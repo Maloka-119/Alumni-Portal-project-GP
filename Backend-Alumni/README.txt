@@ -46,6 +46,7 @@ Backend-Alumni/
 │   ├── utils/         # Helper functions
 │      ├── generateToken.js
 │      ├── hashPassword.js
+       ├── HttpStatusHepler.js
 │      └── logger.js
 │-- .env                   # Environment variables
 │-- package.json
@@ -70,7 +71,7 @@ morgan → HTTP request logger
 
 nodemon → Auto-restart server in dev mode
 
-pg / sequelize / prisma → PostgreSQL integration
+sequelize → PostgreSQL integration
 
 bcrypt → Password hashing
 
