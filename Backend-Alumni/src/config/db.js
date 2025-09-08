@@ -1,21 +1,28 @@
 // src/config/db.js
 const { Sequelize } = require("sequelize");
-require("dotenv").config();
+const path = require("path");
+const fs = require("fs");
+require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
 
-const sequelize = new Sequelize(
-  process.env.DB_NAME,
-  process.env.DB_USER,
-  process.env.DB_PASSWORD,
-  {
-    host: process.env.DB_HOST,
-    dialect: "postgres",
-    logging: false,
+console.log("DATABASE_URL:", process.env.DATABASE_URL);
+
+const sequelize = new Sequelize(process.env.DATABASE_URL, {
+  dialect: "postgres",
+  logging: false,
+});
+
+
+const modelsDir = path.join(__dirname, "../models");
+fs.readdirSync(modelsDir).forEach((file) => {
+  if (file.endsWith(".js")) {
+    require(path.join(modelsDir, file))(sequelize);
   }
-);
+});
+
 
 sequelize
-  .authenticate()
-  .then(() => console.log("Database connected successfully..."))
-  .catch((err) => console.error("Error connecting to the database:", err));
+  .sync({ alter: true })
+  .then(() => console.log("All models synchronized with database"))
+  .catch((err) => console.error("Error syncing database:", err));
 
 module.exports = sequelize;

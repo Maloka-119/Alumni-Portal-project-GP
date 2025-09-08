@@ -17,7 +17,8 @@ const Graduate = sequelize.define('Graduate', {
   'cv-url': { type: DataTypes.STRING },
   faculty: { type: DataTypes.STRING },
   'profile-picture-url': { type: DataTypes.STRING },
-  'graduation-year': { type: DataTypes.INTEGER }
+  'graduation-year': { type: DataTypes.INTEGER },
+  'skills': { type: DataTypes.STRING }
 }, {
   tableName: 'Graduate',
   timestamps: false
