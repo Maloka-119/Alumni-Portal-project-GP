@@ -46,6 +46,7 @@ Backend-Alumni/
 │   ├── utils/         # Helper functions
 │      ├── generateToken.js
 │      ├── hashPassword.js
+       ├── HttpStatusHepler.js
 │      └── logger.js
 │-- .env                   # Environment variables
 │-- package.json
