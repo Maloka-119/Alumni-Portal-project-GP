@@ -19,6 +19,7 @@ exports.getDigitalID = async (req, res) => {
     const user = graduate.User; 
 
     const digitalID = {
+      personalPicture:graduate['profile-picture-url'],
       digitalID: graduate.graduate_id,
       fullName: `${user['first-name']} ${user['last-name']}`,
       faculty: graduate.faculty,
