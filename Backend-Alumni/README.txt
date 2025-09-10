@@ -23,6 +23,11 @@ npm install sequelize pg pg-hstore
 
 npm install bcrypt jsonwebtoken joi
 
+Install packes to handle upload images
+
+npm install aws-sdk multer multer-s3
+
+
 ⚙️ Update package.json
 
 Add the following scripts:
@@ -41,6 +46,7 @@ Backend-Alumni/
 │   │-- config/db.js       # Database connection
 │   │-- routes/            # API routes
 │   │-- controllers/       # Business logic
+│   │-- migrations/         #set tables in db
 │   │-- models/            # Database models
 │   │-- middleware/        # Authentication / validation
 │   ├── utils/         # Helper functions
