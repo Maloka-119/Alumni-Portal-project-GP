@@ -18,7 +18,7 @@ app.get("/", (req, res) => {
 });
 
 const graduateRoutes = require("./routes/graduates.route");
-app.use("/graduates", graduateRoutes);
+app.use("/alumni-portal/graduates", graduateRoutes);
 
 const adminRoutes = require("./routes/admin.route");
 app.use("/alumni_portal/admin", adminRoutes);
