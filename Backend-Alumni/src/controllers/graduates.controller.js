@@ -145,8 +145,6 @@ const updateProfile = async (req, res) => {
     }
 
     const user = graduate.User;
-
-    //  الداتا من الريكوست
     const {
       firstName,
       lastName,
@@ -156,7 +154,6 @@ const updateProfile = async (req, res) => {
       cvUrl,
       faculty,
       graduationYear,
-      profilePicture,
       linkedlnLink,
     } = req.body;
 
@@ -168,20 +165,20 @@ const updateProfile = async (req, res) => {
     if (cvUrl !== undefined) graduate["cv-url"] = cvUrl;
     if (faculty !== undefined) graduate.faculty = faculty;
     if (graduationYear !== undefined) graduate["graduation-year"] = graduationYear;
-    if (profilePicture !== undefined) graduate["profile-picture-url"] = profilePicture;
     if (linkedlnLink !== undefined) graduate["linkedln-link"] = linkedlnLink;
 
-    
+    //  لو فيه ملف صورة مرفوع
+    if (req.file) {
+      graduate["profile-picture-url"] = req.file.location; // location من S3
+    }
+
     await user.save();
     await graduate.save();
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate profile updated successfully",
-      data: {
-        graduate,
-        user,
-      },
+      data: { graduate, user },
     });
   } catch (err) {
     return res.status(500).json({

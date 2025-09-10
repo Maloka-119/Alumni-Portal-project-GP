@@ -7,7 +7,7 @@ const Like = require('../models/Like');
 const createPost = async (req, res) => {
   try {
     const userId = req.user.id; 
-    const { category, content, description, groupId, inLanding, images } = req.body;
+    const { category, content, description, groupId, inLanding } = req.body;
 
     const post = await Post.create({
       category,
@@ -18,16 +18,20 @@ const createPost = async (req, res) => {
       'in-landing': inLanding || false
     });
 
-    if (images && images.length > 0) {
-      const postImages = images.map(url => ({ 'post-id': post.post_id, 'image-url': url }));
+    if (req.files && req.files.length > 0) {
+      const postImages = req.files.map(file => ({
+        'post-id': post.post_id,
+        'image-url': file.location   // URL اللي جاي من S3
+      }));
       await PostImage.bulkCreate(postImages);
     }
 
-    return res.status(201).json({ status: 'success', data: post });
+    return res.status(201).json({ status: HttpStatusHelper.SUCCESS, data: post });
   } catch (err) {
-    return res.status(500).json({ status: 'error', message: err.message });
+    return res.status(500).json({ status: HttpStatusHelper.ERROR, message: err.message });
   }
 };
+
 
 module.exports={
   createPost
