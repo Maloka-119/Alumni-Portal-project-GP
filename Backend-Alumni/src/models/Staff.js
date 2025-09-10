@@ -1,22 +1,26 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/db');
-const User = require('./User');
+const { DataTypes } = require("sequelize");
+const sequelize = require("../config/db");
+const User = require("./User");
 
-const Staff = sequelize.define('Staff', {
-  staff_id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    references: {
-      model: User,
-      key: 'id'
-    }
+const Staff = sequelize.define(
+  "Staff",
+  {
+    staff_id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      references: {
+        model: User,
+        key: "id",
+      },
+    },
+    "status-to-login": { type: DataTypes.ENUM("active", "inactive") },
   },
-  'status-to-login': { type: DataTypes.ENUM('active', 'inactive') }
-}, {
-  tableName: 'Staff',
-  timestamps: false
-});
+  {
+    tableName: "Staff",
+    timestamps: false,
+  }
+);
 
-Staff.belongsTo(User, { foreignKey: 'staff_id' });
+Staff.belongsTo(User, { foreignKey: "staff_id" });
 
 module.exports = Staff;
