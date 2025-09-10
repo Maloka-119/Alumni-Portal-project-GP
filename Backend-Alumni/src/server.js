@@ -20,9 +20,14 @@ app.get("/", (req, res) => {
 const graduateRoutes = require("./routes/graduates.route");
 app.use("/alumni-portal/graduates", graduateRoutes);
 
-const adminRoutes = require("./routes/admin.route");
-app.use("/alumni_portal/admin", adminRoutes);
+// const adminRoutes = require("./routes/admin.route");
+// app.use("/alumni_portal/admin", adminRoutes);
 
+const postRoutes = require("./routes/post.route");
+app.use("/alumni-portal/posts", postRoutes);
+
+const userRoutes = require("./routes/user.route");
+app.use("/alumni-portal/users", userRoutes);
 // sync db
 sequelize
   .sync()
