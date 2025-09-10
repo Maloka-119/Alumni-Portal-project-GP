@@ -14,3 +14,6 @@ catch(err){
     });
 }
 };
+module.exports={
+  addPost
+}
