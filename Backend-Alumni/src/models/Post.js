@@ -11,7 +11,8 @@ const Post = sequelize.define('Post', {
   'created-at': { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   'author-id': { type: DataTypes.INTEGER, references: { model: User, key: 'id' } },
   'group-id': { type: DataTypes.INTEGER, references: { model: Group, key: 'id' } },
-  'in-landing': { type: DataTypes.BOOLEAN }
+  'in-landing': { type: DataTypes.BOOLEAN, defaultValue: false }
+
 }, { tableName: 'Post', timestamps: false });
 
 Post.belongsTo(User, { foreignKey: 'author-id' });
