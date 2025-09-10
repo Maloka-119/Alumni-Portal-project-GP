@@ -41,6 +41,7 @@ Backend-Alumni/
 │   │-- config/db.js       # Database connection
 │   │-- routes/            # API routes
 │   │-- controllers/       # Business logic
+│   │-- migrations/         #set tables in db
 │   │-- models/            # Database models
 │   │-- middleware/        # Authentication / validation
 │   ├── utils/         # Helper functions
