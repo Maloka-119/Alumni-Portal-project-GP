@@ -1,11 +1,11 @@
-const express=require('express');
-const router=express.Router();
-const graduateController= require('../controllers/graduates.controller');
+const express = require("express");
+const router = express.Router();
+const graduateController = require("../controllers/graduates.controller");
 
-router.route('/:id')
-        .get('/digital-id',graduateController.getDigitalID)
-        .get('/profile',graduateController.getGraduateProfile)
+// Digital ID
+router.get("/:id/digital-id", graduateController.getDigitalID);
 
+// Graduate Profile
+router.get("/:id/profile", graduateController.getGraduateProfile);
 
-
-module.exports = router; 
+module.exports = router;
