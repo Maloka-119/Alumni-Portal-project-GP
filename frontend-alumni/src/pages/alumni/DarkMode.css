@@ -1,0 +1,409 @@
+/* Dark Mode Base */
+.dark {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+/* Header */
+.dark .page-header,
+.dark .header-dark {
+  background-color: #1f2937;
+}
+
+.dark .alumni-menu-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+  transition: background 0.3s, color 0.3s;
+}
+
+.dark .alumni-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Sidebar */
+.dark .alumni-sidebar {
+  background: #1f2937;
+}
+
+.dark .alumni-sidebar-item:hover,
+.dark .alumni-sidebar-item.active {
+  background: #374151;
+  color: #f3f4f6;
+}
+
+/* Main content cards */
+.dark .alumni-card {
+  background: #1f2937;
+  color: #f3f4f6;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+  transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+}
+
+/* Scrollbars */
+.dark .alumni-sidebar::-webkit-scrollbar-thumb,
+.dark .alumni-main-content::-webkit-scrollbar-thumb,
+.dark body::-webkit-scrollbar-thumb {
+  background: #4b5563;
+  border-radius: 8px;
+}
+
+/* Contact button */
+.dark .contact-btn {
+  background-color: #2563eb;
+  color: #f3f4f6;
+  transition: background 0.3s;
+}
+
+.dark .contact-btn:hover {
+  background-color: #1d4ed8;
+}
+
+/* Dark Mode for AlumniAdminPosts */
+.dark .uni-feed {
+  background: #111827;
+  color: #f3f4f6;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Dark Mode Header */
+.dark .uni-header {
+  background: linear-gradient(90deg, #2563eb, #4f7ef5, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark .uni-header::after {
+  background: linear-gradient(90deg, #2563eb, #10b981);
+}
+
+.dark .uni-filter label {
+  color: #10b981;
+}
+
+.dark .uni-filter select {
+  color: #f3f4f6;
+  background: #1f2937;
+  border: 1px solid #374151;
+  transition: background 0.3s, color 0.3s, border 0.3s;
+}
+
+.dark .uni-filter select:hover {
+  background: #374151;
+  border-color: #10b981;
+}
+
+/* Posts */
+.dark .uni-post-card {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+  border-radius: 16px;
+  transition: background 0.3s, color 0.3s, transform 0.2s, box-shadow 0.3s;
+}
+
+.dark .uni-post-header strong,
+.dark .uni-post-header span,
+.dark .uni-post-type {
+  color: #f3f4f6;
+}
+
+.dark .uni-post-link {
+  color: #3b82f6;
+}
+
+.dark .uni-post-actions button {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+  border-radius: 12px;
+  padding: 6px 12px;
+  transition: background 0.3s, color 0.3s, border 0.3s;
+}
+
+.dark .uni-post-actions button:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.dark .uni-post-actions button.uni-liked {
+  color: #f87171; /* Like button highlight */
+}
+
+/* Comments */
+.dark .uni-comment-input input {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+  border-radius: 22px;
+  padding: 10px 16px;
+}
+
+.dark .uni-comment-input button {
+  background: #2563eb;
+  color: #f3f4f6;
+  border: none;
+  border-radius: 22px;
+  padding: 8px 18px;
+  font-weight: 600;
+  transition: background 0.3s;
+}
+
+.dark .uni-comment-input button:hover {
+  background: #1d4ed8;
+}
+
+.dark .uni-existing-comments .uni-comment-item {
+  background: #1f2937;
+  color: #f3f4f6;
+  border-bottom: 1px solid #374151;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.dark .uni-existing-comments .uni-comment-avatar {
+  border: 1px solid #374151;
+  border-radius: 50%;
+}
+
+
+/* Dark Mode for PostsAlumni */
+.dark .am-feed {
+  background: #111827;
+  color: #f3f4f6;
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Header */
+.dark .am-header {
+  background: linear-gradient(90deg, #2563eb, #4f7ef5, #10b981);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.dark .am-header::after {
+  background: linear-gradient(90deg, #2563eb, #10b981);
+}
+
+/* Create Post Bar - Dark Mode */
+.dark .am-create-bar {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+  transition: all 0.2s ease-in-out;
+}
+
+.dark .am-create-bar:hover {
+  background: #374151; 
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.dark .am-create-bar input {
+  background: transparent;
+  color: #f3f4f6;
+  width: 100%;
+  border: none; 
+  outline: none;
+  font-size: 14px;
+}
+
+
+
+/* Post Form */
+.dark .uni-post-form {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+}
+
+.dark .uni-post-form input,
+.dark .uni-post-form textarea {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+}
+
+.dark .uni-optional-icons label,
+.dark .uni-optional-icons span {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+.dark .uni-optional-icons label:hover,
+.dark .uni-optional-icons span:hover {
+  background: #374151;
+}
+
+/* Form Buttons */
+.dark .uni-form-buttons button[type="submit"] {
+  background-color: #2563eb;
+  color: #f3f4f6;
+}
+
+.dark .uni-form-buttons button[type="submit"]:hover {
+  background-color: #1d4ed8;
+}
+
+.dark .uni-form-buttons button[type="button"] {
+  background-color: #374151;
+  color: #f3f4f6;
+}
+
+.dark .uni-form-buttons button[type="button"]:hover {
+  background-color: #4b5563;
+}
+/* Dark Mode Inputs & Textareas */
+.dark .uni-post-form input,
+.dark .uni-post-form textarea,
+.dark .am-create-bar input,
+.dark .am-comment-input input {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+  transition: background 0.3s, color 0.3s, border 0.3s;
+}
+
+.dark .uni-post-form input:focus,
+.dark .uni-post-form textarea:focus,
+.dark .am-create-bar input:focus,
+.dark .am-comment-input input:focus {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #2563eb;
+  outline: none;
+}
+
+
+/* Posts */
+/* Dark Mode Posts */
+.dark .am-posts {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.dark .am-post-card {
+  background: #1f2937; /* خلفية أساسية للدارك */
+  padding: 20px;
+  border-radius: 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+  transition: transform 0.2s, box-shadow 0.3s, background 0.3s;
+  color: #f3f4f6;
+}
+
+.dark .am-post-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 25px rgba(0,0,0,0.5);
+  background: #1f2937c0; /* أفتح شويه للتمييز عند Hover */
+}
+
+.dark .am-post-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.dark .am-post-header-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.dark .am-post-header-info strong {
+  font-size: 16px;
+  color: #f3f4f6;
+}
+
+.dark .am-post-date {
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+/* Edit/Delete buttons Dark Mode */
+.dark .am-post-header button {
+  background: #1f2937;
+  color: #1f2937;
+  border: 1px solid #374151;
+}
+
+.dark .am-post-header button:hover {
+  background: rgba(59, 130, 246, 0.1);color: #f3f4f6;
+}
+
+.dark .am-post-header button:nth-child(2) {
+  background-color: #5c1a1a;
+  color: #f87171;
+}
+
+.dark .am-post-header button:nth-child(2):hover {
+  background-color: #f87171;
+  color: #1f2937;
+}
+
+/* Comments */
+.dark .am-comment-input input {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+}
+
+.dark .am-comment-input button {
+  background: #2563eb;
+  color: #f3f4f6;
+  border: none;
+}
+
+.dark .am-comment-input button:hover {
+  background: #1d4ed8;
+}
+
+.dark .am-existing-comments .am-comment-item {
+  background: #1f2937;
+  color: #f3f4f6;
+  border-bottom: 1px solid #374151;
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.dark .am-existing-comments .am-comment-avatar {
+  border: 1px solid #374151;
+  border-radius: 50%;
+}
+
+/* ===== Dark Mode ===== */
+.dark .comments-container {
+  background: #1f2937;
+  color: #f1f1f1;
+}
+
+.dark .comments-close-btn {
+  color: #f1f1f1;
+}
+
+.dark .comment-item {
+  background: #2d3748;
+  box-shadow: none;
+}
+
+.dark .comment-text strong {
+  color: #f9fafb;
+}
+
+.dark .comment-text p {
+  color: #d1d5db;
+}
+
+.dark .comment-input input {
+  background: #374151;
+  color: #f1f1f1;
+  border: 1px solid #555;
+}
+
+.dark .comment-input button {
+  background-color: #3b82f6;
+}
+
+.dark .comment-input button:hover {
+  background-color: #2563eb;
+}
