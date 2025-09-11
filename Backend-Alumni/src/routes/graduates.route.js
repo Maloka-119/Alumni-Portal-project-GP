@@ -38,4 +38,7 @@ const AWS = require("aws-sdk");
 // router
 //   .route("/digital-id")
 //   .get(authMiddleware, graduateController.getDigitalID);
+
+router.route("/:id/status").put(graduateController.updateGraduateStatus);
+
 module.exports = router;

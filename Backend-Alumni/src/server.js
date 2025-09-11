@@ -28,6 +28,9 @@ app.use("/alumni-portal/posts", postRoutes);
 
 const userRoutes = require("./routes/user.route");
 app.use("/alumni-portal/users", userRoutes);
+
+const staffRoutes = require("./routes/staff.route");
+app.use("/alumni-portal/staff", staffRoutes);
 // sync db
 sequelize
   .sync()

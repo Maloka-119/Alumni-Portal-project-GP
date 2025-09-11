@@ -21,6 +21,10 @@ const Graduate = sequelize.define(
     "profile-picture-url": { type: DataTypes.STRING },
     "graduation-year": { type: DataTypes.INTEGER },
     skills: { type: DataTypes.STRING },
+    status: {
+      type: DataTypes.ENUM("active", "inactive"),
+      defaultValue: "active",
+    },
   },
   {
     tableName: "Graduate",
