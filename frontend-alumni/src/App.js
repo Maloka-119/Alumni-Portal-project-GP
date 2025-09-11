@@ -1,24 +1,28 @@
-import { useState } from 'react'
+import logo from './logo.svg';
+import './App.css';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { DarkModeProvider } from './pages/alumni/DarkModeContext';
+import Register from './auth/Register';
+import AdminPanel from './pages/admin/AdminPanel';
+import Login from './auth/Login';
+import AlumniPortal from './pages/alumni/AlumniPortal';
 
-function App() {
-  const [count, setCount] = useState(0)
+  function App() {  
 
-  return (
-    <div className="App">
-      <h1>Alumni Portal</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.js</code> and save to test HMR
-        </p>
+    return (
+      <div className="App">
+        <Router>
+        <DarkModeProvider>
+          <Routes>
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/admindashboard" element={<AdminPanel />} />
+            <Route path="/alumnidashboard" element={<AlumniPortal />} />
+          </Routes>
+        </DarkModeProvider>
+      </Router>
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </div>
-  )
-}
+      );
+  }
 
-export default App
+ export default App;
