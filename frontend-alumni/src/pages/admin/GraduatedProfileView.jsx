@@ -1,6 +1,6 @@
+import PROFILE from "./PROFILE.jpeg";
 import React, { useEffect, useState } from "react";
 import "./GradProfile.css";
-import PROFILE from "./PROFILE.jpeg";
 
 function GraduatedProfileView() {
   const [user, setUser] = useState(null);
@@ -88,7 +88,7 @@ export default GraduatedProfileView;
 
 //       <div className="profile-card">
 //         <img
-//           src={user.profilePicture || "/OIP.webp"}
+//           src={user.profilePicture || PROFILE}
 //           alt="Profile"
 //           className="profile-img"
 //         />

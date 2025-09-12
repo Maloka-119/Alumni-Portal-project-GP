@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import "./GradProfile.css";
 import PROFILE from "./PROFILE.jpeg";
 
@@ -6,7 +7,8 @@ function GraduatedProfile({ userId }) {
   const [user, setUser] = useState(null);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState(null);
-  const API_URL = "http://localhost:5005/graduates"; // عدلي حسب الباك إند
+  const { t } = useTranslation();
+  const API_URL = "http://localhost:5005/graduates";
 
   useEffect(() => {
     fetchUser();
@@ -75,13 +77,13 @@ function GraduatedProfile({ userId }) {
     setEditing(false);
   };
 
-  if (!user || !formData) return <p>Loading...</p>;
+  if (!user || !formData) return <p>{t("loading")}</p>;
 
   const fullName = `${formData.firstName} ${formData.lastName}`;
 
   return (
     <div>
-      <h1>Profile</h1>
+      <h1>{t("profile")}</h1>
 
       {!editing ? (
         <div className="profile-card">
@@ -91,62 +93,64 @@ function GraduatedProfile({ userId }) {
             className="profile-img"
           />
           <h2>{fullName}</h2>
-          <p><strong>Faculty:</strong> {formData.faculty}</p>
-          <p><strong>Graduation Year:</strong> {formData.graduationYear}</p>
-          <p><strong>Bio:</strong> {formData.bio}</p>
+          <p><strong>{t("faculty")}:</strong> {formData.faculty}</p>
+          <p><strong>{t("graduationYear")}:</strong> {formData.graduationYear}</p>
+          <p><strong>{t("bio")}:</strong> {formData.bio}</p>
           <p>
-            <strong>CV:</strong>{" "}
+            <strong>{t("cv")}:</strong>{" "}
             {formData.cv ? (
               <a href={formData.cv} download>
-                Download CV
+                {t("downloadCv")}
               </a>
-            ) : "No CV uploaded"}
+            ) : t("noCv")}
           </p>
-          <p><strong>Skills:</strong> {formData.skills.join(", ")}</p>
-          <p><strong>Current Job:</strong> {formData.currentJob}</p>
-          <button onClick={() => setEditing(true)}>Update your Info</button>
+          <p><strong>{t("skills")}:</strong> {formData.skills.join(", ")}</p>
+          <p><strong>{t("currentJob")}:</strong> {formData.currentJob}</p>
+          <button onClick={() => setEditing(true)}>
+            {t("updateInfo")}
+          </button>
         </div>
       ) : (
         <div className="info">
           <label>
-            First Name:
+            {t("firstName")}:
             <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} />
           </label>
           <label>
-            Last Name:
+            {t("lastName")}:
             <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} />
           </label>
           <label>
-            Faculty:
+            {t("faculty")}:
             <input type="text" name="faculty" value={formData.faculty} onChange={handleChange} />
           </label>
           <label>
-            Graduation Year:
+            {t("graduationYear")}:
             <input type="text" name="graduationYear" value={formData.graduationYear} onChange={handleChange} />
           </label>
           <label>
-            Bio:
+            {t("bio")}:
             <textarea name="bio" value={formData.bio} onChange={handleChange} />
           </label>
           <label>
-            Skills (comma separated):
+            {t("skills")}:
             <input type="text" name="skills" value={formData.skills.join(",")} onChange={handleSkillsChange} />
           </label>
           <label>
-            Current Job:
+            {t("currentJob")}:
             <input type="text" name="currentJob" value={formData.currentJob} onChange={handleChange} />
           </label>
           <label>
-            Profile Photo:
+            {t("profilePhoto")}:
             <input type="file" accept="image/*" onChange={handlePhotoChange} />
           </label>
           <label>
-            CV:
+            {t("cv")}:
             <input type="file" accept=".pdf,.doc,.docx" onChange={handleCvChange} />
           </label>
 
-          <button onClick={handleSave}>Save</button>
-          <button onClick={handleCancel}>Cancel</button>
+          <button onClick={handleSave}>{t("save")}</button>
+          <button onClick={handleCancel}>{t("cancel")}</button>
         </div>
       )}
     </div>
