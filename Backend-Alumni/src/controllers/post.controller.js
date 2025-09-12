@@ -9,7 +9,16 @@ const createPost = async (req, res) => {
   try {
     const userId = req.user.id;
     const { category, content, description, groupId, inLanding } = req.body;
+    const graduate = await Graduate.findOne({ where: { graduate_id: userId } });
 
+    if (graduate) {
+      if (graduate.status_to_login !== "active") {
+        return res.status(403).json({
+          status: HttpStatusHelper.FAIL,
+          message: "Your account is not active. You cannot create posts.",
+        });
+      }
+    }
     const post = await Post.create({
       category,
       content,
@@ -19,6 +28,7 @@ const createPost = async (req, res) => {
       "in-landing": inLanding || false,
     });
 
+    // لو فيه صور
     if (req.files && req.files.length > 0) {
       const postImages = req.files.map((file) => ({
         "post-id": post.post_id,
@@ -36,6 +46,7 @@ const createPost = async (req, res) => {
       .json({ status: HttpStatusHelper.ERROR, message: err.message });
   }
 };
+
 
 const getAllPosts = async (req, res) => {
   try {
