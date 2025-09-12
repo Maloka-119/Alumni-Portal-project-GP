@@ -2,11 +2,14 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Heart, MessageCircle, Share2 } from 'lucide-react';
 import './AlumniAdminPosts.css';
 import { DarkModeContext } from './DarkModeContext';
+import { useTranslation } from 'react-i18next';
 
 const API_URL = 'http://localhost:5000/api';
 
 const HomeAlumni = () => {
   const { darkMode } = useContext(DarkModeContext);
+  const { t } = useTranslation();
+
   const [posts, setPosts] = useState([]);
   const [commentInputs, setCommentInputs] = useState({});
   const [page, setPage] = useState(1);
@@ -25,7 +28,7 @@ const HomeAlumni = () => {
       else setPosts(prev => [...prev, ...data]);
     } catch (err) {
       console.error(err);
-      setError('Error fetching posts');
+      setError(t('errorFetchingPosts'));
     } finally {
       setLoading(false);
     }
@@ -76,12 +79,12 @@ const HomeAlumni = () => {
     }
   };
 
-  if (loading && page === 1) return <p>Loading posts...</p>;
+  if (loading && page === 1) return <p>{t('loadingPosts')}</p>;
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (
     <div className={`uni-feed ${darkMode ? 'dark-mode' : ''}`}>
-      <div className="uni-header"><h2>Home Feed</h2></div>
+      <div className="uni-header"><h2>{t('homeFeed')}</h2></div>
 
       <div className="uni-posts">
         {posts.map(post => (
@@ -125,11 +128,11 @@ const HomeAlumni = () => {
                 <div className="uni-comment-input">
                   <input
                     type="text"
-                    placeholder="Write a comment..."
+                    placeholder={t('writeComment')}
                     value={commentInputs[post.id] || ''}
                     onChange={(e) => handleCommentChange(post.id, e.target.value)}
                   />
-                  <button onClick={() => handleCommentSubmit(post.id)}>Send</button>
+                  <button onClick={() => handleCommentSubmit(post.id)}>{t('send')}</button>
                 </div>
               </div>
             )}
@@ -139,7 +142,7 @@ const HomeAlumni = () => {
 
       {hasMore && (
         <div style={{ textAlign: 'center', margin: '20px' }}>
-          <button onClick={() => setPage(page + 1)}>Load more</button>
+          <button onClick={() => setPage(page + 1)}>{t('loadMore')}</button>
         </div>
       )}
     </div>

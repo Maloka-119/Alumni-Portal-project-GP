@@ -3,6 +3,7 @@ import { Heart, MessageCircle, Share2 } from 'lucide-react';
 import AdminPostsImg from './AdminPosts.jpeg';
 import './AlumniAdminPosts.css';
 import { DarkModeContext } from './DarkModeContext';
+import { useTranslation } from "react-i18next";
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -14,6 +15,7 @@ const AlumniAdminPosts = () => {
   const [types, setTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchPosts();
@@ -87,19 +89,19 @@ const AlumniAdminPosts = () => {
 
   const filteredPosts = filterType === 'All' ? posts : posts.filter(p => p.type === filterType);
 
-  if (loading) return <p>Loading posts...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  if (loading) return <p>{t("uniAdminPosts_loading")}</p>;
+  if (error) return <p style={{ color: 'red' }}>{t("uniAdminPosts_error")}</p>;
 
   return (
     <div className={`uni-feed ${darkMode ? 'dark-mode' : ''}`}>
       <div className="uni-header">
-        <h2>Uni Opportunities</h2>
+        <h2>{t("uniAdminPosts_title")}</h2>
       </div>
 
       <div className="uni-filter">
-        <label>Filter by type:</label>
+        <label>{t("uniAdminPosts_filterByType")}</label>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-          <option>All</option>
+          <option>{t("uniAdminPosts_all")}</option>
           {types.map(t => <option key={t}>{t}</option>)}
         </select>
       </div>
@@ -124,13 +126,13 @@ const AlumniAdminPosts = () => {
 
             <div className="uni-post-actions">
               <button className={post.liked ? 'uni-liked' : ''} onClick={() => handleLike(post.id)}>
-                <Heart size={16}/> {post.likes}
+                <Heart size={16}/> {post.likes} {t("uniAdminPosts_likes")}
               </button>
               <button onClick={() => toggleComments(post.id)}>
-                <MessageCircle size={16}/> {post.comments.length}
+                <MessageCircle size={16}/> {post.comments.length} {t("uniAdminPosts_comments")}
               </button>
               <button>
-                <Share2 size={16}/> {post.shares}
+                <Share2 size={16}/> {post.shares} {t("uniAdminPosts_shares")}
               </button>
             </div>
 
@@ -149,11 +151,11 @@ const AlumniAdminPosts = () => {
                 <div className="uni-comment-input">
                   <input
                     type="text"
-                    placeholder="Write a comment..."
+                    placeholder={t("uniAdminPosts_writeComment")}
                     value={commentInputs[post.id] || ''}
                     onChange={(e) => handleCommentChange(post.id, e.target.value)}
                   />
-                  <button onClick={() => handleCommentSubmit(post.id)}>Send</button>
+                  <button onClick={() => handleCommentSubmit(post.id)}>{t("uniAdminPosts_send")}</button>
                 </div>
               </div>
             )}
@@ -165,6 +167,7 @@ const AlumniAdminPosts = () => {
 };
 
 export default AlumniAdminPosts;
+
 
 
 

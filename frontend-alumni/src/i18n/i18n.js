@@ -2,7 +2,7 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
 import general from "./general";
-// import alumni from "./alumni";
+import alumni from "./alumni";
 import admin from "./admin";
 
 
@@ -13,7 +13,7 @@ i18n
       en: {
         translation: {
           ...general.en.translation,
-        //   ...alumni.en.translation,
+          ...alumni.en.translation,
           ...admin.en.translation,
           
         }
@@ -21,7 +21,7 @@ i18n
       ar: {
         translation: {
           ...general.ar.translation,
-        //   ...alumni.ar.translation,
+          ...alumni.ar.translation,
           ...admin.ar.translation,
           
         }

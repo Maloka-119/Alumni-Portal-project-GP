@@ -13,53 +13,56 @@ import PostsAlumni from './PostsAlumni';
 import HomeAlumni from './HomeAlumni';
 import DigitalID from './DigitalID';
 import GraduatedProfile from './GraduatedProfile';
+import { useTranslation } from "react-i18next";
 
-const sidebarSections = (darkMode) => [
+const sidebarSections = (darkMode, t) => [
   {
-    title: "Personal",
+    title: t("personal"),
     items: [
-      { name: "Home", icon: <Home size={18}/> },
-      { name: "Profile", icon: <User size={18}/> },
-      { name: "My Posts", icon: <FileText size={18}/> },
-      { name: "Notifications", icon: <Bell size={18}/> },
-      { name: "Digital ID", icon: <IdCard size={18}/> }
+      { name: t("home"), key: "Home", icon: <Home size={18}/> },
+      { name: t("profile"), key: "Profile", icon: <User size={18}/> },
+      { name: t("myPosts"), key: "My Posts", icon: <FileText size={18}/> },
+      { name: t("notifications"), key: "Notifications", icon: <Bell size={18}/> },
+      { name: t("digitalId"), key: "Digital ID", icon: <IdCard size={18}/> }
     ]
   },
   {
-    title: "Networks & Opportunities",
+    title: t("networksOpportunities"),
     items: [
-      { name: "People & Friends", icon: <Users size={18}/> },
-      { name: "Communities", icon: <Network size={18}/> },
-      { name: "Opportunities", icon: <Briefcase size={18}/> }
+      { name: t("peopleFriends"), key: "People & Friends", icon: <Users size={18}/> },
+      { name: t("communities"), key: "Communities", icon: <Network size={18}/> },
+      { name: t("opportunities"), key: "Opportunities", icon: <Briefcase size={18}/> }
     ]
   },
   {
-    title: "Services & Support",
+    title: t("servicesSupport"),
     items: [
-      { name: "Document Requests", icon: <File size={18}/> },
-      { name: "Consultations", icon: <MessageSquare size={18}/> },
-      { name: "FAQ & Help", icon: <HelpCircle size={18}/> },
+      { name: t("documentRequests"), key: "Document Requests", icon: <File size={18}/> },
+      { name: t("consultations"), key: "Consultations", icon: <MessageSquare size={18}/> },
+      { name: t("faqHelp"), key: "FAQ & Help", icon: <HelpCircle size={18}/> },
     ]
   },
   {
-    title: "Manage Account",
+    title: t("manageAccount"),
     items: [
       { 
-        name: darkMode ? "Light Mode" : "Dark Mode", 
+        name: darkMode ? t("lightMode") : t("darkMode"), 
         icon: darkMode ? <Sun size={18}/> : <Moon size={18}/>, 
         action: "toggleDark" 
       },
-      { name: "Language", icon: <Globe size={18}/>, action: "language" },
-      { name: "Logout", icon: <LogOut size={18}/>, action: "logout" }
+      { name: t("language"), icon: <Globe size={18}/>, action: "language" },
+      { name: t("logout"), icon: <LogOut size={18}/>, action: "logout" }
     ]
   },
 ];
+
 
 const Dashboard = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [activePage, setActivePage] = useState("Home"); 
   const footerRef = useRef(null);
+  const { t, i18n } = useTranslation();
 
   const scrollToFooter = () => {
     footerRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -68,39 +71,25 @@ const Dashboard = () => {
   const handleSidebarAction = (action) => {
     if(action === "toggleDark") setDarkMode(!darkMode);
     if(action === "logout") console.log("Logout action");
-    if(action === "language") console.log("Change language");
+    if(action === "language") {
+      const newLang = i18n.language === "en" ? "ar" : "en";
+      i18n.changeLanguage(newLang);
+    }
     if(action === "contact") scrollToFooter();
   }
 
   const renderContent = () => {
-    if(activePage === "Home") {
-      return <HomeAlumni darkMode={darkMode}/>;
-    }
+    if(activePage === "Home") return <HomeAlumni darkMode={darkMode}/>;
+  if(activePage === "Opportunities") return <AlumniAdminPosts darkMode={darkMode}/>;
+  if(activePage === "My Posts") return <PostsAlumni darkMode={darkMode}/>;
+  if(activePage === "Digital ID") return <DigitalID darkMode={darkMode}/>;
+  if(activePage === "Profile") return <GraduatedProfile darkMode={darkMode}/>;
 
-    if(activePage === "Opportunities") {
-      return <AlumniAdminPosts darkMode={darkMode}/>;
-    }
-
-    if(activePage === "My Posts") {
-      return <PostsAlumni darkMode={darkMode}/>;
-    }
-
-    if(activePage === "Digital ID") {
-      return <DigitalID darkMode={darkMode}/>;
-    }
-
-    if(activePage === "Profile") {
-      return <GraduatedProfile darkMode={darkMode}/>;
-    }
-
-   
-
-    // باقي الصفحات
-    return (
-      <div className="alumni-card">
-        <h2>{activePage}</h2>
-        <p>Content for {activePage}</p>
-      </div>
+  return (
+    <div className="alumni-card">
+      <h2>{activePage}</h2>
+      <p>Content for {activePage}</p>
+    </div>
     )
   }
 
@@ -128,21 +117,21 @@ const Dashboard = () => {
       {/* Layout */}
       <div className="alumni-layout">
         <aside className={`alumni-sidebar ${isOpen ? "open" : "closed"}`}>
-          {sidebarSections(darkMode).map((section, index) => (
+          {sidebarSections(darkMode, t).map((section, index) => (
             <div className="alumni-sidebar-section" key={index}>
               <h3>{section.title}</h3>
               <ul>
                 {section.items.map((item, i) => (
                   <li 
-                    key={i} 
-                    className={`alumni-sidebar-item ${activePage===item.name?"active":""}`}
-                    onClick={()=>{
-                      if(item.action) handleSidebarAction(item.action);
-                      else setActivePage(item.name)
-                    }}
-                  >
-                    {item.icon} {item.name}
-                  </li>
+                  key={i} 
+                  className={`alumni-sidebar-item ${activePage===item.key?"active":""}`}
+                  onClick={()=>{
+                    if(item.action) handleSidebarAction(item.action);
+                    else setActivePage(item.key)
+                  }}
+                >
+                  {item.icon} {item.name}
+                </li>
                 ))}
               </ul>
             </div>
