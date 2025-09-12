@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Share2, Image, FileText, Link as LinkIcon, Trash2, MoreVertical, Edit } from 'lucide-react';
 import './AlumniAdminPosts.css';
 
-const API_URL = 'http://localhost:5000/api/posts'; // غيّري حسب سيرفرك
+const API_URL = 'http://localhost:5000/api/posts';
 
 const PostsAlumni = ({ user }) => {
   const [showForm, setShowForm] = useState(false);
@@ -14,7 +14,6 @@ const PostsAlumni = ({ user }) => {
   const [selectedPost, setSelectedPost] = useState(null);
   const [newComment, setNewComment] = useState('');
 
-  // تحميل البوستات
   useEffect(() => {
     fetch(`${API_URL}/me`, { credentials: 'include' })
       .then(res => res.json())
@@ -25,7 +24,6 @@ const PostsAlumni = ({ user }) => {
       .catch(err => { setError(err.message); setLoading(false); });
   }, []);
 
-  // إضافة بوست
   const handleAddPost = async (e) => {
     e.preventDefault();
     if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) return;
@@ -48,7 +46,6 @@ const PostsAlumni = ({ user }) => {
     }
   };
 
-  // تعديل بوست
   const handleEdit = async (id, content, link) => {
     try {
       const res = await fetch(`${API_URL}/${id}`, {
@@ -64,7 +61,6 @@ const PostsAlumni = ({ user }) => {
     }
   };
 
-  // حذف بوست
   const handleDelete = async (id) => {
     try {
       await fetch(`${API_URL}/${id}`, { method: 'DELETE', credentials: 'include' });
@@ -74,11 +70,9 @@ const PostsAlumni = ({ user }) => {
     }
   };
 
-  // فتح وغلق الكومنتات
   const openComments = (post) => setSelectedPost(post);
   const closeComments = () => { setSelectedPost(null); setNewComment(''); };
 
-  // إضافة كومنت
   const handleAddComment = async () => {
     if (!newComment.trim()) return;
     try {
@@ -97,7 +91,6 @@ const PostsAlumni = ({ user }) => {
     }
   };
 
-  // لايك
   const handleLike = async (postId) => {
     try {
       const res = await fetch(`${API_URL}/${postId}/like`, { method: 'POST', credentials: 'include' });
@@ -109,13 +102,11 @@ const PostsAlumni = ({ user }) => {
     }
   };
 
-  if (loading) return <div>Loading posts...</div>;
-  if (error) return <div style={{ color: 'red' }}>Error: {error}</div>;
-
   return (
     <div className="uni-feed">
       <h2 className="uni-header">My Posts</h2>
 
+      {/* شريط إنشاء بوست دايمًا ظاهر */}
       <div className="am-create-bar" onClick={() => setShowForm(true)}>
         <input placeholder="Create new post..." readOnly />
       </div>
@@ -148,7 +139,6 @@ const PostsAlumni = ({ user }) => {
               <LinkIcon size={20} />
             </span>
           </div>
-
           <div className="uni-form-buttons">
             <button type="submit">Post</button>
             <button type="button" onClick={() => { setShowForm(false); setShowLinkInput(false); }}>Cancel</button>
@@ -156,18 +146,21 @@ const PostsAlumni = ({ user }) => {
         </form>
       )}
 
-      <div className="uni-posts">
-        {posts.map(post => (
-          <PostCard
-            key={post.id}
-            post={post}
-            onEdit={(content, link) => handleEdit(post.id, content, link)}
-            onDelete={() => handleDelete(post.id)}
-            onOpenComments={() => openComments(post)}
-            onLike={() => handleLike(post.id)}
-          />
-        ))}
-      </div>
+      {error && <div style={{ color: 'red' }}>Error: {error}</div>}
+      {loading && <div>Loading posts...</div>}
+
+      {!loading && posts.length === 0 && <div>No posts yet. Create one!</div>}
+
+      {!loading && posts.map(post => (
+        <PostCard
+          key={post.id}
+          post={post}
+          onEdit={(content, link) => handleEdit(post.id, content, link)}
+          onDelete={() => handleDelete(post.id)}
+          onOpenComments={() => openComments(post)}
+          onLike={() => handleLike(post.id)}
+        />
+      ))}
 
       {selectedPost && (
         <div className="comments-modal">
@@ -176,7 +169,6 @@ const PostsAlumni = ({ user }) => {
               <span>Comments</span>
               <button className="comments-close-btn" onClick={closeComments}>X</button>
             </div>
-
             <div className="comments-list">
               {selectedPost.comments.map(c => (
                 <div key={c.id} className="comment-item">
@@ -188,7 +180,6 @@ const PostsAlumni = ({ user }) => {
                 </div>
               ))}
             </div>
-
             <div className="comment-input">
               <input
                 placeholder="Write a comment..."
@@ -270,6 +261,7 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
 };
 
 export default PostsAlumni;
+
 
 
 
