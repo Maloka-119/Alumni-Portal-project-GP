@@ -24,7 +24,7 @@ const StaffManagement = () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await API.get('/all-users'); 
+        const res = await API.get('/users'); 
         const staffUsers = res.data.filter(u => u.role === 'staff'); 
         setUsers(staffUsers);
       } catch (err) {
@@ -45,7 +45,7 @@ const StaffManagement = () => {
     const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
 
     try {
-      await API.patch(`/all-users/${id}`, { status: newStatus });
+      await API.patch(`/staff/${id}/status`, { status: newStatus });
       setUsers(users.map(u =>
         u.id === id ? { ...u, status: newStatus } : u
       ));
@@ -69,7 +69,7 @@ const StaffManagement = () => {
   const handleSaveRole = async () => {
     try {
       if (selectedRole) {
-        await API.post(`/all-users/${currentUserId}/add-role`, { roleId: selectedRole });
+        await API.post(`/users/${currentUserId}/add-role`, { roleId: selectedRole });
       } else if (newRole) {
         await API.post('/roles', { name: newRole });
       }
