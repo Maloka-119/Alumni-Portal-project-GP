@@ -1,7 +1,8 @@
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 const Post = require("../models/Post");
 const PostImage = require("../models/PostImage");
-const Comment = require("../models/Comment");6
+const Comment = require("../models/Comment");
+6;
 const Like = require("../models/Like");
 const User = require("../models/User");
 
@@ -20,7 +21,6 @@ const createPost = async (req, res) => {
         });
       }
     }
-
 
     const post = await Post.create({
       category,
@@ -52,11 +52,56 @@ const createPost = async (req, res) => {
   }
 };
 
+// const getAllPosts = async (req, res) => {
 
+// const getAllPosts = async (req, res) => {
+//   try {
+//     const posts = await Post.findAll({
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "first-name", "last-name", "email"],
+//         },
+//       ],
+//       order: [["created-at", "DESC"]],
+//     });
 
-const getAllPosts = async (req, res) => {
+//     // تعديل الـ response عشان يبقى بالشكل المطلوب
+//     const responseData = posts.map((post) => ({
+//       post_id: post.post_id,
+//       category: post.category,
+//       content: post.content,
+//       description: post.description,
+//       "created-at": post["created-at"],
+//       author: {
+//         id: post.User.id,
+//         "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`, // الحقل الجديد فقط
+//         email: post.User.email,
+//       },
+//       "group-id": post["group-id"],
+//       "in-landing": post["in-landing"],
+//     }));
+
+//     res.status(200).json({
+//       status: "success",
+//       message: "All posts fetched successfully",
+//       data: responseData,
+//     });
+//   } catch (error) {
+//     console.error("Error details:", error);
+//     res.status(500).json({
+//       status: "error",
+//       message: "Failed to fetch posts: " + error.message,
+//       data: [],
+//     });
+//   }
+// };
+const getMyPosts = async (req, res) => {
   try {
+    const userId = req.user.id; // جاي من التوكن
+
     const posts = await Post.findAll({
+      where: { "author-id": userId },
       include: [
         {
           model: User,
@@ -66,7 +111,6 @@ const getAllPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    // تعديل الـ response عشان يبقى بالشكل المطلوب
     const responseData = posts.map((post) => ({
       post_id: post.post_id,
       category: post.category,
@@ -75,7 +119,7 @@ const getAllPosts = async (req, res) => {
       "created-at": post["created-at"],
       author: {
         id: post.User.id,
-        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`, // الحقل الجديد فقط
+        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
         email: post.User.email,
       },
       "group-id": post["group-id"],
@@ -84,14 +128,14 @@ const getAllPosts = async (req, res) => {
 
     res.status(200).json({
       status: "success",
-      message: "All posts fetched successfully",
+      message: "My posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
     console.error("Error details:", error);
     res.status(500).json({
       status: "error",
-      message: "Failed to fetch posts: " + error.message,
+      message: "Failed to fetch my posts: " + error.message,
       data: [],
     });
   }
@@ -99,5 +143,5 @@ const getAllPosts = async (req, res) => {
 
 module.exports = {
   createPost,
-  getAllPosts,
+  getMyPosts,
 };

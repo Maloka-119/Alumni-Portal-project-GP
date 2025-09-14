@@ -25,8 +25,14 @@ router.post(
   postController.createPost
 );
 
+// router.get("/", postController.getAllPosts);
 
-
-router.get("/", postController.getAllPosts);
+// router.post(
+//   "/",
+//   authMiddleware,
+//   upload.array("images", 5), // images هو اسم الحقل اللي هتبعته من الـ frontend
+//   postController.createPost
+// );
+router.get("/", postController.getMyPosts);
 
 module.exports = router;
