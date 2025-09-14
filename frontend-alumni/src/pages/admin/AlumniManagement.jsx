@@ -15,7 +15,7 @@ const AlumniManagement = () => {
 
   useEffect(() => {
     setLoading(true);
-    API.get("/all-users") // endpoint اللي بيرجع كل اليوزرز
+    API.get("/users") 
       .then(res => {
         const graduatedUsers = res.data.filter(u => u.role === 'graduated');
         setUsers(graduatedUsers);
@@ -35,7 +35,7 @@ const AlumniManagement = () => {
     const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
   
     try {
-      const res = await API.patch(`/all-users/${id}`, { status: newStatus });
+      const res = await API.patch(`/graduates/${id}/status`, { status: newStatus });
       setUsers(users.map(u =>
         u.id === id ? { ...u, status: newStatus } : u
       ));
@@ -47,7 +47,7 @@ const AlumniManagement = () => {
 
   const handleShowProfile = async (user) => {
     try {
-      const res = await API.get(`/all-users/${user.id}`);
+      const res = await API.get(`/users/${user.id}`);
       setSelectedUser(res.data);
     } catch (err) {
       console.error('Error fetching profile:', err);
