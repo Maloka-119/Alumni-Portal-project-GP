@@ -3,6 +3,8 @@ import UserManagement from './UserManagement';
 import './GradProfile.css';
 import GraduatedProfileView from './GraduatedProfileView';
 import { useTranslation } from "react-i18next";
+import API from '../../services/api';
+
 
 const AlumniManagement = () => {
   const [users, setUsers] = useState([]);
@@ -11,15 +13,12 @@ const AlumniManagement = () => {
   const [error, setError] = useState(null);
   const { t } = useTranslation();
 
-  const API_URL = 'http://localhost:5005/graduates'; // عدل حسب الباك إند
-
-  // جلب البيانات من API عند تحميل الصفحة
   useEffect(() => {
     setLoading(true);
-    fetch(`${API_URL}`)
-      .then(res => res.json())
-      .then(data => {
-        setUsers(data);
+    API.get("/all-users") // endpoint اللي بيرجع كل اليوزرز
+      .then(res => {
+        const graduatedUsers = res.data.filter(u => u.role === 'graduated');
+        setUsers(graduatedUsers);
         setLoading(false);
       })
       .catch(err => {
@@ -29,40 +28,27 @@ const AlumniManagement = () => {
       });
   }, []);
 
-  // تبديل حالة المستخدم عن طريق API
   const toggleUserStatus = async (id) => {
     const user = users.find(u => u.id === id);
     if (!user) return;
-
+  
     const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
-
+  
     try {
-      const res = await fetch(`${API_URL}/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-      if (res.ok) {
-        setUsers(users.map(u =>
-          u.id === id ? { ...u, status: newStatus } : u
-        ));
-      } else {
-        console.error('Failed to update status');
-      }
+      const res = await API.patch(`/all-users/${id}`, { status: newStatus });
+      setUsers(users.map(u =>
+        u.id === id ? { ...u, status: newStatus } : u
+      ));
     } catch (err) {
       console.error('Error updating status:', err);
     }
   };
+  
 
   const handleShowProfile = async (user) => {
     try {
-      const res = await fetch(`${API_URL}/${user.id}`);
-      if (res.ok) {
-        const userData = await res.json();
-        setSelectedUser(userData);
-      } else {
-        console.error('Failed to fetch user profile');
-      }
+      const res = await API.get(`/all-users/${user.id}`);
+      setSelectedUser(res.data);
     } catch (err) {
       console.error('Error fetching profile:', err);
     }
