@@ -167,9 +167,9 @@ const updateProfile = async (req, res) => {
       graduate["graduation-year"] = graduationYear;
     if (linkedlnLink !== undefined) graduate["linkedln-link"] = linkedlnLink;
 
-    //  لو فيه ملف صورة مرفوع
+    // لو فيه ملف صورة مرفوع من Cloudinary
     if (req.file) {
-      graduate["profile-picture-url"] = req.file.location; // location من S3
+      graduate["profile-picture-url"] = req.file.path; // Cloudinary بيرجع path
     }
 
     await user.save();
@@ -188,6 +188,7 @@ const updateProfile = async (req, res) => {
     });
   }
 };
+
 // Activate / Inactivate Graduate
 const updateGraduateStatus = async (req, res) => {
   try {
