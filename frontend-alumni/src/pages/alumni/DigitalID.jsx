@@ -3,20 +3,19 @@ import html2canvas from "html2canvas";
 import { useRef, useState, useEffect } from "react";
 import PROFILE from "./PROFILE.jpeg";
 import { useTranslation } from "react-i18next";
+import API from "../services/api";
 
 function DigitalID({ userId }) {
   const { t } = useTranslation();
   const cardRef = useRef(null);
   const [user, setUser] = useState(null);
-  const API_URL = "http://localhost:5005/graduates";
+  
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch(`${API_URL}/${userId}`);
-        if (!res.ok) throw new Error("Failed to fetch user");
-        const data = await res.json();
-        setUser(data);
+        const res = await API.get(`/graduates/digital-id/${userId}`);
+        setUser(res.data);
       } catch (err) {
         console.error(err);
       }
