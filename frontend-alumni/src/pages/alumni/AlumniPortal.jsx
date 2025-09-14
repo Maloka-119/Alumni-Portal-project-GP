@@ -14,6 +14,8 @@ import HomeAlumni from './HomeAlumni';
 import DigitalID from './DigitalID';
 import GraduatedProfile from './GraduatedProfile';
 import { useTranslation } from "react-i18next";
+import { useNavigate } from 'react-router-dom';
+
 
 const sidebarSections = (darkMode, t) => [
   {
@@ -63,6 +65,7 @@ const Dashboard = () => {
   const [activePage, setActivePage] = useState("Home"); 
   const footerRef = useRef(null);
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
 
   const scrollToFooter = () => {
     footerRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -70,7 +73,10 @@ const Dashboard = () => {
 
   const handleSidebarAction = (action) => {
     if(action === "toggleDark") setDarkMode(!darkMode);
-    if(action === "logout") console.log("Logout action");
+    if(action === "logout") {
+      localStorage.removeItem('user'); 
+      navigate('/login', { replace: true });
+    }
     if(action === "language") {
       const newLang = i18n.language === "en" ? "ar" : "en";
       i18n.changeLanguage(newLang);

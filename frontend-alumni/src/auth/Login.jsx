@@ -6,7 +6,7 @@ import '../components/Footer.css';
 import Unibackground from './Unibackground.jpeg';
 import { useTranslation } from "react-i18next";
 import './Login.css';
-import API from "../../services/api"; // استدعاء الـ API
+import API from "../services/api"; // استدعاء الـ API
 
 function Login() {
   const { t } = useTranslation();
