@@ -2,13 +2,13 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import "./GradProfile.css";
 import PROFILE from "./PROFILE.jpeg";
+import API from "../services/api";
 
 function GraduatedProfile({ userId }) {
   const [user, setUser] = useState(null);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState(null);
   const { t } = useTranslation();
-  const API_URL = "http://localhost:5005/graduates";
 
   useEffect(() => {
     fetchUser();
@@ -16,13 +16,11 @@ function GraduatedProfile({ userId }) {
 
   const fetchUser = async () => {
     try {
-      const res = await fetch(`${API_URL}/${userId}`);
-      if (!res.ok) throw new Error("Failed to fetch user");
-      const data = await res.json();
-      setUser(data);
-      setFormData(data);
+      const res = await API.get(`/graduates/${userId}/profile`);
+      setUser(res.data);
+      setFormData(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to fetch user:", err);
     }
   };
 
@@ -57,18 +55,12 @@ function GraduatedProfile({ userId }) {
       if (formData.profilePictureFile) payload.append("profilePicture", formData.profilePictureFile);
       if (formData.cvFile) payload.append("cv", formData.cvFile);
 
-      const res = await fetch(`${API_URL}/${userId}`, {
-        method: "PUT",
-        body: payload,
-      });
-
-      if (!res.ok) throw new Error("Failed to update user");
-      const updatedUser = await res.json();
-      setUser(updatedUser);
-      setFormData(updatedUser);
+      const res = await API.put(`/graduates/${userId}/profile`, payload);
+      setUser(res.data);
+      setFormData(res.data);
       setEditing(false);
     } catch (err) {
-      console.error(err);
+      console.error("Failed to update user:", err);
     }
   };
 
@@ -158,6 +150,7 @@ function GraduatedProfile({ userId }) {
 }
 
 export default GraduatedProfile;
+
 
 
 
