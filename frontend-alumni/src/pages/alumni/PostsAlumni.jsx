@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Heart, MessageCircle, Share2, Image, FileText, Link as LinkIcon, Trash2, MoreVertical, Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import './AlumniAdminPosts.css';
+import API from "../../services/api";
 
 const API_URL = 'http://localhost:5000/api/posts';
 
@@ -29,22 +30,26 @@ const PostsAlumni = ({ user }) => {
   const handleAddPost = async (e) => {
     e.preventDefault();
     if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) return;
-
+  
     const formData = new FormData();
     formData.append('content', newPost.content);
     if (newPost.image) formData.append('image', newPost.image);
     if (newPost.file) formData.append('file', newPost.file);
     if (newPost.link) formData.append('link', newPost.link);
-
+  
     try {
-      const res = await fetch(API_URL, { method: 'POST', body: formData, credentials: 'include' });
-      const created = await res.json();
-      setPosts([created, ...posts]);
+      const res = await API.post('/posts/create-post', formData, {
+        headers: {
+          'Authorization': `Bearer ${user.token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      setPosts([res.data, ...posts]);
       setNewPost({ content: '', image: null, file: null, link: '' });
       setShowForm(false);
       setShowLinkInput(false);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
