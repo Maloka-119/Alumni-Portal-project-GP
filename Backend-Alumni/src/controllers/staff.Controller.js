@@ -3,6 +3,40 @@ const Staff = require("../models/Staff");
 const User = require("../models/User");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
+// get all staff
+const getAllStaff = async (req, res) => {
+  try {
+    const staff = await Staff.findAll({
+      include: {
+        model: User,
+        attributes: [
+          "id",
+          "first-name",
+          "last-name",
+          "national-id",
+          "email",
+          "phone-number",
+          "birth-date",
+          "user-type",
+        ],
+      },
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "All staff fetched successfully",
+      data: staff,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      status: "error",
+      message: "Error fetching staff",
+      data: [],
+    });
+  }
+};
+
 // suspend/activate staff
 const updateStaffStatus = async (req, res) => {
   try {
@@ -51,4 +85,5 @@ const updateStaffStatus = async (req, res) => {
   }
 };
 
-module.exports = { updateStaffStatus };
+
+module.exports = { getAllStaff, updateStaffStatus };

@@ -6,4 +6,6 @@ const staffController = require("../controllers/staff.Controller");
 // PUT /alumni-portal/staff/:id/status
 router.put("/:id/status", staffController.updateStaffStatus);
 
+router.route("/")
+      .get(staffController.getAllStaff)
 module.exports = router;
