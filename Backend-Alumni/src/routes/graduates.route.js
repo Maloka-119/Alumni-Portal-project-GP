@@ -11,7 +11,8 @@ router
     upload.single("profilePicture"),
     graduateController.updateProfile
   );
-
+router.route("/")
+      .get(graduateController.getAllGraduates)
 router.route("/:id/profile").get(graduateController.getGraduateProfile);
 
 router

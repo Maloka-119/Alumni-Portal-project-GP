@@ -1,8 +1,39 @@
 const Graduate = require("../models/Graduate");
 const User = require("../models/User");
-
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
+const getAllGraduates = async (req, res) => {
+  try {
+    const graduates = await Graduate.findAll({
+      include: {
+        model: User,
+        attributes: [
+          "id",
+          "first-name",
+          "last-name",
+          "national-id",
+          "email",
+          "phone-number",
+          "birth-date",
+          "user-type",
+        ],
+      },
+    });
+
+    return res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "All graduates fetched successfully",
+      data: graduates,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      status:HttpStatusHelper.ERROR,
+      message: "Error fetching graduates",
+      data: [],
+    });
+  }
+};
 //with token
 const getDigitalID = async (req, res) => {
   try {
@@ -233,7 +264,7 @@ const updateGraduateStatus = async (req, res) => {
     });
   }
 };
-
+ 
 // //نسخه بالid
 // const updateProfile = async (req, res) => {
 //   try {
@@ -301,4 +332,5 @@ module.exports = {
   getGraduateProfile,
   updateProfile,
   updateGraduateStatus,
+  getAllGraduates
 };
