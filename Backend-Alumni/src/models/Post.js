@@ -6,8 +6,7 @@ const Group = require('./Group');
 const Post = sequelize.define('Post', {
   post_id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   category: { type: DataTypes.STRING },
-  content: { type: DataTypes.STRING },
-  description: { type: DataTypes.STRING },
+  content: { type: DataTypes.TEXT },
   'created-at': { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
   'author-id': { type: DataTypes.INTEGER, references: { model: User, key: 'id' } },
   'group-id': { type: DataTypes.INTEGER, references: { model: Group, key: 'id' } },
