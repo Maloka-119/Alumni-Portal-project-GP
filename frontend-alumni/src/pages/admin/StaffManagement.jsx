@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import UserManagement from './UserManagement';
 import './AlumniManagement.css';
 import { useTranslation } from "react-i18next";
+import API from '../../services/api';
 
 
 const StaffManagement = () => {
@@ -23,12 +24,12 @@ const StaffManagement = () => {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch('https://api.example.com/alumni');
-        if (!response.ok) throw new Error('Failed to fetch Staff data');
-        const data = await response.json();
-        setUsers(data);
+        const res = await API.get('/all-users'); 
+        const staffUsers = res.data.filter(u => u.role === 'staff'); 
+        setUsers(staffUsers);
       } catch (err) {
-        setError(err.message);
+        console.error('Failed to fetch staff data:', err);
+        setError(t("loadingError"));
       } finally {
         setLoading(false);
       }
@@ -38,18 +39,15 @@ const StaffManagement = () => {
   }, []);
 
   const toggleUserStatus = async (id) => {
+    const user = users.find(u => u.id === id);
+    if (!user) return;
+
+    const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
+
     try {
-      const updatedUser = users.find(u => u.id === id);
-      const newStatus = updatedUser.status === 'Active' ? 'Inactive' : 'Active';
-
-      await fetch(`https://api.example.com/alumni/${id}/status`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus })
-      });
-
-      setUsers(users.map(user =>
-        user.id === id ? { ...user, status: newStatus } : user
+      await API.patch(`/all-users/${id}`, { status: newStatus });
+      setUsers(users.map(u =>
+        u.id === id ? { ...u, status: newStatus } : u
       ));
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -61,29 +59,19 @@ const StaffManagement = () => {
     setShowModal(true);
 
     try {
-      const res = await fetch('https://api.example.com/roles');
-      if (!res.ok) throw new Error('Failed to fetch roles');
-      const data = await res.json();
-      setRoles(data);
+      const res = await API.get('/roles');
+      setRoles(res.data);
     } catch (err) {
-      console.error(err);
+      console.error('Failed to fetch roles:', err);
     }
   };
 
   const handleSaveRole = async () => {
     try {
       if (selectedRole) {
-        await fetch(`https://api.example.com/alumni/${currentUserId}/add-role`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ roleId: selectedRole })
-        });
+        await API.post(`/all-users/${currentUserId}/add-role`, { roleId: selectedRole });
       } else if (newRole) {
-        await fetch(`https://api.example.com/roles`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: newRole })
-        });
+        await API.post('/roles', { name: newRole });
       }
     } catch (err) {
       console.error('Failed to save role:', err);
@@ -95,7 +83,7 @@ const StaffManagement = () => {
     }
   };
 
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = users.filter(user =>
     statusFilter === 'All' ? true : user.status === statusFilter
   );
 
