@@ -3,25 +3,29 @@ import html2canvas from "html2canvas";
 import { useRef, useState, useEffect } from "react";
 import PROFILE from "./PROFILE.jpeg";
 import { useTranslation } from "react-i18next";
-import API from "../services/api";
+import API from "../../services/api";
 
-function DigitalID({ userId }) {
+function DigitalID() {
   const { t } = useTranslation();
   const cardRef = useRef(null);
   const [user, setUser] = useState(null);
-  
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await API.get(`/graduates/digital-id/${userId}`);
+        const token = localStorage.getItem("token"); 
+        const res = await API.get("/graduates/digital-id", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setUser(res.data);
       } catch (err) {
         console.error(err);
       }
     };
     fetchUser();
-  }, [userId]);
+  }, []);
 
   const handleDownload = () => {
     if (!cardRef.current) return;
@@ -99,6 +103,7 @@ function DigitalID({ userId }) {
 }
 
 export default DigitalID;
+
 
 
 

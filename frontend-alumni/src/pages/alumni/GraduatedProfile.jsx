@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import "./GradProfile.css";
 import PROFILE from "./PROFILE.jpeg";
-import API from "../services/api";
+import API from "../../services/api";
 
 function GraduatedProfile({ userId }) {
   const [user, setUser] = useState(null);
@@ -44,6 +44,7 @@ function GraduatedProfile({ userId }) {
 
   const handleSave = async () => {
     try {
+      const token = localStorage.getItem("token");
       const payload = new FormData();
       payload.append("firstName", formData.firstName);
       payload.append("lastName", formData.lastName);
@@ -54,8 +55,11 @@ function GraduatedProfile({ userId }) {
       payload.append("skills", formData.skills.join(","));
       if (formData.profilePictureFile) payload.append("profilePicture", formData.profilePictureFile);
       if (formData.cvFile) payload.append("cv", formData.cvFile);
-
-      const res = await API.put(`/graduates/${userId}/profile`, payload);
+  
+      const res = await API.put("/graduates/profile", payload, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+  
       setUser(res.data);
       setFormData(res.data);
       setEditing(false);
@@ -63,6 +67,7 @@ function GraduatedProfile({ userId }) {
       console.error("Failed to update user:", err);
     }
   };
+  
 
   const handleCancel = () => {
     setFormData(user);
