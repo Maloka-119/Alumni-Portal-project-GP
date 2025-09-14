@@ -1,7 +1,7 @@
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 const Post = require("../models/Post");
 const PostImage = require("../models/PostImage");
-const Comment = require("../models/Comment");
+const Comment = require("../models/Comment");6
 const Like = require("../models/Like");
 const User = require("../models/User");
 
@@ -9,6 +9,7 @@ const createPost = async (req, res) => {
   try {
     const userId = req.user.id;
     const { category, content, description, groupId, inLanding } = req.body;
+
     const graduate = await Graduate.findOne({ where: { graduate_id: userId } });
 
     if (graduate) {
@@ -19,6 +20,8 @@ const createPost = async (req, res) => {
         });
       }
     }
+
+
     const post = await Post.create({
       category,
       content,
@@ -28,24 +31,27 @@ const createPost = async (req, res) => {
       "in-landing": inLanding || false,
     });
 
-    // لو فيه صور
+    // لو فيه صور مرفوعة مع البوست
     if (req.files && req.files.length > 0) {
       const postImages = req.files.map((file) => ({
         "post-id": post.post_id,
-        "image-url": file.location, // URL اللي جاي من S3
+        "image-url": file.path, // Cloudinary بيرجع path
       }));
       await PostImage.bulkCreate(postImages);
     }
 
-    return res
-      .status(201)
-      .json({ status: HttpStatusHelper.SUCCESS, data: post });
+    return res.status(201).json({
+      status: HttpStatusHelper.SUCCESS,
+      data: post,
+    });
   } catch (err) {
-    return res
-      .status(500)
-      .json({ status: HttpStatusHelper.ERROR, message: err.message });
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: err.message,
+    });
   }
 };
+
 
 
 const getAllPosts = async (req, res) => {

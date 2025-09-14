@@ -1,28 +1,32 @@
 const express = require("express");
 const router = express.Router();
-// const authMiddleware = require("../middlewares/authMiddleware");
+const authMiddleware = require("../middleware/authMiddleware");
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+const multer = require("multer");
+const cloudinary = require("../config/cloudinary"); // ملف إعدادات Cloudinary
 const postController = require("../controllers/post.controller");
 
-// const multer = require('multer');
-// const multerS3 = require('multer-s3');
-// const s3 = require('../config/s3'); // ملف إعدادات AWS S3
-// const upload = multer({
-//   storage: multerS3({
-//     s3: s3,
-//     bucket: process.env.AWS_BUCKET_NAME,
-//     acl: 'public-read',
-//     key: (req, file, cb) => {
-//       cb(null, Date.now().toString() + '-' + file.originalname);
-//     }
-//   })
-// });
+// إعداد التخزين على Cloudinary
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "posts", // كل الصور هتتحط في فولدر اسمه posts
+    allowed_formats: ["jpg", "png", "jpeg"],
+  },
+});
 
-// router.post(
-//   "/",
-//   authMiddleware,
-//   upload.array("images", 5), // images هو اسم الحقل اللي هتبعته من الـ frontend
-//   postController.createPost
-// );
+const upload = multer({ storage: storage });
+
+// رفع صور البوست (لحد 5 صور)
+router.post(
+  "/create-post",
+  authMiddleware,
+  upload.array("images", 5), // images = اسم الحقل من الـ frontend
+  postController.createPost
+);
+
+
+
 router.get("/", postController.getAllPosts);
 
 module.exports = router;
