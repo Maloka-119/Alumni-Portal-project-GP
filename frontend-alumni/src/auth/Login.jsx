@@ -6,7 +6,7 @@ import '../components/Footer.css';
 import Unibackground from './Unibackground.jpeg';
 import { useTranslation } from "react-i18next";
 import './Login.css';
-import API from "../services/api"; // استدعاء الـ API
+import API from "../services/api"; 
 
 function Login() {
   const { t } = useTranslation();
@@ -19,7 +19,7 @@ function Login() {
   const [showNewPass, setShowNewPass] = useState(false);
   const [newPass, setNewPass] = useState("");
 
-  // الفانكشن الجديدة لتسجيل الدخول
+  
   const handleLogin = async () => {
     try {
       const res = await API.post("/auth/login", { email, password });

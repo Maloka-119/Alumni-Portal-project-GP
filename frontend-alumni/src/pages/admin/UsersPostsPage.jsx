@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './AdminPostsPage.css';
 import { Heart, MessageCircle, Share2, EyeOff } from 'lucide-react';
 import { useTranslation } from "react-i18next";
+import API from '../../services/api';
+import PROFILE from './PROFILE.jpeg'
 
 const UsersPostsPage = () => {
   const { t } = useTranslation();
@@ -9,6 +11,9 @@ const UsersPostsPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedPost, setSelectedPost] = useState(null); 
+const [newComment, setNewComment] = useState(''); 
+
 
   useEffect(() => {
     fetchPosts();
@@ -18,10 +23,8 @@ const UsersPostsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/users-posts'); // استبدلي بالرابط الصح للباك
-      if (!res.ok) throw new Error('Network response was not ok');
-      const data = await res.json();
-      setPosts(data);
+      const res = await API.get('/posts'); // الرابط النسبي بعد baseURL
+      setPosts(res.data);
     } catch (err) {
       console.error('Error fetching posts', err);
       setError(t("fetchPostsFailed"));
@@ -32,14 +35,48 @@ const UsersPostsPage = () => {
 
   const handleHide = async (id) => {
     try {
-      const res = await fetch(`/api/users-posts/${id}/hide`, { method: 'PUT' });
-      if (!res.ok) throw new Error('Failed to hide post');
+      await API.put(`/posts/${id}/hide`);
       setPosts(posts.map(p => p.id === id ? { ...p, state: 'hidden' } : p));
     } catch (err) {
       console.error('Error hiding post', err);
       setError(t("hidePostFailed"));
     }
   };
+
+  const openComments = (post) => {
+    setSelectedPost(post);
+  };
+  
+  const closeComments = () => {
+    setSelectedPost(null);
+  };
+
+  const handleAddComment = async () => {
+  if (!newComment) return;
+
+  try {
+    await API.post(`/posts/${selectedPost.id}/comment`, { content: newComment });
+
+    // تحديث التعليقات محلياً بعد الإرسال
+    setSelectedPost({
+      ...selectedPost,
+      comments: [
+        ...selectedPost.comments,
+        { id: Date.now(), user: { name: 'You', photo: selectedPost.profileImageUrl }, content: newComment }
+      ]
+    });
+
+    // تحديث الحالة العامة للبوستات لو محتاج
+    setPosts(posts.map(p => p.id === selectedPost.id ? {
+      ...p,
+      comments: [...p.comments, { id: Date.now(), user: { name: 'You', photo: selectedPost.profileImageUrl }, content: newComment }]
+    } : p));
+
+    setNewComment('');
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   return (
     <div className="feed-container">
@@ -76,9 +113,34 @@ const UsersPostsPage = () => {
 
                 <div className="post-actions">
                   <button><Heart size={16} /> {post.likes}</button>
-                  <button><MessageCircle size={16} /> {post.comments.length}</button>
+                  <button onClick={() => openComments(post)}>
+  <MessageCircle size={16} /> {post.comments.length}
+</button>
                   <button><Share2 size={16} /> {post.shares}</button>
                 </div>
+
+                {selectedPost && (
+  <div className="comments-modal">
+    <div className="comments-container">
+      <div className="comments-header">
+        <span>{t('comments')}</span>
+        <button className="comments-close-btn" onClick={closeComments}>X</button>
+      </div>
+      <div className="comments-list">
+        {selectedPost.comments.map(c => (
+          <div key={c.id} className="comment-item">
+            <img src={c.user?.photo || PROFILE } alt="avatar" className="comment-avatar" />
+            <div className="comment-text">
+              <strong>{c.user?.name || t('unknown')}</strong>
+              <p>{c.content}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+)}
+
               </div>
             )
           ))}
