@@ -5,7 +5,7 @@ import Header from '../components/Header';
 import Footer from '../components/Footer';
 import LinkedInSignUp from './LinkedInSignUp';
 import { useTranslation } from "react-i18next";
-import API from "../../services/api"; 
+import API from "../services/api"; 
 
 const Register = () => {
   const { t } = useTranslation();
