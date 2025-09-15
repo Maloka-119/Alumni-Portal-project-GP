@@ -76,7 +76,7 @@ const Dashboard = () => {
     if(action === "logout") {
       localStorage.removeItem('user'); 
   localStorage.removeItem('token'); 
-  navigate('/login', { replace: true });
+  navigate('/Helwan-portal/login', { replace: true });
     }
     if(action === "language") {
       const newLang = i18n.language === "en" ? "ar" : "en";

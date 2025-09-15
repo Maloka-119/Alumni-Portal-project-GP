@@ -37,11 +37,11 @@ function Login() {
   
       
       if(user.role === "admin") {
-        navigate("/admindashboard", { replace: true });
+        navigate("/Helwan-portal/admindashboard", { replace: true });
       } else if(user.role === "graduated") {
-        navigate("/alumnidashboard", { replace: true });
+        navigate("/Helwan-portal/alumnidashboard", { replace: true });
       } else {
-        navigate("/login", { replace: true }); 
+        navigate("/Helwan-portal/login", { replace: true }); 
       }
   
     } catch (err) {
