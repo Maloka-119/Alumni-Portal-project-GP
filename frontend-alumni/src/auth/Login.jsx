@@ -6,9 +6,7 @@ import '../components/Footer.css';
 import Unibackground from './Unibackground.jpeg';
 import { useTranslation } from "react-i18next";
 import './Login.css';
-import API from "../services/api"; 
-import { useNavigate } from 'react-router-dom';
-
+import API from "../services/api"; // استدعاء الـ API
 
 function Login() {
   const { t } = useTranslation();
@@ -20,36 +18,20 @@ function Login() {
   const [code, setCode] = useState("");
   const [showNewPass, setShowNewPass] = useState(false);
   const [newPass, setNewPass] = useState("");
-  const navigate = useNavigate();
 
-
-  
+  // الفانكشن الجديدة لتسجيل الدخول
   const handleLogin = async () => {
     try {
       const res = await API.post("/auth/login", { email, password });
       const token = res.data.token;
-      const user = res.data.user; // نفترض الرد يحتوي على بيانات المستخدم بما فيها role
-  
       localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-  
       alert(t("loginSuccess"));
-  
-      
-      if(user.role === "admin") {
-        navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
-      } else if(user.role === "graduated") {
-        navigate("/helwan-alumni-portal/alumni/dashboard", { replace: true });
-      } else {
-        navigate("/helwan-alumni-portal/login", { replace: true }); 
-      }
-  
+      // بعد كده ممكن تعمل Redirect للصفحة الرئيسية أو Profile
     } catch (err) {
       console.error("Login failed:", err);
       alert(t("loginFailed") + ": " + (err.response?.data?.message || err.message));
     }
   };
-  
 
   const handleResetPassword = (e) => {
     e.preventDefault();
