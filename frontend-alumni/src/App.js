@@ -6,7 +6,7 @@ import Register from './auth/Register';
 import AdminPanel from './pages/admin/AdminPanel';
 import Login from './auth/Login';
 import AlumniPortal from './pages/alumni/AlumniPortal';
-import ProtectedRoute from './ProtectedRoute';
+import ProtectedRoute from './routes/ProtectedRoute';
 
   function App() {  
     // const user = JSON.parse(localStorage.getItem('user'));
@@ -17,10 +17,10 @@ import ProtectedRoute from './ProtectedRoute';
 <Router>
         <DarkModeProvider>
           <Routes>
-            <Route path="/register" element={<Register />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/admindashboard" element={<AdminPanel />} />
-            <Route path="/alumnidashboard" element={<AlumniPortal />} />
+            <Route path="/Helwan-portal/register" element={<Register />} />
+            <Route path="/Helwan-portal/login" element={<Login />} />
+            <Route path="/Helwan-portal/admindashboard" element={<AdminPanel />} />
+            <Route path="/Helwan-portal/alumnidashboard" element={<AlumniPortal />} />
           </Routes>
         </DarkModeProvider>
       </Router>
