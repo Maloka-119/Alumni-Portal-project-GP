@@ -75,8 +75,7 @@ const Dashboard = () => {
     if(action === "toggleDark") setDarkMode(!darkMode);
     if(action === "logout") {
       localStorage.removeItem('user'); 
-  localStorage.removeItem('token'); 
-  navigate('/helwan-alumni-portal/login', { replace: true });
+      navigate('/login', { replace: true });
     }
     if(action === "language") {
       const newLang = i18n.language === "en" ? "ar" : "en";

@@ -44,7 +44,7 @@ const Register = () => {
     }
 
     try {
-      const response = await API.post("/auth/register", formData); 
+      const response = await API.post("/auth/register", formData); // استخدمنا الـ API بدل الرابط الثابت
 
       if (response.status === 201 || response.status === 200) {
         const data = response.data;

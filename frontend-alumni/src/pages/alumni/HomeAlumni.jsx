@@ -3,7 +3,8 @@ import { Heart, MessageCircle, Share2 } from 'lucide-react';
 import './AlumniAdminPosts.css';
 import { DarkModeContext } from './DarkModeContext';
 import { useTranslation } from 'react-i18next';
-import API from '../../services/api';
+
+const API_URL = 'http://localhost:5000/api';
 
 const HomeAlumni = () => {
   const { darkMode } = useContext(DarkModeContext);
@@ -20,9 +21,11 @@ const HomeAlumni = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await API.get(`/posts?page=${page}&limit=5`);
-      if (res.data.length === 0) setHasMore(false);
-      else setPosts(prev => [...prev, ...res.data]);
+      const res = await fetch(`${API_URL}/posts?page=${page}&limit=5`);
+      if (!res.ok) throw new Error('Failed to fetch posts');
+      const data = await res.json();
+      if (data.length === 0) setHasMore(false);
+      else setPosts(prev => [...prev, ...data]);
     } catch (err) {
       console.error(err);
       setError(t('errorFetchingPosts'));
@@ -30,11 +33,12 @@ const HomeAlumni = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => { fetchPosts(); }, [page]);
 
   const handleLike = async (postId) => {
     try {
-      await API.post(`/posts/${postId}/like`);
+      await fetch(`${API_URL}/posts/${postId}/like`, { method: 'POST' });
       setPosts(posts.map(p =>
         p.id === postId && !p.liked ? { ...p, likes: p.likes + 1, liked: true } : p
       ));
@@ -56,12 +60,17 @@ const HomeAlumni = () => {
   const handleCommentSubmit = async (postId) => {
     const comment = commentInputs[postId];
     if (!comment) return;
-  
+
     try {
-      await API.post(`/posts/${postId}/comment`, { content: comment });
+      await fetch(`${API_URL}/posts/${postId}/comment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: comment })
+      });
+
       setPosts(posts.map(p =>
         p.id === postId
-          ? { ...p, comments: [...p.comments, { userName: 'You', content: comment,  avatar: p.avatar }] }
+          ? { ...p, comments: [...p.comments, { userName: 'You', content: comment, avatar: 'https://i.pravatar.cc/40?img=10' }] }
           : p
       ));
       setCommentInputs({ ...commentInputs, [postId]: '' });

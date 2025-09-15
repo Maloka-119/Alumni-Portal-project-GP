@@ -6,53 +6,21 @@ import Register from './auth/Register';
 import AdminPanel from './pages/admin/AdminPanel';
 import Login from './auth/Login';
 import AlumniPortal from './pages/alumni/AlumniPortal';
-import ProtectedRoute from './routes/ProtectedRoute';
 
   function App() {  
-    // const user = JSON.parse(localStorage.getItem('user'));
 
     return (
       <div className="App">
-
-<Router>
+        <Router>
         <DarkModeProvider>
           <Routes>
-            <Route path="/helwan-alumni-portal/register" element={<Register />} />
-            <Route path="/helwan-alumni-portal/login" element={<Login />} />
-            <Route path="/helwan-alumni-portal/admin/dashboard" element={<AdminPanel />} />
-            <Route path="/helwan-alumni-portal/alumni/dashboard" element={<AlumniPortal />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/admindashboard" element={<AdminPanel />} />
+            <Route path="/alumnidashboard" element={<AlumniPortal />} />
           </Routes>
         </DarkModeProvider>
       </Router>
-
-      {/* <Router>
-  <DarkModeProvider>
-    <Routes>
-      <Route path="/Helwan-portal/register" element={<Register />} />
-      <Route path="/Helwan-portal/login" element={<Login />} />
-
-      <Route 
-        path="/Helwan-portal/Admin-dashboard" 
-        element={
-          <ProtectedRoute user={user} requiredRole="admin">
-            <AdminPanel />
-          </ProtectedRoute>
-        } 
-      />
-
-      <Route 
-        path="/Helwan-portal/Alumni-dashboard" 
-        element={
-          <ProtectedRoute user={user} requiredRole="graduated">
-            <AlumniPortal />
-          </ProtectedRoute>
-        } 
-      />
-    </Routes>
-  </DarkModeProvider>
-</Router> */}
-
-
       </div>
       );
   }
