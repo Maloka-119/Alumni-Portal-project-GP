@@ -19,8 +19,8 @@ import ProtectedRoute from './routes/ProtectedRoute';
           <Routes>
             <Route path="/Helwan-portal/register" element={<Register />} />
             <Route path="/Helwan-portal/login" element={<Login />} />
-            <Route path="/Helwan-portal/admindashboard" element={<AdminPanel />} />
-            <Route path="/Helwan-portal/alumnidashboard" element={<AlumniPortal />} />
+            <Route path="/Helwan-portal/Admin-dashboard" element={<AdminPanel />} />
+            <Route path="/Helwan-portal/Alumni-dashboard" element={<AlumniPortal />} />
           </Routes>
         </DarkModeProvider>
       </Router>
