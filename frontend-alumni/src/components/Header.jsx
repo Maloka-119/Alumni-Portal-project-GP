@@ -33,7 +33,7 @@ const Header = () => {
         </button>
         <button
           className="login-btn"
-          onClick={() => navigate("/Helwan-portal/login")}
+          onClick={() => navigate("/helwan-alumni-portal/login")}
         >
           <LogIn size={20} />
         </button>

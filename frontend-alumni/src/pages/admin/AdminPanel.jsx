@@ -89,7 +89,7 @@ const AdminPanel = () => {
             <Globe size={16} style={{ marginRight: '4px' }} />
             {i18n.language === "en" ? "EN" : "AR"}
           </button>
-          <button className="logout-btn" onClick={() => navigate("/Helwan-portal/login")}>
+          <button className="logout-btn" onClick={() => navigate("/helwan-alumni-portal/login")}>
             <LogOut size={16} />
           </button>
         </div>

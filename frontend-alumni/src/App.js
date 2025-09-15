@@ -17,10 +17,10 @@ import ProtectedRoute from './routes/ProtectedRoute';
 <Router>
         <DarkModeProvider>
           <Routes>
-            <Route path="/Helwan-portal/register" element={<Register />} />
-            <Route path="/Helwan-portal/login" element={<Login />} />
-            <Route path="/Helwan-portal/Admin-dashboard" element={<AdminPanel />} />
-            <Route path="/Helwan-portal/Alumni-dashboard" element={<AlumniPortal />} />
+            <Route path="/helwan-alumni-portal/register" element={<Register />} />
+            <Route path="/helwan-alumni-portal/login" element={<Login />} />
+            <Route path="/helwan-alumni-portal/admin/dashboard" element={<AdminPanel />} />
+            <Route path="/helwan-alumni-portal/alumni/dashboard" element={<AlumniPortal />} />
           </Routes>
         </DarkModeProvider>
       </Router>
@@ -28,11 +28,11 @@ import ProtectedRoute from './routes/ProtectedRoute';
       {/* <Router>
   <DarkModeProvider>
     <Routes>
-      <Route path="/register" element={<Register />} />
-      <Route path="/login" element={<Login />} />
+      <Route path="/Helwan-portal/register" element={<Register />} />
+      <Route path="/Helwan-portal/login" element={<Login />} />
 
       <Route 
-        path="/admindashboard" 
+        path="/Helwan-portal/Admin-dashboard" 
         element={
           <ProtectedRoute user={user} requiredRole="admin">
             <AdminPanel />
@@ -41,7 +41,7 @@ import ProtectedRoute from './routes/ProtectedRoute';
       />
 
       <Route 
-        path="/alumnidashboard" 
+        path="/Helwan-portal/Alumni-dashboard" 
         element={
           <ProtectedRoute user={user} requiredRole="graduated">
             <AlumniPortal />
