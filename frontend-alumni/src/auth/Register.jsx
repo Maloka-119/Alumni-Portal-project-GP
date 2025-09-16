@@ -44,7 +44,7 @@ const Register = () => {
     }
 
     try {
-      const response = await API.post("/auth/register", formData); 
+      const response = await API.post("/register", formData); 
 
       if (response.status === 201 || response.status === 200) {
         const data = response.data;
