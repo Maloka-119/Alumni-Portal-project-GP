@@ -23,6 +23,8 @@ npm install sequelize pg pg-hstore
 
 npm install bcrypt jsonwebtoken joi
 
+npm install nodemailer
+
 Install packes to handle upload images
 
 npm install aws-sdk multer multer-s3
