@@ -1,46 +1,73 @@
-# Node.js + PostgreSQL Starter Project
+# 🎓 Alumni Portal Backend (Node.js + PostgreSQL)
 
 ## 🚀 Project Setup
 
-1. Create a new project folder and initialize Node.js:
-   ```bash
-   mkdir my-node-project
-   cd my-node-project
-   npm init -y
+### 1️⃣ Create a new Node.js project
 
-📦 Install core dependencies
+```bash
+mkdir Backend-Alumni
+cd Backend-Alumni
+npm init -y
+```
 
+---
+
+### 2️⃣ Install Core Dependencies
+
+```bash
 npm install express cors dotenv helmet morgan
 npm install --save-dev nodemon
+```
 
+---
 
-🗄️ Install PostgreSQL dependencies
+### 3️⃣ Install PostgreSQL + ORM (Sequelize)
 
-using Sequelize (ORM):
+```bash
 npm install sequelize pg pg-hstore
+```
 
-🔑 Install authentication and validation packages
+---
 
+### 4️⃣ Install Authentication & Validation Packages
+
+```bash
 npm install bcrypt jsonwebtoken joi
+```
 
+---
+
+### 5️⃣ Install Email & File Upload Packages
+
+```bash
 npm install nodemailer
-
-Install packes to handle upload images
-
 npm install aws-sdk multer multer-s3
+```
 
+---
 
-⚙️ Update package.json
+### 6️⃣ Install Async Error Handling
 
-Add the following scripts:
+```bash
+npm install express-async-handler
+```
 
+---
+
+### 7️⃣ Update `package.json` Scripts
+
+```json
 "scripts": {
   "start": "node src/server.js",
   "dev": "nodemon src/server.js"
 }
+```
 
+---
 
-# Project Structure
+## 📂 Project Structure
+
+```
 Backend-Alumni/
 │-- node_modules/
 │-- src/
@@ -48,41 +75,54 @@ Backend-Alumni/
 │   │-- config/db.js       # Database connection
 │   │-- routes/            # API routes
 │   │-- controllers/       # Business logic
-│   │-- migrations/         #set tables in db
-│   │-- models/            # Database models
-│   │-- middleware/        # Authentication / validation
-│   ├── utils/         # Helper functions
-│      ├── generateToken.js
-│      ├── hashPassword.js
-       ├── HttpStatusHepler.js
-│      └── logger.js
+│   │-- migrations/        # DB migrations
+│   │-- models/            # Sequelize models
+│   │-- middleware/        # Authentication & validation
+│   └── utils/             # Helper functions
+│       ├── generateToken.js
+│       ├── hashPassword.js
+│       ├── HttpStatusHelper.js
+│       └── logger.js
 │-- .env                   # Environment variables
 │-- package.json
 │-- README.md
+```
 
+---
 
-▶️ Run the server
+## ▶️ Run the Server
 
+Development mode (with auto-reload):
+
+```bash
 npm run dev
+```
 
-🛠️ Included Packages
+Production mode:
 
-express → Web framework for APIs
+```bash
+npm start
+```
 
-cors → Enable cross-origin requests
+---
 
-dotenv → Environment variables
+## 🛠️ Included Packages
 
-helmet → Security headers
+* **express** → Web framework for APIs
+* **cors** → Enable cross-origin requests
+* **dotenv** → Manage environment variables
+* **helmet** → Secure HTTP headers
+* **morgan** → HTTP request logging
+* **nodemon** → Auto-restart server in dev mode
+* **sequelize** → PostgreSQL ORM
+* **pg / pg-hstore** → PostgreSQL drivers
+* **bcrypt** → Password hashing
+* **jsonwebtoken** → JWT authentication
+* **joi** → Input validation
+* **nodemailer** → Sending emails
+* **aws-sdk, multer, multer-s3** → File/image uploads
+* **express-async-handler** → Async error handling
 
-morgan → HTTP request logger
+---
 
-nodemon → Auto-restart server in dev mode
-
-sequelize → PostgreSQL integration
-
-bcrypt → Password hashing
-
-jsonwebtoken → Authentication with JWT
-
-joi → Input validation
+تحبي أجهزلك كمان ملف `.env.example` عشان يبقى عندك القيم الأساسية اللي هتحتاجيها للبيئة؟
