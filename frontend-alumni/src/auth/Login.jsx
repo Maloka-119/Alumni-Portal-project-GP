@@ -26,9 +26,9 @@ function Login() {
   
   const handleLogin = async () => {
     try {
-      const res = await API.post("/auth/login", { email, password });
+      const res = await API.post("/login", { email, password });
       const token = res.data.token;
-      const user = res.data.user; // نفترض الرد يحتوي على بيانات المستخدم بما فيها role
+      const user = res.data.user; 
   
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
@@ -51,15 +51,49 @@ function Login() {
   };
   
 
-  const handleResetPassword = (e) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
-    setShowCode(true);
+    try {
+      const res = await API.post("/forgot-password", { email });
+      alert(t("resetCodeSent"));
+      setShowReset(false);
+      setShowCode(true);
+    } catch (err) {
+      console.error("Forgot password failed:", err);
+      alert(err.response?.data?.message || err.message);
+    }
   };
 
-  const handleCodeSubmit = (e) => {
+  const handleCodeSubmit = async (e) => {
     e.preventDefault();
-    setShowNewPass(true);
+    try {
+      // هنا غالبا السيرفر مش محتاج API منفصل للتحقق من الكود
+      // لكن هنمشى على إن reset بيأخذ code و password
+      setShowCode(false);
+      setShowNewPass(true);
+    } catch (err) {
+      console.error("Code verification failed:", err);
+      alert(err.response?.data?.message || err.message);
+    }
   };
+
+  const handleNewPassword = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await API.post("/reset-password", {
+        email,
+        code,
+        newPassword: newPass,
+      });
+      alert(t("passwordResetSuccess"));
+      setShowNewPass(false);
+    } catch (err) {
+      console.error("Reset password failed:", err);
+      alert(err.response?.data?.message || err.message);
+    }
+  };
+  
+  
 
   return (
     <div className="login-container" style={{ backgroundImage: `url(${Unibackground})` }}>
@@ -177,25 +211,28 @@ function Login() {
         {showNewPass && (
           <div className="modal-overlay">
             <div className="reset-modal">
-              <form>
-                <h3 className="reset-title">{t("setNewPassword")}</h3>
-                
-                <div className="form-group">
-                  <label className="form-label">{t("newPassword")}</label>
-                  <input
-                    className="form-input"
-                    required
-                    placeholder={t("enterNewPassword")}
-                    type="password"
-                    value={newPass}
-                    onChange={(e) => setNewPass(e.target.value)}
-                  />
-                </div>
-                
-                <div className="modal-buttons">
-                  <button className="modal-button primary">{t("resetPassword")}</button>
-                </div>
-              </form>
+            <form onSubmit={handleNewPassword}>
+  <h3 className="reset-title">{t("setNewPassword")}</h3>
+  
+  <div className="form-group">
+    <label className="form-label">{t("newPassword")}</label>
+    <input
+      className="form-input"
+      required
+      placeholder={t("enterNewPassword")}
+      type="password"
+      value={newPass}
+      onChange={(e) => setNewPass(e.target.value)}
+    />
+  </div>
+  
+  <div className="modal-buttons">
+    <button type="submit" className="modal-button primary">
+      {t("resetPassword")}
+    </button>
+  </div>
+</form>
+
             </div>
           </div>
         )}
