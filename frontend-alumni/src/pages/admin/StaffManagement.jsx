@@ -20,23 +20,23 @@ const StaffManagement = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchStaff = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await API.get('/users'); 
-        const staffUsers = res.data.filter(u => u.role === 'staff'); 
-        setUsers(staffUsers);
+        const res = await API.get("/staff"); 
+        setUsers(res.data);
       } catch (err) {
-        console.error('Failed to fetch staff data:', err);
+        console.error("Failed to fetch staff data:", err);
         setError(t("loadingError"));
       } finally {
         setLoading(false);
       }
     };
-
-    fetchUsers();
+  
+    fetchStaff();
   }, []);
+  
 
   const toggleUserStatus = async (id) => {
     const user = users.find(u => u.id === id);

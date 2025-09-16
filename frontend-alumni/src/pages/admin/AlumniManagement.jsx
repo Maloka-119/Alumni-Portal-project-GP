@@ -15,18 +15,18 @@ const AlumniManagement = () => {
 
   useEffect(() => {
     setLoading(true);
-    API.get("/users") 
+    API.get("/graduated") 
       .then(res => {
-        const graduatedUsers = res.data.filter(u => u.role === 'graduated');
-        setUsers(graduatedUsers);
+        setUsers(res.data);
         setLoading(false);
       })
       .catch(err => {
-        console.error('Error fetching users:', err);
+        console.error("Error fetching graduated users:", err);
         setError(t("loadingError"));
         setLoading(false);
       });
   }, []);
+  
 
   const toggleUserStatus = async (id) => {
     const user = users.find(u => u.id === id);
