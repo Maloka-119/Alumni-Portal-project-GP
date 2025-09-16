@@ -7,13 +7,7 @@ const generateToken = require("../utils/generateToken");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
-const asyncHandler = require("express-async-handler");
-const axios = require("axios");
-const bcrypt = require("bcryptjs");
-const User = require("../models/User");
-const Graduate = require("../models/Graduate");
-const Staff = require("../models/Staff");
-const generateToken = require("../utils/generateToken");
+
 // @desc    Register user automatically as graduate or staff
 // @route   POST /alumni-portal/register
 // @access  Public
@@ -23,37 +17,41 @@ const registerUser = asyncHandler(async (req, res) => {
   let externalData;
   let userType;
 
-  // 1️⃣ تحقق من Graduate API باستخدام الرقم القومي فقط
+  // تحقق من Graduate API باستخدام الرقم القومي فقط
   try {
     const gradResponse = await axios.get(
       `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
     );
+     console.log("Graduate API response:", gradResponse.data);
     externalData = gradResponse.data;
-
-    if (externalData && externalData.faculty) { // بدل college
+ console.log("Graduate API response:", externalData);
+    if (externalData && externalData.faculty) { 
       userType = "graduate";
     }
+    console.log(gradResponse);
   } catch (err) {
-    // إذا لم نجد في Graduate API، نكمل للتحقق في Staff API
+    console.log("Graduate API error:", err.message);
   }
 
-  // 2️⃣ إذا لم يكن خريج، تحقق من Staff API
+  // إذا لم يكن خريج، تحقق من Staff API
   if (!userType) {
     try {
       const staffResponse = await axios.get(
         `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
       );
+      console.log("Staff API response:", staffResponse.data);
       externalData = staffResponse.data;
+console.log("Staff API response:", externalData);
 
       if (externalData && externalData.department) {
         userType = "staff";
       }
     } catch (err) {
-      // إذا لم نجد، نترك userType undefined
+        console.log("Staff API error:", err.message);
     }
   }
 
-  // 3️⃣ إذا لم نجد userType، ارفض التسجيل
+  // إذا لم نجد userType، ارفض التسجيل
   if (!userType) {
     res.status(400);
     throw new Error(
@@ -61,18 +59,18 @@ const registerUser = asyncHandler(async (req, res) => {
     );
   }
 
-  // 4️⃣ تحقق إذا البريد موجود مسبقًا
+  // تحقق إذا البريد موجود مسبقًا
   const userExists = await User.findOne({ where: { email } });
   if (userExists) {
     res.status(400);
     throw new Error("User already exists");
   }
 
-  // 5️⃣ تشفير الباسورد
+  // تشفير الباسورد
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // 6️⃣ حفظ البيانات في جدول User
+  // حفظ البيانات في جدول User
   const user = await User.create({
     "first-name": firstName,
     "last-name": lastName,
@@ -84,7 +82,7 @@ const registerUser = asyncHandler(async (req, res) => {
     "national-id": nationalId,
   });
 
-  // 7️⃣ حفظ بيانات إضافية في Graduate أو Staff
+  // حفظ بيانات إضافية في Graduate أو Staff
   if (userType === "graduate") {
     await Graduate.create({
       graduate_id: user.id,
@@ -98,7 +96,7 @@ const registerUser = asyncHandler(async (req, res) => {
     });
   }
 
-  // 8️⃣ رجع الرد للـ frontend
+  // رجع الرد للـ frontend
   res.status(201).json({
     id: user.id,
     email: user.email,
@@ -106,93 +104,6 @@ const registerUser = asyncHandler(async (req, res) => {
     token: generateToken(user.id),
   });
 });
-
-
-
-// const registerUser = asyncHandler(async (req, res) => {
-//   const { firstName, lastName, email, password, nationalId, phoneNumber, birthDate } = req.body;
-
-//   let externalData;
-//   let userType;
-
-//   // Check Graduate API
-//   try {
-//     const gradResponse = await axios.get(`${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`);
-//     externalData = gradResponse.data;
-//     if (externalData && externalData.college) {
-//       userType = "graduate";
-//     }
-//   } catch (err) {
-//     // ignore, maybe not a graduate
-//   }
-
-//   // If not graduate, check Staff API
-//   if (!userType) {
-//     try {
-//       const staffResponse = await axios.get(`${process.env.STAFF_API_URL}?nationalId=${nationalId}`);
-//       externalData = staffResponse.data;
-//       if (externalData && externalData.department) {
-//         userType = "staff";
-//       }
-//     } catch (err) {
-//       // ignore, maybe not staff
-//     }
-//   }
-
-//   // If still no userType, reject registration
-//   if (!userType) {
-//     res.status(400);
-//     throw new Error("Registration failed: National ID not recognized in Helwan University records.");
-//   }
-
-//   // Check if user already exists
-//   const userExists = await User.findOne({ where: { email } });
-//   if (userExists) {
-//     res.status(400);
-//     throw new Error("User already exists");
-//   }
-
-//   // Hash password
-//   const salt = await bcrypt.genSalt(10);
-//   const hashedPassword = await bcrypt.hash(password, salt);
-
-//   // Save in User table
-//   const user = await User.create({
-//     "first-name": firstName,
-//     "last-name": lastName,
-//     email,
-//     "phone-number": phoneNumber,
-//     "hashed-password": hashedPassword,
-//     "birth-date": birthDate,
-//     "user-type": userType,
-//     "national-id": nationalId,
-//   });
-
-//   // Save in Graduate OR Staff table
-//   if (userType === "graduate") {
-//     await Graduate.create({
-//       graduate_id: user.id,
-//       faculty: externalData.college,
-//       "graduation-year": externalData.graduationYear,
-//     });
-//   } else if (userType === "staff") {
-//     await Staff.create({
-//       staff_id: user.id,
-//       "status-to-login": "inactive", // always inactive until admin approval
-//     });
-//   }
-
-//   res.status(201).json({
-//     id: user.id,
-//     email: user.email,
-//     userType: userType,
-//     token: generateToken(user.id),
-//   });
-// });
-
-
-
-
 
 
 // @desc    Login user
