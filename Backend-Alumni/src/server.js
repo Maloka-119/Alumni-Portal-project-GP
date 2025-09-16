@@ -3,6 +3,7 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 require("dotenv").config();
+const { errorHandler } = require("./middleware/errorMiddleware");
 
 const sequelize = require("./config/db");
 
@@ -31,6 +32,10 @@ app.use("/alumni-portal/posts", postRoutes);
 
 const staffRoutes = require("./routes/staff.route");
 app.use("/alumni-portal/staff", staffRoutes);
+
+const authRoutes = require("./routes/auth.route");
+app.use("/alumni-portal", authRoutes);
+app.use(errorHandler);
 // sync db
 sequelize
   .sync()

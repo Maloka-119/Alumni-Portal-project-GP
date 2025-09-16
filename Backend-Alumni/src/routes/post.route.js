@@ -20,7 +20,7 @@ const upload = multer({ storage: storage });
 // رفع صور البوست (لحد 5 صور)
 router.post(
   "/create-post",
-  authMiddleware,
+  authMiddleware.protect,
   upload.array("images", 5), // images = اسم الحقل من الـ frontend
   postController.createPost
 );

@@ -1,24 +1,28 @@
 const express = require("express");
 const router = express.Router();
 const graduateController = require("../controllers/graduates.controller");
-const authMiddleware = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadProfile");
 
+// Update graduate profile (protected)
 router
   .route("/profile")
   .put(
-    authMiddleware,
+    protect,
     upload.single("profilePicture"),
     graduateController.updateProfile
   );
-router.route("/")
-      .get(graduateController.getAllGraduates)
+
+// Get all graduates (public)
+router.route("/").get(graduateController.getAllGraduates);
+
+// Get graduate profile by ID (public)
 router.route("/:id/profile").get(graduateController.getGraduateProfile);
 
-router
-  .route("/digital-id")
-  .get(authMiddleware, graduateController.getDigitalID);
+// Get digital ID (protected)
+router.route("/digital-id").get(protect, graduateController.getDigitalID);
 
-router.route("/:id/status").put(graduateController.updateGraduateStatus);
+// Update graduate status by ID (protected - ممكن تخليها admin only لو لزم)
+router.route("/:id/status").put(protect, graduateController.updateGraduateStatus);
 
 module.exports = router;

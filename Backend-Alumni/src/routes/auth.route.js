@@ -9,7 +9,7 @@ const {
   forgotPassword,
   resetPassword,
   logoutUser,
-} = require('../controllers/authController');
+} = require('../controllers/auth.controller');
 const { protect } = require('../middleware/authMiddleware');
 
 // Public routes

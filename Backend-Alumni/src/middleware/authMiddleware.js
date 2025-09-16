@@ -1,88 +1,84 @@
-//authMiddleware
+// middleware/authMiddleware.js
+const jwt = require("jsonwebtoken");
+const asyncHandler = require("express-async-handler");
+const User = require("../models/User");
+const Staff = require("../models/Staff");
 
-const jwt = require('jsonwebtoken');
-const asyncHandler = require('express-async-handler');
-const User = require('../models/User');
-const Staff = require('../models/Staff');
-
-// Protect routes middleware
+// Protect middleware (أي يوزر: graduate, staff, admin)
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     try {
-      // Get token from header
-      token = req.headers.authorization.split(' ')[1];
-
-      // Verify token
+      token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      // Get user from the token
-      req.user = await User.findByPk(decoded.id);
+      // جرب الأول تجيب اليوزر من جدول Users
+      let user = await User.findByPk(decoded.id);
 
+      // لو مش لاقي في Users ممكن يكون Staff
+      if (!user) {
+        const staff = await Staff.findByPk(decoded.id, { include: User });
+        if (staff) {
+          user = await User.findByPk(staff.staff_id);
+        }
+      }
+
+      if (!user) {
+        return res.status(401).json({ message: "Not authorized, user not found" });
+      }
+
+      req.user = user; // خزّن بيانات اليوزر في request
       next();
     } catch (error) {
-      console.error(error);
-      res.status(401);
-      throw new Error('Not authorized, token failed');
+      console.error("Auth middleware error:", error.message);
+      return res.status(401).json({ message: "Not authorized, token failed" });
     }
-  }
-
-  if (!token) {
-    res.status(401);
-    throw new Error('Not authorized, no token');
+  } else {
+    return res.status(401).json({ message: "Not authorized, no token" });
   }
 });
 
-// Admin middleware
+// Role middlewares
 const admin = asyncHandler(async (req, res, next) => {
-  if (req.user && req.user['user-type'] === 'admin') {
+  if (req.user && req.user["user-type"] === "admin") {
     next();
   } else {
-    res.status(403);
-    throw new Error('Not authorized as an admin');
+    return res.status(403).json({ message: "Not authorized as an admin" });
   }
 });
 
-// Admin only middleware (alias for admin)
-const adminOnly = admin;
-
-// Staff middleware
 const staff = asyncHandler(async (req, res, next) => {
-  if (req.user && req.user['user-type'] === 'staff') {
+  if (req.user && req.user["user-type"] === "staff") {
     next();
   } else {
-    res.status(403);
-    throw new Error('Not authorized as staff');
+    return res.status(403).json({ message: "Not authorized as staff" });
   }
 });
 
-// Staff only middleware (alias for staff)
-const staffOnly = staff;
-
-// Role-specific staff middleware
 const staffTypeOnly = (staffType) => {
   return asyncHandler(async (req, res, next) => {
-    const staff = await Staff.findOne({ where: { user: req.user.id } });
-    
-    if (staff && staff.staffType === staffType) {
+    const staffProfile = await Staff.findOne({ where: { staff_id: req.user.id } });
+    if (staffProfile && staffProfile.staffType === staffType) {
       next();
     } else {
-      res.status(403);
-     throw new Error(`Not authorized as ${staffType} staff`);
-
+      return res.status(403).json({ message: `Not authorized as ${staffType} staff` });
     }
   });
 };
 
-// Graduate middleware
 const graduateOnly = asyncHandler(async (req, res, next) => {
-  if (req.user && req.user['user-type'] === 'graduate') {
+  if (req.user && req.user["user-type"] === "graduate") {
     next();
   } else {
-    res.status(403);
-    throw new Error('Not authorized as a graduate');
+    return res.status(403).json({ message: "Not authorized as a graduate" });
   }
 });
 
-module.exports = { protect, admin, adminOnly, staff, staffOnly, staffTypeOnly, graduateOnly };
+module.exports = {
+  protect,
+  admin,
+  staff,
+  staffTypeOnly,
+  graduateOnly,
+};
