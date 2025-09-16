@@ -28,9 +28,9 @@ const graduates = [
 
 // GET graduate by nationalId and birthDate
 app.get("/api/graduate", (req, res) => {
-  const { nationalId, birthDate } = req.query;
+  const { nationalId } = req.query;
   const graduate = graduates.find(
-    g => g.nationalId === nationalId && g.birthDate === birthDate
+    g => g.nationalId === nationalId 
   );
 
   if (graduate) {
