@@ -25,4 +25,6 @@ router.route("/digital-id").get(protect, graduateController.getDigitalID);
 // Update graduate status by ID (protected - ممكن تخليها admin only لو لزم)
 router.route("/:id/status").put(protect, graduateController.updateGraduateStatus);
 
+router.route('/profile')
+          .put(protect, graduateController.updateProfile)
 module.exports = router;
