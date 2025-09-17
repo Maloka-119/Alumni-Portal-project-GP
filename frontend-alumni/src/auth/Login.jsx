@@ -27,8 +27,12 @@ function Login() {
   const handleLogin = async () => {
     try {
       const res = await API.post("/login", { email, password });
-      const token = res.data.token;
-      const user = res.data.user; 
+   const { id, email: userEmail, userType, token } = res.data;
+
+    const user = { id, email: userEmail, userType };
+
+
+     
   
       localStorage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
@@ -36,9 +40,9 @@ function Login() {
       alert(t("loginSuccess"));
   
       
-      if(user.role === "admin") {
+      if(user.userType === "admin") {
         navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
-      } else if(user.role === "graduated") {
+      } else if(user.userType === "graduate") {
         navigate("/helwan-alumni-portal/alumni/dashboard", { replace: true });
       } else {
         navigate("/helwan-alumni-portal/login", { replace: true }); 

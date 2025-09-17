@@ -4,21 +4,26 @@ import "./GradProfile.css";
 import PROFILE from "./PROFILE.jpeg";
 import API from "../../services/api";
 
-function GraduatedProfile({ userId }) {
+
+//yara's code
+function GraduatedProfile() {
   const [user, setUser] = useState(null);
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState(null);
   const { t } = useTranslation();
-
+ 
+  const storedUser = JSON.parse(localStorage.getItem("user"));
+  const userId = storedUser?.id;
   useEffect(() => {
+     console.log("userId passed to GraduatedProfile:", userId);
     fetchUser();
   }, [userId]);
 
   const fetchUser = async () => {
     try {
       const res = await API.get(`/graduates/${userId}/profile`);
-      setUser(res.data);
-      setFormData(res.data);
+      setUser(res.data.data);
+    setFormData(res.data.data);
     } catch (err) {
       console.error("Failed to fetch user:", err);
     }
@@ -76,7 +81,8 @@ function GraduatedProfile({ userId }) {
 
   if (!user || !formData) return <p>{t("loading")}</p>;
 
-  const fullName = `${formData.firstName} ${formData.lastName}`;
+  const fullName = formData.fullName || `${formData.firstName || ""} ${formData.lastName || ""}`;
+
 
   return (
     <div>
@@ -101,7 +107,7 @@ function GraduatedProfile({ userId }) {
               </a>
             ) : t("noCv")}
           </p>
-          <p><strong>{t("skills")}:</strong> {formData.skills.join(", ")}</p>
+         <p><strong>{t("skills")}:</strong> {formData.skills ? formData.skills.join(", ") : t("noSkills")}</p>
           <p><strong>{t("currentJob")}:</strong> {formData.currentJob}</p>
           <button onClick={() => setEditing(true)}>
             {t("updateInfo")}
@@ -131,7 +137,12 @@ function GraduatedProfile({ userId }) {
           </label>
           <label>
             {t("skills")}:
-            <input type="text" name="skills" value={formData.skills.join(",")} onChange={handleSkillsChange} />
+            <input
+  type="text"
+  name="skills"
+  value={formData.skills ? formData.skills.join(",") : ""}
+  onChange={handleSkillsChange}
+/>
           </label>
           <label>
             {t("currentJob")}:
