@@ -123,14 +123,14 @@ function GraduatedProfile() {
             {t("lastName")}:
             <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} />
           </label>
-          <label>
+      <label>
             {t("faculty")}:
-            <input type="text" name="faculty" value={formData.faculty} onChange={handleChange} />
+            <input type="text" name="faculty" value={formData.faculty} />
           </label>
           <label>
             {t("graduationYear")}:
-            <input type="text" name="graduationYear" value={formData.graduationYear} onChange={handleChange} />
-          </label>
+            <input type="text" name="graduationYear" value={formData.graduationYear} />
+          </label>
           <label>
             {t("bio")}:
             <textarea name="bio" value={formData.bio} onChange={handleChange} />
