@@ -4,7 +4,6 @@ import './AlumniManagement.css';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api';
 
-
 const StaffManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +24,7 @@ const StaffManagement = () => {
         setLoading(true);
         setError(null);
         const res = await API.get("/staff"); 
-        setUsers(res.data);
+        setUsers(res.data.data);
       } catch (err) {
         console.error("Failed to fetch staff data:", err);
         setError(t("loadingError"));
@@ -36,26 +35,25 @@ const StaffManagement = () => {
   
     fetchStaff();
   }, []);
-  
 
-  const toggleUserStatus = async (id) => {
-    const user = users.find(u => u.id === id);
+  const toggleUserStatus = async (staffId) => {
+    const user = users.find(u => u['staff id'] === staffId);
     if (!user) return;
 
-    const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
+    const newStatus = user['status-to-login'] === 'Active' ? 'Inactive' : 'Active';
 
     try {
-      await API.patch(`/staff/${id}/status`, { status: newStatus });
+      await API.patch(`/staff/${staffId}/status`, { status: newStatus });
       setUsers(users.map(u =>
-        u.id === id ? { ...u, status: newStatus } : u
+        u['staff id'] === staffId ? { ...u, 'status-to-login': newStatus } : u
       ));
     } catch (err) {
       console.error('Failed to update status:', err);
     }
   };
 
-  const openRoleModal = async (userId) => {
-    setCurrentUserId(userId);
+  const openRoleModal = async (staffId) => {
+    setCurrentUserId(staffId);
     setShowModal(true);
 
     try {
@@ -84,7 +82,7 @@ const StaffManagement = () => {
   };
 
   const filteredUsers = users.filter(user =>
-    statusFilter === 'All' ? true : user.status === statusFilter
+    statusFilter === 'All' ? true : user['status-to-login'] === statusFilter
   );
 
   return (
@@ -94,10 +92,10 @@ const StaffManagement = () => {
       <div className="filter-container">
         <label>Status: </label>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-        <option value="All">{t("all")}</option>
-<option value="Pending">{t("pending")}</option>
-<option value="Active">{t("active")}</option>
-<option value="Inactive">{t("inactive")}</option>
+          <option value="All">{t("all")}</option>
+          <option value="Pending">{t("pending")}</option>
+          <option value="Active">{t("active")}</option>
+          <option value="Inactive">{t("inactive")}</option>
         </select>
       </div>
 
@@ -109,34 +107,34 @@ const StaffManagement = () => {
           <table className="users-table">
             <thead>
               <tr>
-              <th>{t("name")}</th>
-    <th>{t("nationalId")}</th>
-    <th>{t("role")}</th>
-    <th>{t("status")}</th>
-    <th>{t("actions")}</th>
+                <th>{t("name")}</th>
+                <th>{t("nationalId")}</th>
+                <th>{t("role")}</th>
+                <th>{t("status")}</th>
+                <th>{t("actions")}</th>
               </tr>
             </thead>
             <tbody>
               {filteredUsers.map(user => (
-                <tr key={user.id} className="table-row">
-                  <td>{user.name}</td>
-                  <td>{user.nationalId}</td>
-                  <td>{user.Role}</td>
+                <tr key={user['staff id']} className="table-row">
+                  <td>{user.User['first-name']} {user.User['last-name']}</td>
+                  <td>{user.User['national-id']}</td>
+                  <td>{user.Role || '-'}</td>
                   <td>
-                    <span className={`status-badge ${user.status.toLowerCase()}`}>
-                      {user.status}
+                    <span className={`status-badge ${user['status-to-login'].toLowerCase()}`}>
+                      {user['status-to-login']}
                     </span>
                   </td>
                   <td className="actions-cell">
                     <button
                       className="add-button"
-                      onClick={() => openRoleModal(user.id)}
+                      onClick={() => openRoleModal(user['staff id'])}
                     >
                       +
                     </button>
                     <button
-                      onClick={() => toggleUserStatus(user.id)}
-                      className={`toggle-switch ${user.status === 'Active' ? 'active' : ''}`}
+                      onClick={() => toggleUserStatus(user['staff id'])}
+                      className={`toggle-switch ${user['status-to-login'] === 'Active' ? 'active' : ''}`}
                     >
                       <span className="toggle-slider"></span>
                     </button>
