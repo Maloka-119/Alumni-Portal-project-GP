@@ -3,12 +3,12 @@ import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ user, requiredRole, children }) => {
   if (!user) {
-    // لو مش مسجل دخول
+    // لو المستخدم مش مسجل دخول
     return <Navigate to="/helwan-alumni-portal/login" replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    // لو الرول مش مطابق
+  if (requiredRole && user.userType !== requiredRole) {
+    // لو نوع المستخدم مش نفس الـ role المطلوب
     return <Navigate to="/helwan-alumni-portal/login" replace />;
   }
 
@@ -16,3 +16,4 @@ const ProtectedRoute = ({ user, requiredRole, children }) => {
 };
 
 export default ProtectedRoute;
+

@@ -15,6 +15,7 @@ import DigitalID from './DigitalID';
 import GraduatedProfile from './GraduatedProfile';
 import { useTranslation } from "react-i18next";
 import { useNavigate } from 'react-router-dom';
+import API from "../../api";
 
 
 const sidebarSections = (darkMode, t) => [
@@ -71,13 +72,26 @@ const Dashboard = () => {
     footerRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
-  const handleSidebarAction = (action) => {
+  const handleSidebarAction = async (action) => {
     if(action === "toggleDark") setDarkMode(!darkMode);
     if(action === "logout") {
-      localStorage.removeItem('user'); 
-  localStorage.removeItem('token'); 
-  navigate('/helwan-alumni-portal/login', { replace: true });
+      try {
+        const token = localStorage.getItem("token");
+        if (token) {
+          const res = await API.post("/logout", {}, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log(res.data.message); // "Logged out successfully"
+        }
+      } catch (err) {
+        console.error("Logout failed:", err);
+      } finally {
+        localStorage.removeItem("user"); 
+        localStorage.removeItem("token"); 
+        navigate('/helwan-alumni-portal/login', { replace: true });
+      }
     }
+  
     if(action === "language") {
       const newLang = i18n.language === "en" ? "ar" : "en";
       i18n.changeLanguage(newLang);
