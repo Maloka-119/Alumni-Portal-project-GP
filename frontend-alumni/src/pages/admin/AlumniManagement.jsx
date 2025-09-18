@@ -57,8 +57,8 @@ const AlumniManagement = () => {
 
   const handleShowProfile = async (user) => {
     try {
-      const res = await API.get(`/graduates/${user.alumniId}`);
-      setSelectedUser(res.data);
+      const res = await API.get(`/graduates/${user.alumniId}/profile`);
+      setSelectedUser(res.data.data);
     } catch (err) {
       console.error('Error fetching profile:', err);
     }
