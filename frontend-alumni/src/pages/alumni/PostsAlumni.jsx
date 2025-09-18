@@ -4,8 +4,6 @@ import { useTranslation } from 'react-i18next';
 import './AlumniAdminPosts.css';
 import API from "../../services/api";
 
-const API_URL = 'http://localhost:5000/api/posts';
-
 const PostsAlumni = ({ user }) => {
   const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
@@ -18,14 +16,26 @@ const PostsAlumni = ({ user }) => {
   const [newComment, setNewComment] = useState('');
 
   useEffect(() => {
-    fetch(`${API_URL}/me`, { credentials: 'include' })
-      .then(res => res.json())
-      .then(data => {
-        setPosts(data.sort((a, b) => new Date(b.date) - new Date(a.date)));
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await API.get('/posts/my-posts', {
+          headers: {
+            'Authorization': `Bearer ${user.token}`
+          }
+        });
+        setPosts(res.data.data.sort((a, b) => new Date(b.date) - new Date(a.date)));
         setLoading(false);
-      })
-      .catch(err => { setError(err.message); setLoading(false); });
-  }, []);
+      } catch (err) {
+        setError(err.response?.data?.message || err.message);
+        setLoading(false);
+      }
+    };
+  
+    fetchPosts();
+  }, [user.token]);
+  
 
   const handleAddPost = async (e) => {
     e.preventDefault();
@@ -53,59 +63,57 @@ const PostsAlumni = ({ user }) => {
     }
   };
 
-  const handleEdit = async (id, content, link) => {
+  const handleEdit = async (postId, content, link) => {
     try {
-      const res = await fetch(`${API_URL}/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, link }),
-        credentials: 'include',
+      const res = await API.patch(`/posts/${postId}`, { content, link }, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
       });
-      const updated = await res.json();
-      setPosts(posts.map(p => (p.id === id ? updated : p)));
+      const updated = res.data.data;
+      setPosts(posts.map(p => (p.id === postId ? updated : p)));
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (postId) => {
     try {
-      await fetch(`${API_URL}/${id}`, { method: 'DELETE', credentials: 'include' });
-      setPosts(posts.filter(p => p.id !== id));
+      await API.delete(`/posts/${postId}`, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      setPosts(posts.filter(p => p.id !== postId));
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
-
   const openComments = (post) => setSelectedPost(post);
   const closeComments = () => { setSelectedPost(null); setNewComment(''); };
 
   const handleAddComment = async () => {
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !selectedPost) return;
     try {
-      const res = await fetch(`${API_URL}/${selectedPost.id}/comment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newComment }),
-        credentials: 'include',
+      const res = await API.post(`/posts/${selectedPost.id}/comment`, { content: newComment }, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
       });
-      const updated = await res.json();
-      setPosts(posts.map(p => (p.id === updated.id ? updated : p)));
-      setSelectedPost(updated);
+      const updatedPost = res.data.data;
+      setPosts(posts.map(p => (p.id === updatedPost.id ? updatedPost : p)));
+      setSelectedPost(updatedPost);
       setNewComment('');
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
+
   const handleLike = async (postId) => {
     try {
-      const res = await fetch(`${API_URL}/${postId}/like`, { method: 'POST', credentials: 'include' });
-      const updated = await res.json();
+      const res = await API.post(`/posts/${postId}/like`, {}, {
+        headers: { 'Authorization': `Bearer ${user.token}` }
+      });
+      const updated = res.data.data;
       setPosts(posts.map(p => (p.id === updated.id ? updated : p)));
       if (selectedPost?.id === postId) setSelectedPost(updated);
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
     }
   };
 
@@ -113,7 +121,6 @@ const PostsAlumni = ({ user }) => {
     <div className="uni-feed">
       <h2 className="uni-header">{t('myPosts')}</h2>
 
-      {/* شريط إنشاء بوست */}
       <div className="am-create-bar" onClick={() => setShowForm(true)}>
         <input placeholder={t('createNewPost')} readOnly />
       </div>
