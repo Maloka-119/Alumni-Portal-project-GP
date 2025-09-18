@@ -15,7 +15,7 @@ import DigitalID from './DigitalID';
 import GraduatedProfile from './GraduatedProfile';
 import { useTranslation } from "react-i18next";
 import { useNavigate } from 'react-router-dom';
-import API from "../../api";
+import API from "../../services/api";
 
 
 const sidebarSections = (darkMode, t) => [

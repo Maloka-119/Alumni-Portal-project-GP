@@ -1,54 +1,45 @@
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
-const Post = require("../models/Post");
-const PostImage = require("../models/PostImage");
 const Comment = require("../models/Comment");6
 const Like = require("../models/Like");
 const User = require("../models/User");
-
+const Graduate = require("../models/Graduate");
+const Post = require("../models/Post");
+const PostImage = require("../models/PostImage");
 const createPost = async (req, res) => {
   try {
-    const userId = req.user.id;
-    const { category, content, description, groupId, inLanding } = req.body;
+    const { category, content, groupId, inLanding } = req.body;
+    const userId = req.user.id; // جاي من الـ middleware بتاع الـ auth
 
-    const graduate = await Graduate.findOne({ where: { graduate_id: userId } });
+    // هات بيانات اليوزر من الداتابيز
+    const user = await User.findByPk(userId);
 
-    if (graduate) {
-      if (graduate.status_to_login !== "active") {
-        return res.status(403).json({
-          status: HttpStatusHelper.FAIL,
-          message: "Your account is not active. You cannot create posts.",
-        });
-      }
+    if (!user) {
+      return res.status(404).json({ status: "error", message: "User not found" });
     }
 
+    // لو Graduate لازم يكون Active
+    if (user["user-type"] === "Graduate" && !user.isActive) {
+      return res.status(403).json({ status: "error", message: "Graduate is not active" });
+    }
 
-    const post = await Post.create({
+    // إنشاء البوست
+    const newPost = await Post.create({
       category,
       content,
-      description,
       "author-id": userId,
       "group-id": groupId || null,
       "in-landing": inLanding || false,
     });
 
-    // لو فيه صور مرفوعة مع البوست
-    if (req.files && req.files.length > 0) {
-      const postImages = req.files.map((file) => ({
-        "post-id": post.post_id,
-        "image-url": file.path, // Cloudinary بيرجع path
-      }));
-      await PostImage.bulkCreate(postImages);
-    }
-
     return res.status(201).json({
-      status: HttpStatusHelper.SUCCESS,
-      data: post,
+      status: "success",
+      message: "Post created successfully",
+      post: newPost,
     });
-  } catch (err) {
-    return res.status(500).json({
-      status: HttpStatusHelper.ERROR,
-      message: err.message,
-    });
+
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ status: "error", message: "Something went wrong" });
   }
 };
 
