@@ -15,9 +15,17 @@ const AlumniManagement = () => {
 
   useEffect(() => {
     setLoading(true);
-    API.get("/graduated") 
+    API.get("/graduated")
       .then(res => {
-        setUsers(res.data);
+        const mappedUsers = res.data.data.map(g => ({
+          id: g.User.id,
+          name: `${g.User["first-name"]} ${g.User["last-name"]}`,
+          nationalId: g.User["national-id"],
+          graduationYear: g["graduation-year"],
+          status: g.status,
+          alumniId: g.graduate_id
+        }));
+        setUsers(mappedUsers);
         setLoading(false);
       })
       .catch(err => {
@@ -27,27 +35,29 @@ const AlumniManagement = () => {
       });
   }, []);
   
+  
 
-  const toggleUserStatus = async (id) => {
-    const user = users.find(u => u.id === id);
+  const toggleUserStatus = async (alumniId) => {
+    const user = users.find(u => u.alumniId === alumniId);
     if (!user) return;
   
-    const newStatus = user.status === 'Active' ? 'Inactive' : 'Active';
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
   
     try {
-      const res = await API.patch(`/graduates/${id}/status`, { status: newStatus });
+      const res = await API.patch(`/graduates/${alumniId}/status`, { status: newStatus });
       setUsers(users.map(u =>
-        u.id === id ? { ...u, status: newStatus } : u
+        u.alumniId === alumniId ? { ...u, status: newStatus } : u
       ));
     } catch (err) {
       console.error('Error updating status:', err);
     }
   };
   
+  
 
   const handleShowProfile = async (user) => {
     try {
-      const res = await API.get(`/users/${user.id}`);
+      const res = await API.get(`/graduates/${user.alumniId}`);
       setSelectedUser(res.data);
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -98,11 +108,12 @@ const AlumniManagement = () => {
                       {t("showProfile")}
                     </button>
                     <button
-                      onClick={() => toggleUserStatus(user.id)}
-                      className={`toggle-switch ${user.status === 'Active' ? 'active' : ''}`}
-                    >
-                      <span className="toggle-slider"></span>
-                    </button>
+  onClick={() => toggleUserStatus(user.alumniId)}
+  className={`toggle-switch ${user.status === 'active' ? 'active' : ''}`}
+>
+  <span className="toggle-slider"></span>
+</button>
+
                   </td>
                 </tr>
               ))}
