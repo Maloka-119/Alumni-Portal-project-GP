@@ -34,14 +34,26 @@ const getAllGraduates = async (req, res) => {
     });
   }
 };
-//with token
+
+
+//get digital id 
 const getDigitalID = async (req, res) => {
   try {
+    // تأكد إن req.user موجود
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: HttpStatusHelper.FAIL,
+        message: "Not authorized or user not found",
+        data: null,
+      });
+    }
+
     const userId = req.user.id;
 
+    // جلب بيانات الـ Graduate مع الـ User المرتبط
     const graduate = await Graduate.findOne({
       where: { graduate_id: userId },
-      include: [{ model: User }],
+      include: [{ model: require("../models/User") }],
     });
 
     if (!graduate) {
@@ -54,21 +66,33 @@ const getDigitalID = async (req, res) => {
 
     const user = graduate.User;
 
+    if (!user) {
+      return res.status(404).json({
+        status: HttpStatusHelper.FAIL,
+        message: "User details not found for this graduate",
+        data: null,
+      });
+    }
+
+    //  تجهيز البيانات النهائية للـ Digital ID
     const digitalID = {
-      personalPicture: graduate["profile-picture-url"],
+      personalPicture: graduate["profile-picture-url"] || null,
       digitalID: graduate.graduate_id,
-      fullName: `${user["first-name"]} ${user["last-name"]}`,
-      faculty: graduate.faculty,
-      nationalNumber: user["national-id"],
-      graduationYear: graduate["graduation-year"],
+      fullName: `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim(),
+      faculty: graduate.faculty || null,
+      nationalNumber: user["national-id"] || null,
+      graduationYear: graduate["graduation-year"] || null,
     };
 
+    //  إرجاع الاستجابة
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate Digital ID fetched successfully",
       data: digitalID,
     });
+
   } catch (err) {
+    console.error("getDigitalID error:", err.message);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
       message: err.message,
@@ -76,6 +100,9 @@ const getDigitalID = async (req, res) => {
     });
   }
 };
+
+module.exports = { getDigitalID };
+
 
 
 const getGraduateProfile = async (req, res) => {
@@ -120,14 +147,19 @@ const getGraduateProfile = async (req, res) => {
   }
 };
 
-//middleware for security
+//updateProfile
 const updateProfile = async (req, res) => {
   try {
-    const graduate = await Graduate.findByPk(req.params.id, {
+    console.log("req.user:", req.user);
+    console.log("req.user.id:", req.user?.id);
+
+    const graduate = await Graduate.findByPk(req.user.id, {
       include: [{ model: User }],
     });
 
     if (!graduate) {
+      console.log("Graduate not found for user id:", req.user.id);
+
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -159,11 +191,23 @@ const updateProfile = async (req, res) => {
       graduate["graduation-year"] = graduationYear;
     if (linkedlnLink !== undefined) graduate["linkedln-link"] = linkedlnLink;
 
-    // لو فيه ملف صورة مرفوع من Cloudinary
-    if (req.file) {
-      graduate["profile-picture-url"] = req.file.path; // Cloudinary بيرجع path
+    // لو فيه صورة مرفوعة
+    if (req.files && req.files.profilePicture) {
+      const result = await cloudinary.uploader.upload(
+        req.files.profilePicture[0].path,
+        { folder: "graduates/profile_pictures" }
+      );
+      graduate["profile-picture-url"] = result.secure_url;
     }
 
+    // لو فيه CV مرفوع
+    if (req.files && req.files.cv) {
+      const result = await cloudinary.uploader.upload(
+        req.files.cv[0].path,
+        { folder: "graduates/cvs", resource_type: "raw" } // raw عشان PDF أو DOC
+      );
+      graduate["cv-url"] = result.secure_url;
+    }
     await user.save();
     await graduate.save();
 
@@ -180,6 +224,9 @@ const updateProfile = async (req, res) => {
     });
   }
 };
+
+
+
 
 // Activate / Inactivate Graduate
 const updateGraduateStatus = async (req, res) => {
