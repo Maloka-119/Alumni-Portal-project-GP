@@ -20,7 +20,7 @@ const fetchPosts = async () => {
   setError(null);
   try {
     const res = await API.get(`/posts?page=${page}&limit=5`);
-    console.log(res.data); // عشان تشوفيه
+    console.log(res.data); 
     if (res.data.data.length === 0) setHasMore(false);
     else setPosts(prev => [...prev, ...res.data.data]);
   } catch (err) {
@@ -30,21 +30,6 @@ const fetchPosts = async () => {
     setLoading(false);
   }
 };
-
-  // const fetchPosts = async () => {
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     const res = await API.get(`/posts?page=${page}&limit=5`);
-  //     if (res.data.length === 0) setHasMore(false);
-  //     else setPosts(prev => [...prev, ...res.data]);
-  //   } catch (err) {
-  //     console.error(err);
-  //     setError(t('errorFetchingPosts'));
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   useEffect(() => { fetchPosts(); }, [page]);
 
   const handleLike = async (postId) => {
