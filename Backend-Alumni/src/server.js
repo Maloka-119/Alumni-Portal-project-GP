@@ -4,7 +4,9 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 require("dotenv").config();
 const { errorHandler } = require("./middleware/errorMiddleware");
+const bcrypt = require("bcryptjs");
 
+const User = require("./models/User");
 const sequelize = require("./config/db");
 
 const app = express();
@@ -21,26 +23,42 @@ app.get("/", (req, res) => {
 const graduateRoutes = require("./routes/graduates.route");
 app.use("/alumni-portal/graduates", graduateRoutes);
 
-// const adminRoutes = require("./routes/admin.route");
-// app.use("/alumni_portal/admin", adminRoutes);
-
 const postRoutes = require("./routes/post.route");
 app.use("/alumni-portal/posts", postRoutes);
-
-// const userRoutes = require("./routes/user.route");
-// app.use("/alumni-portal/users", userRoutes);
 
 const staffRoutes = require("./routes/staff.route");
 app.use("/alumni-portal/staff", staffRoutes);
 
 const authRoutes = require("./routes/auth.route");
 app.use("/alumni-portal", authRoutes);
+
 app.use(errorHandler);
-// sync db
-sequelize
-  .sync()
-  .then(() => console.log("Database synced"))
-  .catch((err) => console.error("Error syncing database:", err));
+
+// sync DB
+sequelize.sync().then(async () => {
+  console.log('Database synced');
+
+  // تحقق إذا فيه أدمن موجود
+  const existingAdmin = await User.findByPk(1);
+  if (!existingAdmin) {
+    const hashedPassword = await bcrypt.hash('admin123', 10);
+
+    await User.create({
+      id: 1,
+      email: 'alumniportalhelwan@gmail.com',
+      'hashed-password': hashedPassword,
+      'user-type': 'admin',
+      'first-name': 'helwan',
+      'last-name': 'university',
+    });
+
+    console.log('Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123');
+
+    // ضبط الـ sequence بحيث أي User جديد يبدأ من ID = 2
+    await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
+    console.log('User sequence reset to start from 2');
+  }
+});
 
 // listen
 const PORT = process.env.PORT || 5005;

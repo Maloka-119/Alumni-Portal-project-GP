@@ -46,15 +46,20 @@ function GraduatedProfile() {
     setFormData({ ...formData, skills: e.target.value.split(",") });
   };
 
-  const handlePhotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) setFormData({ ...formData, profilePictureFile: file });
-  };
+ const handlePhotoChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setFormData({ ...formData, profilePictureFile: file });
+  }
+};
 
-  const handleCvChange = (e) => {
-    const file = e.target.files[0];
-    if (file) setFormData({ ...formData, cvFile: file });
-  };
+const handleCvChange = (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    setFormData({ ...formData, cvFile: file });
+  }
+};
+
 
   const handleEdit = () => {
     if (user.fullName) {
@@ -68,42 +73,42 @@ function GraduatedProfile() {
     setEditing(true);
   };
 
-  const handleSave = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const payload = new FormData();
-      const fullName = `${formData.firstName} ${formData.lastName}`.trim();
-      payload.append("fullName", fullName);
-      payload.append("faculty", formData.faculty);
-      payload.append("graduationYear", formData.graduationYear);
-      payload.append("bio", formData.bio);
-      payload.append("currentJob", formData.currentJob);
-      payload.append("skills", formData.skills.join(","));
-      if (formData.profilePictureFile)
-        payload.append("profilePicture", formData.profilePictureFile);
-      if (formData.cvFile) payload.append("CV", formData.cvFile); // تعديل هنا
+const handleSave = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const payload = new FormData();
 
-      const res = await API.put("/graduates/profile", payload, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+    // هنا نربط fullName بالـ firstName + lastName قبل الإرسال
+    const fullName = `${formData.firstName || ""} ${formData.lastName || ""}`.trim();
+    payload.append("fullName", fullName);
 
-      // const updatedData = res.data;
-      const updatedData = res.data.data;
+    payload.append("faculty", formData.faculty || "");
+    payload.append("graduationYear", formData.graduationYear || "");
+    payload.append("bio", formData.bio || "");
+    payload.append("currentJob", formData.currentJob || "");
+    payload.append("skills", formData.skills || "");
 
-      // نفصل الاسم تاني بعد التحديث
-      if (updatedData.fullName) {
-        const parts = updatedData.fullName.split(" ");
-        updatedData.firstName = parts[0] || "";
-        updatedData.lastName = parts.slice(1).join(" ") || "";
-      }
+    if (formData.profilePictureFile)
+      payload.append("profilePicture", formData.profilePictureFile);
 
-      setUser(updatedData);
-      setFormData(updatedData);
-      setEditing(false);
-    } catch (err) {
-      console.error("Failed to update user:", err);
-    }
-  };
+    if (formData.cvFile)
+      payload.append("CV", formData.cvFile);
+
+    const res = await API.put("/graduates/profile", payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    await fetchUser(); // نجدد البيانات بعد الحفظ
+    setEditing(false);
+
+  } catch (err) {
+    console.error("Failed to update user:", err.response?.data || err.message);
+  }
+};
+
 
   const handleCancel = () => {
     setFormData(user);
@@ -121,11 +126,11 @@ function GraduatedProfile() {
 
       {!editing ? (
         <div className="profile-card">
-          <img
-            src={formData.profilePicture || PROFILE}
-            alt="Profile"
-            className="profile-img"
-          />
+        <img
+  src={formData.profilePicture || PROFILE}
+  alt="Profile"
+  className="profile-img"
+/>
           <h2>{fullName}</h2>
           <p>
             <strong>{t("faculty")}:</strong> {formData.faculty}
@@ -138,17 +143,17 @@ function GraduatedProfile() {
           </p>
           <p>
             <strong>{t("cv")}:</strong>{" "}
-            {formData.CV ? (
-              <a href={formData.CV} download>
-                {t("downloadCv")}
-              </a>
-            ) : (
-              t("noCv")
-            )}
+           {formData.CV ? (
+  <a href={formData.CV} download>
+    {t("downloadCv")}
+  </a>
+) : (
+  t("noCv")
+)}
           </p>
           <p>
             <strong>{t("skills")}:</strong>{" "}
-            {formData.skills ? formData.skills.join(", ") : t("noSkills")}
+            {formData.skills ? formData.skills : t("noSkills")}
           </p>
           <p>
             <strong>{t("currentJob")}:</strong> {formData.currentJob}
@@ -177,24 +182,30 @@ function GraduatedProfile() {
               onChange={handleChange}
             />
           </label>
-          <label>
+        <label>
             {t("faculty")}:
             <input
               type="text"
               name="faculty"
               value={formData.faculty}
-              onChange={handleChange}
+
+           disabled
+
             />
           </label>
+          <br />
+
           <label>
             {t("graduationYear")}:
             <input
               type="text"
               name="graduationYear"
               value={formData.graduationYear}
-              onChange={handleChange}
+              disabled
+
             />
           </label>
+          <br />
           <label>
             {t("bio")}:
             <textarea
@@ -208,7 +219,7 @@ function GraduatedProfile() {
             <input
               type="text"
               name="skills"
-              value={formData.skills ? formData.skills.join(",") : ""}
+              value={formData.skills ? formData.skills: ""}
               onChange={handleSkillsChange}
             />
           </label>
