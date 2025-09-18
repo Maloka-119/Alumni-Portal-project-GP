@@ -15,7 +15,7 @@ const AlumniManagement = () => {
 
   useEffect(() => {
     setLoading(true);
-    API.get("/graduated")
+    API.get("/graduates")
       .then(res => {
         const mappedUsers = res.data.data.map(g => ({
           id: g.User.id,
