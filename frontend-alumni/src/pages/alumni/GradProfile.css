@@ -163,3 +163,59 @@
   border: 1px solid #4b5563;
   color: #f3f4f6;
 }
+
+
+
+/* زرار التعديل - الوضع العادي */
+.edit-btnn {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background 0.3s, color 0.3s;
+}
+
+.edit-btnn:hover {
+  background-color: #0056b3;
+}
+
+/* ملف الـ CV - الوضع العادي */
+.file-input {
+  display: block;
+  margin-top: 8px;
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: white;
+  color: black;
+  transition: border-color 0.3s, background 0.3s, color 0.3s;
+}
+
+.file-input:hover {
+  border-color: #007bff;
+}
+
+/* زرار التعديل - دارك مود */
+body.dark-mode .edit-btnn {
+  background-color: #1a73e8;
+  color: #fff;
+}
+
+body.dark-mode .edit-btnn:hover {
+  background-color: #155ab6;
+}
+
+/* ملف الـ CV - دارك مود */
+body.dark-mode .file-input {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #555;
+}
+
+body.dark-mode .file-input:hover {
+  border-color: #1a73e8;
+}
