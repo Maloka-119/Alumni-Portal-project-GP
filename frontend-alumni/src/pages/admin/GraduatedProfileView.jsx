@@ -1,37 +1,9 @@
 import PROFILE from "./PROFILE.jpeg";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import "./GradProfile.css";
 
-function GraduatedProfileView() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // غير اللينك حسب الباك إند عندك
-  const API_URL = "http://localhost:5000/api/graduates/1";
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(API_URL);
-        const data = await res.json();
-        setUser(data);
-      } catch (err) {
-        console.error("Error fetching user:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, []);
-
-  if (loading) return <p>Loading profile...</p>;
+function GraduatedProfileView({ user }) {
   if (!user) return <p>No profile data found</p>;
-
-  const fullName =
-    user.firstName && user.lastName
-      ? `${user.firstName} ${user.lastName}`
-      : user.name || "No Name";
 
   return (
     <div>
@@ -43,15 +15,15 @@ function GraduatedProfileView() {
           alt="Profile"
           className="profile-img"
         />
-        <h2>{fullName}</h2>
+        <h2>{user.fullName || "No Name"}</h2>
 
         <p><strong>Faculty:</strong> {user.faculty || "Not provided"}</p>
         <p><strong>Graduation Year:</strong> {user.graduationYear}</p>
         <p><strong>Bio:</strong> {user.bio || "No bio"}</p>
         <p>
           <strong>CV:</strong>{" "}
-          {user.cv ? (
-            <a href={user.cv} download="My_CV">
+          {user.CV ? (
+            <a href={user.CV} download="My_CV">
               Download CV
             </a>
           ) : (
@@ -60,17 +32,24 @@ function GraduatedProfileView() {
         </p>
         <p>
           <strong>Skills:</strong>{" "}
-          {Array.isArray(user.skills) && user.skills.length > 0
-            ? user.skills.join(", ")
-            : "No skills"}
+          {user.skills ? user.skills : "No skills"}
         </p>
         <p><strong>Current Job:</strong> {user.currentJob || "Not provided"}</p>
+        {user.linkedInLink && (
+          <p>
+            <strong>LinkedIn:</strong>{" "}
+            <a href={user.linkedInLink} target="_blank" rel="noreferrer">
+              View Profile
+            </a>
+          </p>
+        )}
       </div>
     </div>
   );
 }
 
 export default GraduatedProfileView;
+
 
 
 
