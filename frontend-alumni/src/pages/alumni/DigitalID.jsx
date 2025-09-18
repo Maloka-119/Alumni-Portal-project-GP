@@ -19,7 +19,8 @@ function DigitalID() {
             Authorization: `Bearer ${token}`,
           },
         });
-        setUser(res.data);
+        // setUser(res.data);
+        setUser(res.data.data);
       } catch (err) {
         console.error(err);
       }
@@ -58,7 +59,8 @@ function DigitalID() {
 
   if (!user) return <p>{t("digitalId_loading")}</p>;
 
-  const fullName = `${user.firstName} ${user.lastName}`;
+  const fullName = user.fullName;
+
 
   return (
     <div>
@@ -75,16 +77,16 @@ function DigitalID() {
             <p className="p">
               <strong className="strong">{t("digitalId_fullName")}:</strong> {fullName} <br/>
               <strong className="strong">{t("digitalId_faculty")}:</strong> {user.faculty} <br/>
-              <strong className="strong">{t("digitalId_program")}:</strong> {user.program} <br/>
+              {/* <strong className="strong">{t("digitalId_program")}:</strong> {user.program} <br/> */}
               <strong className="strong">{t("digitalId_graduationYear")}:</strong> {user.graduationYear} <br/>
-              <strong className="strong">{t("digitalId_graduateID")}:</strong> {user.graduateID} <br/>
+              <strong className="strong">{t("digitalId_graduateID")}:</strong> {user.digitalID} <br/>
               <strong className="strong">{t("digitalId_nationalNumber")}:</strong> {user.nationalNumber}
             </p>
           </div>
 
           <img 
             className="profile-picc"
-            src={user.profilePicture || PROFILE}
+            src={user.personalPicture || PROFILE}
             alt="Profile" 
           />
         </div>
