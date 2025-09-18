@@ -23,8 +23,8 @@ const [newComment, setNewComment] = useState('');
     setLoading(true);
     setError(null);
     try {
-      const res = await API.get('/posts'); // الرابط النسبي بعد baseURL
-      setPosts(res.data);
+      const res = await API.get('/posts'); 
+      setPosts(res.data.data);
     } catch (err) {
       console.error('Error fetching posts', err);
       setError(t("fetchPostsFailed"));
@@ -57,7 +57,6 @@ const [newComment, setNewComment] = useState('');
   try {
     await API.post(`/posts/${selectedPost.id}/comment`, { content: newComment });
 
-    // تحديث التعليقات محلياً بعد الإرسال
     setSelectedPost({
       ...selectedPost,
       comments: [
@@ -66,7 +65,6 @@ const [newComment, setNewComment] = useState('');
       ]
     });
 
-    // تحديث الحالة العامة للبوستات لو محتاج
     setPosts(posts.map(p => p.id === selectedPost.id ? {
       ...p,
       comments: [...p.comments, { id: Date.now(), user: { name: 'You', photo: selectedPost.profileImageUrl }, content: newComment }]
