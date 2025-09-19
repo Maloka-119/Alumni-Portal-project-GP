@@ -2,6 +2,8 @@ const Graduate = require("../models/Graduate");
 const User = require("../models/User");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
+
+//get all graduates
 const getAllGraduates = async (req, res) => {
   try {
     const graduates = await Graduate.findAll({
@@ -101,10 +103,10 @@ const getDigitalID = async (req, res) => {
   }
 };
 
-module.exports = { getDigitalID };
 
 
 
+//get profile
 const getGraduateProfile = async (req, res) => {
   try {
     const graduate = await Graduate.findByPk(req.params.id, {
@@ -150,7 +152,7 @@ const getGraduateProfile = async (req, res) => {
 
 
 
-//updateProfile
+// updateProfile
 const updateProfile = async (req, res) => {
   try {
     console.log("req.user:", req.user);
@@ -181,10 +183,12 @@ const updateProfile = async (req, res) => {
       faculty,
       graduationYear,
       linkedlnLink,
+      phoneNumber,   // 👈 هنا خدنا رقم التليفون من الـ body
     } = req.body;
 
     if (firstName !== undefined) user["first-name"] = firstName;
     if (lastName !== undefined) user["last-name"] = lastName;
+    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
     if (bio !== undefined) graduate.bio = bio;
     if (skills !== undefined) graduate.skills = skills;
     if (currentJob !== undefined) graduate["current-job"] = currentJob;
@@ -194,40 +198,31 @@ const updateProfile = async (req, res) => {
       graduate["graduation-year"] = graduationYear;
     if (linkedlnLink !== undefined) graduate["linkedln-link"] = linkedlnLink;
 
-    // لو فيه صورة مرفوعة
-  // رفع الملفات
-if (req.files && req.files.profilePicture) {
-  const result = await cloudinary.uploader.upload(
-    req.files.profilePicture[0].path,
-    { folder: "graduates/profile_pictures" }
-  );
-  graduate["profile-picture-url"] = result.secure_url;
-}
+    // رفع صورة شخصية
+    if (req.files && req.files.profilePicture) {
+      const result = await cloudinary.uploader.upload(
+        req.files.profilePicture[0].path,
+        { folder: "graduates/profile_pictures" }
+      );
+      graduate["profile-picture-url"] = result.secure_url;
+    }
 
-if (req.files && req.files.cv) {
-  const result = await cloudinary.uploader.upload(
-    req.files.cv[0].path,
-    { folder: "graduates/cvs", resource_type: "raw" }
-  );
-  graduate["cv-url"] = result.secure_url;
-}
-
-
-    // لو فيه CV مرفوع
+    // رفع CV
     if (req.files && req.files.cv) {
       const result = await cloudinary.uploader.upload(
         req.files.cv[0].path,
-        { folder: "graduates/cvs", resource_type: "raw" } // raw عشان PDF أو DOC
+        { folder: "graduates/cvs", resource_type: "raw" }
       );
       graduate["cv-url"] = result.secure_url;
     }
+
     await user.save();
     await graduate.save();
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate profile updated successfully",
-      data: { graduate, user },
+      data: { graduate},
     });
   } catch (err) {
     return res.status(500).json({
@@ -237,6 +232,7 @@ if (req.files && req.files.cv) {
     });
   }
 };
+
 
 
 
