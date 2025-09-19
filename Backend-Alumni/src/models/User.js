@@ -7,7 +7,7 @@ id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   'last-name': { type: DataTypes.STRING },
   'national-id': { type: DataTypes.STRING, unique: true },
   email: { type: DataTypes.STRING, unique: true },
-  'phone-number': { type: DataTypes.STRING },
+  phoneNumber: { type: DataTypes.STRING, field: 'phone-number' },
   'hashed-password': { type: DataTypes.STRING },
   'birth-date': { type: DataTypes.DATE },
   'user-type': { type: DataTypes.ENUM('graduate', 'staff', 'admin') }

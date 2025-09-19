@@ -5,21 +5,36 @@ const User = require("../models/User");
 const Graduate = require("../models/Graduate");
 const Post = require("../models/Post");
 const PostImage = require("../models/PostImage");
+
+
+//create post
 const createPost = async (req, res) => {
   try {
     const { category, content, groupId, inLanding } = req.body;
-    const userId = req.user.id; // جاي من الـ middleware بتاع الـ auth
+    const userId = req.user.id; // جاي من الـ middleware
 
-    // هات بيانات اليوزر من الداتابيز
+    // هات بيانات اليوزر
     const user = await User.findByPk(userId);
 
     if (!user) {
-      return res.status(404).json({ status: "error", message: "User not found" });
+      return res.status(404).json({
+        status: "error",
+        message: "User not found",
+      });
     }
 
     // لو Graduate لازم يكون Active
-    if (user["user-type"] === "Graduate" && !user.isActive) {
-      return res.status(403).json({ status: "error", message: "Graduate is not active" });
+    if (user["user-type"] === "graduate") {
+      const graduate = await Graduate.findOne({
+        where: { graduate_id: user.id },
+      });
+
+      if (!graduate || graduate.status !== "active") {
+        return res.status(403).json({
+          status: "error",
+          message: "Graduate is not active",
+        });
+      }
     }
 
     // إنشاء البوست
@@ -32,19 +47,21 @@ const createPost = async (req, res) => {
     });
 
     return res.status(201).json({
-      status: "success",
+      status: HttpStatusHelper.SUCCESS,
       message: "Post created successfully",
       post: newPost,
     });
-
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ status: "error", message: "Something went wrong" });
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: error.message,
+    });
   }
 };
 
 
-
+//get all posts
 const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({

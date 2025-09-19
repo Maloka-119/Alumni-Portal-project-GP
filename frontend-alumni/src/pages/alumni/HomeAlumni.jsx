@@ -15,21 +15,39 @@ const HomeAlumni = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-const fetchPosts = async () => {
-  setLoading(true);
-  setError(null);
-  try {
-    const res = await API.get(`/posts?page=${page}&limit=5`);
-    console.log(res.data); 
-    if (res.data.data.length === 0) setHasMore(false);
-    else setPosts(prev => [...prev, ...res.data.data]);
-  } catch (err) {
-    console.error(err);
-    setError(t('errorFetchingPosts'));
-  } finally {
-    setLoading(false);
-  }
-};
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await API.get(`/posts?page=${page}&limit=5`);
+      console.log("Raw posts:", res.data);
+
+      // نعمل mapping عشان نخلي شكل الداتا زي اللي الفرونت مستنيها
+      const formatted = res.data.data.map(post => ({
+        id: post.post_id,
+        userName: post.author["full-name"],
+        avatar: "/default-avatar.png", // صورة افتراضية لحد ما يجي من الباك
+        date: new Date(post["created-at"]).toLocaleDateString(),
+        title: post.category, // مفيش title، ممكن نخليها category
+        content: post.content,
+        likes: 0,     // مش راجع من الباك
+        liked: false, // حالة اللايك
+        shares: 0,    // مش راجع من الباك
+        comments: [], // مفيش comments راجعة من الباك
+      }));
+
+      if (formatted.length === 0) setHasMore(false);
+      else setPosts(prev => [...prev, ...formatted]);
+
+    } catch (err) {
+      console.error(err);
+      setError(t('errorFetchingPosts'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => { fetchPosts(); }, [page]);
 
   const handleLike = async (postId) => {
@@ -56,12 +74,12 @@ const fetchPosts = async () => {
   const handleCommentSubmit = async (postId) => {
     const comment = commentInputs[postId];
     if (!comment) return;
-  
+
     try {
       await API.post(`/posts/${postId}/comment`, { content: comment });
       setPosts(posts.map(p =>
         p.id === postId
-          ? { ...p, comments: [...p.comments, { userName: 'You', content: comment,  avatar: p.avatar }] }
+          ? { ...p, comments: [...p.comments, { userName: 'You', content: comment, avatar: p.avatar }] }
           : p
       ));
       setCommentInputs({ ...commentInputs, [postId]: '' });
@@ -145,81 +163,87 @@ export default HomeAlumni;
 
 
 
-// import React, { useState, useContext } from 'react';
+
+
+//girl's code
+// import React, { useState, useEffect, useContext } from 'react';
 // import { Heart, MessageCircle, Share2 } from 'lucide-react';
-// import AdminPostsImg from './AdminPosts.jpeg';
 // import './AlumniAdminPosts.css';
 // import { DarkModeContext } from './DarkModeContext';
+// import { useTranslation } from 'react-i18next';
+// import API from '../../services/api';
 
 // const HomeAlumni = () => {
 //   const { darkMode } = useContext(DarkModeContext);
+//   const { t } = useTranslation();
+
+//   const [posts, setPosts] = useState([]);
 //   const [commentInputs, setCommentInputs] = useState({});
+//   const [page, setPage] = useState(1);
+//   const [hasMore, setHasMore] = useState(true);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+// const fetchPosts = async () => {
+//   setLoading(true);
+//   setError(null);
+//   try {
+//     const res = await API.get(`/posts?page=${page}&limit=5`);
+//     console.log(res.data); 
+//     if (res.data.data.length === 0) setHasMore(false);
+//     else setPosts(prev => [...prev, ...res.data.data]);
+//   } catch (err) {
+//     console.error(err);
+//     setError(t('errorFetchingPosts'));
+//   } finally {
+//     setLoading(false);
+//   }
+// };
+//   useEffect(() => { fetchPosts(); }, [page]);
 
-//   const initialPosts = [
-//     {
-//       id: 1,
-//       title: 'Welcome Alumni!',
-//       content: 'Join our upcoming networking event this Friday.',
-//       type: 'University',
-//       date: '2025-09-07',
-//       likes: 12,
-//       liked: false,
-//       shares: 3,
-//       showComments: false,
-//       comments: [
-//         { userName: 'Ahmed', content: 'Looking forward to it!', avatar: 'https://i.pravatar.cc/40?img=1' },
-//         { userName: 'Sara', content: 'I will be there.', avatar: 'https://i.pravatar.cc/40?img=2' }
-//       ],
-//       avatar: AdminPostsImg,
-//       userName: 'Alumni Portal – Helwan University'
-//     },
-//     {
-//       id: 2,
-//       title: 'Had a great weekend!',
-//       content: 'Visited the new cafe downtown, it was amazing!',
-//       type: null,
-//       date: '2025-09-08',
-//       likes: 5,
-//       liked: false,
-//       shares: 0,
-//       showComments: false,
-//       comments: [
-//         { userName: 'Laila', content: 'Looks fun!', avatar: 'https://i.pravatar.cc/40?img=4' }
-//       ],
-//       avatar: 'https://i.pravatar.cc/40?img=5',
-//       userName: 'Omar Khaled'
+//   const handleLike = async (postId) => {
+//     try {
+//       await API.post(`/posts/${postId}/like`);
+//       setPosts(posts.map(p =>
+//         p.id === postId && !p.liked ? { ...p, likes: p.likes + 1, liked: true } : p
+//       ));
+//     } catch (err) {
+//       console.error(err);
 //     }
-//   ];
-
-//   const [posts, setPosts] = useState(initialPosts);
-
-//   const handleLike = (postId) => {
-//     setPosts(posts.map(p => p.id === postId && !p.liked ? { ...p, likes: p.likes + 1, liked: true } : p));
 //   };
 
 //   const toggleComments = (postId) => {
-//     setPosts(posts.map(p => p.id === postId ? { ...p, showComments: !p.showComments } : p));
+//     setPosts(posts.map(p =>
+//       p.id === postId ? { ...p, showComments: !p.showComments } : p
+//     ));
 //   };
 
 //   const handleCommentChange = (postId, value) => {
 //     setCommentInputs({ ...commentInputs, [postId]: value });
 //   };
 
-//   const handleCommentSubmit = (postId) => {
+//   const handleCommentSubmit = async (postId) => {
 //     const comment = commentInputs[postId];
-//     if(!comment) return;
-//     setPosts(posts.map(p => p.id === postId ? { 
-//       ...p, 
-//       comments: [...p.comments, { userName: 'You', content: comment, avatar: 'https://i.pravatar.cc/40?img=10' }] 
-//     } : p));
-//     setCommentInputs({ ...commentInputs, [postId]: '' });
+//     if (!comment) return;
+  
+//     try {
+//       await API.post(`/posts/${postId}/comment`, { content: comment });
+//       setPosts(posts.map(p =>
+//         p.id === postId
+//           ? { ...p, comments: [...p.comments, { userName: 'You', content: comment,  avatar: p.avatar }] }
+//           : p
+//       ));
+//       setCommentInputs({ ...commentInputs, [postId]: '' });
+//     } catch (err) {
+//       console.error(err);
+//     }
 //   };
+
+//   if (loading && page === 1) return <p>{t('loadingPosts')}</p>;
+//   if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
 //   return (
 //     <div className={`uni-feed ${darkMode ? 'dark-mode' : ''}`}>
-//       <div className="uni-header">
-//         <h2>Home Feed</h2>
-//       </div>
+//       <div className="uni-header"><h2>{t('homeFeed')}</h2></div>
 
 //       <div className="uni-posts">
 //         {posts.map(post => (
@@ -232,11 +256,7 @@ export default HomeAlumni;
 //                   <div className="post-date">{post.date}</div>
 //                 </div>
 //               </div>
-//               {post.type === 'University' && (
-//                 <span className="post-type-badge">
-//                   {post.type}
-//                 </span>
-//               )}
+//               {post.type && <span className="post-type-badge">{post.type}</span>}
 //             </div>
 
 //             <div className="uni-post-body">
@@ -258,32 +278,38 @@ export default HomeAlumni;
 
 //             {post.showComments && (
 //               <div className="uni-comments-section">
-//                 <div className="uni-existing-comments">
-//                   {post.comments.map((c, idx) => (
-//                     <div key={idx} className="uni-comment-item">
-//                       <img src={c.avatar} alt={c.userName} className="uni-comment-avatar"/>
-//                       <div className="uni-comment-text">
-//                         <strong>{c.userName}</strong>: {c.content}
-//                       </div>
-//                     </div>
-//                   ))}
-//                 </div>
+//                 {post.comments.map((c, idx) => (
+//                   <div key={idx} className="uni-comment-item">
+//                     <img src={c.avatar} alt={c.userName} className="uni-comment-avatar"/>
+//                     <div className="uni-comment-text"><strong>{c.userName}</strong>: {c.content}</div>
+//                   </div>
+//                 ))}
 //                 <div className="uni-comment-input">
 //                   <input
 //                     type="text"
-//                     placeholder="Write a comment..."
+//                     placeholder={t('writeComment')}
 //                     value={commentInputs[post.id] || ''}
 //                     onChange={(e) => handleCommentChange(post.id, e.target.value)}
 //                   />
-//                   <button onClick={() => handleCommentSubmit(post.id)}>Send</button>
+//                   <button onClick={() => handleCommentSubmit(post.id)}>{t('send')}</button>
 //                 </div>
 //               </div>
 //             )}
 //           </div>
 //         ))}
 //       </div>
+
+//       {hasMore && (
+//         <div style={{ textAlign: 'center', margin: '20px' }}>
+//           <button onClick={() => setPage(page + 1)}>{t('loadMore')}</button>
+//         </div>
+//       )}
 //     </div>
 //   );
 // };
 
 // export default HomeAlumni;
+
+
+
+
