@@ -38,7 +38,6 @@ app.use(errorHandler);
 sequelize.sync().then(async () => {
   console.log('Database synced');
 
-  // تحقق إذا فيه أدمن موجود
   const existingAdmin = await User.findByPk(1);
   if (!existingAdmin) {
     const hashedPassword = await bcrypt.hash('admin123', 10);
