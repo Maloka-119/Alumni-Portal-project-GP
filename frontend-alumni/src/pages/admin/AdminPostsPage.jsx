@@ -3,6 +3,8 @@ import './AdminPostsPage.css';
 import AdminPostsImg from './AdminPosts.jpeg';
 import { Heart, MessageCircle, Share2, Image, FileText, Edit, Trash2, Link as LinkIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import API from "../../services/api";
+
 
 const AdminPostsPage = () => {
   const { t } = useTranslation();
@@ -15,81 +17,77 @@ const AdminPostsPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchTypes();
+    
     fetchPosts();
   }, []);
 
-  const fetchTypes = async () => {
-    try {
-      const res = await fetch('/api/post-types');
-      if (!res.ok) throw new Error('Failed to fetch types');
-      const data = await res.json();
-      setTypes(data);
-    } catch (err) {
-      console.error('Error fetching types', err);
-      setError(t('fetchTypesFailed'));
-    }
-  };
+  const POST_TYPES = [
+    "event",
+    "Jop opportunity",
+    "News",
+    "Internship",
+    "Discount",
+    "Library",
+    "general" // ده هيبقى الديفولت
+  ];
 
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch('/api/posts');
-      if (!res.ok) throw new Error('Failed to fetch posts');
-      const data = await res.json();
-      setPosts(data);
+      const res = await API.get("/posts");
+      setPosts(res.data.data); // حسب الريسبونس اللى بيرجعلك من الباك
     } catch (err) {
-      console.error('Error fetching posts', err);
-      setError(t('fetchPostsFailed'));
+      console.error("Error fetching posts", err);
+      setError(t("fetchPostsFailed"));
     } finally {
       setLoading(false);
     }
   };
+  
 
   const handleSubmitPost = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    formData.append('title', e.target.title.value);
-    formData.append('content', e.target.content.value);
-    formData.append('type', e.target.type.value);
-    formData.append('link', e.target.link.value);
-    if (e.target.image.files[0]) formData.append('image', e.target.image.files[0]);
-    if (e.target.file.files[0]) formData.append('file', e.target.file.files[0]);
-
+    // formData.append("title", e.target.title.value);
+    formData.append("content", e.target.content.value);
+    formData.append("type", e.target.type.value);
+    formData.append("link", e.target.link.value);
+    if (e.target.image.files[0]) formData.append("image", e.target.image.files[0]);
+    if (e.target.file.files[0]) formData.append("file", e.target.file.files[0]);
+  
     try {
       if (editingPostId) {
-        const res = await fetch(`/api/posts/${editingPostId}`, { method: 'PUT', body: formData });
-        if (!res.ok) throw new Error('Failed to update post');
+        await API.put(`/posts/${editingPostId}`, formData);
       } else {
-        const res = await fetch('/api/posts', { method: 'POST', body: formData });
-        if (!res.ok) throw new Error('Failed to create post');
+        await API.post("/posts", formData);
       }
       fetchPosts();
       setShowForm(false);
       setEditingPostId(null);
     } catch (err) {
-      console.error('Error saving post', err);
-      setError(t('savePostFailed'));
+      console.error("Error saving post", err);
+      setError(t("savePostFailed"));
     }
   };
+  
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`/api/posts/${id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Failed to delete post');
+      await API.delete(`/posts/${id}`);
       fetchPosts();
     } catch (err) {
-      console.error('Error deleting post', err);
-      setError(t('deletePostFailed'));
+      console.error("Error deleting post", err);
+      setError(t("deletePostFailed"));
     }
   };
+  
 
   const handleEdit = (post) => {
     setShowForm(true);
     setEditingPostId(post.id);
     setTimeout(() => {
-      document.querySelector('input[name="title"]').value = post.title;
+      // document.querySelector('input[name="title"]').value = post.title;
       document.querySelector('textarea[name="content"]').value = post.content;
       document.querySelector('select[name="type"]').value = post.type;
       document.querySelector('input[name="link"]').value = post.link || '';
@@ -112,11 +110,11 @@ const AdminPostsPage = () => {
 
           {showForm && (
             <form onSubmit={handleSubmitPost} className="compact-post-form">
-              <input name="title" placeholder={t('Post Title')} required className="input-field" />
+              {/* <input name="title" placeholder={t('Post Title')} required className="input-field" /> */}
               <textarea name="content" placeholder={t('Post Content')} required className="input-field" />
-              <select name="type" required className="input-field">
-                {types.map(ti => <option key={ti}>{ti}</option>)}
-              </select>
+              <select name="type" required className="input-field" defaultValue="general">
+            {POST_TYPES.map(ti => <option key={ti} value={ti}>{ti}</option>)}
+          </select>
               <input name="link" placeholder={t('Optional Link')} className="input-field" />
               <div className="optional-icons">
                 <label title={t('Add Image')}>
@@ -161,7 +159,7 @@ const AdminPostsPage = () => {
                   <span className="post-type-badge">{post.type}</span>
                 </div>
                 <div className="post-content">
-                  <h4>{post.title}</h4>
+                  {/* <h4>{post.title}</h4> */}
                   <p>{post.content}</p>
                   {post.imageUrl && <img src={post.imageUrl} alt="post" className="post-image" />}
                   {post.fileUrl && <a href={post.fileUrl} download className="post-file-link">{post.fileName}</a>}
