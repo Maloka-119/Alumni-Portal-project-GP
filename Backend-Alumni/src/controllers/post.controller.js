@@ -105,7 +105,36 @@ const getAllPosts = async (req, res) => {
   }
 };
 
+
+// get Categories
+const getCategories = async (req, res) => {
+  try {
+    // query مباشر من PostgreSQL علشان يجيب القيم بتاعت ENUM
+    const query = `
+      SELECT unnest(enum_range(NULL::"enum_Post_category")) AS category;
+    `;
+    const [results] = await Post.sequelize.query(query);
+
+    res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "All categories fetched successfully",
+      data: results.map(r => r.category),
+    });
+  } catch (error) {
+    console.error("Error details:", error);
+    res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: "Failed to fetch categories: " + error.message,
+      data: [],
+    });
+  }
+};
+
+module.exports = { getCategories };
+
+
 module.exports = {
   createPost,
   getAllPosts,
+ getCategories
 };
