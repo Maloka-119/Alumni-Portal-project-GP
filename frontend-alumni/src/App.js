@@ -6,15 +6,13 @@ import AdminPanel from './pages/admin/AdminPanel';
 import Login from './auth/Login';
 import AlumniPortal from './pages/alumni/AlumniPortal';
 import ProtectedRoute from './routes/ProtectedRoute';
+import StaffDashboard from './pages/staff/StaffDashboard'
 
   function App() {  
     const user = JSON.parse(localStorage.getItem('user'));
 
     return (
       <div className="App">
-
-
-
       <Router>
   <DarkModeProvider>
     <Routes>
@@ -26,6 +24,15 @@ import ProtectedRoute from './routes/ProtectedRoute';
         element={
           <ProtectedRoute user={user} requiredRole="admin">
             <AdminPanel />
+          </ProtectedRoute>
+        } 
+      />
+
+      <Route 
+        path="/helwan-alumni-portal/staff/dashboard" 
+        element={
+          <ProtectedRoute user={user} requiredRole="staff">
+            <StaffDashboard />
           </ProtectedRoute>
         } 
       />
