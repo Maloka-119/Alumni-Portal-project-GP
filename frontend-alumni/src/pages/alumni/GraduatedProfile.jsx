@@ -1,5 +1,3 @@
-
-
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import "./GradProfile.css";
@@ -97,7 +95,8 @@ function GraduatedProfile() {
       payload.append("skills", JSON.stringify(formData.skills || []));
       payload.append("faculty", formData.faculty || "");
       payload.append("graduationYear", formData.graduationYear || "");
-      payload.append("linkedlnLink", formData.linkedlnLink || "");
+      payload.append("linkedInLink", formData.linkedInLink || "");
+    payload.append("phoneNumber", formData.phoneNumber || "");
 
       // الملفات
       if (formData.profilePictureFile)
@@ -173,6 +172,20 @@ function GraduatedProfile() {
           <p>
             <strong>{t("currentJob")}:</strong> {formData.currentJob}
           </p>
+          <p>
+  <strong>{t("linkedIn")}:</strong>{" "}
+  {formData.linkedInLink ? (
+    <a href={formData.linkedInLink} target="_blank" rel="noopener noreferrer">
+      {formData.linkedInLink}
+    </a>
+  ) : (
+    t("noLinkedIn")
+  )}
+</p>
+
+<p>
+  <strong>{t("phoneNumber")}:</strong> {formData.phoneNumber || t("noPhone")}
+</p>
           <button className="edit-btnn" onClick={handleEdit}>
             {t("updateInfo")}
           </button>
@@ -250,6 +263,26 @@ function GraduatedProfile() {
               onChange={handleCvChange}
             />
           </label>
+          <label>
+  {t("linkedIn")}:
+  <input
+    type="text"
+    name="linkedInLink"
+    value={formData.linkedInLink || ""}
+    onChange={handleChange}
+  />
+</label>
+
+<label>
+  {t("phoneNumber")}:
+  <input
+    type="text"
+    name="phoneNumber"
+    value={formData.phoneNumber || ""}
+    onChange={handleChange}
+  />
+</label>
+
 
           <button onClick={handleSave}>{t("save")}</button>
           <button onClick={handleCancel}>{t("cancel")}</button>
