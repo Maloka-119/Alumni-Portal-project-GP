@@ -677,4 +677,33 @@
   background-color: #1e40af;
 }
 
+.load-more-btn {
+  background: #e5e7eb; /* رمادي فاتح */
+  color: #111;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.load-more-btn:hover {
+  background: #d1d5db; /* أغمق شوية */
+}
+
+.load-more-btn:active {
+  transform: scale(0.97);
+}
+
+/* Dark mode */
+.dark-mode .load-more-btn {
+  background: #374151; /* رمادي غامق */
+  color: #f9fafb;
+}
+
+.dark-mode .load-more-btn:hover {
+  background: #4b5563;
+}
 

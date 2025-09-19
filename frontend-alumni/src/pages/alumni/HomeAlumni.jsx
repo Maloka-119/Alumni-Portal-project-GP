@@ -4,6 +4,8 @@ import './AlumniAdminPosts.css';
 import { DarkModeContext } from './DarkModeContext';
 import { useTranslation } from 'react-i18next';
 import API from '../../services/api';
+import PROFILE  from './PROFILE.jpeg';
+import AdminPostsImg from './AdminPosts.jpeg';
 
 const HomeAlumni = () => {
   const { darkMode } = useContext(DarkModeContext);
@@ -21,25 +23,57 @@ const HomeAlumni = () => {
     setError(null);
     try {
       const res = await API.get(`/posts?page=${page}&limit=5`);
-      console.log("Raw posts:", res.data);
-
-      // نعمل mapping عشان نخلي شكل الداتا زي اللي الفرونت مستنيها
-      const formatted = res.data.data.map(post => ({
-        id: post.post_id,
-        userName: post.author["full-name"],
-        avatar: "/default-avatar.png", // صورة افتراضية لحد ما يجي من الباك
-        date: new Date(post["created-at"]).toLocaleDateString(),
-        title: post.category, // مفيش title، ممكن نخليها category
-        content: post.content,
-        likes: 0,     // مش راجع من الباك
-        liked: false, // حالة اللايك
-        shares: 0,    // مش راجع من الباك
-        comments: [], // مفيش comments راجعة من الباك
-      }));
-
-      if (formatted.length === 0) setHasMore(false);
-      else setPosts(prev => [...prev, ...formatted]);
-
+  
+      // const formatted = res.data.data.map(post => ({
+        
+      //   id: post.post_id,
+      //   userName: post.author["full-name"],
+      //   avatar: PROFILE,
+      //   date: new Date(post["created-at"]).toLocaleDateString(),
+      //   type: post.category,
+      //   content: post.content,
+      //   likes: 0,
+      //   liked: false,
+      //   shares: 0,
+      //   comments: [],
+      // }));
+      const formatted = res.data.data.map(post => {
+        let avatar;
+      
+        if (post.author["full-name"] === "Alumni Portal - Helwan university") {
+          avatar = AdminPostsImg;
+        } else if (post.author.avatar) {
+          avatar = post.author.avatar; 
+        } else {
+          avatar = PROFILE;
+        }
+      
+        return {
+          id: post.post_id,
+          userName: post.author["full-name"],
+          avatar,
+          date: new Date(post["created-at"]).toLocaleDateString(),
+          type: post.category,
+          content: post.content,
+          likes: 0,
+          liked: false,
+          shares: 0,
+          comments: [],
+        };
+      });
+      
+      
+  
+      
+      setPosts(prev => {
+        const existingIds = new Set(prev.map(p => p.id));
+        const newOnes = formatted.filter(p => !existingIds.has(p.id));
+        return [...prev, ...newOnes];
+      });
+  
+     
+      if (res.data.data.length < 5) setHasMore(false);
+  
     } catch (err) {
       console.error(err);
       setError(t('errorFetchingPosts'));
@@ -47,6 +81,7 @@ const HomeAlumni = () => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => { fetchPosts(); }, [page]);
 
@@ -110,7 +145,7 @@ const HomeAlumni = () => {
             </div>
 
             <div className="uni-post-body">
-              <h4>{post.title}</h4>
+              {/* <h4>{post.title}</h4> */}
               <p>{post.content}</p>
             </div>
 
@@ -150,10 +185,12 @@ const HomeAlumni = () => {
       </div>
 
       {hasMore && (
-        <div style={{ textAlign: 'center', margin: '20px' }}>
-          <button onClick={() => setPage(page + 1)}>{t('loadMore')}</button>
-        </div>
-      )}
+  <div style={{ textAlign: 'center', margin: '20px' }}>
+    <button className="load-more-btn" onClick={() => setPage(page + 1)}>
+      {t('loadMore')}
+    </button>
+  </div>
+)}
     </div>
   );
 };
