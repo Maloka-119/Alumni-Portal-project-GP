@@ -5,7 +5,6 @@ import { Heart, MessageCircle, Share2, Image, FileText, Edit, Trash2, Link as Li
 import { useTranslation } from 'react-i18next';
 import API from "../../services/api";
 
-
 const AdminPostsPage = () => {
   const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
@@ -17,26 +16,16 @@ const AdminPostsPage = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    
     fetchPosts();
+    fetchCategories();
   }, []);
-
-  const POST_TYPES = [
-    "event",
-    "Jop opportunity",
-    "News",
-    "Internship",
-    "Discount",
-    "Library",
-    "general" // ده هيبقى الديفولت
-  ];
 
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.get("/posts");
-      setPosts(res.data.data); // حسب الريسبونس اللى بيرجعلك من الباك
+      setPosts(res.data.data);
     } catch (err) {
       console.error("Error fetching posts", err);
       setError(t("fetchPostsFailed"));
@@ -44,12 +33,20 @@ const AdminPostsPage = () => {
       setLoading(false);
     }
   };
-  
+
+  const fetchCategories = async () => {
+    try {
+      const res = await API.get("/posts/categories");
+      setTypes(res.data.data || []); 
+    } catch (err) {
+      console.error("Error fetching categories", err);
+      setTypes([]);
+    }
+  };
 
   const handleSubmitPost = async (e) => {
     e.preventDefault();
     const formData = new FormData();
-    // formData.append("title", e.target.title.value);
     formData.append("content", e.target.content.value);
     formData.append("type", e.target.type.value);
     formData.append("link", e.target.link.value);
@@ -70,7 +67,6 @@ const AdminPostsPage = () => {
       setError(t("savePostFailed"));
     }
   };
-  
 
   const handleDelete = async (id) => {
     try {
@@ -81,13 +77,11 @@ const AdminPostsPage = () => {
       setError(t("deletePostFailed"));
     }
   };
-  
 
   const handleEdit = (post) => {
     setShowForm(true);
     setEditingPostId(post.id);
     setTimeout(() => {
-      // document.querySelector('input[name="title"]').value = post.title;
       document.querySelector('textarea[name="content"]').value = post.content;
       document.querySelector('select[name="type"]').value = post.type;
       document.querySelector('input[name="link"]').value = post.link || '';
@@ -104,37 +98,38 @@ const AdminPostsPage = () => {
 
       {loading && <p>{t('loadingPosts')}</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
-<div className="create-post-bar" onClick={() => setShowForm(true)}>
-            <input placeholder={t('Create new post...')} className="post-input" readOnly />
-          </div>
 
-          {showForm && (
-            <form onSubmit={handleSubmitPost} className="compact-post-form">
-              {/* <input name="title" placeholder={t('Post Title')} required className="input-field" /> */}
-              <textarea name="content" placeholder={t('Post Content')} required className="input-field" />
-              <select name="type" required className="input-field" defaultValue="general">
-            {POST_TYPES.map(ti => <option key={ti} value={ti}>{ti}</option>)}
+      <div className="create-post-bar" onClick={() => setShowForm(true)}>
+        <input placeholder={t('Create new post...')} className="post-input" readOnly />
+      </div>
+
+      {showForm && (
+        <form onSubmit={handleSubmitPost} className="compact-post-form">
+          <textarea name="content" placeholder={t('Post Content')} required className="input-field" />
+          <select name="type" required className="input-field" defaultValue={types[0] || ''}>
+            {types.map(ti => <option key={ti} value={ti}>{ti}</option>)}
           </select>
-              <input name="link" placeholder={t('Optional Link')} className="input-field" />
-              <div className="optional-icons">
-                <label title={t('Add Image')}>
-                  <input type="file" name="image" style={{ display: 'none' }} />
-                  <Image size={20} />
-                </label>
-                <label title={t('Add File')}>
-                  <input type="file" name="file" style={{ display: 'none' }} />
-                  <FileText size={20} />
-                </label>
-                <label title={t('Add Link')}>
-                  <LinkIcon size={20} />
-                </label>
-              </div>
-              <div className="form-buttons">
-                <button type="submit" className="submit-btn">{editingPostId ? t('Update') : t('Post')}</button>
-                <button type="button" className="cancel-btn" onClick={() => { setShowForm(false); setEditingPostId(null); }}>{t('Cancel')}</button>
-              </div>
-            </form>
-          )}
+          <input name="link" placeholder={t('Optional Link')} className="input-field" />
+          <div className="optional-icons">
+            <label title={t('Add Image')}>
+              <input type="file" name="image" style={{ display: 'none' }} />
+              <Image size={20} />
+            </label>
+            <label title={t('Add File')}>
+              <input type="file" name="file" style={{ display: 'none' }} />
+              <FileText size={20} />
+            </label>
+            <label title={t('Add Link')}>
+              <LinkIcon size={20} />
+            </label>
+          </div>
+          <div className="form-buttons">
+            <button type="submit" className="submit-btn">{editingPostId ? t('Update') : t('Post')}</button>
+            <button type="button" className="cancel-btn" onClick={() => { setShowForm(false); setEditingPostId(null); }}>{t('Cancel')}</button>
+          </div>
+        </form>
+      )}
+
       {!loading && !error && (
         <>
           <div className="filter-bar">
@@ -144,8 +139,6 @@ const AdminPostsPage = () => {
               {types.map(ti => <option key={ti}>{ti}</option>)}
             </select>
           </div>
-
-          
 
           <div className="posts-feed">
             {filteredPosts.map((post) => (
@@ -159,7 +152,6 @@ const AdminPostsPage = () => {
                   <span className="post-type-badge">{post.type}</span>
                 </div>
                 <div className="post-content">
-                  {/* <h4>{post.title}</h4> */}
                   <p>{post.content}</p>
                   {post.imageUrl && <img src={post.imageUrl} alt="post" className="post-image" />}
                   {post.fileUrl && <a href={post.fileUrl} download className="post-file-link">{post.fileName}</a>}
@@ -186,6 +178,7 @@ const AdminPostsPage = () => {
 };
 
 export default AdminPostsPage;
+
 
 
 
