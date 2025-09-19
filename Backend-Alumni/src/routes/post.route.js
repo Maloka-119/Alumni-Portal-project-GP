@@ -28,5 +28,6 @@ router.post(
 
 
 router.get("/", postController.getAllPosts);
+router.get("/categories", postController.getCategories);
 
 module.exports = router;
