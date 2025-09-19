@@ -60,7 +60,7 @@ const AdminPostsPage = () => {
       if (editingPostId) {
         await API.put(`/posts/${editingPostId}`, formData);
       } else {
-        await API.post("/posts", formData);
+        await API.post("/posts/create-post", formData);
       }
       fetchPosts();
       setShowForm(false);
