@@ -19,6 +19,7 @@ function GraduatedProfileView({ user }) {
 
         <p><strong>Faculty:</strong> {user.faculty || "Not provided"}</p>
         <p><strong>Graduation Year:</strong> {user.graduationYear}</p>
+        <p><strong>Phone Number:</strong> {user.phoneNumber || "noPhone"}</p>
         <p><strong>Bio:</strong> {user.bio || "No bio"}</p>
         <p>
           <strong>CV:</strong>{" "}
