@@ -37,15 +37,15 @@ const StaffManagement = () => {
   }, []);
 
   const toggleUserStatus = async (staffId) => {
-    const user = users.find(u => u['staff id'] === staffId);
+    const user = users.find(u => u['staff_id'] === staffId);
     if (!user) return;
 
-    const newStatus = user['status-to-login'] === 'Active' ? 'Inactive' : 'Active';
+    const newStatus = user['status-to-login'] === 'active' ? 'inactive' : 'active';
 
     try {
-      await API.patch(`/staff/${staffId}/status`, { status: newStatus });
+      await API.put(`/staff/${staffId}/status`, { status: newStatus });
       setUsers(users.map(u =>
-        u['staff id'] === staffId ? { ...u, 'status-to-login': newStatus } : u
+        u['staff_id'] === staffId ? { ...u, 'status-to-login': newStatus } : u
       ));
     } catch (err) {
       console.error('Failed to update status:', err);
@@ -93,9 +93,8 @@ const StaffManagement = () => {
         <label>Status: </label>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="All">{t("all")}</option>
-          <option value="Pending">{t("pending")}</option>
-          <option value="Active">{t("active")}</option>
-          <option value="Inactive">{t("inactive")}</option>
+          <option value="active">{t("active")}</option>
+          <option value="inactive">{t("inactive")}</option>
         </select>
       </div>
 
@@ -116,7 +115,7 @@ const StaffManagement = () => {
             </thead>
             <tbody>
               {filteredUsers.map(user => (
-                <tr key={user['staff id']} className="table-row">
+                <tr key={user['staff_id']} className="table-row">
                   <td>{user.User['first-name']} {user.User['last-name']}</td>
                   <td>{user.User['national-id']}</td>
                   <td>{user.Role || '-'}</td>
@@ -128,13 +127,13 @@ const StaffManagement = () => {
                   <td className="actions-cell">
                     <button
                       className="add-button"
-                      onClick={() => openRoleModal(user['staff id'])}
+                      onClick={() => openRoleModal(user['staff_id'])}
                     >
                       +
                     </button>
                     <button
-                      onClick={() => toggleUserStatus(user['staff id'])}
-                      className={`toggle-switch ${user['status-to-login'] === 'Active' ? 'active' : ''}`}
+                      onClick={() => toggleUserStatus(user['staff_id'])}
+                      className={`toggle-switch ${user['status-to-login'].toLowerCase() === 'active' ? 'active' : ''}`}
                     >
                       <span className="toggle-slider"></span>
                     </button>
