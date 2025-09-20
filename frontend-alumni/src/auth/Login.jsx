@@ -43,7 +43,7 @@ function Login() {
       if(user.userType === "admin") {
         navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
       } else if(user.userType === "graduate") {
-        navigate("/helwan-alumni-portal/alumni/dashboard", { replace: true });
+        navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
       }else if(user.userType === "staff") {
         navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
       }

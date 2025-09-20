@@ -38,7 +38,7 @@ import StaffDashboard from './pages/staff/StaffDashboard'
       />
 
       <Route 
-        path="/helwan-alumni-portal/alumni/dashboard"
+        path="/helwan-alumni-portal/graduate/dashboard"
         element={
           <ProtectedRoute user={user} requiredRole="graduate">
             <AlumniPortal />
