@@ -10,7 +10,9 @@ id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   phoneNumber: { type: DataTypes.STRING, field: 'phone-number' },
   'hashed-password': { type: DataTypes.STRING },
   'birth-date': { type: DataTypes.DATE },
-  'user-type': { type: DataTypes.ENUM('graduate', 'staff', 'admin') }
+  'user-type': { type: DataTypes.ENUM('graduate', 'staff', 'admin') },
+  'verification-code': { type: DataTypes.STRING, allowNull: true },
+  'verification-code-expires': { type: DataTypes.DATE, allowNull: true }
 }, {
   tableName: 'User',
   timestamps: false

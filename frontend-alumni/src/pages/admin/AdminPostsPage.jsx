@@ -38,8 +38,12 @@ const AdminPostsPage = () => {
     setError(null);
     try {
       const res = await API.get("/posts/admin");
+<<<<<<< HEAD
       console.log("Response from backend:", res.data); 
       setPosts(res.data?.data || []); 
+=======
+      setPosts(res.data.data);
+>>>>>>> 1bfbaab (Link admin posts 3nd admin)
     } catch (err) {
       console.error("Error fetching posts", err);
       setError(t("fetchPostsFailed"));

@@ -156,13 +156,17 @@ const forgotPassword = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  // Generate reset token (valid for 15 minutes)
-  const resetToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
-    expiresIn: "15m",
-  });
+  // هيكون كود من6 ارقام
+  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // 15د دقيقه وينتهي
+  const expirationTime = new Date();
+  expirationTime.setMinutes(expirationTime.getMinutes() + 15);
 
-  // Create reset link
-  const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+  // هيحفظ الكود ووقت الانتهاء في اليوزر
+  user['verification-code'] = verificationCode;
+  user['verification-code-expires'] = expirationTime;
+  await user.save();
 
   // Send email using nodemailer
   const transporter = nodemailer.createTransport({
@@ -176,52 +180,107 @@ const forgotPassword = asyncHandler(async (req, res) => {
   const mailOptions = {
     from: `"Alumni Portal" <${process.env.EMAIL_USER}>`,
     to: email,
-    subject: "Password Reset Request",
+    subject: "Password Reset Verification Code",
     html: `
-      <p>You requested a password reset.</p>
-      <p>Click the link below to reset your password (valid for 15 minutes):</p>
-      <a href="${resetLink}">${resetLink}</a>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Password Reset Request</h2>
+        <p>You requested a password reset for your Alumni Portal account.</p>
+        <p>Your verification code is:</p>
+        <div style="background-color: #f4f4f4; padding: 20px; text-align: center; margin: 20px 0;">
+          <h1 style="color: #007bff; font-size: 32px; margin: 0; letter-spacing: 5px;">${verificationCode}</h1>
+        </div>
+        <p><strong>This code will expire in 15 minutes.</strong></p>
+        <p>If you didn't request this password reset, please ignore this email.</p>
+        <hr style="margin: 30px 0;">
+        <p style="color: #666; font-size: 14px;">Helwan University Alumni Portal</p>
+      </div>
     `,
   };
 
   await transporter.sendMail(mailOptions);
 
-  res.json({ message: "Password reset link sent to your email" });
+  res.json({ message: "Verification code sent to your email" });
 });
 
-// ---------- RESET PASSWORD ----------
-// @desc    Reset user password using reset token
-// @route   POST /alumni-portal/reset-password
+// ---------- VERIFY CODE ----------
+// @desc    Verify the verification code
+// @route   POST /alumni-portal/verify-code
 // @access  Public
-const resetPassword = asyncHandler(async (req, res) => {
-  const { token, newPassword } = req.body;
+const verifyCode = asyncHandler(async (req, res) => {
+  const { email, code } = req.body;
 
-  if (!token || !newPassword) {
+  if (!email || !code) {
     res.status(400);
-    throw new Error("Token and new password are required");
+    throw new Error("Email and verification code are required");
   }
 
-  // verify token
-  let decoded;
-  try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
-  } catch (err) {
-    res.status(400);
-    throw new Error("Invalid or expired token");
-  }
-
-  // get user
-  const user = await User.findByPk(decoded.id);
+  const user = await User.findOne({ where: { email } });
   if (!user) {
     res.status(404);
     throw new Error("User not found");
+  }
+
+  // هيتحقق من الكود ووقت الانتهاء
+  if (!user['verification-code'] || !user['verification-code-expires']) {
+    res.status(400);
+    throw new Error("No verification code found. Please request a new one.");
+  }
+
+  if (new Date() > user['verification-code-expires']) {
+    res.status(400);
+    throw new Error("Verification code has expired. Please request a new one.");
+  }
+
+  if (user['verification-code'] !== code) {
+    res.status(400);
+    throw new Error("Invalid verification code");
+  }
+
+  res.json({ message: "Verification code is valid" });
+});
+
+// ---------- RESET PASSWORD ----------
+// @desc    Reset user password using verification code
+// @route   POST /alumni-portal/reset-password
+// @access  Public
+const resetPassword = asyncHandler(async (req, res) => {
+  const { email, code, newPassword } = req.body;
+
+  if (!email || !code || !newPassword) {
+    res.status(400);
+    throw new Error("Email, verification code, and new password are required");
+  }
+
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  // Check if code exists and is not expired
+  if (!user['verification-code'] || !user['verification-code-expires']) {
+    res.status(400);
+    throw new Error("No verification code found. Please request a new one.");
+  }
+
+  if (new Date() > user['verification-code-expires']) {
+    res.status(400);
+    throw new Error("Verification code has expired. Please request a new one.");
+  }
+
+  if (user['verification-code'] !== code) {
+    res.status(400);
+    throw new Error("Invalid verification code");
   }
 
   // hash new password
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(newPassword, salt);
 
+  // Update password and clear verification code
   user["hashed-password"] = hashedPassword;
+  user['verification-code'] = null;
+  user['verification-code-expires'] = null;
   await user.save();
 
   res.json({ message: "Password reset successfully" });
@@ -293,6 +352,7 @@ module.exports = {
   registerUser,
   loginUser,
   forgotPassword,
+  verifyCode,
   resetPassword,
   getUserProfile,
   updateUserProfile,
