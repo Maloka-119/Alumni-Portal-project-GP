@@ -4,18 +4,17 @@ import AdminPostsImg from './AdminPosts.jpeg';
 import './AlumniAdminPosts.css';
 import { DarkModeContext } from './DarkModeContext';
 import { useTranslation } from "react-i18next";
-
-const API_URL = 'http://localhost:5000/api';
+import API from '../../services/api'; // استدعاء الـ base URL الجديد
 
 const AlumniAdminPosts = () => {
   const { darkMode } = useContext(DarkModeContext);
   const [filterType, setFilterType] = useState('All');
   const [commentInputs, setCommentInputs] = useState({});
   const [posts, setPosts] = useState([]);
-  const [types, setTypes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { t } = useTranslation();
+  const [types, setTypes] = useState([]);
 
   useEffect(() => {
     fetchPosts();
@@ -26,10 +25,22 @@ const AlumniAdminPosts = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_URL}/posts`);
+      const res = await fetch(`${API}/posts/admin`);
       if (!res.ok) throw new Error('Failed to fetch posts');
       const data = await res.json();
-      setPosts(data);
+      // data.data هو اللي فيه البوستس
+      const formattedPosts = data.data.map(p => ({
+        id: p.post_id,
+        content: p.content,
+        date: p['created-at'],
+        authorName: "Alumni Portal – Helwan University",
+        likes: p.likes || 0,
+        liked: false,
+        comments: [],
+        shares: 0,
+        type: p.category
+      }));
+      setPosts(formattedPosts);
     } catch (err) {
       console.error(err);
       setError('Error fetching posts');
@@ -37,22 +48,20 @@ const AlumniAdminPosts = () => {
       setLoading(false);
     }
   };
-
   const fetchTypes = async () => {
     try {
-      const res = await fetch(`${API_URL}/post-types`);
+      const res = await fetch(`${API}/posts/categories`);
       if (!res.ok) throw new Error('Failed to fetch types');
       const data = await res.json();
-      setTypes(data);
+      setTypes(data.data); // هنا data.data هي مصفوفة الأنواع
     } catch (err) {
       console.error(err);
-      setError('Error fetching post types');
     }
   };
 
   const handleLike = async (postId) => {
     try {
-      await fetch(`${API_URL}/posts/${postId}/like`, { method: 'POST' });
+      await fetch(`${API}/posts/${postId}/like`, { method: 'POST' });
       setPosts(posts.map(p => p.id === postId ? { ...p, likes: p.likes + 1, liked: true } : p));
     } catch (err) {
       console.error(err);
@@ -71,7 +80,7 @@ const AlumniAdminPosts = () => {
     const comment = commentInputs[postId];
     if (!comment) return;
     try {
-      await fetch(`${API_URL}/posts/${postId}/comment`, {
+      await fetch(`${API}/posts/${postId}/comment`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: comment })
@@ -101,9 +110,10 @@ const AlumniAdminPosts = () => {
       <div className="uni-filter">
         <label>{t("uniAdminPosts_filterByType")}</label>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-          <option>{t("uniAdminPosts_all")}</option>
-          {types.map(t => <option key={t}>{t}</option>)}
-        </select>
+  <option>All</option>
+  {types.map(t => <option key={t}>{t}</option>)}
+</select>
+
       </div>
 
       <div className="uni-posts">
@@ -112,16 +122,15 @@ const AlumniAdminPosts = () => {
             <div className="post-header">
               <img src={AdminPostsImg} alt="profile" className="profile-pic" />
               <div className="post-header-info">
-                <strong>Alumni Portal – Helwan University</strong>
+                <strong>{post.authorName}</strong>
                 <div className="post-date">{post.date}</div>
               </div>
               <span className="post-type-badge">{post.type}</span>
             </div>
 
             <div className="uni-post-body">
-              <h4>{post.title}</h4>
+              {/* <h4>{post.title}</h4> */}
               <p>{post.content}</p>
-              {post.link && <a href={post.link} target="_blank" rel="noopener noreferrer" className="uni-post-link">{post.link}</a>}
             </div>
 
             <div className="uni-post-actions">
@@ -167,6 +176,7 @@ const AlumniAdminPosts = () => {
 };
 
 export default AlumniAdminPosts;
+
 
 
 
