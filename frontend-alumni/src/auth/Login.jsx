@@ -142,6 +142,15 @@ function Login() {
             <p className="forgot-link" onClick={() => setShowReset(true)}>
               {t("forgotPassword")}
             </p>
+            <p 
+            className="dont-have-account"
+            onClick={() => navigate("/helwan-alumni-portal/register")}
+            >
+              {t("dontHaveAccount")}
+            </p>
+
+
+          
           </form>
         </div>
         

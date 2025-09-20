@@ -39,7 +39,9 @@ const general = {
         passwordsNotMatch: "Passwords do not match",
       registrationSuccess: "Registration successful",
       registrationFailed: "Registration failed",
-      somethingWrong: "Something went wrong"
+      somethingWrong: "Something went wrong",
+      "dontHaveAccount": "Don't have an account? Create a new one"
+      
       }
     },
     ar: {
@@ -82,7 +84,8 @@ const general = {
         passwordsNotMatch: "كلمتا المرور غير متطابقتين",
         registrationSuccess: "تم التسجيل بنجاح",
         registrationFailed: "فشل التسجيل",
-        somethingWrong: "حدث خطأ ما"
+        somethingWrong: "حدث خطأ ما",
+        "dontHaveAccount": "ليس لديك حساب؟ انشئ حساب جديد"
       }
     }
   };
