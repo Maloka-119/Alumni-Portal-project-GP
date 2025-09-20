@@ -4,7 +4,7 @@ import AdminPostsImg from './AdminPosts.jpeg';
 import './AlumniAdminPosts.css';
 import { DarkModeContext } from './DarkModeContext';
 import { useTranslation } from "react-i18next";
-import API from '../../services/api'; // استدعاء الـ base URL الجديد
+import API from '../../services/api'; // base URL معرف مسبقًا
 
 const AlumniAdminPosts = () => {
   const { darkMode } = useContext(DarkModeContext);
@@ -25,11 +25,8 @@ const AlumniAdminPosts = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API}/posts/admin`);
-      if (!res.ok) throw new Error('Failed to fetch posts');
-      const data = await res.json();
-      // data.data هو اللي فيه البوستس
-      const formattedPosts = data.data.map(p => ({
+      const res = await API.get("/posts/admin");
+      const formattedPosts = res.data.data.map(p => ({
         id: p.post_id,
         content: p.content,
         date: p['created-at'],
@@ -48,12 +45,11 @@ const AlumniAdminPosts = () => {
       setLoading(false);
     }
   };
+
   const fetchTypes = async () => {
     try {
-      const res = await fetch(`${API}/posts/categories`);
-      if (!res.ok) throw new Error('Failed to fetch types');
-      const data = await res.json();
-      setTypes(data.data); // هنا data.data هي مصفوفة الأنواع
+      const res = await API.get("/posts/categories");
+      setTypes(res.data.data);
     } catch (err) {
       console.error(err);
     }
@@ -61,7 +57,7 @@ const AlumniAdminPosts = () => {
 
   const handleLike = async (postId) => {
     try {
-      await fetch(`${API}/posts/${postId}/like`, { method: 'POST' });
+      await API.post(`/posts/${postId}/like`);
       setPosts(posts.map(p => p.id === postId ? { ...p, likes: p.likes + 1, liked: true } : p));
     } catch (err) {
       console.error(err);
@@ -80,11 +76,7 @@ const AlumniAdminPosts = () => {
     const comment = commentInputs[postId];
     if (!comment) return;
     try {
-      await fetch(`${API}/posts/${postId}/comment`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: comment })
-      });
+      await API.post(`/posts/${postId}/comment`, { content: comment });
       setPosts(posts.map(p =>
         p.id === postId
           ? { ...p, comments: [...p.comments, { userName: 'You', content: comment, avatar: 'https://i.pravatar.cc/40?img=10' }] }
@@ -110,10 +102,9 @@ const AlumniAdminPosts = () => {
       <div className="uni-filter">
         <label>{t("uniAdminPosts_filterByType")}</label>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-  <option>All</option>
-  {types.map(t => <option key={t}>{t}</option>)}
-</select>
-
+          <option>All</option>
+          {types.map(t => <option key={t}>{t}</option>)}
+        </select>
       </div>
 
       <div className="uni-posts">
@@ -129,7 +120,6 @@ const AlumniAdminPosts = () => {
             </div>
 
             <div className="uni-post-body">
-              {/* <h4>{post.title}</h4> */}
               <p>{post.content}</p>
             </div>
 
@@ -176,6 +166,7 @@ const AlumniAdminPosts = () => {
 };
 
 export default AlumniAdminPosts;
+
 
 
 
