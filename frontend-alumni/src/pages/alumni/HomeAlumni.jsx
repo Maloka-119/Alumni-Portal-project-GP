@@ -42,8 +42,8 @@ const HomeAlumni = () => {
       
         if (post.author["full-name"] === "Alumni Portal - Helwan university") {
           avatar = AdminPostsImg;
-        } else if (post.author.avatar) {
-          avatar = post.author.avatar; 
+        } else if (post.author.image) {
+          avatar = post.author.image; 
         } else {
           avatar = PROFILE;
         }
@@ -51,7 +51,7 @@ const HomeAlumni = () => {
         return {
           id: post.post_id,
           userName: post.author["full-name"],
-          avatar,
+          avatar: avatar,
           date: new Date(post["created-at"]).toLocaleDateString(),
           type: post.category,
           content: post.content,
