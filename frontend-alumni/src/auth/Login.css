@@ -189,3 +189,21 @@
     width: 100%;
   }
 }
+.dont-have-account {
+  text-align: center;
+  margin-top: 15px;
+  color: #ffffff; /* أبيض */
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: inline-block;
+  position: relative;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5); /* ظل خفيف للنص */
+}
+
+.dont-have-account:hover {
+  color: #f0f0f0; /* أبيض فاتح عند hover */
+  text-decoration: underline;
+}
