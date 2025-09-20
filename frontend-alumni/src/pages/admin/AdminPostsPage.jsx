@@ -24,7 +24,7 @@ const AdminPostsPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await API.get("/posts");
+      const res = await API.get("/posts/admin");
       setPosts(res.data.data);
     } catch (err) {
       console.error("Error fetching posts", err);
@@ -83,14 +83,14 @@ const AdminPostsPage = () => {
     setEditingPostId(post.id);
     setTimeout(() => {
       document.querySelector('textarea[name="content"]').value = post.content;
-      document.querySelector('select[name="type"]').value = post.type;
+      document.querySelector('select[name="type"]').value = post.category;
       document.querySelector('input[name="link"]').value = post.link || '';
     }, 0);
   };
 
   const filteredPosts = filterType === t('All', { defaultValue: 'All' }) 
     ? posts 
-    : posts.filter(p => p.type === filterType);
+    : posts.filter(p => p.category === filterType);
 
   return (
     <div className="feed-container">
@@ -147,9 +147,9 @@ const AdminPostsPage = () => {
                   <img src={AdminPostsImg} alt="profile" className="profile-pic" />
                   <div className="post-header-info">
                     <strong>Alumni Portal – Helwan University</strong>
-                    <div className="post-date">{post.date}</div>
+                    <div className="post-date">{post['created-at']}</div>
                   </div>
-                  <span className="post-type-badge">{post.type}</span>
+                  <span className="post-type-badge">{post.category}</span>
                 </div>
                 <div className="post-content">
                   <p>{post.content}</p>
