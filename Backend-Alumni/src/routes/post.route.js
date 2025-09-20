@@ -25,9 +25,8 @@ router.post(
   postController.createPost
 );
 
-
-
 router.get("/", postController.getAllPosts);
 router.get("/categories", postController.getCategories);
+router.get("/admin", authMiddleware.protect, postController.getAdminPosts);
 
 module.exports = router;
