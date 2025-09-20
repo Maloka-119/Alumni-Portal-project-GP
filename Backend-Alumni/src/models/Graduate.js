@@ -33,5 +33,6 @@ const Graduate = sequelize.define(
 );
 
 Graduate.belongsTo(User, { foreignKey: "graduate_id" });
+User.hasOne(Graduate, { foreignKey: "graduate_id" });
 
 module.exports = Graduate;
