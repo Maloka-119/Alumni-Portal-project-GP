@@ -47,8 +47,8 @@ sequelize.sync().then(async () => {
       email: 'alumniportalhelwan@gmail.com',
       'hashed-password': hashedPassword,
       'user-type': 'admin',
-      'first-name': 'helwan',
-      'last-name': 'university',
+      'first-name': 'Alumni Portal -',
+      'last-name': ' Helwan university',
     });
 
     console.log('Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123');
