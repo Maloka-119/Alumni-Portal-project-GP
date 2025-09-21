@@ -22,7 +22,7 @@ const HomeAlumni = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await API.get(`/posts?page=${page}&limit=5`);
+      const res = await API.get(`/posts/user-posts?page=${page}&limit=5`);
   
       // const formatted = res.data.data.map(post => ({
         

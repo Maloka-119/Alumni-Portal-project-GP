@@ -26,7 +26,7 @@ router.post(
 );
 
 router.get("/", postController.getAllPosts);
-router.get("/", postController.getAllPostsOfUsers);
+router.get("/user-posts", postController.getAllPostsOfUsers);
 router.get("/categories", postController.getCategories);
 router.get("/admin", authMiddleware.protect, postController.getAdminPosts);
 router.get(

@@ -6,6 +6,7 @@ const User = require("../models/User");
 const Graduate = require("../models/Graduate");
 const Post = require("../models/Post");
 const PostImage = require("../models/PostImage");
+const Staff = require("../models/Staff");
 
 //create post
 const createPost = async (req, res) => {
@@ -67,11 +68,15 @@ const getAllPostsOfUsers = async (req, res) => {
       include: [
         {
           model: User,
-          attributes: ["id", "first-name", "last-name", "email"],
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
           include: [
             {
               model: Graduate,
-              attributes: ["profile-picture-url"], // الصورة من جدول Graduate
+              attributes: ["profile-picture-url"],
+            },
+            {
+              model: Staff,
+              attributes: ["status-to-login"], // مثال: ممكن تضيف اي عمود من staff زي الوظيفة
             },
           ],
         },
@@ -79,23 +84,32 @@ const getAllPostsOfUsers = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    const responseData = posts.map((post) => ({
-      post_id: post.post_id,
-      category: post.category,
-      content: post.content,
-      description: post.description,
-      "created-at": post["created-at"],
-      author: {
-        id: post.User.id,
-        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-        email: post.User.email,
-        image: post.User.Graduate
-          ? post.User.Graduate["profile-picture-url"]
-          : null, // لو staff أو ملوش صورة
-      },
-      "group-id": post["group-id"],
-      "in-landing": post["in-landing"],
-    }));
+    const responseData = posts.map((post) => {
+      let image = null;
+
+      if (post.User.Graduate) {
+        image = post.User.Graduate["profile-picture-url"];
+      } else if (post.User.Staff) {
+        image = null; // ممكن تحط عمود صورة staff لو موجود
+      }
+
+      return {
+        post_id: post.post_id,
+        category: post.category,
+        content: post.content,
+        description: post.description,
+        "created-at": post["created-at"],
+        author: {
+          id: post.User.id,
+          "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+          email: post.User.email,
+          type: post.User["user-type"],
+          image: image,
+        },
+        "group-id": post["group-id"],
+        "in-landing": post["in-landing"],
+      };
+    });
 
     res.status(200).json({
       status: "success",
@@ -111,6 +125,7 @@ const getAllPostsOfUsers = async (req, res) => {
     });
   }
 };
+
 const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
