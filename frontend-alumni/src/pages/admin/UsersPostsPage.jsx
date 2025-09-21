@@ -112,7 +112,8 @@ const [newComment, setNewComment] = useState('');
                 <div className="post-actions">
                   <button><Heart size={16} /> {post.likes}</button>
                   <button onClick={() => openComments(post)}>
-  <MessageCircle size={16} /> {post.comments.length}
+                  <MessageCircle size={16} /> {post.comments?.length || 0}
+
 </button>
                   <button><Share2 size={16} /> {post.shares}</button>
                 </div>
