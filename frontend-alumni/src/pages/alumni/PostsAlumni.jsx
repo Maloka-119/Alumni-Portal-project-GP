@@ -26,7 +26,7 @@ const PostsAlumni = ({ user: propUser }) => {
       try {
         setLoading(true);
         setError(null);
-        const res = await API.get('/posts/my-posts', {
+        const res = await API.get('/posts/graduate', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
