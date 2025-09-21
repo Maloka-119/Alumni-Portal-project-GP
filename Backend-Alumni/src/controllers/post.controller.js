@@ -61,13 +61,64 @@ const createPost = async (req, res) => {
 };
 
 //get all posts
+// const getAllPosts = async (req, res) => {
+//   try {
+//     const posts = await Post.findAll({
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "first-name", "last-name", "email"],
+//           include: [
+//             {
+//               model: Graduate,
+//               attributes: ["profile-picture-url"], // الصورة من جدول Graduate
+//             },
+//           ],
+//         },
+//       ],
+//       order: [["created-at", "DESC"]],
+//     });
+
+//     const responseData = posts.map((post) => ({
+//       post_id: post.post_id,
+//       category: post.category,
+//       content: post.content,
+//       description: post.description,
+//       "created-at": post["created-at"],
+//       author: {
+//         id: post.User.id,
+//         "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+//         email: post.User.email,
+//         image: post.User.Graduate
+//           ? post.User.Graduate["profile-picture-url"]
+//           : null, // لو staff أو ملوش صورة
+//       },
+//       "group-id": post["group-id"],
+//       "in-landing": post["in-landing"],
+//     }));
+
+//     res.status(200).json({
+//       status: "success",
+//       message: "All posts fetched successfully",
+//       data: responseData,
+//     });
+//   } catch (error) {
+//     console.error("Error details:", error);
+//     res.status(500).json({
+//       status: "error",
+//       message: "Failed to fetch posts: " + error.message,
+//       data: [],
+//     });
+//   }
+// };
 const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
       include: [
         {
           model: User,
-          attributes: ["id", "first-name", "last-name", "email"],
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+          where: { "user-type": "graduate" }, // ✅ شرط ان يكون Graduate فقط
           include: [
             {
               model: Graduate,
@@ -91,7 +142,7 @@ const getAllPosts = async (req, res) => {
         email: post.User.email,
         image: post.User.Graduate
           ? post.User.Graduate["profile-picture-url"]
-          : null, // لو staff أو ملوش صورة
+          : null, // لو ملوش صورة
       },
       "group-id": post["group-id"],
       "in-landing": post["in-landing"],
@@ -99,18 +150,42 @@ const getAllPosts = async (req, res) => {
 
     res.status(200).json({
       status: "success",
-      message: "All posts fetched successfully",
+      message: "Graduate posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
     console.error("Error details:", error);
     res.status(500).json({
       status: "error",
-      message: "Failed to fetch posts: " + error.message,
+      message: "Failed to fetch graduate posts: " + error.message,
       data: [],
     });
   }
 };
+
+// const getGraduatePosts = asyncHandler(async (req, res) => {
+//   try {
+//     const posts = await Post.findAll({
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "name", "user-type"],
+//           where: { "user-type": "graduate" }, // شرط ان يكون graduate فقط
+//         },
+//       ],
+//       order: [["createdAt", "DESC"]],
+//     });
+
+//     res.json({
+//       status: "success",
+//       message: "Graduate posts fetched successfully",
+//       data: posts,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching graduate posts:", error);
+//     res.status(500).json({ status: "error", message: "Server error" });
+//   }
+// });
 
 // get Categories
 const getCategories = async (req, res) => {
@@ -193,4 +268,5 @@ module.exports = {
   getAllPosts,
   getCategories,
   getAdminPosts,
+  // getGraduatePosts,
 };
