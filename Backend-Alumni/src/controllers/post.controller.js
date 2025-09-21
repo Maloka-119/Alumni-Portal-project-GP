@@ -60,57 +60,57 @@ const createPost = async (req, res) => {
   }
 };
 
-//get all posts
-// const getAllPosts = async (req, res) => {
-//   try {
-//     const posts = await Post.findAll({
-//       include: [
-//         {
-//           model: User,
-//           attributes: ["id", "first-name", "last-name", "email"],
-//           include: [
-//             {
-//               model: Graduate,
-//               attributes: ["profile-picture-url"], // الصورة من جدول Graduate
-//             },
-//           ],
-//         },
-//       ],
-//       order: [["created-at", "DESC"]],
-//     });
+// get all posts
+const getAllPostsOfUsers = async (req, res) => {
+  try {
+    const posts = await Post.findAll({
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email"],
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"], // الصورة من جدول Graduate
+            },
+          ],
+        },
+      ],
+      order: [["created-at", "DESC"]],
+    });
 
-//     const responseData = posts.map((post) => ({
-//       post_id: post.post_id,
-//       category: post.category,
-//       content: post.content,
-//       description: post.description,
-//       "created-at": post["created-at"],
-//       author: {
-//         id: post.User.id,
-//         "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-//         email: post.User.email,
-//         image: post.User.Graduate
-//           ? post.User.Graduate["profile-picture-url"]
-//           : null, // لو staff أو ملوش صورة
-//       },
-//       "group-id": post["group-id"],
-//       "in-landing": post["in-landing"],
-//     }));
+    const responseData = posts.map((post) => ({
+      post_id: post.post_id,
+      category: post.category,
+      content: post.content,
+      description: post.description,
+      "created-at": post["created-at"],
+      author: {
+        id: post.User.id,
+        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+        email: post.User.email,
+        image: post.User.Graduate
+          ? post.User.Graduate["profile-picture-url"]
+          : null, // لو staff أو ملوش صورة
+      },
+      "group-id": post["group-id"],
+      "in-landing": post["in-landing"],
+    }));
 
-//     res.status(200).json({
-//       status: "success",
-//       message: "All posts fetched successfully",
-//       data: responseData,
-//     });
-//   } catch (error) {
-//     console.error("Error details:", error);
-//     res.status(500).json({
-//       status: "error",
-//       message: "Failed to fetch posts: " + error.message,
-//       data: [],
-//     });
-//   }
-// };
+    res.status(200).json({
+      status: "success",
+      message: "All posts fetched successfully",
+      data: responseData,
+    });
+  } catch (error) {
+    console.error("Error details:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch posts: " + error.message,
+      data: [],
+    });
+  }
+};
 const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
@@ -261,6 +261,68 @@ const getAdminPosts = async (req, res) => {
     });
   }
 };
+
+const getGraduatePosts = async (req, res) => {
+  try {
+    // نتأكد إنه فعلاً Graduate
+    if (!req.user || req.user["user-type"] !== "graduate") {
+      return res.status(403).json({
+        status: "error",
+        message: "Not authorized as a graduate",
+        data: [],
+      });
+    }
+
+    // نجيب البوستات اللي author-id بتاعها = id اليوزر اللي عامل لوجن
+    const posts = await Post.findAll({
+      where: { "author-id": req.user.id },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"],
+            },
+          ],
+        },
+      ],
+      order: [["created-at", "DESC"]],
+    });
+
+    const responseData = posts.map((post) => ({
+      post_id: post.post_id,
+      category: post.category,
+      content: post.content,
+      description: post.description,
+      "created-at": post["created-at"],
+      author: {
+        id: post.User.id,
+        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+        email: post.User.email,
+        image: post.User.Graduate
+          ? post.User.Graduate["profile-picture-url"]
+          : null,
+      },
+      "group-id": post["group-id"],
+      "in-landing": post["in-landing"],
+    }));
+
+    return res.status(200).json({
+      status: "success",
+      message: "Graduate posts fetched successfully",
+      data: responseData,
+    });
+  } catch (error) {
+    console.error("Error fetching graduate posts:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to fetch graduate posts: " + error.message,
+      data: [],
+    });
+  }
+};
 // module.exports = { getCategories };
 
 module.exports = {
@@ -268,5 +330,6 @@ module.exports = {
   getAllPosts,
   getCategories,
   getAdminPosts,
-  // getGraduatePosts,
+  getGraduatePosts,
+  getAllPostsOfUsers,
 };
