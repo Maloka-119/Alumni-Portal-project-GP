@@ -20,19 +20,34 @@ const AdminPostsPage = () => {
     fetchCategories();
   }, []);
 
+  // const fetchPosts = async () => {
+  //   setLoading(true);
+  //   setError(null);
+  //   try {
+  //     const res = await API.get("/posts/admin");
+  //     setPosts(res.data.data);
+  //   } catch (err) {
+  //     console.error("Error fetching posts", err);
+  //     setError(t("fetchPostsFailed"));
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.get("/posts/admin");
-      setPosts(res.data.data);
+      console.log("Response from backend:", res.data); 
+      setPosts(res.data?.data || []); // 👈 لو undefined خليه array فاضي
     } catch (err) {
       console.error("Error fetching posts", err);
       setError(t("fetchPostsFailed"));
     } finally {
       setLoading(false);
     }
-  };
+  }; 
+  
 
   const fetchCategories = async () => {
     try {
@@ -163,7 +178,10 @@ const AdminPostsPage = () => {
                 </div>
                 <div className="post-actions">
                   <button><Heart size={16} /> {post.likes}</button>
-                  <button><MessageCircle size={16} /> {post.comments.length}</button>
+                  <button>
+  <MessageCircle size={16} /> {post.comments?.length || 0}
+</button>
+
                   <button><Share2 size={16} /> {post.shares}</button>
                   <button onClick={() => handleEdit(post)} className="edit-btn"><Edit size={16} /></button>
                   <button onClick={() => handleDelete(post.id)} className="delete-btn"><Trash2 size={16} /></button>
