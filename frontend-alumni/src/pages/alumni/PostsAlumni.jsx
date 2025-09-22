@@ -12,17 +12,17 @@ const PostsAlumni = ({ user: propUser }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [successMsg, setSuccessMsg] = useState(null);
-  const [newPost, setNewPost] = useState({ content: '', image: null, file: null, link: '', category: 'General' });
+  const [newPost, setNewPost] = useState({ content: '', image: null, file: null, link: '' , category: 'General' });
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [newComment, setNewComment] = useState('');
 
-  const user = propUser || JSON.parse(localStorage.getItem("user")) || null;
-  const token = user?.token || user?.accessToken;
+  const user = JSON.parse(localStorage.getItem("user")) || null;
+const token = localStorage.getItem("token"); 
 
   useEffect(() => {
     if (!token) return;
-
+  
     const fetchPosts = async () => {
       try {
         setLoading(true);
@@ -45,11 +45,12 @@ const PostsAlumni = ({ user: propUser }) => {
         );
       } catch (err) {
         setError(err.response?.data?.message || err.message);
+        setError(err.response?.data?.message || err.message);
       } finally {
         setLoading(false);
       }
     };
-
+  
     fetchPosts();
   }, [token]);
 
@@ -57,6 +58,8 @@ const PostsAlumni = ({ user: propUser }) => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
+
+    console.log("Submitting new post:", newPost);
 
     if (!token) {
       setError("You must be logged in to post");
@@ -82,15 +85,8 @@ const PostsAlumni = ({ user: propUser }) => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      const createdPost = {
-        ...res.data.data,
-        date: res.data.data['created-at'],
-        author: {
-          id: res.data.data.author.id,
-          name: res.data.data.author['full-name'],
-          photo: res.data.data.author.image || PROFILE
-        }
-      };
+      console.log("Post response:", res.data);
+      const createdPost = res.data.data;
 
       setPosts([createdPost, ...posts]);
       setSuccessMsg("Post created successfully");
@@ -99,6 +95,7 @@ const PostsAlumni = ({ user: propUser }) => {
       setShowLinkInput(false);
 
     } catch (err) {
+      console.error("Error creating post:", err.response?.data || err.message);
       setError(err.response?.data?.message || "Failed to create post");
     }
   };
@@ -116,7 +113,7 @@ const PostsAlumni = ({ user: propUser }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const updated = res.data.data;
-      setPosts(posts.map(p => (p.post_id === postId ? updated : p)));
+      setPosts(posts.map(p => (p.id === postId ? updated : p)));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
@@ -128,7 +125,7 @@ const PostsAlumni = ({ user: propUser }) => {
       await API.delete(`/posts/${postId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      setPosts(posts.filter(p => p.post_id !== postId));
+      setPosts(posts.filter(p => p.id !== postId));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
@@ -141,8 +138,8 @@ const PostsAlumni = ({ user: propUser }) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const updated = res.data.data;
-      setPosts(posts.map(p => (p.post_id === updated.post_id ? updated : p)));
-      if (selectedPost?.post_id === postId) setSelectedPost(updated);
+      setPosts(posts.map(p => (p.id === updated.id ? updated : p)));
+      if (selectedPost?.id === postId) setSelectedPost(updated);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
@@ -154,11 +151,11 @@ const PostsAlumni = ({ user: propUser }) => {
   const handleAddComment = async () => {
     if (!token || !newComment.trim() || !selectedPost) return;
     try {
-      const res = await API.post(`/posts/${selectedPost.post_id}/comment`, { content: newComment }, {
+      const res = await API.post(`/posts/${selectedPost.id}/comment`, { content: newComment }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const updatedPost = res.data.data;
-      setPosts(posts.map(p => (p.post_id === updatedPost.post_id ? updatedPost : p)));
+      setPosts(posts.map(p => (p.id === updatedPost.id ? updatedPost : p)));
       setSelectedPost(updatedPost);
       setNewComment('');
     } catch (err) {
@@ -236,12 +233,12 @@ const PostsAlumni = ({ user: propUser }) => {
 
           {!loading && posts.map(post => (
             <PostCard
-              key={post.post_id}
+              key={post.id}
               post={post}
-              onEdit={(content, link) => handleEdit(post.post_id, content, link)}
-              onDelete={() => handleDelete(post.post_id)}
+              onEdit={(content, link) => handleEdit(post.id, content, link)}
+              onDelete={() => handleDelete(post.id)}
               onOpenComments={() => openComments(post)}
-              onLike={() => handleLike(post.post_id)}
+              onLike={() => handleLike(post.id)}
             />
           ))}
 
