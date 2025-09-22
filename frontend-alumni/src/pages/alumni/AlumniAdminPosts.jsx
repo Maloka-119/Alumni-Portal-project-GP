@@ -4,7 +4,7 @@ import AdminPostsImg from './AdminPosts.jpeg';
 import './AlumniAdminPosts.css';
 import { DarkModeContext } from './DarkModeContext';
 import { useTranslation } from "react-i18next";
-import API from '../../services/api'; // base URL معرف مسبقًا
+import API from '../../services/api'; 
 
 const AlumniAdminPosts = () => {
   const { darkMode } = useContext(DarkModeContext);
@@ -26,10 +26,12 @@ const AlumniAdminPosts = () => {
     setError(null);
     try {
       const res = await API.get("/posts/admin");
-      const formattedPosts = res.data.data.map(p => ({
+      console.log("Response from backend:", res.data); 
+  
+      const formattedPosts = (res.data?.data || []).map(p => ({
         id: p.post_id,
         content: p.content,
-        date: p['created-at'],
+        date: p['created-at'], 
         authorName: "Alumni Portal – Helwan University",
         likes: p.likes || 0,
         liked: false,
@@ -37,14 +39,16 @@ const AlumniAdminPosts = () => {
         shares: 0,
         type: p.category
       }));
+  
       setPosts(formattedPosts);
     } catch (err) {
-      console.error(err);
-      setError('Error fetching posts');
+      console.error("Error fetching posts:", err.response?.data || err.message);
+      setError(err.response?.data?.message || 'Error fetching posts');
     } finally {
       setLoading(false);
     }
   };
+  
 
   const fetchTypes = async () => {
     try {
