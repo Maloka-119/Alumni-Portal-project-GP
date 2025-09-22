@@ -20,7 +20,6 @@ const PostsAlumni = ({ user: propUser }) => {
   const user = JSON.parse(localStorage.getItem("user")) || null;
 const token = localStorage.getItem("token"); 
 
-
   useEffect(() => {
     if (!token) return;
   
@@ -55,8 +54,6 @@ const token = localStorage.getItem("token");
   
     fetchPosts();
   }, [token]);
-  
-  
 
   const handleAddPost = async (e) => {
     e.preventDefault();
@@ -92,19 +89,7 @@ const token = localStorage.getItem("token");
       console.log("Post response:", res.data);
       const createdPost = res.data.data;
 
-const formattedPost = {
-  ...createdPost,
-  date: createdPost['created-at'],
-  comments: createdPost.comments || [],
-  author: createdPost.author ? {
-    id: createdPost.author.id,
-    name: createdPost.author['full-name'],
-    photo: createdPost.author.image || PROFILE
-  } : { id: 0, name: 'Unknown', photo: PROFILE }
-};
-
-setPosts(prevPosts => [formattedPost, ...prevPosts]);
-
+      setPosts(prevPosts => [createdPost, ...prevPosts]);
       setSuccessMsg("Post created successfully");
       setNewPost({ content: '', image: null, file: null, link: '', category: 'General' });
       setShowForm(false);
