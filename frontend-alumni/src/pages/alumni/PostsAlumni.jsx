@@ -20,110 +20,90 @@ const PostsAlumni = ({ user: propUser }) => {
   const user = JSON.parse(localStorage.getItem("user")) || null;
   const token = localStorage.getItem("token"); 
 
-useEffect(() => {
-  if (!token) return;
+  const formatPosts = (data) => {
+    return data
+      .sort((a, b) => new Date(b['created-at']) - new Date(a['created-at']))
+      .map(post => ({
+        ...post,
+        id: post.id,
+        date: post['created-at'],
+        comments: post.comments || [],
+        author: {
+          id: post.author?.id,
+          name: post.author?.['full-name'] || 'Unknown',
+          photo: post.author?.image || PROFILE
+        }
+      }));
+  };
 
   const fetchPosts = async () => {
+    if (!token) return;
     try {
       setLoading(true);
       setError(null);
       const res = await API.get('/posts/my-graduate-posts', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
-      setPosts(
-        res.data.data
-          .sort((a, b) => new Date(b['created-at']) - new Date(a['created-at']))
-          .map(post => ({
-            ...post,
-            id: post.id, // استخدم id من الريسبونس
-            date: post['created-at'],
-            comments: post.comments || [],
-            author: {
-              id: post.author?.id,
-              name: post.author?.['full-name'] || 'Unknown',
-              photo: post.author?.image || PROFILE
-            }
-          }))
-      );
+      setPosts(formatPosts(res.data.data));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
   };
+useEffect(() => {
+  if (!token) return;
 
-  fetchPosts();
+  fetchPosts(); // جلب البيانات مرة واحدة عند تحميل المكون
 }, [token]);
 
-const handleAddPost = async (e) => {
-  e.preventDefault();
-  setError(null);
-  setSuccessMsg(null);
 
-  if (!token) {
-    setError("You must be logged in to post");
-    return;
-  }
+  const handleAddPost = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMsg(null);
 
-  if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) {
-    setError("Post cannot be empty");
-    return;
-  }
+    if (!token) {
+      setError("You must be logged in to post");
+      return;
+    }
 
-  const formData = new FormData();
-  formData.append('content', newPost.content);
-  if (newPost.image) formData.append('image', newPost.image);
-  if (newPost.file) formData.append('file', newPost.file);
-  if (newPost.link) formData.append('link', newPost.link);
-  formData.append('category', newPost.category);
+    if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) {
+      setError("Post cannot be empty");
+      return;
+    }
 
-  try {
-    const res = await API.post('/posts/create-post', formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+    const formData = new FormData();
+    formData.append('content', newPost.content);
+    if (newPost.image) formData.append('image', newPost.image);
+    if (newPost.file) formData.append('file', newPost.file);
+    if (newPost.link) formData.append('link', newPost.link);
+    formData.append('category', newPost.category);
 
-    const createdPost = res.data.post;
+    try {
+      const res = await API.post('/posts/create-post', formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
-    // صياغة البوست الجديد باستخدام بيانات المستخدم اللي عامل اللوج إن
-    const formattedPost = {
-      id: createdPost.id,
-      content: createdPost.content,
-      date: createdPost['created-at'],
-      category: createdPost.category,
-      image: createdPost.image || null,
-      file: createdPost.file || null,
-      link: createdPost.link || null,
-      likes: 0,
-      shares: 0,
-      comments: [],
-      author: {
-        id: user?.id,
-        name: user?.fullName || 'Unknown',
-        photo: user?.image || PROFILE
-      }
-    };
+      // جلب البيانات الجديدة فورًا من السيرفر بدل الإضافة اليدوية
+      await fetchPosts();
 
-    // إضافة البوست فورًا في بداية الـ state
-    setPosts(prevPosts => [formattedPost, ...prevPosts]);
-    setSuccessMsg("Post created successfully");
-    setNewPost({ content: '', image: null, file: null, link: '', category: 'General' });
-    setShowForm(false);
-    setShowLinkInput(false);
+      setSuccessMsg("Post created successfully");
+      setNewPost({ content: '', image: null, file: null, link: '', category: 'General' });
+      setShowForm(false);
+      setShowLinkInput(false);
 
-  } catch (err) {
-    setError(err.response?.data?.message || "Failed to create post");
-  }
-};
-
-
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to create post");
+    }
+  };
 
   const categories = [
     { value: "General", label: "General" },
-    { value: "Ad", label: "Ad" },
+    { value: "Internship", label: "Internship" },
     { value: "Success story", label: "Success story" }
   ];
 
@@ -134,7 +114,7 @@ const handleAddPost = async (e) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const updated = res.data.data;
-      setPosts(posts.map(p => (p.id === updated.id ? updated : p)));
+      setPosts(posts.map(p => (p.id === updated.id ? formatPosts([updated])[0] : p)));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
@@ -159,8 +139,8 @@ const handleAddPost = async (e) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const updated = res.data.data;
-      setPosts(posts.map(p => (p.id === updated.id ? updated : p)));
-      if (selectedPost?.id === postId) setSelectedPost(updated);
+      setPosts(posts.map(p => (p.id === updated.id ? formatPosts([updated])[0] : p)));
+      if (selectedPost?.id === postId) setSelectedPost(formatPosts([updated])[0]);
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
@@ -176,8 +156,8 @@ const handleAddPost = async (e) => {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const updatedPost = res.data.data;
-      setPosts(posts.map(p => (p.id === updatedPost.id ? updatedPost : p)));
-      setSelectedPost(updatedPost);
+      setPosts(posts.map(p => (p.id === updatedPost.id ? formatPosts([updatedPost])[0] : p)));
+      setSelectedPost(formatPosts([updatedPost])[0]);
       setNewComment('');
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -252,7 +232,7 @@ const handleAddPost = async (e) => {
             </form>
           )}
 
-          {!loading && posts.length > 0 && posts.filter(p => p.id).map(post => (
+          {!loading && posts.map(post => (
             <PostCard
               key={post.id}
               post={post}
