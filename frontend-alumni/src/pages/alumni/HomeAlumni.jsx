@@ -59,7 +59,7 @@ const HomeAlumni = () => {
           id: post.id,
           userName: post.author["full-name"],
           avatar: avatar,
-          date: new Date(post['created-at']).toLocaleDateString(),
+          date: new Date(post['created-at']).toLocaleString(),
           type: post.category,
           isPortal: post.author["full-name"] === "Alumni Portal - Helwan university",
           content: post.content,

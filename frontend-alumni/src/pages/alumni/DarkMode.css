@@ -407,3 +407,24 @@
 .dark .comment-input button:hover {
   background-color: #2563eb;
 }
+
+/* Dark Mode Select */
+.dark .uni-category-select select {
+  background-color: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+}
+
+.dark .uni-category-select select:hover {
+  background-color: #374151;
+  border-color: #10b981;
+}
+
+.dark .uni-category-select select:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.4);
+}
+
+.dark .uni-category-select label {
+  color: #10b981;
+}
