@@ -47,7 +47,7 @@ const HomeAlumni = () => {
         console.log("Mapping post:", post); // 🔹 هنا هتشوف كل بوست قبل ما يتعدل
         let avatar;
       
-        if (post.author["full-name"] === "Alumni Portal - Helwan university") {
+        if (post.author["full-name"] === "Alumni Portal - Helwan University") {
           avatar = AdminPostsImg;
         } else if (post.author.image) {
           avatar = post.author.image; 
@@ -61,7 +61,7 @@ const HomeAlumni = () => {
           avatar: avatar,
           date: new Date(post['created-at']).toLocaleString(),
           type: post.category,
-          isPortal: post.author["full-name"] === "Alumni Portal - Helwan university",
+          isPortal: post.author["full-name"] === "Alumni Portal - Helwan University",
           content: post.content,
           likes: 0,
           liked: false,
