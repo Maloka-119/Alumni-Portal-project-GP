@@ -47,11 +47,19 @@ sequelize.sync().then(async () => {
 
     await User.create({
       id: 1,
+      // <<<<<<< HEAD
       email: "alumniportalhelwan@gmail.com",
       "hashed-password": hashedPassword,
       "user-type": "admin",
       "first-name": "Alumni Portal -",
       "last-name": " Helwan university",
+      // =======
+      //       email: 'alumniportalhelwan@gmail.com',
+      //       'hashed-password': hashedPassword,
+      //       'user-type': 'admin',
+      //       'first-name': 'Alumni Portal -',
+      //       'last-name': ' Helwan University',
+      // >>>>>>> 87aa552bd646488b539d7ebdda30e6fd16f6a966
     });
 
     console.log(
