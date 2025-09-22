@@ -33,7 +33,7 @@ const createPost = async (req, res) => {
       if (!graduate || graduate.status !== "active") {
         return res.status(403).json({
           status: "error",
-          message: "Graduate is not active",
+          message: "You are denied from creating a post",
         });
       }
     }
