@@ -307,12 +307,13 @@ const getGraduatePosts = async (req, res) => {
     });
 
     const responseData = posts.map((post) => ({
-      post_id: post.post_id,
+      id: post.post_id,
       category: post.category,
       content: post.content,
       description: post.description,
       "created-at": post["created-at"],
       author: {
+        // غيري من "username" إلى "author"
         id: post.User.id,
         "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
         email: post.User.email,
@@ -322,6 +323,9 @@ const getGraduatePosts = async (req, res) => {
       },
       "group-id": post["group-id"],
       "in-landing": post["in-landing"],
+      likes: post.likes || 0, // أضيفي
+      shares: post.shares || 0, // أضيفي
+      comments: post.comments || [], // أضيفي
     }));
 
     return res.status(200).json({

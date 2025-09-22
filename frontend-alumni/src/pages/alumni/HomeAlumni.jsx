@@ -22,7 +22,13 @@ const HomeAlumni = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log("Fetching posts..."); // 🔹 بداية الفانكشن
       const res = await API.get(`/posts/user-posts?page=${page}&limit=5`);
+
+      console.log("Response from API:", res); // 🔹 هنا هتشوف الـ response كامل
+      
+
+
   
       // const formatted = res.data.data.map(post => ({
         
@@ -38,6 +44,7 @@ const HomeAlumni = () => {
       //   comments: [],
       // }));
       const formatted = res.data.data.map(post => {
+        console.log("Mapping post:", post); // 🔹 هنا هتشوف كل بوست قبل ما يتعدل
         let avatar;
       
         if (post.author["full-name"] === "Alumni Portal - Helwan university") {
@@ -49,10 +56,10 @@ const HomeAlumni = () => {
         }
       
         return {
-          id: post.post_id,
+          id: post.id,
           userName: post.author["full-name"],
           avatar: avatar,
-          date: new Date(post["created-at"]).toLocaleDateString(),
+          date: new Date(post['created-at']).toLocaleDateString(),
           type: post.category,
           content: post.content,
           likes: 0,

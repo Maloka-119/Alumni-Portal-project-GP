@@ -20,18 +20,33 @@ const PostsAlumni = ({ user: propUser }) => {
   const token = user?.token;
 
   useEffect(() => {
-    if (!token) return; // exit if no token
-
+    if (!token) return;
+  
     const fetchPosts = async () => {
       try {
         setLoading(true);
         setError(null);
-        const res = await API.get('/posts/graduate', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
+  
+        // ✅ هنا نغير المسار للـ graduate posts
+        const res = await API.get('/posts/my-graduate-posts', {
+          headers: { 'Authorization': `Bearer ${token}` }
         });
-        setPosts(res.data.data.sort((a, b) => new Date(b.date) - new Date(a.date)));
+  
+        // 🔹 ترتيب حسب التاريخ
+        setPosts(
+          res.data.data
+            .sort((a, b) => new Date(b['created-at']) - new Date(a['created-at']))
+            .map(post => ({
+              ...post,
+              date: post['created-at'], // حسب اللي بيجبه backend
+              user: {
+                ...post.author,
+                photo: post.author.image || 'default-profile.png', // avatar
+                name: post.author['full-name']
+              }
+            }))
+        );
+  
       } catch (err) {
         setError(err.response?.data?.message || err.message);
       } finally {

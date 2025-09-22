@@ -29,8 +29,9 @@ router.get("/", postController.getAllPosts);
 router.get("/user-posts", postController.getAllPostsOfUsers);
 router.get("/categories", postController.getCategories);
 router.get("/admin", authMiddleware.protect, postController.getAdminPosts);
+// route جديد مخصوص للفانكشن الجديدة
 router.get(
-  "/graduate",
+  "/my-graduate-posts",
   authMiddleware.protect,
   postController.getGraduatePosts
 );
