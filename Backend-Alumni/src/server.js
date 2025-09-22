@@ -32,30 +32,35 @@ app.use("/alumni-portal/staff", staffRoutes);
 const authRoutes = require("./routes/auth.route");
 app.use("/alumni-portal", authRoutes);
 
+const groupRoutes = require("./routes/group.route");
+app.use("/alumni-portal", groupRoutes);
+
 app.use(errorHandler);
 
 // sync DB
 sequelize.sync().then(async () => {
-  console.log('Database synced');
+  console.log("Database synced");
 
   const existingAdmin = await User.findByPk(1);
   if (!existingAdmin) {
-    const hashedPassword = await bcrypt.hash('admin123', 10);
+    const hashedPassword = await bcrypt.hash("admin123", 10);
 
     await User.create({
       id: 1,
-      email: 'alumniportalhelwan@gmail.com',
-      'hashed-password': hashedPassword,
-      'user-type': 'admin',
-      'first-name': 'Alumni Portal -',
-      'last-name': ' Helwan university',
+      email: "alumniportalhelwan@gmail.com",
+      "hashed-password": hashedPassword,
+      "user-type": "admin",
+      "first-name": "Alumni Portal -",
+      "last-name": " Helwan university",
     });
 
-    console.log('Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123');
+    console.log(
+      "Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123"
+    );
 
     // ضبط الـ sequence بحيث أي User جديد يبدأ من ID = 2
     await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
-    console.log('User sequence reset to start from 2');
+    console.log("User sequence reset to start from 2");
   }
 });
 
