@@ -61,6 +61,7 @@ const HomeAlumni = () => {
           avatar: avatar,
           date: new Date(post['created-at']).toLocaleDateString(),
           type: post.category,
+          isPortal: post.author["full-name"] === "Alumni Portal - Helwan university",
           content: post.content,
           likes: 0,
           liked: false,
@@ -145,10 +146,21 @@ const HomeAlumni = () => {
                 <img src={post.avatar} alt={post.userName} className="profile-pic" />
                 <div className="post-header-info" style={{ marginLeft: '10px' }}>
                   <strong>{post.userName}</strong>
-                  <div className="post-date">{post.date}</div>
+                  <div className="post-date">
+  {post.date}
+  {!post.isPortal && post.type && (
+    <span style={{ marginLeft: "8px", color: "#555", fontSize: "0.9em" }}>
+      {post.type}
+    </span>
+  )}
+</div>
+
                 </div>
               </div>
-              {post.type && <span className="post-type-badge">{post.type}</span>}
+              {post.isPortal && post.type && (
+  <span className="post-type-badge">{post.type}</span>
+)}
+
             </div>
 
             <div className="uni-post-body">
@@ -203,12 +215,3 @@ const HomeAlumni = () => {
 };
 
 export default HomeAlumni;
-
-
-
-
-
-
-
-
-
