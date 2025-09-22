@@ -228,12 +228,12 @@ const getCategories = async (req, res) => {
 const getAdminPosts = async (req, res) => {
   try {
     // نتأكد إنه فعلاً Admin
-    if (!req.user || req.user["user-type"] !== "admin") {
-      return res.status(403).json({
-        status: "error",
-        message: "Not authorized as an admin",
-      });
-    }
+    // if (!req.user || req.user["user-type"] !== "admin") {
+    //   return res.status(403).json({
+    //     status: "error",
+    //     message: "Not authorized as an admin",
+    //   });
+    // }
 
     // نجيب البوستات اللي الـ author-id بتاعها = id الأدمن
     const posts = await Post.findAll({
