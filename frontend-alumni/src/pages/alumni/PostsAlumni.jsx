@@ -36,6 +36,7 @@ const token = localStorage.getItem("token");
             .map(post => ({
               ...post,
               date: post['created-at'],
+              comments: post.comments || [],
               author: {
                 id: post.author.id,
                 name: post.author['full-name'],
@@ -88,7 +89,7 @@ const token = localStorage.getItem("token");
       console.log("Post response:", res.data);
       const createdPost = res.data.data;
 
-      setPosts([createdPost, ...posts]);
+      setPosts(prevPosts => [createdPost, ...prevPosts]);
       setSuccessMsg("Post created successfully");
       setNewPost({ content: '', image: null, file: null, link: '', category: 'General' });
       setShowForm(false);
@@ -231,16 +232,17 @@ const token = localStorage.getItem("token");
             </form>
           )}
 
-          {!loading && posts.map(post => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onEdit={(content, link) => handleEdit(post.id, content, link)}
-              onDelete={() => handleDelete(post.id)}
-              onOpenComments={() => openComments(post)}
-              onLike={() => handleLike(post.id)}
-            />
-          ))}
+{!loading && posts.length > 0 && posts.filter(p => p.id).map(post => (
+  <PostCard
+    key={post.id}
+    post={post}
+    onEdit={(content, link) => handleEdit(post.id, content, link)}
+    onDelete={() => handleDelete(post.id)}
+    onOpenComments={() => openComments(post)}
+    onLike={() => handleLike(post.id)}
+  />
+))}
+
 
           {selectedPost && (
             <div className="comments-modal">
@@ -293,7 +295,7 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
     <div className="uni-post-card">
       <div className="uni-post-header">
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <img src={post.author?.photo || PROFILE }/>
+          <img src={post.author?.photo || PROFILE } className="profile-pic" />
           <strong>{post.author?.name || t('unknown')}</strong>
           <div className="uni-post-date">
             {new Date(post.date).toLocaleString()} - {post.category}
