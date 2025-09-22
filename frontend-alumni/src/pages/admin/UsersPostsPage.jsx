@@ -90,9 +90,12 @@ const [newComment, setNewComment] = useState('');
               <div key={post.id} className="post-card">
                 <div className="post-header">
                   <div className="post-header-info">
-                    <img src={post.profileImageUrl} alt="profile" className="profile-pic" />
-                    <strong>{post.username}</strong>
-                    <div className="post-date">{post.date}</div>
+                    <img src={post.author.image || PROFILE} alt="profile" className="profile-pic" />
+                    <strong>{post.author["full-name"]}</strong>
+                    <div className="post-date">
+                      {new Date(post["created-at"]).toLocaleString()} - {post.category}
+                    </div>
+
                   </div>
                   <button onClick={() => handleHide(post.id)} className="hide-btn-top"><EyeOff size={16} /></button>
                 </div>
@@ -139,7 +142,6 @@ const [newComment, setNewComment] = useState('');
     </div>
   </div>
 )}
-
               </div>
             )
           ))}
