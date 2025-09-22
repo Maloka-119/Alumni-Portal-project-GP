@@ -11,6 +11,7 @@ const PostsAlumni = ({ user: propUser }) => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [successMsg, setSuccessMsg] = useState(null);
   const [newPost, setNewPost] = useState({ content: '', image: null, file: null, link: '' , category: 'General' });
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -40,10 +41,8 @@ const PostsAlumni = ({ user: propUser }) => {
                 name: post.author['full-name'],
                 photo: post.author.image || PROFILE 
               }
-              
             }))
         );
-  
       } catch (err) {
         setError(err.response?.data?.message || err.message);
       } finally {
@@ -56,8 +55,20 @@ const PostsAlumni = ({ user: propUser }) => {
 
   const handleAddPost = async (e) => {
     e.preventDefault();
-    if (!token) return;
-    if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) return;
+    setError(null);
+    setSuccessMsg(null);
+
+    console.log("Submitting new post:", newPost);
+
+    if (!token) {
+      setError("You must be logged in to post");
+      return;
+    }
+
+    if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) {
+      setError("Post cannot be empty");
+      return;
+    }
 
     const formData = new FormData();
     formData.append('content', newPost.content);
@@ -73,12 +84,18 @@ const PostsAlumni = ({ user: propUser }) => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      setPosts([res.data, ...posts]);
-      setNewPost({ content: '', image: null, file: null, link: '' });
+      console.log("Post response:", res.data);
+      const createdPost = res.data.data;
+
+      setPosts([createdPost, ...posts]);
+      setSuccessMsg("Post created successfully");
+      setNewPost({ content: '', image: null, file: null, link: '', category: 'General' });
       setShowForm(false);
       setShowLinkInput(false);
+
     } catch (err) {
-      setError(err.response?.data?.message || err.message);
+      console.error("Error creating post:", err.response?.data || err.message);
+      setError(err.response?.data?.message || "Failed to create post");
     }
   };
 
@@ -152,6 +169,11 @@ const PostsAlumni = ({ user: propUser }) => {
         <>
           <h2 className="uni-header">{t('myPosts')}</h2>
 
+          {successMsg && <div style={{ color: 'green' }}>{successMsg}</div>}
+          {error && <div style={{ color: 'red' }}>{error}</div>}
+          {loading && <div>{t('loadingPosts')}</div>}
+          {!loading && posts.length === 0 && <div>{t('noPosts')}</div>}
+
           <div className="am-create-bar" onClick={() => setShowForm(true)}>
             <input placeholder={t('createNewPost')} readOnly />
           </div>
@@ -164,25 +186,22 @@ const PostsAlumni = ({ user: propUser }) => {
                 onChange={(e) => setNewPost({ ...newPost, content: e.target.value })}
                 rows={4}
               />
-              {/* category select */}
-  <div className="uni-category-select">
-    <label>Category:</label>
-    <select
-      value={newPost.category}
-      onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
-    >
-      {categories.map(c => (
-        <option key={c.value} value={c.value}>
-          {c.label}
-        </option>
-      ))}
-    </select>
-    {newPost.category === "Success story" && (
-      <small style={{ color: "#555" }}>
-        If you choose this, it means you agree that the post will appear on the landing page
-      </small>
-    )}
-  </div>
+              <div className="uni-category-select">
+                <label>Category:</label>
+                <select
+                  value={newPost.category}
+                  onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
+                >
+                  {categories.map(c => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+                {newPost.category === "Success story" && (
+                  <small style={{ color: "#555" }}>
+                    If you choose this, it means you agree that the post will appear on the landing page
+                  </small>
+                )}
+              </div>
 
               {showLinkInput && (
                 <input
@@ -211,10 +230,6 @@ const PostsAlumni = ({ user: propUser }) => {
             </form>
           )}
 
-          {error && <div style={{ color: 'red' }}>{t('error')}: {error}</div>}
-          {loading && <div>{t('loadingPosts')}</div>}
-          {!loading && posts.length === 0 && <div>{t('noPosts')}</div>}
-
           {!loading && posts.map(post => (
             <PostCard
               key={post.id}
@@ -236,7 +251,7 @@ const PostsAlumni = ({ user: propUser }) => {
                 <div className="comments-list">
                   {selectedPost.comments.map(c => (
                     <div key={c.id} className="comment-item">
-                      <img src={c.user?.photo ||PROFILE } alt="avatar" className="comment-avatar" />
+                      <img src={c.user?.photo || PROFILE } alt="avatar" className="comment-avatar" />
                       <div className="comment-text">
                         <strong>{c.user?.name || t('unknown')}</strong>
                         <p>{c.content}</p>
@@ -277,12 +292,11 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
     <div className="uni-post-card">
       <div className="uni-post-header">
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <img src={post.author?.photo || PROFILE }/>
-<strong>{post.author?.name || t('unknown')}</strong>
-<div className="uni-post-date">
-  {new Date(post.date).toLocaleString()} - {post.category}
-</div>
-
+          <img src={post.author?.photo || PROFILE }/>
+          <strong>{post.author?.name || t('unknown')}</strong>
+          <div className="uni-post-date">
+            {new Date(post.date).toLocaleString()} - {post.category}
+          </div>
         </div>
         <div className="post-actions-dropdown">
           <button className="more-btn" onClick={() => setOpenDropdown(!openDropdown)}>
