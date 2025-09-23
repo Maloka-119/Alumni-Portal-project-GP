@@ -29,5 +29,9 @@ router.get(
   authMiddleware.protect,
   groupController.getGroupMembersCount
 );
+// join 
+router.post("/groups/join", authMiddleware.protect, groupController.joinGroup);
+// leave
+router.delete("/groups/leave/:groupId", authMiddleware.protect, groupController.leaveGroup);
 
 module.exports = router;

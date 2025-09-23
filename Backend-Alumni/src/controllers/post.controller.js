@@ -1,6 +1,6 @@
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 const Comment = require("../models/Comment");
-6;
+const GroupMember = require("../models/GroupMember");
 const Like = require("../models/Like");
 const User = require("../models/User");
 const Graduate = require("../models/Graduate");
@@ -36,6 +36,23 @@ const createPost = async (req, res) => {
           status: HttpStatusHelper.ERROR,
           message: "You are denied from creating a post",
         });
+      }
+
+      // لو فيه groupId لازم يتأكد إنه عضو ف الجروب
+      if (groupId) {
+        const isMember = await GroupMember.findOne({
+          where: {
+            "group-id": groupId,
+            "user-id": userId,
+          },
+        });
+
+        if (!isMember) {
+          return res.status(403).json({
+            status: HttpStatusHelper.ERROR,
+            message: "You must be a member of the group to create a post",
+          });
+        }
       }
     }
 
@@ -80,6 +97,75 @@ const createPost = async (req, res) => {
     });
   }
 };
+
+//get all posts in specific group
+const getGroupPosts = async (req, res) => {
+  try {
+    const { groupId } = req.params; 
+
+    const posts = await Post.findAll({
+      where: { "group-id": groupId }, 
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"],
+            },
+            {
+              model: Staff,
+              attributes: ["status-to-login"], // مثال: ممكن تضيف أي عمود من staff
+            },
+          ],
+        },
+      ],
+      order: [["created-at", "DESC"]],
+    });
+
+    const responseData = posts.map((post) => {
+      let image = null;
+
+      if (post.User.Graduate) {
+        image = post.User.Graduate["profile-picture-url"];
+      } else if (post.User.Staff) {
+        image = null; // لو عندك عمود صورة staff ممكن تضيفه هنا
+      }
+
+      return {
+        post_id: post.post_id,
+        category: post.category,
+        content: post.content,
+        description: post.description,
+        "created-at": post["created-at"],
+        author: {
+          id: post.User.id,
+          "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+          email: post.User.email,
+          type: post.User["user-type"],
+          image: image,
+        },
+        "group-id": post["group-id"],
+        "in-landing": post["in-landing"],
+      };
+    });
+
+    res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "Group posts fetched successfully",
+      data: responseData,
+    });
+  } catch (error) {
+    console.error("Error details:", error);
+    res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: "Failed to fetch group posts: " + error.message,
+      data: [],
+    });
+  }
+};
+
 
 // get all posts
 const getAllPostsOfUsers = async (req, res) => {
@@ -464,4 +550,5 @@ module.exports = {
   getGraduatePosts,
   getAllPostsOfUsers,
   editPost,
+  getGroupPosts
 };
