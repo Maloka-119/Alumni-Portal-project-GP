@@ -35,5 +35,6 @@ router.get(
   authMiddleware.protect,
   postController.getGraduatePosts
 );
+router.put("/:postId", authMiddleware.protect, postController.editPost);
 
 module.exports = router;

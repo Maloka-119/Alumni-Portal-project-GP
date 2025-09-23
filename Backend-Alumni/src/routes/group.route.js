@@ -11,5 +11,23 @@ router.post(
   authMiddleware.protect,
   groupController.addUserToGroup
 );
+// routes/group.route.js
+router.put(
+  "/groups/:groupId",
+  authMiddleware.protect,
+  groupController.editGroup
+);
+// routes/group.route.js
+router.delete(
+  "/groups/:groupId",
+  authMiddleware.protect,
+  groupController.deleteGroup
+);
+// routes/group.route.js
+router.get(
+  "/groups/:groupId/members/count",
+  authMiddleware.protect,
+  groupController.getGroupMembersCount
+);
 
 module.exports = router;

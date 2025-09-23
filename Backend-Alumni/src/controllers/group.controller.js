@@ -176,9 +176,167 @@ const addUserToGroup = async (req, res) => {
     });
   }
 };
+// controllers/group.controller.js
+
+const editGroup = async (req, res) => {
+  try {
+    const user = req.user;
+    const { groupId } = req.params;
+    const { groupName, description, groupImage } = req.body;
+
+    // لازم يكون Admin
+    if (user["user-type"] !== "admin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only admins can edit groups",
+        data: [],
+      });
+    }
+
+    // دور على الجروب
+    const group = await Group.findByPk(groupId);
+    if (!group) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Group not found",
+        data: [],
+      });
+    }
+
+    // عدّل القيم اللي اتبعتت بس
+    if (groupName) group["group-name"] = groupName;
+    if (description) group.description = description;
+    if (groupImage) group["group-image"] = groupImage;
+
+    await group.save();
+
+    // جيب عدد الأعضاء
+    const membersCount = await GroupMember.count({
+      where: { "group-id": group.id },
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Group updated successfully",
+      data: [
+        {
+          id: group.id,
+          groupName: group["group-name"],
+          description: group.description,
+          groupImage: group["group-image"],
+          createdDate: group["created-date"],
+          membersCount,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      status: "error",
+      message: err.message,
+      data: [],
+    });
+  }
+};
+// controllers/group.controller.js
+
+const deleteGroup = async (req, res) => {
+  try {
+    const user = req.user;
+    const { groupId } = req.params;
+
+    // لازم يكون Admin
+    if (user["user-type"] !== "admin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only admins can delete groups",
+        data: [],
+      });
+    }
+
+    // دور على الجروب
+    const group = await Group.findByPk(groupId);
+    if (!group) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Group not found",
+        data: [],
+      });
+    }
+
+    // امسح الجروب
+    await group.destroy();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Group deleted successfully",
+      data: [],
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      status: "error",
+      message: err.message,
+      data: [],
+    });
+  }
+};
+// controllers/group.controller.js
+const getGroupMembersCount = async (req, res) => {
+  try {
+    const user = req.user;
+    const { groupId } = req.params;
+
+    // لازم يكون Admin
+    if (user["user-type"] !== "admin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only admins can view members count",
+        data: [],
+      });
+    }
+
+    // اتأكد إن الجروب موجود
+    const group = await Group.findByPk(groupId);
+    if (!group) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Group not found",
+        data: [],
+      });
+    }
+
+    // احسب عدد الأعضاء
+    const membersCount = await GroupMember.count({
+      where: { "group-id": groupId },
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Group members count fetched successfully",
+      data: [
+        {
+          groupId: group.id,
+          groupName: group["group-name"],
+          membersCount,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      status: "error",
+      message: err.message,
+      data: [],
+    });
+  }
+};
 
 module.exports = {
   createGroup,
   getGroups,
   addUserToGroup,
+  editGroup,
+  deleteGroup,
+  getGroupMembersCount,
 };
