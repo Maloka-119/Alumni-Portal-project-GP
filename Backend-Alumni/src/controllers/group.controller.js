@@ -2,7 +2,9 @@ const Group = require("../models/Group");
 const Staff = require("../models/Staff"); // للتأكد ان الي عامل العملية admin
 const User = require("../models/User");
 const GroupMember = require("../models/GroupMember");
+const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
+//as an admin, i want to create group
 const createGroup = async (req, res) => {
   try {
     const { groupName, description, groupImage } = req.body; // استقبل الصورة من الـ body
@@ -55,6 +57,7 @@ const createGroup = async (req, res) => {
   }
 };
 
+//as an admin & graduate ,i want to see all groups in community
 const getGroups = async (req, res) => {
   try {
     const user = req.user;
@@ -103,6 +106,8 @@ const getGroups = async (req, res) => {
     });
   }
 };
+
+//as an admin, i want to add person to group
 const addUserToGroup = async (req, res) => {
   try {
     const { groupId, userId } = req.body;
@@ -176,8 +181,8 @@ const addUserToGroup = async (req, res) => {
     });
   }
 };
-// controllers/group.controller.js
 
+// controllers/group.controller.js
 const editGroup = async (req, res) => {
   try {
     const user = req.user;
@@ -238,8 +243,8 @@ const editGroup = async (req, res) => {
     });
   }
 };
-// controllers/group.controller.js
 
+// controllers/group.controller.js
 const deleteGroup = async (req, res) => {
   try {
     const user = req.user;
@@ -281,6 +286,7 @@ const deleteGroup = async (req, res) => {
     });
   }
 };
+
 // controllers/group.controller.js
 const getGroupMembersCount = async (req, res) => {
   try {
@@ -332,6 +338,131 @@ const getGroupMembersCount = async (req, res) => {
   }
 };
 
+//as a graduate ,i want to join to group
+const joinGroup = async (req, res) => {
+  try {
+    const userId = req.user.id; // جاي من الـ middleware
+    const { groupId } = req.body;
+
+    // هات بيانات اليوزر
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({
+        status: HttpStatusHelper.FAIL,
+        message: "User not found",
+      });
+    }
+
+    // لازم يكون Graduate علشان يعمل join
+    if (user["user-type"] !== "graduate") {
+      return res.status(403).json({
+        status: HttpStatusHelper.FAIL,
+        message: "Only graduates can join groups",
+      });
+    }
+
+    // هات بيانات الجروب
+    const group = await Group.findByPk(groupId);
+    if (!group) {
+      return res.status(404).json({
+        status:HttpStatusHelper.FAIL,
+        message: "Group not found",
+      });
+    }
+
+    // اتأكد إنه مش عضو بالفعل
+    const existingMember = await GroupMember.findOne({
+      where: { "group-id": groupId, "user-id": userId },
+    });
+
+    if (existingMember) {
+      return res.status(400).json({
+        status: HttpStatusHelper.FAIL,
+        message: "You are already a member of this group",
+      });
+    }
+
+    // ضيفه كعضو جديد
+    await GroupMember.create({
+      "group-id": groupId,
+      "user-id": userId,
+    });
+
+    // احسب عدد الأعضاء بعد الإضافة
+    const memberCount = await GroupMember.count({
+      where: { "group-id": groupId },
+    });
+
+    return res.status(201).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "Joined group successfully",
+      data: {
+        groupId: group.id,
+        groupName: group["group-name"],
+        memberCount: memberCount,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status:HttpStatusHelper.ERROR,
+      message: error.message,
+    });
+  }
+};
+
+//as a graduate,i want to left from group 
+const leaveGroup = async (req, res) => {
+  try {
+    const userId = req.user.id; // جاي من الـ middleware
+    const { groupId } = req.params; // بنجيب الـ groupId من الـ URL
+
+    //find group
+    const group = await Group.findByPk(groupId);
+    if (!group) {
+      return res.status(404).json({
+        status: HttpStatusHelper.ERROR,
+        message: "Group not found",
+      });
+    }
+
+    // is member??
+    const membership = await GroupMember.findOne({
+      where: {
+        "group-id": groupId,
+        "user-id": userId,
+      },
+    });
+
+    if (!membership) {
+      return res.status(400).json({
+        status: HttpStatusHelper.ERROR,
+        message: "You are not a member of this group",
+      });
+    }
+
+    // delete membership
+    await GroupMember.destroy({
+      where: {
+        "group-id": groupId,
+        "user-id": userId,
+      },
+    });
+
+    return res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "You have left the group successfully",
+    });
+  } catch (error) {
+    console.error("Error in leaveGroup:", error);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: "Failed to leave group: " + error.message,
+    });
+  }
+};
+
+
 module.exports = {
   createGroup,
   getGroups,
@@ -339,4 +470,6 @@ module.exports = {
   editGroup,
   deleteGroup,
   getGroupMembersCount,
+  joinGroup,
+  leaveGroup
 };

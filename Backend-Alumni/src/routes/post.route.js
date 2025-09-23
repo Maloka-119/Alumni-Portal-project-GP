@@ -36,5 +36,6 @@ router.get(
   postController.getGraduatePosts
 );
 router.put("/:postId", authMiddleware.protect, postController.editPost);
-
+//get posts in specific group
+router.get("/:groupId", authMiddleware.protect,postController.getGroupPosts );
 module.exports = router;
