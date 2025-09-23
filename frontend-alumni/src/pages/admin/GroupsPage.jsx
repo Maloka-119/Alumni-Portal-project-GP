@@ -18,7 +18,7 @@ function GroupsPage() {
   const [preview, setPreview] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  // تحميل الجروبات من API
+  
   useEffect(() => {
     const fetchGroups = async () => {
       try {
@@ -30,7 +30,7 @@ function GroupsPage() {
             description: g.description,
             cover: g.groupImage,
             createdAt: g.createdDate,
-            members: [],
+            membersCount: g.membersCount || 0,
           }));
           setGroups(mapped);
         }
@@ -80,7 +80,8 @@ function GroupsPage() {
             description: g.description,
             cover: g.groupImage || editingGroup.cover,
             createdAt: g.createdDate,
-            members: [],
+            membersCount: g.membersCount || editingGroup.membersCount || 0,
+
           };
           setGroups(groups.map((gr) => (gr.id === g.id ? updatedGroup : gr)));
         }
@@ -96,7 +97,7 @@ function GroupsPage() {
             description: g.description,
             cover: g.groupImage,
             createdAt: g.createdDate,
-            members: [],
+            membersCount: g.membersCount
           };
           setGroups([...groups, newGroup]);
         }
@@ -220,7 +221,7 @@ function GroupsPage() {
               <h2>{g.name}</h2>
             </div>
 
-            <span className="badge">{g.members.length} members</span>
+            <span className="badge">{g.membersCount} members</span>
 
             <div
               className="card-icons"
