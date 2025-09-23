@@ -7,6 +7,7 @@ const Graduate = require("../models/Graduate");
 const Post = require("../models/Post");
 const PostImage = require("../models/PostImage");
 const Staff = require("../models/Staff");
+const { Op } = require("sequelize");
 
 //create post
 const createPost = async (req, res) => {
@@ -19,7 +20,7 @@ const createPost = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({
-        status: "error",
+        status: HttpStatusHelper.ERROR,
         message: "User not found",
       });
     }
@@ -32,7 +33,7 @@ const createPost = async (req, res) => {
 
       if (!graduate || graduate.status !== "active") {
         return res.status(403).json({
-          status: "error",
+          status: HttpStatusHelper.ERROR,
           message: "You are denied from creating a post",
         });
       }
@@ -47,10 +48,29 @@ const createPost = async (req, res) => {
       "in-landing": inLanding || false,
     });
 
+    // إضافة الصور لو فيه
+    if (req.files && req.files.length > 0) {
+      const imagesData = req.files.map((file) => ({
+        "post-id": newPost.post_id,
+        "image-url": file.path, // لينك Cloudinary
+      }));
+
+      await PostImage.bulkCreate(imagesData);
+    }
+
+    // جلب كل الصور بعد الإنشاء
+    const savedImages = await PostImage.findAll({
+      where: { "post-id": newPost.post_id },
+      attributes: ["image-url"],
+    });
+
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Post created successfully",
-      post: newPost,
+      post: {
+        ...newPost.toJSON(),
+        images: savedImages.map((img) => img["image-url"]),
+      },
     });
   } catch (error) {
     console.error(error);
@@ -342,6 +362,98 @@ const getGraduatePosts = async (req, res) => {
     });
   }
 };
+
+const editPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { category, content, groupId, inLanding, images, removeImages } =
+      req.body;
+
+    // تحقق إن المستخدم Admin
+    if (!req.user || req.user["user-type"] !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Only admins can edit posts",
+      });
+    }
+
+    // ندور على البوست
+    const post = await Post.findByPk(postId);
+    if (!post) {
+      return res.status(404).json({
+        status: "error",
+        message: "Post not found",
+      });
+    }
+
+    // السماح للأدمن يعدل بوستاته فقط
+    if (post["author-id"] !== req.user.id) {
+      return res.status(403).json({
+        status: "error",
+        message: "You can only edit your own posts",
+      });
+    }
+
+    // تحديث بيانات البوست
+    if (category !== undefined) post.category = category;
+    if (content !== undefined) post.content = content;
+
+    if (groupId !== undefined) {
+      post["group-id"] = groupId === null ? null : groupId;
+    }
+
+    if (inLanding !== undefined) {
+      post["in-landing"] = inLanding;
+    }
+
+    await post.save();
+
+    // حذف صور محددة لو موجودة في removeImages
+    if (removeImages && Array.isArray(removeImages)) {
+      await PostImage.destroy({
+        where: {
+          "post-id": postId,
+          "image-url": removeImages,
+        },
+      });
+    }
+
+    // إضافة صور جديدة لو موجودة
+    if (images !== undefined) {
+      const imagesArray = Array.isArray(images) ? images : [images];
+      await Promise.all(
+        imagesArray.map((url) =>
+          PostImage.create({
+            "post-id": postId,
+            "image-url": url,
+          })
+        )
+      );
+    }
+
+    // جلب كل الصور بعد التحديث
+    const updatedImages = await PostImage.findAll({
+      where: { "post-id": postId },
+      attributes: ["image-url"],
+    });
+
+    return res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "Post updated successfully",
+      post: {
+        ...post.toJSON(),
+        images: updatedImages.map((img) => img["image-url"]),
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: error.message,
+    });
+  }
+};
+
 // module.exports = { getCategories };
 
 module.exports = {
@@ -351,4 +463,5 @@ module.exports = {
   getAdminPosts,
   getGraduatePosts,
   getAllPostsOfUsers,
+  editPost,
 };

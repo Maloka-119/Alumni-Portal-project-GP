@@ -8,6 +8,7 @@ const bcrypt = require("bcryptjs");
 
 const User = require("./models/User");
 const sequelize = require("./config/db");
+const path = require("path"); // ضيفه فوق مع باقي الـ requires
 
 const app = express();
 app.use(express.json());
@@ -34,6 +35,9 @@ app.use("/alumni-portal", authRoutes);
 
 const groupRoutes = require("./routes/group.route");
 app.use("/alumni-portal", groupRoutes);
+
+// Serve static files from uploads folder
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(errorHandler);
 
