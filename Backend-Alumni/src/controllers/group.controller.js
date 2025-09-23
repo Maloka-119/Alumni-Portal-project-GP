@@ -5,7 +5,7 @@ const GroupMember = require("../models/GroupMember");
 
 const createGroup = async (req, res) => {
   try {
-    const { groupName, description } = req.body;
+    const { groupName, description, groupImage } = req.body; // استقبل الصورة من الـ body
     const user = req.user; // middleware بيرجع الـ user
 
     // تأكد إن الشخص admin
@@ -22,6 +22,7 @@ const createGroup = async (req, res) => {
       "group-name": groupName,
       description,
       "created-date": new Date(),
+      "group-image": groupImage || null, // نحط الصورة لو موجودة
     });
 
     // احسب عدد الأعضاء الحاليين في الجروب
@@ -39,6 +40,7 @@ const createGroup = async (req, res) => {
           groupName: group["group-name"],
           description: group.description,
           createdDate: group["created-date"],
+          groupImage: group["group-image"], // نرجع الصورة كمان
           memberCount: memberCount, // العدد الحالي للأعضاء
         },
       ],
@@ -52,6 +54,7 @@ const createGroup = async (req, res) => {
     });
   }
 };
+
 const getGroups = async (req, res) => {
   try {
     const user = req.user;
@@ -80,6 +83,7 @@ const getGroups = async (req, res) => {
           groupName: group["group-name"],
           description: group.description,
           createdDate: group["created-date"],
+          groupImage: group["group-image"], // أضفنا الصورة هنا
           membersCount,
         };
       })
@@ -99,8 +103,82 @@ const getGroups = async (req, res) => {
     });
   }
 };
+const addUserToGroup = async (req, res) => {
+  try {
+    const { groupId, userId } = req.body;
+    const user = req.user; // middleware بيرجع اليوزر الحالي
+
+    // تأكد إنه Admin
+    if (user["user-type"] !== "admin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only admins can add users to groups",
+        data: [],
+      });
+    }
+
+    // تأكد إن الجروب موجود
+    const group = await Group.findByPk(groupId);
+    if (!group) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Group not found",
+        data: [],
+      });
+    }
+
+    // تأكد إن اليوزر موجود
+    const member = await User.findByPk(userId);
+    if (!member) {
+      return res.status(404).json({
+        status: "fail",
+        message: "User not found",
+        data: [],
+      });
+    }
+
+    // تأكد إنه مش موجود بالفعل في الجروب
+    const existingMember = await GroupMember.findOne({
+      where: { "group-id": groupId, "user-id": userId },
+    });
+    if (existingMember) {
+      return res.status(400).json({
+        status: "fail",
+        message: "User already in this group",
+        data: [],
+      });
+    }
+
+    // أضف العضو للجروب
+    await GroupMember.create({
+      "group-id": groupId,
+      "user-id": userId,
+    });
+
+    return res.status(201).json({
+      status: "success",
+      message: "User added to group successfully",
+      data: [
+        {
+          groupId: group.id,
+          groupName: group["group-name"],
+          userId: member.id,
+          userName: `${member["first-name"]} ${member["last-name"]}`,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      status: "error",
+      message: err.message,
+      data: [],
+    });
+  }
+};
 
 module.exports = {
   createGroup,
   getGroups,
+  addUserToGroup,
 };

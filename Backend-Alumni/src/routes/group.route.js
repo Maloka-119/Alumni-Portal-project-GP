@@ -6,5 +6,10 @@ const authMiddleware = require("../middleware/authMiddleware"); // middleware ل
 
 router.post("/groups", authMiddleware.protect, groupController.createGroup);
 router.get("/groups", authMiddleware.protect, groupController.getGroups);
+router.post(
+  "/groups/add-user",
+  authMiddleware.protect,
+  groupController.addUserToGroup
+);
 
 module.exports = router;
