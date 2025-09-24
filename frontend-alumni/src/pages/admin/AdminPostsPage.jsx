@@ -38,12 +38,7 @@ const AdminPostsPage = () => {
     setError(null);
     try {
       const res = await API.get("/posts/admin");
-<<<<<<< HEAD
-      console.log("Response from backend:", res.data); 
-      setPosts(res.data?.data || []); 
-=======
       setPosts(res.data.data);
->>>>>>> 1bfbaab (Link admin posts 3nd admin)
     } catch (err) {
       console.error("Error fetching posts", err);
       setError(t("fetchPostsFailed"));
@@ -116,12 +111,14 @@ const AdminPostsPage = () => {
     setTimeout(() => {
       document.querySelector('textarea[name="content"]').value = post.content;
       document.querySelector('select[name="type"]').value = post.category;
+      document.querySelector('select[name="type"]').value = post.category;
       document.querySelector('input[name="link"]').value = post.link || '';
     }, 0);
   };
 
   const filteredPosts = filterType === t('All', { defaultValue: 'All' }) 
     ? posts 
+    : posts.filter(p => p.category === filterType);
     : posts.filter(p => p.category === filterType);
 
   return (
@@ -180,7 +177,9 @@ const AdminPostsPage = () => {
                   <div className="post-header-info">
                     <strong>Alumni Portal – Helwan University</strong>
                     <div className="post-date">{post['created-at']}</div>
+                    <div className="post-date">{post['created-at']}</div>
                   </div>
+                  <span className="post-type-badge">{post.category}</span>
                   <span className="post-type-badge">{post.category}</span>
                 </div>
                 <div className="post-content">
