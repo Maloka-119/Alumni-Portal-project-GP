@@ -36,6 +36,9 @@ app.use("/alumni-portal", authRoutes);
 const groupRoutes = require("./routes/group.route");
 app.use("/alumni-portal", groupRoutes);
 
+const userRoutes = require("./routes/user.route");
+app.use("/alumni-portal", userRoutes);
+
 // Serve static files from uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -51,13 +54,12 @@ sequelize.sync().then(async () => {
 
     await User.create({
       id: 1,
-  
-            email: 'alumniportalhelwan@gmail.com',
-            'hashed-password': hashedPassword,
-            'user-type': 'admin',
-            'first-name': 'Alumni Portal -',
-            'last-name': ' Helwan University',
-    
+
+      email: "alumniportalhelwan@gmail.com",
+      "hashed-password": hashedPassword,
+      "user-type": "admin",
+      "first-name": "Alumni Portal -",
+      "last-name": " Helwan University",
     });
 
     console.log(
