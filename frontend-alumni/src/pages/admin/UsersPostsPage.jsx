@@ -75,6 +75,19 @@ const [newComment, setNewComment] = useState('');
     console.error(err);
   }
 };
+const handleLikePost = async (post) => {
+  try {
+    await API.post(`/posts/${post.id}/like`);
+    setPosts(posts.map(p =>
+      p.id === post.id ? { ...p, likes: (p.likes || 0) + 1 } : p
+    ));
+    if (selectedPost?.id === post.id) {
+      setSelectedPost({ ...selectedPost, likes: (selectedPost.likes || 0) + 1 });
+    }
+  } catch (err) {
+    console.error("Failed to like post", err);
+  }
+};
 
   return (
     <div className="feed-container">
@@ -113,7 +126,7 @@ const [newComment, setNewComment] = useState('');
                 </div>
 
                 <div className="post-actions">
-                  <button><Heart size={16} /> {post.likes}</button>
+                  <button onClick={() => handleLikePost(post)}><Heart size={16} /> {post.likes}</button>
                   <button onClick={() => openComments(post)}>
                   <MessageCircle size={16} /> {post.comments?.length || 0}
 

@@ -132,20 +132,22 @@ useEffect(() => {
     }
   };
 
-  const handleLike = async (postId) => {
+  const handleLikeToggle = async (post) => {
     if (!token) return;
     try {
-      const res = await API.post(`/posts/${postId}/like`, {}, {
+      const method = post.liked ? 'delete' : 'post';
+      const res = await API[method](`/posts/${post.id}/like`, {}, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const updated = res.data.data;
-      setPosts(posts.map(p => (p.id === updated.id ? formatPosts([updated])[0] : p)));
-      if (selectedPost?.id === postId) setSelectedPost(formatPosts([updated])[0]);
+      setPosts(posts.map(p => 
+        p.id === post.id ? { ...p, likes: post.liked ? post.likes - 1 : post.likes + 1, liked: !post.liked } : p
+      ));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
   };
-
+  
   const openComments = (post) => setSelectedPost(post);
   const closeComments = () => { setSelectedPost(null); setNewComment(''); };
 
@@ -239,7 +241,7 @@ useEffect(() => {
               onEdit={(content, link) => handleEdit(post.id, content, link)}
               onDelete={() => handleDelete(post.id)}
               onOpenComments={() => openComments(post)}
-              onLike={() => handleLike(post.id)}
+              onLike={() =>handleLikeToggle(post)}
             />
           ))}
 
