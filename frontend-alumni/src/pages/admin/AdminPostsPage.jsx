@@ -39,7 +39,7 @@ const AdminPostsPage = () => {
     try {
       const res = await API.get("/posts/admin");
       console.log("Response from backend:", res.data); 
-      setPosts(res.data?.data || []); // 👈 لو undefined خليه array فاضي
+      setPosts(res.data?.data || []); 
     } catch (err) {
       console.error("Error fetching posts", err);
       setError(t("fetchPostsFailed"));
@@ -90,6 +90,19 @@ const AdminPostsPage = () => {
     } catch (err) {
       console.error("Error deleting post", err);
       setError(t("deletePostFailed"));
+    }
+  };
+  const handleLikePost = async (post) => {
+    try {
+      await API.post(`/posts/${post.id}/like`);
+     
+      setPosts(prev =>
+        prev.map(p =>
+          p.id === post.id ? { ...p, likes: (p.likes || 0) + 1 } : p
+        )
+      );
+    } catch (err) {
+      console.error("Failed to like post", err);
     }
   };
 
@@ -177,7 +190,7 @@ const AdminPostsPage = () => {
                   )}
                 </div>
                 <div className="post-actions">
-                  <button><Heart size={16} /> {post.likes}</button>
+                  <button onClick={() => handleLikePost(post)}><Heart size={16} /> {post.likes}</button>
                   <button>
   <MessageCircle size={16} /> {post.comments?.length || 0}
 </button>
