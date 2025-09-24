@@ -59,20 +59,14 @@ const AlumniAdminPosts = () => {
     }
   };
 
-  const handleLikePost = async (post) => {
+  const handleLike = async (postId) => {
     try {
-      await API.post(`/posts/${post.id}/like`);
-      setPosts(posts.map(p =>
-        p.id === post.id ? { ...p, likes: (p.likes || 0) + 1 } : p
-      ));
-      if (selectedPost?.id === post.id) {
-        setSelectedPost({ ...selectedPost, likes: (selectedPost.likes || 0) + 1 });
-      }
+      await API.post(`/posts/${postId}/like`);
+      setPosts(posts.map(p => p.id === postId ? { ...p, likes: p.likes + 1, liked: true } : p));
     } catch (err) {
-      console.error("Failed to like post", err);
+      console.error(err);
     }
   };
-  
 
   const toggleComments = (postId) => {
     setPosts(posts.map(p => p.id === postId ? { ...p, showComments: !p.showComments } : p));
