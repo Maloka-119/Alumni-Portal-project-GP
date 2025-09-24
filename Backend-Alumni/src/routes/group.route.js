@@ -5,7 +5,7 @@ const groupController = require("../controllers/group.controller");
 const authMiddleware = require("../middleware/authMiddleware"); // middleware للتحقق من التوكن
 
 router.post("/groups", authMiddleware.protect, groupController.createGroup);
-router.get("/groups", authMiddleware.protect, groupController.getGroups);
+router.get("/groups", groupController.getGroups);
 router.post(
   "/groups/add-user",
   authMiddleware.protect,
@@ -29,9 +29,13 @@ router.get(
   authMiddleware.protect,
   groupController.getGroupMembersCount
 );
-// join 
+// join
 router.post("/groups/join", authMiddleware.protect, groupController.joinGroup);
 // leave
-router.delete("/groups/leave/:groupId", authMiddleware.protect, groupController.leaveGroup);
+router.delete(
+  "/groups/leave/:groupId",
+  authMiddleware.protect,
+  groupController.leaveGroup
+);
 
 module.exports = router;

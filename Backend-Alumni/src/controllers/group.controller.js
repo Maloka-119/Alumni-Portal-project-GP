@@ -60,17 +60,6 @@ const createGroup = async (req, res) => {
 //as an admin & graduate ,i want to see all groups in community
 const getGroups = async (req, res) => {
   try {
-    const user = req.user;
-
-    // تأكد إنه admin
-    if (user["user-type"] !== "admin") {
-      return res.status(403).json({
-        status: "fail",
-        message: "Only admins can view groups",
-        data: [],
-      });
-    }
-
     // هات كل الجروبات
     const groups = await Group.findAll();
 
@@ -86,7 +75,7 @@ const getGroups = async (req, res) => {
           groupName: group["group-name"],
           description: group.description,
           createdDate: group["created-date"],
-          groupImage: group["group-image"], // أضفنا الصورة هنا
+          groupImage: group["group-image"],
           membersCount,
         };
       })
@@ -365,7 +354,7 @@ const joinGroup = async (req, res) => {
     const group = await Group.findByPk(groupId);
     if (!group) {
       return res.status(404).json({
-        status:HttpStatusHelper.FAIL,
+        status: HttpStatusHelper.FAIL,
         message: "Group not found",
       });
     }
@@ -405,13 +394,13 @@ const joinGroup = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({
-      status:HttpStatusHelper.ERROR,
+      status: HttpStatusHelper.ERROR,
       message: error.message,
     });
   }
 };
 
-//as a graduate,i want to left from group 
+//as a graduate,i want to left from group
 const leaveGroup = async (req, res) => {
   try {
     const userId = req.user.id; // جاي من الـ middleware
@@ -462,7 +451,6 @@ const leaveGroup = async (req, res) => {
   }
 };
 
-
 module.exports = {
   createGroup,
   getGroups,
@@ -471,5 +459,5 @@ module.exports = {
   deleteGroup,
   getGroupMembersCount,
   joinGroup,
-  leaveGroup
+  leaveGroup,
 };
