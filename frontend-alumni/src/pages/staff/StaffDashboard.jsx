@@ -29,7 +29,7 @@ const StaffDashboard = () => {
             nationalId: data.data.nationalId,
             workId: data.data.workId,
             email: data.data.email,
-            role: data.data.userType
+            roles: data.data.roles || []
           });
         }
       })
@@ -89,8 +89,12 @@ const StaffDashboard = () => {
                   <span className="profile-value">{currentUser.email}</span>
                 </div>
                 <div className="profile-item">
-                  <span className="profile-label">Role</span>
-                  <span className="profile-value">{currentUser.role}</span>
+                  <span className="profile-label">Roles</span>
+                  <span className="profile-value">
+                    {currentUser.roles.length > 0 
+                      ? currentUser.roles.join(', ') 
+                      : 'No roles assigned'}
+                  </span>
                 </div>
               </div>
             </div>
