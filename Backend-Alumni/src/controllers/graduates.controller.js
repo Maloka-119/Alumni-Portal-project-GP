@@ -2,7 +2,6 @@ const Graduate = require("../models/Graduate");
 const User = require("../models/User");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
-
 //get all graduates
 const getAllGraduates = async (req, res) => {
   try {
@@ -30,15 +29,14 @@ const getAllGraduates = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({
-      status:HttpStatusHelper.ERROR,
+      status: HttpStatusHelper.ERROR,
       message: "Error fetching graduates",
       data: [],
     });
   }
 };
 
-
-//get digital id 
+//get digital id
 const getDigitalID = async (req, res) => {
   try {
     // تأكد إن req.user موجود
@@ -92,7 +90,6 @@ const getDigitalID = async (req, res) => {
       message: "Graduate Digital ID fetched successfully",
       data: digitalID,
     });
-
   } catch (err) {
     console.error("getDigitalID error:", err.message);
     return res.status(500).json({
@@ -102,9 +99,6 @@ const getDigitalID = async (req, res) => {
     });
   }
 };
-
-
-
 
 //get profile
 const getGraduateProfile = async (req, res) => {
@@ -149,9 +143,6 @@ const getGraduateProfile = async (req, res) => {
   }
 };
 
-
-
-
 // updateProfile
 const updateProfile = async (req, res) => {
   try {
@@ -183,7 +174,7 @@ const updateProfile = async (req, res) => {
       faculty,
       graduationYear,
       linkedlnLink,
-      phoneNumber,   // 👈 هنا خدنا رقم التليفون من الـ body
+      phoneNumber, // 👈 هنا خدنا رقم التليفون من الـ body
     } = req.body;
 
     if (firstName !== undefined) user["first-name"] = firstName;
@@ -209,10 +200,10 @@ const updateProfile = async (req, res) => {
 
     // رفع CV
     if (req.files && req.files.cv) {
-      const result = await cloudinary.uploader.upload(
-        req.files.cv[0].path,
-        { folder: "graduates/cvs", resource_type: "raw" }
-      );
+      const result = await cloudinary.uploader.upload(req.files.cv[0].path, {
+        folder: "graduates/cvs",
+        resource_type: "raw",
+      });
       graduate["cv-url"] = result.secure_url;
     }
 
@@ -222,7 +213,7 @@ const updateProfile = async (req, res) => {
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate profile updated successfully",
-      data: { graduate},
+      data: { graduate },
     });
   } catch (err) {
     return res.status(500).json({
@@ -232,10 +223,6 @@ const updateProfile = async (req, res) => {
     });
   }
 };
-
-
-
-
 
 // Activate / Inactivate Graduate
 const updateGraduateStatus = async (req, res) => {
@@ -281,12 +268,44 @@ const updateGraduateStatus = async (req, res) => {
     });
   }
 };
- 
+
+const searchGraduates = async (req, res) => {
+  try {
+    const { faculty, "graduation-year": graduationYear } = req.query;
+
+    const whereClause = {};
+    if (faculty) whereClause.faculty = faculty;
+    if (graduationYear) whereClause["graduation-year"] = graduationYear; // 👈 لازم بنفس الاسم اللي في المودل
+
+    const graduates = await Graduate.findAll({
+      where: whereClause,
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email"],
+        },
+      ],
+    });
+
+    res.json({
+      status: "success",
+      data: graduates,
+    });
+  } catch (error) {
+    console.error("Error searching graduates:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to search graduates",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   getDigitalID,
   getGraduateProfile,
   updateProfile,
   updateGraduateStatus,
-  getAllGraduates
+  getAllGraduates,
+  searchGraduates,
 };
