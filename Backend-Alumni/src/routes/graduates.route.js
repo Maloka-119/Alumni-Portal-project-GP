@@ -10,11 +10,10 @@ router.put(
   protect,
   upload.fields([
     { name: "profilePicture", maxCount: 1 },
-    { name: "cv", maxCount: 1 }
+    { name: "cv", maxCount: 1 },
   ]),
   graduateController.updateProfile
 );
-
 
 // Get all graduates (public)
 router.route("/").get(graduateController.getAllGraduates);
@@ -26,7 +25,9 @@ router.route("/:id/profile").get(graduateController.getGraduateProfile);
 router.route("/digital-id").get(protect, graduateController.getDigitalID);
 
 // Update graduate status by ID (protected - ممكن تخليها admin only لو لزم)
-router.route("/:id/status").put(protect, graduateController.updateGraduateStatus);
-
+router
+  .route("/:id/status")
+  .put(protect, graduateController.updateGraduateStatus);
+router.get("/search", graduateController.searchGraduates);
 
 module.exports = router;
