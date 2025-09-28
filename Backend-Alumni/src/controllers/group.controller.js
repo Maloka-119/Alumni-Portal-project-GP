@@ -451,6 +451,64 @@ const leaveGroup = async (req, res) => {
   }
 };
 
+//as a graduate, i want to get my groups i member in
+const getMyGroups = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // هات الجروبات اللي المستخدم عضو فيها
+    const groups = await Group.findAll({
+      include: [
+        {
+          model: User,
+          where: { id: userId },
+          attributes: [], // مش عايزين بيانات اليوزر
+          through: { attributes: [] }, // نشيل بيانات GroupMember
+        },
+      ],
+      attributes: ["id", "group-name", "description", "created-date", "group-image"],
+    });
+
+    if (!groups || groups.length === 0) {
+      return res.status(200).json({
+        status: HttpStatusHelper.FAIL,
+        message: "You are not a member of any group",
+      });
+    }
+
+    // احسب عدد الأعضاء لكل جروب
+    const formattedGroups = await Promise.all(
+      groups.map(async (group) => {
+        const membersCount = await GroupMember.count({
+          where: { "group-id": group.id },
+        });
+
+        return {
+          id: group.id,
+          groupName: group["group-name"],
+          description: group.description,
+          createdDate: group["created-date"],
+          groupImage: group["group-image"],
+          membersCount,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "These are your groups",
+      data: formattedGroups,
+    });
+  } catch (err) {
+    console.error("❌ Error in getMyGroups:", err);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: "Something went wrong",
+    });
+  }
+};
+
+
 module.exports = {
   createGroup,
   getGroups,
@@ -460,4 +518,5 @@ module.exports = {
   getGroupMembersCount,
   joinGroup,
   leaveGroup,
+  getMyGroups
 };
