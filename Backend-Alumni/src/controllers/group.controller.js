@@ -456,14 +456,14 @@ const getMyGroups = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // هات الجروبات اللي المستخدم عضو فيها
+  //get groups user is memeber in
     const groups = await Group.findAll({
       include: [
         {
           model: User,
           where: { id: userId },
-          attributes: [], // مش عايزين بيانات اليوزر
-          through: { attributes: [] }, // نشيل بيانات GroupMember
+          attributes: [],
+          through: { attributes: [] }, 
         },
       ],
       attributes: ["id", "group-name", "description", "created-date", "group-image"],
@@ -476,7 +476,7 @@ const getMyGroups = async (req, res) => {
       });
     }
 
-    // احسب عدد الأعضاء لكل جروب
+    // membersCount
     const formattedGroups = await Promise.all(
       groups.map(async (group) => {
         const membersCount = await GroupMember.count({
@@ -500,7 +500,7 @@ const getMyGroups = async (req, res) => {
       data: formattedGroups,
     });
   } catch (err) {
-    console.error("❌ Error in getMyGroups:", err);
+    console.error("Error in getMyGroups:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: "Something went wrong",
