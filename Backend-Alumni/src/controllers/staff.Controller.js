@@ -1,8 +1,6 @@
 // src/controllers/staff.controller.js
 const Staff = require("../models/Staff");
 const User = require("../models/User");
-const Role = require("../models/Role");
-const StaffRole = require("../models/StaffRole");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
 // get all staff
@@ -88,80 +86,4 @@ const updateStaffStatus = async (req, res) => {
 };
 
 
-// get staff profile (staff can only access their own profile)
-const getStaffProfile = async (req, res) => {
-  try {
-    const userId = req.user.id;
-
-    // Check if user is staff
-    if (req.user["user-type"] !== "staff") {
-      return res.status(403).json({
-        status: "error",
-        message: "Only staff members can access staff profiles",
-      });
-    }
-
-    // Find staff record with user details and roles
-    const staff = await Staff.findByPk(userId, {
-      include: [
-        {
-          model: User,
-          attributes: [
-            "id",
-            "first-name",
-            "last-name",
-            "national-id",
-            "email",
-            "phone-number",
-            "birth-date",
-            "user-type",
-          ],
-        },
-        {
-          model: Role,
-          through: {
-            attributes: [], // Don't include StaffRole attributes
-          },
-          attributes: ["id", "role-name"],
-        },
-      ],
-    });
-
-    if (!staff) {
-      return res.status(404).json({
-        status: "error",
-        message: "Staff profile not found",
-      });
-    }
-
-    // Format the response data
-    const profileData = {
-      fullName: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
-      nationalId: staff.User["national-id"],
-      workId: staff.staff_id, // Using staff_id as work ID
-      email: staff.User.email,
-      phoneNumber: staff.User["phone-number"],
-      birthDate: staff.User["birth-date"],
-      userType: staff.User["user-type"],
-      status: staff["status-to-login"],
-      roles: staff.Roles.map(role => ({
-        id: role.id,
-        name: role["role-name"]
-      })),
-    };
-
-    return res.status(200).json({
-      status: HttpStatusHelper.SUCCESS,
-      message: "Staff profile retrieved successfully",
-      data: profileData,
-    });
-  } catch (error) {
-    console.error("Error fetching staff profile:", error);
-    return res.status(500).json({
-      status: HttpStatusHelper.ERROR,
-      message: "Failed to fetch staff profile: " + error.message,
-    });
-  }
-};
-
-module.exports = { getAllStaff, updateStaffStatus, getStaffProfile };
+module.exports = { getAllStaff, updateStaffStatus };

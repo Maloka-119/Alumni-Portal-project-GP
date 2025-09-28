@@ -26,24 +26,16 @@ router.post(
 );
 
 router.get("/", postController.getAllPosts);
+router.get("/user-posts", postController.getAllPostsOfUsers);
 router.get("/categories", postController.getCategories);
 router.get("/admin", authMiddleware.protect, postController.getAdminPosts);
-
-// Post details with comments and likes
-router.get("/:postId", postController.getPostWithDetails);
-
-// Like/Unlike post (staff only)
-router.post("/:postId/like", authMiddleware.protect, postController.likePost);
-router.delete("/:postId/like", authMiddleware.protect, postController.unlikePost);
-
-// Comment on post (staff only)
-router.post("/:postId/comments", authMiddleware.protect, postController.addComment);
-
-// Edit/Delete comment (staff only - own comments)
-router.put("/comments/:commentId", authMiddleware.protect, postController.editComment);
-router.delete("/comments/:commentId", authMiddleware.protect, postController.deleteComment);
-
-// Delete post (staff only - own posts and graduate posts)
-router.delete("/:postId", authMiddleware.protect, postController.deletePost);
-
+// route جديد مخصوص للفانكشن الجديدة
+router.get(
+  "/my-graduate-posts",
+  authMiddleware.protect,
+  postController.getGraduatePosts
+);
+router.put("/:postId", authMiddleware.protect, postController.editPost);
+//get posts in specific group
+router.get("/:groupId", authMiddleware.protect,postController.getGroupPosts );
 module.exports = router;
