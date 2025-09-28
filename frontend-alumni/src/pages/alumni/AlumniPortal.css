@@ -291,3 +291,38 @@ body::-webkit-scrollbar-thumb {
 .dark .contact-btn:hover {
   background-color: #374151; 
 }
+
+/* Submenu */
+.alumni-sidebar-submenu {
+  margin-left: 20px;
+  list-style: none;
+  padding: 5px 0;
+}
+
+.alumni-sidebar-subitem {
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.alumni-sidebar-subitem:hover {
+  background: #e0e7ff;
+}
+
+.alumni-sidebar-subitem.active {
+  font-weight: 600;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+/* Dark Mode for submenu */
+.dark .alumni-sidebar-subitem:hover {
+  background: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark .alumni-sidebar-subitem.active {
+  background: #374151;
+  color: #f9fafb;
+}
