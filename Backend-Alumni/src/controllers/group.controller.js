@@ -456,17 +456,23 @@ const getMyGroups = async (req, res) => {
   try {
     const userId = req.user.id;
 
-  //get groups user is memeber in
+    //get groups user is memeber in
     const groups = await Group.findAll({
       include: [
         {
           model: User,
           where: { id: userId },
           attributes: [],
-          through: { attributes: [] }, 
+          through: { attributes: [] },
         },
       ],
-      attributes: ["id", "group-name", "description", "created-date", "group-image"],
+      attributes: [
+        "id",
+        "group-name",
+        "description",
+        "created-date",
+        "group-image",
+      ],
     });
 
     if (!groups || groups.length === 0) {
@@ -507,7 +513,41 @@ const getMyGroups = async (req, res) => {
     });
   }
 };
+const getGroupUsers = async (req, res) => {
+  try {
+    const { groupId } = req.params;
 
+    const group = await Group.findByPk(groupId, {
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+          through: { attributes: [] }, // اخفي بيانات الجدول الوسيط
+        },
+      ],
+    });
+
+    if (!group) {
+      return res.status(404).json({
+        status: "error",
+        message: "Group not found",
+      });
+    }
+
+    res.json({
+      status: "success",
+      count: group.Users.length, // عدد اليوزر
+      data: group.Users, // بيانات اليوزر
+    });
+  } catch (error) {
+    console.error("Error fetching group users:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch group users",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   createGroup,
@@ -518,5 +558,6 @@ module.exports = {
   getGroupMembersCount,
   joinGroup,
   leaveGroup,
-  getMyGroups
+  getMyGroups,
+  getGroupUsers,
 };
