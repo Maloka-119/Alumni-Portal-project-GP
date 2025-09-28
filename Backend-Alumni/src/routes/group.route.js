@@ -31,6 +31,7 @@ router.get(
 );
 // join
 router.post("/groups/join", authMiddleware.protect, groupController.joinGroup);
+
 // leave
 router.delete(
   "/groups/leave/:groupId",
@@ -38,4 +39,8 @@ router.delete(
   groupController.leaveGroup
 );
 
+//my groups 
+router.get("/groups/my-groups",
+  authMiddleware.protect,
+  groupController.getMyGroups)
 module.exports = router;
