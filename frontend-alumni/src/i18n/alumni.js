@@ -32,6 +32,8 @@ const alumni = {
   "darkMode": "Dark Mode",
   "language": "Language",
   "logout": "Logout",
+  "allCommunities": "All Communities",
+  "myCommunities": "My Communities",
 
   // Profile
     "profile": "Profile",
@@ -110,6 +112,20 @@ const alumni = {
   "uniAdminPosts_shares": "Shares",
   "uniAdminPosts_writeComment": "Write a comment...",
   "uniAdminPosts_send": "Send",
+  //Groups
+
+  "myGroups": "My Groups",
+  "join": "Join",
+  "joined": "Joined",
+  "leaveGroup": "Leave Group",
+  "leftGroupSuccess": "You left the group successfully!",
+  "goToGroup": "Go to Group",
+  "searchGroups": "Search groups...",
+  "groupPosts": "Group Posts",
+  "like": "Like",
+  "alreadyLiked": "You already liked this post!",
+
+        
         
       }
     },
@@ -147,6 +163,8 @@ const alumni = {
   "darkMode": "الوضع الداكن",
   "language": "اللغة",
   "logout": "تسجيل خروج",
+  "allCommunities": "كل المجتمعات",
+  "myCommunities": "مجتمعاتي",
 
   // Profile
     "profile": "الملف الشخصي",
@@ -225,10 +243,21 @@ const alumni = {
   "uniAdminPosts_shares": "مشاركات",
   "uniAdminPosts_writeComment": "اكتب تعليق...",
   "uniAdminPosts_send": "إرسال",
-  
+
+  //Groups
+  "myGroups": "مجموعاتي",
+  "join": "انضم",
+  "joined": "تم الانضمام",
+  "leaveGroup": "غادر المجموعة",
+  "leftGroupSuccess": "لقد غادرت المجموعة بنجاح!",
+  "goToGroup": "اذهب إلى المجموعة",
+  "searchGroups": "ابحث في المجموعات...",
+  "groupPosts": "منشورات المجموعة",
+  "like": "إعجاب",
+  "alreadyLiked": "لقد أعجبت بهذا المنشور بالفعل!",
+
       }
     }
   };
   
   export default alumni;
-  
