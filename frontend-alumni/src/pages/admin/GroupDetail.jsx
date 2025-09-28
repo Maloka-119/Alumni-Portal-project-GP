@@ -72,17 +72,26 @@ function GroupDetail({ group, goBack, updateGroup }) {
 
   const addGraduates = async () => {
     try {
-      for (let id of selectedGraduates) {
-        await API.post("/groups/add-user", { groupId: group.id, userId: id });
-      }
-      const res = await API.get(`/groups/${group.id}`);
-      updateGroup(res.data);
+      if (selectedGraduates.length === 0) return;
+  
+      const res = await API.post("/add-to-group", {
+        groupId: group.id,
+        userIds: selectedGraduates
+      });
+  
+      console.log("Users processed:", res.data);
+  
+      const groupRes = await API.get(`/groups/${group.id}`);
+      updateGroup(groupRes.data);
+  
       setSelectedGraduates([]);
       setShowAddModal(false);
+  
     } catch (err) {
       console.error(err);
     }
   };
+  
 
   const handleLikePost = async (post) => {
     try {
