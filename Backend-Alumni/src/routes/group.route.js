@@ -39,8 +39,13 @@ router.delete(
   groupController.leaveGroup
 );
 
-//my groups 
-router.get("/groups/my-groups",
+//my groups
+router.get(
+  "/groups/my-groups",
   authMiddleware.protect,
-  groupController.getMyGroups)
+  groupController.getMyGroups
+);
+
+router.get("/:groupId/users", groupController.getGroupUsers);
+
 module.exports = router;
