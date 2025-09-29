@@ -1,40 +1,86 @@
-// src/pages/MyGroups.js
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import API from "../../services/api"; 
+import "./MyGroups.css"; 
 
 function MyGroups() {
-  const initialGroups = [
-    { id: 1, groupName: "React Lovers", description: "react" },
-    { id: 2, groupName: "NodeJS Devs", description: "NodeJS" },
-    { id: 3, groupName: "Frontend Friends", description: "Frontend" },
-  ];
-
   const [groups, setGroups] = useState([]);
 
-  useEffect(() => {
-    setGroups(initialGroups);
-  }, []);
-
-  const handleLeave = (groupId) => {
-    const updatedGroups = groups.filter(g => g.id !== groupId);
-    setGroups(updatedGroups);
-    alert("You left the group successfully!");
+useEffect(() => {
+  const fetchGroups = async () => {
+    try {
+      const res = await API.get("/groups/my-groups");
+      console.log("Groups from API:", res.data);
+      setGroups(res.data.data || []); // ✅ ضمان إنها تبقى array
+    } catch (err) {
+      console.error("Error fetching groups:", err);
+      setGroups([]); // ✅ fallback في حالة الخطأ
+    }
   };
 
+  fetchGroups();
+}, []);
+
+ const handleLeave = async (groupId) => {
+  try {
+    const res = await API.delete(`/groups/leave/${groupId}`);
+    console.log("Leave response:", res.data);
+
+    if (res.data.status === "success") {
+      const updatedGroups = groups.filter((g) => g.id !== groupId);
+      setGroups(updatedGroups);
+      alert("You left the group successfully!");
+    } else {
+      alert(res.data.message || "Failed to leave the group.");
+    }
+  } catch (err) {
+    console.error("Error leaving group:", err.response?.data || err.message);
+    alert("Failed to leave the group, please try again.");
+  }
+};
+
   return (
-    <div style={{ padding: 20 }}>
-      <h2>My Groups</h2>
-      {groups.map(g => (
-        <div key={g.id} style={{ border: "1px solid #ccc", padding: 15, marginBottom: 10 }}>
-          <h3>{g.groupName}</h3>
-          <p>{g.description}</p>
-          <Link to={`/groups/${g.id}`} style={{ marginRight: 10 }}>Go to Group</Link>
-          <button onClick={() => handleLeave(g.id)} style={{ background: "red", color: "white" }}>Leave Group</button>
+    <div className="mygroups-container">
+      <h2 className="title">My Communities</h2>
+
+      {groups.length === 0 ? (
+        <p className="no-groups">No Communities found</p>
+      ) : (
+        <div className="groups-list">
+          {groups.map((g) => (
+            <div key={g.id} className="group-card">
+              {/* Badge عدد الأعضاء */}
+              <span className="members-badge">{g.membersCount} Members</span>
+
+
+              <h3>{g.groupName}</h3>
+              <p>{g.description}</p>
+              <p>
+                <strong>Created:</strong>{" "}
+                {new Date(g.createdDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </p>
+
+              <div className="actions">
+                <Link to={`/groups/${g.id}`} className="btn go-btn">
+                  View 
+                </Link>
+                <button
+                  onClick={() => handleLeave(g.id)}
+                  className="btn leave-btn"
+                >
+                  Leave community
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 }
 
 export default MyGroups;
-

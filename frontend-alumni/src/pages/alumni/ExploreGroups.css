@@ -1,0 +1,93 @@
+.explore-container {
+  padding: 20px;
+  background-color: #f7f7f7;
+  min-height: 100vh;
+  color: #4a4a4a;
+}
+
+.explore-container h2 {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.explore-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 👈 3 أعمدة ثابتة */
+  gap: 16px;
+}
+.explore-btn-green {
+  background-color: #16a34a;
+}
+
+.explore-btn-green:hover {
+  background-color: #15803d;
+}
+.explore-link-btn {
+  text-decoration: none; /* يشيل الخط من تحت النص */
+  display: inline-block; /* عشان يبقى زي الزرار */
+  text-align: center;
+  line-height: normal;
+}
+
+.explore-card {
+  border: 1px solid #ddd;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease;
+}
+
+.explore-card:hover {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.explore-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.explore-card-header h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.explore-description {
+  color: #828282;
+  margin: 10px 0;
+  flex-grow: 1;
+}
+
+.explore-badge {
+  background-color: #37568d;
+  color: #fff;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.explore-btn {
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-size: 14px;
+  transition: background 0.2s ease;
+}
+
+.explore-btn-blue {
+  background-color: #37568d;
+}
+
+.explore-btn-blue:hover {
+  background-color: #2b4370;
+}
+
+.explore-btn-gray {
+  background-color: #828282;
+  cursor: not-allowed;
+}

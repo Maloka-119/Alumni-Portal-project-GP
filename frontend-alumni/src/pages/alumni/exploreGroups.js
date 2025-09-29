@@ -1,115 +1,106 @@
+// src/pages/ExploreGroups.js
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import API from "../../services/api";
+import "./ExploreGroups.css";
 
 function ExploreGroups() {
   const { t } = useTranslation();
-  const allGroups = [
-    { id: 1, groupName: "React Lovers", description: "مجموعة لعشاق React" },
-    { id: 2, groupName: "NodeJS Devs", description: "مجموعة لمطوري NodeJS" },
-    { id: 3, groupName: "Frontend Friends", description: "مجموعة لتبادل خبرات Frontend" },
-    { id: 4, groupName: "Pythonistas", description: "مجموعة لمبرمجي Python" },
-  ];
-
   const [groups, setGroups] = useState([]);
-  const [search, setSearch] = useState("");
   const [myGroups, setMyGroups] = useState([]);
 
   useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("myGroups") || "[]");
-    setMyGroups(saved);
+    const fetchGroups = async () => {
+      try {
+        const res = await API.get("/groups");
+        setGroups(res.data.data || []);
+      } catch (err) {
+        console.error("Error fetching groups:", err);
+      }
+    };
+
+    const fetchMyGroups = async () => {
+      try {
+        const res = await API.get("/groups/my-groups");
+        setMyGroups(res.data.data || []);
+      } catch (err) {
+        console.error("Error fetching my groups:", err);
+      }
+    };
+
+    fetchGroups();
+    fetchMyGroups();
   }, []);
 
-  useEffect(() => {
-    const filtered = allGroups.filter(
-      (g) =>
-        g.groupName.toLowerCase().includes(search.toLowerCase()) ||
-        g.description.toLowerCase().includes(search.toLowerCase())
-    );
-    setGroups(filtered);
-  }, [search]);
+  const handleJoin = async (groupId) => {
+    try {
+      const token = localStorage.getItem("token");
+      await API.post(
+        "/groups/join",
+        { groupId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  const handleJoin = (group) => {
-    if (myGroups.some((g) => g.id === group.id)) return;
-    const updated = [...myGroups, group];
-    setMyGroups(updated);
-    localStorage.setItem("myGroups", JSON.stringify(updated));
+      const res = await API.get("/groups/my-groups", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      setMyGroups(res.data.data || []);
+
+      alert("You joined the group successfully!");
+    } catch (err) {
+      console.error("Error joining group:", err);
+      alert("Failed to join group, please try again.");
+    }
   };
 
   return (
     <div className="explore-container">
       <h2>{t("communities")}</h2>
-      <input
-        type="text"
-        placeholder={t("filterByType")}
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="input-field"
-      />
 
-      <div className="groups-list">
+      <div className="explore-grid">
         {groups.map((g) => {
           const joined = myGroups.some((mg) => mg.id === g.id);
           return (
-            <div key={g.id} className="card">
-              <div>
+            <div key={g.id} className="explore-card">
+              <div className="explore-card-header">
                 <h3>{g.groupName}</h3>
-                <p className="text-secondary">{g.description}</p>
+                <span className="explore-badge">
+                  {g.membersCount} {t("members")}
+                </span>
               </div>
-              <button
-                onClick={() => handleJoin(g)}
-                disabled={joined}
-                className={`btn ${joined ? "btn-gray" : "btn-blue"}`}
-              >
-                {joined ? t("joined") : t("join")}
-              </button>
+              <p className="explore-description">{g.description}</p>
+
+             <div style={{ display: "flex", gap: "10px" }}>
+  <button
+    onClick={() => handleJoin(g.id)}
+    disabled={joined}
+    className={`explore-btn ${
+      joined ? "explore-btn-gray" : "explore-btn-blue"
+    }`}
+  >
+    {joined ? t("joined") : t("join")}
+  </button>
+
+  {joined && (
+    <a
+      href={`/groups/${g.id}`}
+      className="explore-btn explore-btn-blue explore-link-btn"
+    >
+      Go to community
+    </a>
+  )}
+</div>
+
             </div>
           );
         })}
       </div>
-
-      {/* CSS داخلية */}
-      <style jsx>{`
-        .explore-container {
-          padding: 20px;
-          background-color: #F7F7F7;
-          min-height: 100vh;
-          color: #4A4A4A;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-        }
-        h2 { margin-bottom: 20px; }
-        h3 { margin: 0 0 5px 0; }
-        .text-secondary { color: #828282; }
-        .groups-list { width: 100%; max-width: 600px; }
-        .card {
-          border: 1px solid #828282;
-          padding: 15px;
-          margin-bottom: 10px;
-          border-radius: 5px;
-          background-color: #fff;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-        }
-        .input-field {
-          border: 1px solid #828282;
-          border-radius: 5px;
-          padding: 8px;
-          width: 100%;
-          margin-bottom: 20px;
-          box-sizing: border-box;
-        }
-        .btn {
-          padding: 6px 12px;
-          border-radius: 5px;
-          border: none;
-          cursor: pointer;
-          color: #fff;
-        }
-        .btn-blue { background-color: #37568D; }
-        .btn-gray { background-color: #828282; cursor: not-allowed; }
-      `}</style>
     </div>
   );
 }
