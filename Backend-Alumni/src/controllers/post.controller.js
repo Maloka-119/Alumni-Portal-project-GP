@@ -101,10 +101,10 @@ const createPost = async (req, res) => {
 //get all posts in specific group
 const getGroupPosts = async (req, res) => {
   try {
-    const { groupId } = req.params; 
+    const { groupId } = req.params;
 
     const posts = await Post.findAll({
-      where: { "group-id": groupId }, 
+      where: { "group-id": groupId },
       include: [
         {
           model: User,
@@ -165,7 +165,6 @@ const getGroupPosts = async (req, res) => {
     });
   }
 };
-
 
 // get all posts
 const getAllPostsOfUsers = async (req, res) => {
@@ -333,21 +332,13 @@ const getCategories = async (req, res) => {
 };
 const getAdminPosts = async (req, res) => {
   try {
-    // نتأكد إنه فعلاً Admin
-    // if (!req.user || req.user["user-type"] !== "admin") {
-    //   return res.status(403).json({
-    //     status: "error",
-    //     message: "Not authorized as an admin",
-    //   });
-    // }
-
-    // نجيب البوستات اللي الـ author-id بتاعها = id الأدمن
+    // جلب البوستات الخاصة بالمستخدمين من نوع admin فقط
     const posts = await Post.findAll({
-      where: { "author-id": req.user.id },
       include: [
         {
           model: User,
-          attributes: ["id", "first-name", "last-name", "email"],
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+          where: { "user-type": "admin" }, // الفلترة هنا علشان نجيب الأدمنز فقط
         },
       ],
       order: [["created-at", "DESC"]],
@@ -550,5 +541,5 @@ module.exports = {
   getGraduatePosts,
   getAllPostsOfUsers,
   editPost,
-  getGroupPosts
+  getGroupPosts,
 };

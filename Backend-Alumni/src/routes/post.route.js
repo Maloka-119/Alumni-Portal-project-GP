@@ -28,7 +28,7 @@ router.post(
 router.get("/", postController.getAllPosts);
 router.get("/user-posts", postController.getAllPostsOfUsers);
 router.get("/categories", postController.getCategories);
-router.get("/admin", authMiddleware.protect, postController.getAdminPosts);
+router.get("/admin", postController.getAdminPosts);
 // route جديد مخصوص للفانكشن الجديدة
 router.get(
   "/my-graduate-posts",
@@ -37,5 +37,5 @@ router.get(
 );
 router.put("/:postId", authMiddleware.protect, postController.editPost);
 //get posts in specific group
-router.get("/:groupId", authMiddleware.protect,postController.getGroupPosts );
+router.get("/:groupId", authMiddleware.protect, postController.getGroupPosts);
 module.exports = router;
