@@ -12,6 +12,7 @@ const path = require("path"); // ضيفه فوق مع باقي الـ requires
 
 const app = express();
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));

@@ -23,14 +23,30 @@ function GroupDetail({ group, goBack, updateGroup }) {
   const [colleges, setColleges] = useState([]);
   const [years, setYears] = useState([]);
 
+  // Fetch graduates by filters
   useEffect(() => {
     fetchGraduates();
   }, [college, year]);
 
+  // Fetch filters + types
   useEffect(() => {
     fetchFilters();
     fetchTypes();
   }, []);
+
+  // Fetch members for this group
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        const res = await API.get(`/${group.id}/users`);
+        updateGroup({ ...group, members: res.data.data || [] });
+      } catch (err) {
+        console.error("Error fetching members", err);
+        updateGroup({ ...group, members: [] });
+      }
+    };
+    if (group?.id) fetchMembers();
+  }, [group?.id]);
 
   const fetchGraduates = async () => {
     try {
@@ -52,13 +68,11 @@ function GroupDetail({ group, goBack, updateGroup }) {
 
   const fetchTypes = async () => {
     try {
-      const res = await API.get("/post-types");
-      setTypes(res.data || []);
-      if (res.data && res.data.length > 0) setPostType(res.data[0]);
+      const res = await API.get("/posts/categories");
+      setTypes(res.data.data || []); 
     } catch (err) {
-      console.error("Error fetching types", err);
-      setTypes(["General"]);
-      setPostType("General");
+      console.error("Error fetching categories", err);
+      setTypes([]);
     }
   };
 
@@ -72,7 +86,13 @@ function GroupDetail({ group, goBack, updateGroup }) {
 
   const addGraduates = async () => {
     try {
+      if (!group?.id) return;
       if (selectedGraduates.length === 0) return;
+  
+      console.log("sending:", {
+        groupId: group.id,
+        userIds: selectedGraduates
+      });
   
       const res = await API.post("/add-to-group", {
         groupId: group.id,
@@ -81,22 +101,27 @@ function GroupDetail({ group, goBack, updateGroup }) {
   
       console.log("Users processed:", res.data);
   
-      const groupRes = await API.get(`/groups/${group.id}`);
-      updateGroup(groupRes.data);
+      const newMembers = [
+        ...(group.members || []),
+        ...graduates.filter(g => selectedGraduates.includes(g.graduate_id))
+                    .map(g => g.User) 
+      ];
+  
+      updateGroup({ ...group, members: newMembers });
   
       setSelectedGraduates([]);
       setShowAddModal(false);
-  
     } catch (err) {
       console.error(err);
     }
   };
   
+  
 
   const handleLikePost = async (post) => {
     try {
       await API.post(`/posts/${post.post_id}/like`);
-      const updatedPosts = group.posts.map(p =>
+      const updatedPosts = (group.posts || []).map(p =>
         p.post_id === post.post_id
           ? { ...p, liked: true }
           : p
@@ -125,7 +150,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
         res = await API.put(`/posts/${editingPost.post_id}`, formData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
-        const updatedPosts = group.posts.map(p =>
+        const updatedPosts = (group.posts || []).map(p =>
           p.post_id === editingPost.post_id ? res.data.post : p
         );
         updateGroup({ ...group, posts: updatedPosts });
@@ -135,7 +160,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
         res = await API.post("/posts/create-post", formData, {
           headers: { "Content-Type": "multipart/form-data" }
         });
-        updateGroup({ ...group, posts: [res.data.post, ...group.posts] });
+        updateGroup({ ...group, posts: [res.data.post, ...(group.posts || [])] });
         setShowAddPostForm(false);
       }
 
@@ -200,7 +225,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
 
         <div className="group-actions">
           <div className="action-tag" onClick={() => setShowMembersModal(true)}>
-            {group.members.length} Members
+          {Array.isArray(group.members) ? group.members.length : 0} Members
           </div>
           <div className="action-tag" onClick={() => setShowAddModal(true)}>
             Add Members +
@@ -252,7 +277,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
         )}
 
         <ul className="posts-list">
-          {group.posts.map(p => (
+          {(group.posts || []).map(p => (
             <li key={p.post_id || p.id} className="post-card">
               <div className="post-header">
                 <img
@@ -280,7 +305,11 @@ function GroupDetail({ group, goBack, updateGroup }) {
             <button className="modal-close" onClick={() => setShowMembersModal(false)}>X</button>
             <h3>Members</h3>
             <ul>
-              {group.members.map(m => <li key={m.id}>{m.name}</li>)}
+              {(group.members || []).map(m => (
+                <li key={m.id}>
+                  {m["first-name"]} {m["last-name"]}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -342,7 +371,6 @@ export default GroupDetail;
 //   const [selectedGraduates, setSelectedGraduates] = useState([]);
 //   const [showAddPostForm, setShowAddPostForm] = useState(false);
 //   const [editingPost, setEditingPost] = useState(null);
-//   const [postTitle, setPostTitle] = useState("");
 //   const [postText, setPostText] = useState("");
 //   const [postType, setPostType] = useState("");
 //   const [postLink, setPostLink] = useState("");
@@ -355,11 +383,15 @@ export default GroupDetail;
 //   const [colleges, setColleges] = useState([]);
 //   const [years, setYears] = useState([]);
 
- 
-//  useEffect(() => {
-//   fetchGraduates();
-// }, [college, year]);
- 
+//   useEffect(() => {
+//     fetchGraduates();
+//   }, [college, year]);
+
+//   useEffect(() => {
+//     fetchFilters();
+//     fetchTypes();
+//   }, []);
+
 //   const fetchGraduates = async () => {
 //     try {
 //       const query = [];
@@ -372,7 +404,6 @@ export default GroupDetail;
 //       console.error(err);
 //     }
 //   };
-  
 
 //   const fetchFilters = async () => {
 //     setColleges(["Engineering", "Medicine", "Arts"]);
@@ -383,14 +414,13 @@ export default GroupDetail;
 //     try {
 //       const res = await API.get("/post-types");
 //       setTypes(res.data || []);
-//       if(res.data && res.data.length > 0) setPostType(res.data[0]); 
+//       if (res.data && res.data.length > 0) setPostType(res.data[0]);
 //     } catch (err) {
 //       console.error("Error fetching types", err);
-//       setTypes(["General"]); 
+//       setTypes(["General"]);
 //       setPostType("General");
 //     }
 //   };
-
 
 //   const toggleGraduate = grad => {
 //     setSelectedGraduates(prev =>
@@ -399,27 +429,36 @@ export default GroupDetail;
 //         : [...prev, grad.graduate_id]
 //     );
 //   };
-  
 
 //   const addGraduates = async () => {
 //     try {
-//       for (let id of selectedGraduates) {
-//         await API.post("/groups/add-user", { groupId: group.id, userId: id });
-//       }
-//       const res = await API.get(`/groups/${group.id}`);
-//       updateGroup(res.data);
+//       if (selectedGraduates.length === 0) return;
+  
+//       const res = await API.post("/add-to-group", {
+//         groupId: group.id,
+//         userIds: selectedGraduates
+//       });
+  
+//       console.log("Users processed:", res.data);
+  
+//       const groupRes = await API.get(`/groups/${group.id}`);
+//       updateGroup(groupRes.data);
+  
 //       setSelectedGraduates([]);
 //       setShowAddModal(false);
+  
 //     } catch (err) {
 //       console.error(err);
 //     }
 //   };
+  
+
 //   const handleLikePost = async (post) => {
 //     try {
 //       await API.post(`/posts/${post.post_id}/like`);
 //       const updatedPosts = group.posts.map(p =>
 //         p.post_id === post.post_id
-//           ? { ...p, liked: true } 
+//           ? { ...p, liked: true }
 //           : p
 //       );
 //       updateGroup({ ...group, posts: updatedPosts });
@@ -436,13 +475,13 @@ export default GroupDetail;
 //       formData.append("content", postText);
 //       formData.append("groupId", group.id);
 //       formData.append("inLanding", true);
-//       if(postLink) formData.append("link", postLink);
+//       if (postLink) formData.append("link", postLink);
 //       postImages.forEach(img => formData.append("images", img));
 //       postFiles.forEach(f => formData.append("files", f));
 //       removeImages.forEach(url => formData.append("removeImages", url));
 
 //       let res;
-//       if(editingPost){
+//       if (editingPost) {
 //         res = await API.put(`/posts/${editingPost.post_id}`, formData, {
 //           headers: { "Content-Type": "multipart/form-data" }
 //         });
@@ -451,6 +490,7 @@ export default GroupDetail;
 //         );
 //         updateGroup({ ...group, posts: updatedPosts });
 //         setEditingPost(null);
+//         setShowAddPostForm(false);
 //       } else {
 //         res = await API.post("/posts/create-post", formData, {
 //           headers: { "Content-Type": "multipart/form-data" }
@@ -459,27 +499,26 @@ export default GroupDetail;
 //         setShowAddPostForm(false);
 //       }
 
-      
 //       setPostText("");
 //       setPostLink("");
 //       setPostType(types[0] || "News");
 //       setPostImages([]);
 //       setPostFiles([]);
 //       setRemoveImages([]);
-//     } catch(err){
+//     } catch (err) {
 //       console.error(err);
 //     }
 //   };
 
 //   const startEditPost = post => {
 //     setEditingPost(post);
-   
 //     setPostText(post.content || post.text || "");
 //     setPostType(post.category || (types[0] || "News"));
 //     setPostLink(post.link || "");
 //     setPostImages(post.images || []);
 //     setPostFiles([]);
 //     setRemoveImages([]);
+//     setShowAddPostForm(true);
 //   };
 
 //   const handleImageChange = e => {
@@ -493,7 +532,7 @@ export default GroupDetail;
 //   };
 
 //   const handleRemoveImage = url => {
-//     if(typeof url === "string") setRemoveImages(prev => [...prev, url]);
+//     if (typeof url === "string") setRemoveImages(prev => [...prev, url]);
 //     setPostImages(prev => prev.filter(img => img !== url));
 //   };
 
@@ -537,7 +576,6 @@ export default GroupDetail;
 
 //         {(showAddPostForm || editingPost) && (
 //           <form onSubmit={handlePostSubmit} className="compact-post-form">
-            
 //             <textarea value={postText} onChange={e => setPostText(e.target.value)} placeholder={'Post Content'} required className="input-field" />
 //             <select value={postType} onChange={e => setPostType(e.target.value)} required className="input-field">
 //               {types.map(ti => <option key={ti}>{ti}</option>)}
@@ -554,7 +592,7 @@ export default GroupDetail;
 //                 <FileText size={20} />
 //               </label>
 //               <label title={'Add Link'}>
-//                 <LinkIcon size={20} /> 
+//                 <LinkIcon size={20} />
 //               </label>
 //             </div>
 
@@ -568,7 +606,7 @@ export default GroupDetail;
 //             </div>
 
 //             <div className="form-buttons">
-//               <button style={{backgroundColor: '#facc15'}} type="submit">{editingPost ? "Update Post" : "Post"}</button>
+//               <button style={{ backgroundColor: '#facc15' }} type="submit">{editingPost ? "Update Post" : "Post"}</button>
 //             </div>
 //           </form>
 //         )}
@@ -628,17 +666,17 @@ export default GroupDetail;
 //               </select>
 //             </div>
 //             <ul>
-//   {graduates.map(g => (
-//     <li key={g.graduate_id}>
-//       <input
-//         type="checkbox"
-//         checked={selectedGraduates.includes(g.graduate_id)}
-//         onChange={() => toggleGraduate(g)}
-//       />
-//       {g.User["first-name"]} {g.User["last-name"]} ({g.faculty}, {g["graduation-year"]})
-//     </li>
-//   ))}
-// </ul>
+//               {graduates.map(g => (
+//                 <li key={g.graduate_id}>
+//                   <input
+//                     type="checkbox"
+//                     checked={selectedGraduates.includes(g.graduate_id)}
+//                     onChange={() => toggleGraduate(g)}
+//                   />
+//                   {g.User["first-name"]} {g.User["last-name"]} ({g.faculty}, {g["graduation-year"]})
+//                 </li>
+//               ))}
+//             </ul>
 
 //             <button onClick={addGraduates}>Add to Group</button>
 //           </div>
@@ -649,3 +687,4 @@ export default GroupDetail;
 // }
 
 // export default GroupDetail;
+
