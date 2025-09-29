@@ -5,13 +5,76 @@ const GroupMember = require("../models/GroupMember");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
 //as an admin, i want to create group
+// const createGroup = async (req, res) => {
+//   try {
+//     const { groupName, description, groupImage } = req.body; // استقبل الصورة من الـ body
+//     const user = req.user; // middleware بيرجع الـ user
+
+//     // تأكد إن الشخص admin
+//     if (user["user-type"] !== "admin") {
+//       return res.status(403).json({
+//         status: "fail",
+//         message: "Only admins can create groups",
+//         data: [],
+//       });
+//     }
+
+//     // إنشاء المجموعة
+//     const group = await Group.create({
+//       "group-name": groupName,
+//       description,
+//       "created-date": new Date(),
+//       "group-image": groupImage || null, // نحط الصورة لو موجودة
+//     });
+
+//     // احسب عدد الأعضاء الحاليين في الجروب
+//     const memberCount = await GroupMember.count({
+//       where: { "group-id": group.id },
+//     });
+
+//     // ريسبونس بالشكل المطلوب
+//     return res.status(201).json({
+//       status: "success",
+//       message: "Group created successfully",
+//       data: [
+//         {
+//           id: group.id,
+//           groupName: group["group-name"],
+//           description: group.description,
+//           createdDate: group["created-date"],
+//           groupImage: group["group-image"], // نرجع الصورة كمان
+//           memberCount: memberCount, // العدد الحالي للأعضاء
+//         },
+//       ],
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({
+//       status: "error",
+//       message: err.message,
+//       data: [],
+//     });
+//   }
+// };
 const createGroup = async (req, res) => {
   try {
-    const { groupName, description, groupImage } = req.body; // استقبل الصورة من الـ body
-    const user = req.user; // middleware بيرجع الـ user
+    // تشخيص - نشوف البودي الواصل من الفرونت
+    console.log("Received body:", req.body);
 
-    // تأكد إن الشخص admin
-    if (user["user-type"] !== "admin") {
+    const { groupName, description, groupImage } = req.body || {};
+    const user = req.user;
+
+    // تحقق من البودي
+    if (!groupName || !description) {
+      return res.status(400).json({
+        status: "fail",
+        message: "Group name and description are required",
+        data: [],
+      });
+    }
+
+    // تحقق إن فيه يوزر وفيه نوعه
+    if (!user || user["user-type"] !== "admin") {
       return res.status(403).json({
         status: "fail",
         message: "Only admins can create groups",
@@ -24,34 +87,32 @@ const createGroup = async (req, res) => {
       "group-name": groupName,
       description,
       "created-date": new Date(),
-      "group-image": groupImage || null, // نحط الصورة لو موجودة
+      "group-image": groupImage || null,
     });
 
-    // احسب عدد الأعضاء الحاليين في الجروب
+    // احسب عدد الأعضاء (المفروض 0 عند الإنشاء)
     const memberCount = await GroupMember.count({
       where: { "group-id": group.id },
     });
 
-    // ريسبونس بالشكل المطلوب
     return res.status(201).json({
       status: "success",
       message: "Group created successfully",
-      data: [
-        {
-          id: group.id,
-          groupName: group["group-name"],
-          description: group.description,
-          createdDate: group["created-date"],
-          groupImage: group["group-image"], // نرجع الصورة كمان
-          memberCount: memberCount, // العدد الحالي للأعضاء
-        },
-      ],
+      data: {
+        id: group.id,
+        groupName: group["group-name"],
+        description: group.description,
+        createdDate: group["created-date"],
+        groupImage: group["group-image"],
+        memberCount,
+      },
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error in createGroup:", err);
     return res.status(500).json({
       status: "error",
-      message: err.message,
+      message: "Failed to create group",
+      error: err.message,
       data: [],
     });
   }

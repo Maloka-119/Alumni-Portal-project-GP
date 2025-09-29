@@ -13,7 +13,7 @@ import PostsAlumni from './PostsAlumni';
 import HomeAlumni from './HomeAlumni';
 import DigitalID from './DigitalID';
 import GraduatedProfile from './GraduatedProfile';
-import ExploreGroups from './ExploreGroups.js';
+import ExploreGroups from './exploreGroups.js';
 import MyGroups from './MyGroups';
 import { useTranslation } from "react-i18next";
 import { useNavigate } from 'react-router-dom';
