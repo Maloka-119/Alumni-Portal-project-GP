@@ -1,13 +1,14 @@
-// src/pages/ExploreGroups.js
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import API from "../../services/api";
+import GroupDetails from "../alumni/GroupDetails"; 
 import "./ExploreGroups.css";
 
 function ExploreGroups() {
   const { t } = useTranslation();
   const [groups, setGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
+  const [selectedGroup, setSelectedGroup] = useState(null); 
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -32,32 +33,48 @@ function ExploreGroups() {
     fetchMyGroups();
   }, []);
 
-  const handleJoin = async (groupId) => {
-    try {
-      const token = localStorage.getItem("token");
-      await API.post(
-        "/groups/join",
-        { groupId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const res = await API.get("/groups/my-groups", {
+const handleJoin = async (groupId) => {
+  try {
+    const token = localStorage.getItem("token");
+    await API.post(
+      "/groups/join",
+      { groupId },
+      {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      });
-      setMyGroups(res.data.data || []);
+      }
+    );
 
-      alert("You joined the group successfully!");
-    } catch (err) {
-      console.error("Error joining group:", err);
-      alert("Failed to join group, please try again.");
-    }
-  };
+    // تحديث الـ myGroups
+    const res = await API.get("/groups/my-groups", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setMyGroups(res.data.data || []);
+
+    // تحديث عدد الأعضاء فورًا في الـ groups
+    setGroups((prevGroups) =>
+      prevGroups.map((g) =>
+        g.id === groupId
+          ? { ...g, membersCount: (g.membersCount || 0) + 1 }
+          : g
+      )
+    );
+
+    alert("You joined the community successfully!");
+  } catch (err) {
+    console.error("Error joining community:", err);
+    alert("Failed to join community, please try again.");
+  }
+};
+
+
+  if (selectedGroup) {
+    
+    return <GroupDetails group={selectedGroup} goBack={() => setSelectedGroup(null)} />;
+  }
 
   return (
     <div className="explore-container">
@@ -76,27 +93,26 @@ function ExploreGroups() {
               </div>
               <p className="explore-description">{g.description}</p>
 
-             <div style={{ display: "flex", gap: "10px" }}>
-  <button
-    onClick={() => handleJoin(g.id)}
-    disabled={joined}
-    className={`explore-btn ${
-      joined ? "explore-btn-gray" : "explore-btn-blue"
-    }`}
-  >
-    {joined ? t("joined") : t("join")}
-  </button>
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  onClick={() => handleJoin(g.id)}
+                  disabled={joined}
+                  className={`explore-btn ${
+                    joined ? "explore-btn-gray" : "explore-btn-blue"
+                  }`}
+                >
+                  {joined ? t("joined") : t("join")}
+                </button>
 
-  {joined && (
-    <a
-      href={`/groups/${g.id}`}
-      className="explore-btn explore-btn-blue explore-link-btn"
-    >
-      Go to community
-    </a>
-  )}
-</div>
-
+                {joined && (
+                  <button
+                    onClick={() => setSelectedGroup(g)}
+                    className="explore-btn explore-btn-blue explore-link-btn"
+                  >
+                    {t("goToGroup")}
+                  </button>
+                )}
+              </div>
             </div>
           );
         })}
