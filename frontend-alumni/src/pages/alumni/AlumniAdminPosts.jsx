@@ -28,10 +28,13 @@ const AlumniAdminPosts = () => {
       const res = await API.get("/posts/admin");
       console.log("Response from backend:", res.data); 
   
-      const formattedPosts = (res.data?.data || []).map(p => ({
+      // فلترة البوستات اللي group_id = null
+      const filtered = (res.data?.data || []).filter(p => p["group-id"] === null);
+  
+      const formattedPosts = filtered.map(p => ({
         id: p.post_id,
         content: p.content,
-        date: p['created-at'].toLocaleString(), 
+        date: new Date(p['created-at']).toLocaleString(), 
         authorName: "Alumni Portal – Helwan University",
         likes: p.likes || 0,
         liked: false,
@@ -48,6 +51,7 @@ const AlumniAdminPosts = () => {
       setLoading(false);
     }
   };
+  
   
 
   const fetchTypes = async () => {
