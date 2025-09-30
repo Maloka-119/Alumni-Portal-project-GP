@@ -10,13 +10,13 @@
   margin-bottom: 25px;
   font-size: 30px;
   font-weight: bold;
-  color: #333;
+  color: #37568D;
 }
 
 .no-groups {
   text-align: center;
   font-size: 18px;
-  color: #777;
+  color: #424141;
 }
 
 /* الشبكة */
@@ -43,7 +43,7 @@
 .group-card h3 {
   margin: 0 0 10px;
   font-size: 20px;
-  color: #4f46e5;
+  color: #37568D;
 }
 
 .group-card p {
@@ -83,12 +83,12 @@
 
 /* زر Leave */
 .leave-btn {
-  background-color: #dc2626;
+  background-color: #c10505;
   color: #fff;
 }
 
 .leave-btn:hover {
-  background-color: #b91c1c;
+  background-color: #a70303;
 }
 
 
@@ -97,7 +97,7 @@
   position: absolute;
   top: 8px;         /* أقرب للحافة */
   right: 8px;       /* بعيد عن اسم الجروب */
-  background: #4f46e5;
+  background: #37568D;
   color: #fff;
   font-size: 11px;  /* أصغر */
   font-weight: 600;
