@@ -2,6 +2,7 @@ const Group = require("../models/Group");
 const Staff = require("../models/Staff"); // للتأكد ان الي عامل العملية admin
 const User = require("../models/User");
 const GroupMember = require("../models/GroupMember");
+const Post = require("../models/Post");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
 //as an admin, i want to create group
@@ -300,7 +301,6 @@ const deleteGroup = async (req, res) => {
     const user = req.user;
     const { groupId } = req.params;
 
-    // لازم يكون Admin
     if (user["user-type"] !== "admin") {
       return res.status(403).json({
         status: "fail",
@@ -309,7 +309,6 @@ const deleteGroup = async (req, res) => {
       });
     }
 
-    // دور على الجروب
     const group = await Group.findByPk(groupId);
     if (!group) {
       return res.status(404).json({
@@ -319,16 +318,22 @@ const deleteGroup = async (req, res) => {
       });
     }
 
+    // امسح البوستات المرتبطة بالجروب
+    await Post.destroy({ where: { "group-id": groupId } });
+
+    // امسح الأعضاء
+    await GroupMember.destroy({ where: { "group-id": groupId } });
+
     // امسح الجروب
     await group.destroy();
 
     return res.status(200).json({
       status: "success",
-      message: "Group deleted successfully",
+      message: "Group, members, and posts deleted successfully",
       data: [],
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error deleting group:", err);
     return res.status(500).json({
       status: "error",
       message: err.message,
