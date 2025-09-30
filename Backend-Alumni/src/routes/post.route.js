@@ -25,17 +25,46 @@ router.post(
   postController.createPost
 );
 
+// جلب كل البوستات
 router.get("/", postController.getAllPosts);
+
+// جلب كل البوستات الخاصة بالمستخدمين (موجودة في الكود الأول)
 router.get("/user-posts", postController.getAllPostsOfUsers);
+
+// جلب تصنيفات البوستات
 router.get("/categories", postController.getCategories);
+
+// جلب بوستات الادمن (محمي)
 router.get("/admin", authMiddleware.protect, postController.getAdminPosts);
-// route جديد مخصوص للفانكشن الجديدة
+
+// جلب بوستات الخريجين (موجودة في الكود الأول)
 router.get(
   "/my-graduate-posts",
   authMiddleware.protect,
   postController.getGraduatePosts
 );
+
+// تعديل بوست 
 router.put("/:postId", authMiddleware.protect, postController.editPost);
-//get posts in specific group
-router.get("/:groupId", authMiddleware.protect,postController.getGroupPosts );
+
+// جلب بوستات مجموعة معينة 
+router.get("/:groupId", authMiddleware.protect, postController.getGroupPosts);
+
+// جلب تفاصيل بوست مع التعليقات واللايكات 
+router.get("/:postId", postController.getPostWithDetails);
+
+// لايك / إلغاء لايك على بوست 
+router.post("/:postId/like", authMiddleware.protect, postController.likePost);
+router.delete("/:postId/like", authMiddleware.protect, postController.unlikePost);
+
+// إضافة تعليق على بوست)
+router.post("/:postId/comments", authMiddleware.protect, postController.addComment);
+
+// تعديل / حذف تعليق 
+router.put("/comments/:commentId", authMiddleware.protect, postController.editComment);
+router.delete("/comments/:commentId", authMiddleware.protect, postController.deleteComment);
+
+// حذف بوست 
+router.delete("/:postId", authMiddleware.protect, postController.deletePost);
+
 module.exports = router;
