@@ -8,7 +8,8 @@ const Comment = sequelize.define('Comment', {
   content: { type: DataTypes.STRING },
   'post-id': { type: DataTypes.INTEGER, references: { model: Post, key: 'post_id' } },
   'author-id': { type: DataTypes.INTEGER, references: { model: User, key: 'id' } },
-  'created-at': { type: DataTypes.DATE, defaultValue: DataTypes.NOW }
+  'created-at': { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
+  edited: { type: DataTypes.BOOLEAN, defaultValue: false }
 }, { tableName: 'Comment', timestamps: false });
 
 Comment.belongsTo(Post, { foreignKey: 'post-id' });
