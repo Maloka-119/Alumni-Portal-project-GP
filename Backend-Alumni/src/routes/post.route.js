@@ -33,16 +33,11 @@ router.get("/user-posts", postController.getAllPostsOfUsers);
 
 // جلب تصنيفات البوستات
 router.get("/categories", postController.getCategories);
-// <<<<<<< HEAD
-router.get("/admin", postController.getAdminPosts);
-// route جديد مخصوص للفانكشن الجديدة
-// =======
 
-// // جلب بوستات الادمن (محمي)
-// router.get("/admin", authMiddleware.protect, postController.getAdminPosts);
+router.get("/admin", postController.getAdminPosts);
 
 // جلب بوستات الخريجين (موجودة في الكود الأول)
-// >>>>>>> d777210ca6efe5bd44502e93e7ac869e7754954a
+
 router.get(
   "/my-graduate-posts",
   authMiddleware.protect,
@@ -51,13 +46,9 @@ router.get(
 
 // تعديل بوست
 router.put("/:postId", authMiddleware.protect, postController.editPost);
-// <<<<<<< HEAD
+
 //get posts in specific group
 router.get("/:groupId", authMiddleware.protect, postController.getGroupPosts);
-// =======
-
-// // جلب بوستات مجموعة معينة
-// router.get("/:groupId", authMiddleware.protect, postController.getGroupPosts);
 
 // جلب تفاصيل بوست مع التعليقات واللايكات
 router.get("/:postId", postController.getPostWithDetails);
@@ -92,5 +83,4 @@ router.delete(
 // حذف بوست
 router.delete("/:postId", authMiddleware.protect, postController.deletePost);
 
-// >>>>>>> d777210ca6efe5bd44502e93e7ac869e7754954a
 module.exports = router;

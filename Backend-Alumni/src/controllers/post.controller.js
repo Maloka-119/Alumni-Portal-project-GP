@@ -1004,8 +1004,7 @@ module.exports = {
   getAllPostsOfUsers,
   editPost,
   getGroupPosts,
-  // <<<<<<< HEAD
-  // =======
+
   likePost,
   unlikePost,
   addComment,
@@ -1013,5 +1012,4 @@ module.exports = {
   deleteComment,
   deletePost,
   getPostWithDetails,
-  // >>>>>>> d777210ca6efe5bd44502e93e7ac869e7754954a
 };
