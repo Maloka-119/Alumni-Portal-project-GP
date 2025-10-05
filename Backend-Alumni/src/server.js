@@ -40,6 +40,12 @@ app.use("/alumni-portal", groupRoutes);
 const userRoutes = require("./routes/user.route");
 app.use("/alumni-portal", userRoutes);
 
+const permissionRoutes = require("./routes/permission.route");
+app.use("/alumni-portal/permissions", permissionRoutes);
+
+const roleRoutes = require("./routes/role.route");
+app.use("/alumni-portal/roles", roleRoutes);
+
 // Serve static files from uploads folder
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
