@@ -1,15 +1,14 @@
 "use strict";
 
-/** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn("Comment", "edited", {
+    await queryInterface.addColumn("Post", "is-hidden", {
       type: Sequelize.BOOLEAN,
       defaultValue: false,
     });
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.removeColumn("Comment", "edited");
+    await queryInterface.removeColumn("Post", "is-hidden");
   },
 };

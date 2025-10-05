@@ -995,6 +995,55 @@ const getPostWithDetails = async (req, res) => {
   }
 };
 
+const hideNegativePost = async (req, res) => {
+  try {
+    const user = req.user;
+    const { postId } = req.params;
+
+    // ✅ لازم يكون Admin
+    if (!user || user["user-type"] !== "admin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only admins can hide posts",
+        data: [],
+      });
+    }
+
+    // 🔍 نجيب البوست
+    const post = await Post.findByPk(postId);
+    if (!post) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Post not found",
+        data: [],
+      });
+    }
+
+    // ✅ نخفي البوست
+    post["is-hidden"] = true;
+    await post.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Post hidden successfully",
+      data: [
+        {
+          postId: post.post_id,
+          content: post.content,
+          isHidden: post["is-hidden"],
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("Error in hideNegativePost:", err);
+    return res.status(500).json({
+      status: "error",
+      message: err.message,
+      data: [],
+    });
+  }
+};
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -1011,4 +1060,5 @@ module.exports = {
   deleteComment,
   deletePost,
   getPostWithDetails,
+  hideNegativePost,
 };
