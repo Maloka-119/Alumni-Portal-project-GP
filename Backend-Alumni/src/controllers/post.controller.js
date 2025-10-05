@@ -1004,7 +1004,6 @@ module.exports = {
   getAllPostsOfUsers,
   editPost,
   getGroupPosts,
-
   likePost,
   unlikePost,
   addComment,
