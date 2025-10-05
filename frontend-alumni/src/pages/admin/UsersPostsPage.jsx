@@ -35,13 +35,19 @@ const [newComment, setNewComment] = useState('');
 
   const handleHide = async (id) => {
     try {
-      await API.put(`/posts/${id}/hide`);
-      setPosts(posts.map(p => p.id === id ? { ...p, state: 'hidden' } : p));
+      const response = await API.put(`/posts/${id}/hide`);
+  
+      if (response.data.status === "success") {
+        setPosts(posts.map(p =>
+          p.id === id ? { ...p, isHidden: true } : p
+        ));
+      }
     } catch (err) {
-      console.error('Error hiding post', err);
+      console.error("Error hiding post", err);
       setError(t("hidePostFailed"));
     }
   };
+  
 
   const openComments = (post) => {
     setSelectedPost(post);
@@ -99,7 +105,7 @@ const handleLikePost = async (post) => {
       {!loading && !error && (
         <div className="posts-feed">
           {posts.map((post) => (
-            post.state !== 'hidden' && (
+            !post.isHidden && (
               <div key={post.id} className="post-card">
                 <div className="post-header">
                   <div className="post-header-info">
@@ -134,7 +140,7 @@ const handleLikePost = async (post) => {
                   <button><Share2 size={16} /> {post.shares}</button>
                 </div>
 
-                {selectedPost && (
+                {selectedPost?.id === post.id &&  (
   <div className="comments-modal">
     <div className="comments-container">
       <div className="comments-header">
