@@ -12,6 +12,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import GroupsPage from './GroupsPage';
+import FAQManage from './FAQManage';
+
 const pagesMap = {
   reportsAnalysis: <EmptyPage title="Reports & Analysis" />,
   communityManagement: <GroupsPage/>,
@@ -22,7 +24,7 @@ const pagesMap = {
   permissionsRoles: <EmptyPage title="Permissions & Roles" />,
   adminPosts: <AdminPostsPage />,
   usersPosts: <UsersPostsPage />,
-  faqManage: <EmptyPage title="FAQ Manage" />,
+  faqManage: <FAQManage />,
 };
 
 const AdminPanel = () => {
