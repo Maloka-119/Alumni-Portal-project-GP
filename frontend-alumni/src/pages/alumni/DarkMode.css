@@ -428,3 +428,42 @@
 .dark .uni-category-select label {
   color: #10b981;
 }
+
+/* ===== faq Dark Mode ===== */
+.dark .view-faq {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+.dark .view-faq h2 {
+  color: #60a5fa;
+}
+
+.dark .faq-item {
+  background: #1f2937;
+  border: 1px solid #374151;
+  color: #f3f4f6;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+}
+
+.dark .faq-item:hover {
+  background: #1f2937c0;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.dark .faq-header h4 {
+  color: #f3f4f6;
+}
+
+.dark .faq-header:hover h4 {
+  color: #3b82f6;
+}
+
+.dark .faq-answer {
+  background: #1f2937;
+  border-left: 3px solid #2563eb;
+}
+
+.dark .faq-answer p {
+  color: #d1d5db;
+}
