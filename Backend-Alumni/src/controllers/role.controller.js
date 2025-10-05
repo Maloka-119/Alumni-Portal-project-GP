@@ -4,6 +4,7 @@ const Permission = require("../models/Permission");
 const RolePermission = require("../models/RolePermission");
 const Staff = require("../models/Staff");
 const StaffRole = require("../models/StaffRole");
+const User = require("../models/User");
 
 // 🟢 إنشاء رول جديدة وربطها ببعض البرميشنز
 const createRoleWithPermissions = async (req, res) => {
@@ -160,8 +161,71 @@ const assignRoleToStaff = async (req, res) => {
   }
 };
 
+const viewEmployeesByRole = async (req, res) => {
+  try {
+    // نجيب كل الـ Roles مع الموظفين المرتبطين بيها
+    const roles = await Role.findAll({
+      include: [
+        {
+          model: Staff,
+          through: { attributes: [] }, // علشان ميرجعش بيانات الجدول الوسيط
+          include: [
+            {
+              model: User,
+              attributes: [
+                "id",
+                "first-name",
+                "last-name",
+                "email",
+                "phoneNumber",
+                "user-type",
+              ],
+            },
+          ],
+        },
+      ],
+    });
+
+    // لو مفيش roles
+    if (!roles || roles.length === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "No roles found",
+      });
+    }
+
+    // ترتيب الداتا بشكل منظم
+    const result = roles.map((role) => ({
+      role_id: role.id,
+      role_name: role["role-name"],
+      employees: role.Staffs.map((staff) => ({
+        staff_id: staff.staff_id,
+        first_name: staff.User?.["first-name"] || "",
+        last_name: staff.User?.["last-name"] || "",
+        email: staff.User?.email || "",
+        phoneNumber: staff.User?.phoneNumber || "",
+        user_type: staff.User?.["user-type"] || "",
+      })),
+    }));
+
+    res.status(200).json({
+      status: "success",
+      message: "Employees grouped by roles retrieved successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Error fetching employees by role:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to retrieve employees by role",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createRoleWithPermissions,
   getAllRolesWithPermissions,
   assignRoleToStaff,
+  viewEmployeesByRole,
 };

@@ -25,4 +25,6 @@ router.post(
   roleController.assignRoleToStaff
 );
 
+router.get("/employees-by-role", roleController.viewEmployeesByRole);
+
 module.exports = router;

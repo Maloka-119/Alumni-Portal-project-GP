@@ -83,4 +83,10 @@ router.delete(
 // حذف بوست
 router.delete("/:postId", authMiddleware.protect, postController.deletePost);
 
+router.put(
+  "/:postId/hide",
+  authMiddleware.protect,
+  postController.hideNegativePost
+);
+
 module.exports = router;
