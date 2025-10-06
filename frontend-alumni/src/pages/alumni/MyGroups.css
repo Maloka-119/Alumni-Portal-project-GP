@@ -1,108 +1,133 @@
-.mygroups-container {
-  max-width: 1000px;
-  margin: 30px auto;
-  padding: 20px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+.community-panel {
+  width: 100%;
+  padding: 40px 20px;
+  background: #f9fafb;
+  min-height: 100vh;
 }
 
-.title {
+.community-title {
+  font-size: 28px;
+  font-weight: 600;
   text-align: center;
-  margin-bottom: 25px;
-  font-size: 30px;
-  font-weight: bold;
-  color: #37568D;
+  margin-bottom: 30px;
+  color: #1e293b;
 }
 
-.no-groups {
+.community-empty {
   text-align: center;
-  font-size: 18px;
-  color: #424141;
+  color: #64748b;
+  font-size: 16px;
 }
 
-/* الشبكة */
-.groups-list {
+.community-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 👈 3 أعمدة ثابتة */
-  gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  width: 100%;
+  padding: 10px;
 }
 
-/* الكارد */
-.group-card {
-  position: relative; /* عشان نقدر نثبت الـ badge */
-  background: #fff;
-  border-radius: 10px;
-  padding: 18px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease;
+.community-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+  transition: all 0.2s ease;
 }
 
-.group-card:hover {
-  transform: translateY(-5px);
+.community-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
 }
 
-.group-card h3 {
-  margin: 0 0 10px;
-  font-size: 20px;
-  color: #37568D;
-}
-
-.group-card p {
-  margin: 6px 0;
-  font-size: 15px;
-  color: #555;
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-start;
-  gap: 10px; /* مسافة صغيرة بين الأزرار */
-  margin-top: 15px;
-}
-
-.btn {
-  padding: 6px 14px; /* نفس الحجم بتاع explore */
-  border: none;
-  border-radius: 5px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-  text-decoration: none !important;
-  text-align: center;
+.community-members {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
   display: inline-block;
 }
 
-/* زر Go */
-.go-btn {
-  background-color: #37568d; /* نفس الكحلي */
-  color: #fff;
-}
-
-.go-btn:hover {
-  background-color: #2b4370;
-}
-
-/* زر Leave */
-.leave-btn {
-  background-color: #c10505;
-  color: #fff;
-}
-
-.leave-btn:hover {
-  background-color: #a70303;
-}
-
-
-/* Badge عدد الأعضاء */
-.members-badge {
-  position: absolute;
-  top: 8px;         /* أقرب للحافة */
-  right: 8px;       /* بعيد عن اسم الجروب */
-  background: #37568D;
-  color: #fff;
-  font-size: 11px;  /* أصغر */
+.community-name {
+  font-size: 18px;
+  color: #0f172a;
   font-weight: 600;
-  padding: 2px 6px; /* أصغر في العرض والطول */
-  border-radius: 12px; /* شكل بيضاوي صغير */
-  line-height: 1;
-  white-space: nowrap;
+  margin-bottom: 8px;
+}
+
+.community-desc {
+  color: #475569;
+  font-size: 15px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.community-date {
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 16px;
+}
+
+.community-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.view-btn {
+  background: #2563eb;
+  color: #fff;
+}
+
+.leave-btn {
+  background: #ef4444;
+  color: #fff;
+}
+
+.action-btn:hover {
+  transform: scale(1.02);
+}
+
+@media (max-width: 1024px) {
+  .community-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .community-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .community-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .community-card {
+    padding: 18px;
+  }
+
+  .community-title {
+    font-size: 24px;
+  }
+
+  .action-btn {
+    font-size: 14px;
+    padding: 8px;
+  }
 }

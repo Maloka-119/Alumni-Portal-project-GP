@@ -106,7 +106,7 @@ function GroupDetails({ group, goBack }) {
         </button>
 
         <div className="group-header">
-          <h2>{group.groupName}</h2>
+          <h2 >{group.groupName}</h2>
           <p>{group.description}</p>
         </div>
 
