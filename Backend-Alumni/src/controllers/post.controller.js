@@ -446,7 +446,7 @@ const editPost = async (req, res) => {
     const { category, content, groupId, inLanding, images, removeImages } =
       req.body;
 
-    // تحقق إن المستخدم Admin
+    // ✅ تحقق إن المستخدم Admin
     if (!req.user || req.user["user-type"] !== "admin") {
       return res.status(403).json({
         status: "error",
@@ -454,7 +454,7 @@ const editPost = async (req, res) => {
       });
     }
 
-    // ندور على البوست
+    // ✅ ندور على البوست القديم
     const post = await Post.findByPk(postId);
     if (!post) {
       return res.status(404).json({
@@ -463,7 +463,7 @@ const editPost = async (req, res) => {
       });
     }
 
-    // السماح للأدمن يعدل بوستاته فقط
+    // ✅ السماح للأدمن يعدل بوستاته فقط
     if (post["author-id"] !== req.user.id) {
       return res.status(403).json({
         status: "error",
@@ -471,22 +471,22 @@ const editPost = async (req, res) => {
       });
     }
 
-    // تحديث بيانات البوست
+    // ✅ تعديل البيانات (بدون إنشاء بوست جديد)
     if (category !== undefined) post.category = category;
     if (content !== undefined) post.content = content;
-
-    if (groupId !== undefined) {
+    if (groupId !== undefined)
       post["group-id"] = groupId === null ? null : groupId;
-    }
+    if (inLanding !== undefined) post["in-landing"] = inLanding;
 
-    if (inLanding !== undefined) {
-      post["in-landing"] = inLanding;
-    }
-
+    // ✅ حفظ التعديلات في نفس البوست
     await post.save();
 
-    // حذف صور محددة لو موجودة في removeImages
-    if (removeImages && Array.isArray(removeImages)) {
+    // ✅ حذف صور محددة (لو موجودة)
+    if (
+      removeImages &&
+      Array.isArray(removeImages) &&
+      removeImages.length > 0
+    ) {
       await PostImage.destroy({
         where: {
           "post-id": postId,
@@ -495,27 +495,24 @@ const editPost = async (req, res) => {
       });
     }
 
-    // إضافة صور جديدة لو موجودة
-    if (images !== undefined) {
-      const imagesArray = Array.isArray(images) ? images : [images];
-      await Promise.all(
-        imagesArray.map((url) =>
-          PostImage.create({
-            "post-id": postId,
-            "image-url": url,
-          })
-        )
-      );
+    // ✅ إضافة الصور الجديدة (لو فيه)
+    if (images && Array.isArray(images) && images.length > 0) {
+      const newImages = images.map((url) => ({
+        "post-id": postId,
+        "image-url": url,
+      }));
+      await PostImage.bulkCreate(newImages); // 🔹 نضيفهم مرة واحدة بدل create جوه loop
     }
 
-    // جلب كل الصور بعد التحديث
+    // ✅ نجيب الصور بعد التعديل
     const updatedImages = await PostImage.findAll({
       where: { "post-id": postId },
       attributes: ["image-url"],
     });
 
+    // ✅ نرجع البوست بعد التحديث (نفسه مش نسخة جديدة)
     return res.status(200).json({
-      status: HttpStatusHelper.SUCCESS,
+      status: "success",
       message: "Post updated successfully",
       post: {
         ...post.toJSON(),
@@ -523,9 +520,9 @@ const editPost = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("❌ Error in editPost:", error);
     return res.status(500).json({
-      status: HttpStatusHelper.ERROR,
+      status: "error",
       message: error.message,
     });
   }
