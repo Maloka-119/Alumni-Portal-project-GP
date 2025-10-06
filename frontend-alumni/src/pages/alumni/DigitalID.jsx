@@ -64,7 +64,7 @@ function DigitalID() {
 
   return (
     <div>
-      <h1 className="h1">{t("digitalId_title")}</h1>
+      <h1 className="uni-header">{t("digitalId_title")}</h1>
       <h4 className="h4">{t("digitalId_subtitle")}</h4>
 
       <div className="IdCardArea" ref={cardRef}>
