@@ -520,3 +520,79 @@
 .dark .empty {
   color: #9ca3af;
 }
+
+/* ===== Dark Mode for Community & Explorer ===== */
+.dark .community-panel,
+.dark .explorer-wrapper {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+.dark .community-title,
+.dark .explorer-title {
+  color: #f3f4f6;
+}
+
+.dark .community-empty {
+  color: #9ca3af;
+}
+
+.dark .community-card,
+.dark .explorer-card {
+  background: #1f2937;
+  color: #f3f4f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 1px solid #374151;
+}
+
+.dark .community-card:hover,
+.dark .explorer-card:hover {
+  background: #1f2937c0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.dark .community-name,
+.dark .explorer-name {
+  color: #f3f4f6;
+}
+
+.dark .community-members,
+.dark .explorer-badge {
+  background: #374151;
+  color: #e5e7eb;
+}
+
+.dark .community-desc,
+.dark .explorer-desc {
+  color: #d1d5db;
+}
+
+.dark .community-date {
+  color: #9ca3af;
+}
+
+.dark .view-btn,
+.dark .explorer-btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.dark .leave-btn {
+  background: #ef4444;
+  color: #fff;
+}
+
+.dark .explorer-btn-secondary {
+  background: #475569;
+  color: #f3f4f6;
+}
+
+.dark .explorer-btn-disabled {
+  background: #374151;
+  color: #6b7280;
+}
+
+.dark .action-btn:hover,
+.dark .explorer-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+}
