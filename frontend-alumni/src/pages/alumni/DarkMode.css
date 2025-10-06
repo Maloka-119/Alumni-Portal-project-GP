@@ -467,3 +467,56 @@
 .dark .faq-answer p {
   color: #d1d5db;
 }
+
+/* ===== Dark Mode Notifications ===== */
+.dark .notifications-container {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+.dark .notification-item {
+  background: #1f2937;
+  color: #f3f4f6;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  border: 1px solid #374151;
+}
+
+.dark .notification-item:hover {
+  background: #1f2937c0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+.dark .notification-message {
+  color: #f3f4f6;
+}
+
+.dark .time {
+  color: #9ca3af;
+}
+
+.dark .delete-btn {
+  color: #f87171;
+}
+
+.dark .delete-btn:hover {
+  color: #ef4444;
+  transform: scale(1.15);
+}
+
+.dark .tabs button {
+  background: #2563eb;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+}
+
+.dark .tabs button.active {
+  background: #1d4ed8;
+}
+
+.dark .tabs button:hover {
+  background: #374151;
+}
+
+.dark .empty {
+  color: #9ca3af;
+}

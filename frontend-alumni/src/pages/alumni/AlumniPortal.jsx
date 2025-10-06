@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from 'react-router-dom';
 import API from "../../services/api";
 import ViewFAQ from './ViewFAQ';
+import Notifications from './Notifications.js';
 
 
 const sidebarSections = (darkMode, t) => [
@@ -112,6 +113,8 @@ const Dashboard = () => {
     if(activePage === "all Communities") return <ExploreGroups darkMode={darkMode}/>;
     if(activePage === "my Communities") return <MyGroups darkMode={darkMode}/>;
     if(activePage === "FAQ & Help") return <ViewFAQ darkMode={darkMode}/>;
+    if(activePage === "Notifications") return <Notifications darkMode={darkMode}/>;
+     
 
     return (
       <div className="alumni-card">
