@@ -134,8 +134,8 @@ function GraduatedProfile() {
     formData.fullName || `${formData.firstName || ""} ${formData.lastName || ""}`;
 
   return (
-    <div>
-      <h1>{t("profile")}</h1>
+    <div className="profile-page">
+      <h1 className="uni-header">{t("profile")}</h1>
 
       {!editing ? (
         <div className="profile-card">

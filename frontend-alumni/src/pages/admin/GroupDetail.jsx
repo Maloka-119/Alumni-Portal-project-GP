@@ -211,7 +211,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
   };
 
   return (
-    <div className="container">
+    <div className="containerr">
       <button className="back-btn" onClick={goBack} style={{ float: "right", display: "flex", alignItems: "center", gap: "6px" }}>
         <ArrowLeft size={16} />
       </button>

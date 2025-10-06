@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from "react-router-dom";
 import './Register.css';
 import Unibackground from './Unibackground.jpeg';
 import Header from '../components/Header';
@@ -9,6 +10,7 @@ import API from "../services/api";
 
 const Register = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     nationalId: '',
@@ -50,6 +52,9 @@ const Register = () => {
         const data = response.data;
         setMessage(t("registrationSuccess", { defaultValue: "Registration successful" }));
         console.log("✅ Backend response:", data);
+        setTimeout(() => {
+          navigate("/helwan-alumni-portal/login");
+        }, 1000);
       } else {
         setMessage(response.data.message || t("registrationFailed", { defaultValue: "Registration failed" }));
       }
