@@ -223,9 +223,63 @@ const viewEmployeesByRole = async (req, res) => {
   }
 };
 
+const updateRole = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+    const { name, permissions } = req.body;
+
+    // 🔹 نتحقق من وجود الرول
+    const role = await Role.findByPk(roleId);
+    if (!role) {
+      return res.status(404).json({
+        status: "error",
+        message: "Role not found",
+      });
+    }
+
+    // 🔹 تحديث اسم الرول لو اتغير
+    if (name) {
+      role["role-name"] = name;
+      await role.save();
+    }
+
+    // 🔹 تحديث الصلاحيات
+    if (permissions && Array.isArray(permissions)) {
+      // احذف الصلاحيات القديمة
+      await RolePermission.destroy({ where: { role_id: roleId } }); // ✅ نفس اسم العمود في الجدول
+
+      // أضف الصلاحيات الجديدة
+      const newPermissions = permissions.map((pid) => ({
+        role_id: roleId, // ✅ استخدم نفس الاسم في الجدول
+        permission_id: pid,
+      }));
+
+      await RolePermission.bulkCreate(newPermissions);
+    }
+
+    // ✅ رجّع النتيجة بعد التحديث
+    return res.status(200).json({
+      status: "success",
+      message: "Role updated successfully",
+      data: {
+        id: role.id,
+        name: role["role-name"],
+        permissions: permissions || "unchanged",
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error updating role:", error);
+    return res.status(500).json({
+      status: "error",
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   createRoleWithPermissions,
   getAllRolesWithPermissions,
   assignRoleToStaff,
   viewEmployeesByRole,
+  updateRole,
 };

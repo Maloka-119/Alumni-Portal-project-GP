@@ -3,12 +3,12 @@ const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
 require("dotenv").config();
-const { errorHandler } = require("./middleware/errorMiddleware");
+const path = require("path");
 const bcrypt = require("bcryptjs");
+const { errorHandler } = require("./middleware/errorMiddleware");
 const Permission = require("./models/Permission");
 const User = require("./models/User");
 const sequelize = require("./config/db");
-const path = require("path"); // ضيفه فوق مع باقي الـ requires
 
 const app = express();
 app.use(express.json());
@@ -17,11 +17,12 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));
 
-// test route
+// ✅ Test Route
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
+// ✅ Routes
 const graduateRoutes = require("./routes/graduates.route");
 app.use("/alumni-portal/graduates", graduateRoutes);
 
@@ -46,59 +47,62 @@ app.use("/alumni-portal/permissions", permissionRoutes);
 const roleRoutes = require("./routes/role.route");
 app.use("/alumni-portal/roles", roleRoutes);
 
-// Serve static files from uploads folder
+// ✅ Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+// ✅ Error Handler
 app.use(errorHandler);
 
-// ✅ Auto-seed default permissions (idempotent)
+// ==================================================
+// ✅ Clear old permissions and seed new ones
+// ==================================================
 const ensurePermissionsSeeded = async () => {
+  // الترتيب المطلوب
   const permissions = [
-    {
-      name: "manage_users",
-      "can-view": true,
-      "can-edit": true,
-      "can-delete": true,
-    },
-    {
-      name: "manage_posts",
-      "can-view": true,
-      "can-edit": true,
-      "can-delete": true,
-    },
-    {
-      name: "view_reports",
-      "can-view": true,
-      "can-edit": false,
-      "can-delete": false,
-    },
-    {
-      name: "handle_complaints",
-      "can-view": true,
-      "can-edit": true,
-      "can-delete": false,
-    },
-    {
-      name: "approve_graduates",
-      "can-view": true,
-      "can-edit": true,
-      "can-delete": false,
-    },
+    "Graduates Management",
+    "Staff Management",
+    "Communities Management",
+    "Posts Management",
+    "Reports",
+    "Document's Requests Management",
+    "Consultation Management",
+    "FAQs Management",
   ];
 
-  for (const p of permissions) {
-    await Permission.findOrCreate({
-      where: { name: p.name },
-      defaults: p,
-    });
+  try {
+    console.log("🧹 Deleting old permissions...");
+    await Permission.destroy({ where: {} }); // حذف كل القديم
+
+    console.log("🪄 Seeding new permissions...");
+
+    for (const permName of permissions) {
+      // 🔹 كلهم false في البداية (حتى Reports)
+      // لكن الـ Reports تفضل Edit/Delete = false للأبد
+      await Permission.create({
+        name: permName,
+        "can-view": false,
+        "can-edit": false,
+        "can-delete": false,
+      });
+
+      console.log(`✅ Added permission: ${permName}`);
+    }
+
+    console.log(
+      "✅ All new permissions inserted successfully (old ones deleted)."
+    );
+  } catch (error) {
+    console.error("❌ Error seeding permissions:", error);
   }
-  console.log("✅ Permissions ensured/seeded (idempotent).");
 };
 
-// sync DB
+// ==================================================
+// ✅ Sync Database and Seed Default Admin + Permissions
+// ==================================================
 sequelize.sync().then(async () => {
-  console.log("Database synced");
+  console.log("Database synced successfully.");
 
+  // 🔹 إنشاء الأدمن الافتراضي لو مش موجود
   const existingAdmin = await User.findByPk(1);
   if (!existingAdmin) {
     const hashedPassword = await bcrypt.hash("admin123", 10);
@@ -113,18 +117,20 @@ sequelize.sync().then(async () => {
     });
 
     console.log(
-      "Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123"
+      "✅ Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123"
     );
 
-    // ضبط الـ sequence بحيث أي User جديد يبدأ من ID = 2
+    // 🔹 إعادة ضبط الـ sequence
     await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
-    console.log("User sequence reset to start from 2");
+    console.log("User sequence reset to start from ID=2");
   }
 
-  // ✅ Seed permissions automatically after DB sync
+  // 🔹 حذف البيرميشن القديمة وإضافة الجديدة
   await ensurePermissionsSeeded();
 });
 
-// listen
+// ==================================================
+// ✅ Start Server
+// ==================================================
 const PORT = process.env.PORT || 5005;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

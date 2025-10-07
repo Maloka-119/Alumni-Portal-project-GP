@@ -27,4 +27,10 @@ router.post(
 
 router.get("/employees-by-role", roleController.viewEmployeesByRole);
 
+router.put(
+  "/update/:roleId",
+  authMiddleware.protect,
+  roleController.updateRole
+);
+
 module.exports = router;
