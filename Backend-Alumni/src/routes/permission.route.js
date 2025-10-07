@@ -10,5 +10,4 @@ const permissionController = require("../controllers/permission.controller");
 // ✅ GET /alumni-portal/permissions
 router.get("/", permissionController.getAllPermissions);
 
-router.post("/seed", permissionController.seedPermissions);
 module.exports = router;
