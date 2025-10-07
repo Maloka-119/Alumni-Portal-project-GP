@@ -7,12 +7,7 @@ const cloudinary = require("../config/cloudinary"); // م
 const authMiddleware = require("../middleware/authMiddleware");
 const roleController = require("../controllers/role.controller");
 // 🟢 إنشاء رول جديدة
-router.post(
-  "/create",
-  authMiddleware.protect,
-  roleController.createRoleWithPermissions
-);
-
+router.post("/create", roleController.createRole);
 // 🟢 عرض كل الرولز مع البرميشنز
 router.get(
   "/",

@@ -7,59 +7,76 @@ const StaffRole = require("../models/StaffRole");
 const User = require("../models/User");
 
 // 🟢 إنشاء رول جديدة وربطها ببعض البرميشنز
-const createRoleWithPermissions = async (req, res) => {
+const createRole = async (req, res) => {
   try {
-    const user = req.user;
+    const { roleName, permissions } = req.body;
 
-    // تأكيد إن اليوزر أدمن
-    if (user["user-type"] !== "admin") {
-      return res.status(403).json({
-        status: "fail",
-        message: "Only admins can create roles",
-        data: [],
-      });
-    }
-
-    const { roleName, permissionIds } = req.body;
-
-    if (!roleName || !Array.isArray(permissionIds)) {
+    if (!roleName) {
       return res.status(400).json({
-        status: "fail",
-        message: "roleName and permissionIds (array) are required",
-        data: [],
+        status: "error",
+        message: "Role name is required",
       });
     }
 
-    // إنشاء الرول
-    const newRole = await Role.create({ "role-name": roleName });
+    // 1️⃣ إنشاء رول جديد
+    const role = await Role.create({ "role-name": roleName });
 
-    // البحث عن البرميشنز المطلوبة
-    const permissions = await Permission.findAll({
-      where: { id: permissionIds },
+    // 2️⃣ جلب جميع البيرميشن من الداتابيز
+    const allPermissions = await Permission.findAll();
+
+    // 3️⃣ دمج القيم المرسلة مع الافتراضية + فلترة الـ Reports
+    const updatedPermissions = allPermissions.map((perm) => {
+      const matched = permissions?.find((p) => p.permission_id === perm.id);
+
+      // القيم الافتراضية
+      let canView = matched ? matched["can-view"] : false;
+      let canEdit = matched ? matched["can-edit"] : false;
+      let canDelete = matched ? matched["can-delete"] : false;
+
+      // 🚫 لو البيرميشن اسمه Reports → نسمح بس بالـ view
+      if (perm.name === "Reports") {
+        canEdit = false;
+        canDelete = false;
+      }
+
+      return {
+        id: perm.id,
+        name: perm.name,
+        "can-view": canView,
+        "can-edit": canEdit,
+        "can-delete": canDelete,
+      };
     });
 
-    if (permissions.length === 0) {
-      return res.status(404).json({
-        status: "fail",
-        message: "No valid permissions found",
-        data: [],
-      });
-    }
+    // 4️⃣ حفظ العلاقة في RolePermission
+    await Promise.all(
+      updatedPermissions.map(async (perm) => {
+        await RolePermission.create({
+          role_id: role.id,
+          permission_id: perm.id,
+          "can-view": perm["can-view"],
+          "can-edit": perm["can-edit"],
+          "can-delete": perm["can-delete"],
+        });
+      })
+    );
 
-    // ربط الرول بالبرميشنز
-    await newRole.addPermissions(permissions);
-
+    // ✅ رجّع الريسبونس بكل التفاصيل
     return res.status(201).json({
       status: "success",
-      message: "Role created successfully with permissions",
-      data: { newRole, permissions },
+      message: "Role created successfully",
+      role: {
+        id: role.id,
+        "role-name": role["role-name"],
+        permissions: updatedPermissions,
+      },
     });
-  } catch (err) {
-    console.error("Error creating role with permissions:", err);
+  } catch (error) {
+    console.error("❌ Error creating role:", error);
     return res.status(500).json({
       status: "error",
-      message: err.message,
-      data: [],
+      message: "Failed to create role",
+      error: error.message,
     });
   }
 };
@@ -277,7 +294,7 @@ const updateRole = async (req, res) => {
 };
 
 module.exports = {
-  createRoleWithPermissions,
+  createRole,
   getAllRolesWithPermissions,
   assignRoleToStaff,
   viewEmployeesByRole,
