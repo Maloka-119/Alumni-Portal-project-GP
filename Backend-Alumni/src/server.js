@@ -5,7 +5,7 @@ const morgan = require("morgan");
 require("dotenv").config();
 const { errorHandler } = require("./middleware/errorMiddleware");
 const bcrypt = require("bcryptjs");
-
+const Permission = require("./models/Permission");
 const User = require("./models/User");
 const sequelize = require("./config/db");
 const path = require("path"); // ضيفه فوق مع باقي الـ requires
@@ -51,6 +51,50 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(errorHandler);
 
+// ✅ Auto-seed default permissions (idempotent)
+const ensurePermissionsSeeded = async () => {
+  const permissions = [
+    {
+      name: "manage_users",
+      "can-view": true,
+      "can-edit": true,
+      "can-delete": true,
+    },
+    {
+      name: "manage_posts",
+      "can-view": true,
+      "can-edit": true,
+      "can-delete": true,
+    },
+    {
+      name: "view_reports",
+      "can-view": true,
+      "can-edit": false,
+      "can-delete": false,
+    },
+    {
+      name: "handle_complaints",
+      "can-view": true,
+      "can-edit": true,
+      "can-delete": false,
+    },
+    {
+      name: "approve_graduates",
+      "can-view": true,
+      "can-edit": true,
+      "can-delete": false,
+    },
+  ];
+
+  for (const p of permissions) {
+    await Permission.findOrCreate({
+      where: { name: p.name },
+      defaults: p,
+    });
+  }
+  console.log("✅ Permissions ensured/seeded (idempotent).");
+};
+
 // sync DB
 sequelize.sync().then(async () => {
   console.log("Database synced");
@@ -61,7 +105,6 @@ sequelize.sync().then(async () => {
 
     await User.create({
       id: 1,
-
       email: "alumniportalhelwan@gmail.com",
       "hashed-password": hashedPassword,
       "user-type": "admin",
@@ -77,6 +120,9 @@ sequelize.sync().then(async () => {
     await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
     console.log("User sequence reset to start from 2");
   }
+
+  // ✅ Seed permissions automatically after DB sync
+  await ensurePermissionsSeeded();
 });
 
 // listen
