@@ -45,7 +45,12 @@ router.get(
 );
 
 // تعديل بوست
-router.put("/:postId", authMiddleware.protect, postController.editPost);
+router.put(
+  "/:postId/edit",
+  authMiddleware.protect,
+  upload.array("images", 5),
+  postController.editPost
+);
 
 //get posts in specific group
 router.get("/:groupId", authMiddleware.protect, postController.getGroupPosts);

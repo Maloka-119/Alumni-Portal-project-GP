@@ -58,30 +58,77 @@ const AdminPostsPage = () => {
       setTypes([]);
     }
   };
-
-  const handleSubmitPost = async (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append("content", e.target.content.value);
-    formData.append("type", e.target.type.value);
-    formData.append("link", e.target.link.value);
-    if (e.target.image.files[0]) formData.append("image", e.target.image.files[0]);
-    if (e.target.file.files[0]) formData.append("file", e.target.file.files[0]);
+//========================================================================================
+  // const handleSubmitPost = async (e) => {
+  //   e.preventDefault();
+  //   const formData = new FormData();
+  //   formData.append("content", e.target.content.value);
+  //   formData.append("type", e.target.type.value);
+  //   formData.append("link", e.target.link.value);
+  //   if (e.target.image.files[0]) formData.append("image", e.target.image.files[0]);
+  //   if (e.target.file.files[0]) formData.append("file", e.target.file.files[0]);
   
-    try {
-      if (editingPostId) {
-        await API.put(`/posts/${editingPostId}`, formData);
-      } else {
-        await API.post("/posts/create-post", formData);
-      }
-      fetchPosts();
-      setShowForm(false);
-      setEditingPostId(null);
-    } catch (err) {
-      console.error("Error saving post", err);
-      setError(t("savePostFailed"));
+  //   try {
+  //     if (editingPostId) {
+  //       await API.put(`/posts/${editingPostId}`, formData);
+  //     } else {
+  //       await API.post("/posts/create-post", formData);
+  //     }
+  //     fetchPosts();
+  //     setShowForm(false);
+  //     setEditingPostId(null);
+  //   } catch (err) {
+  //     console.error("Error saving post", err);
+  //     setError(t("savePostFailed"));
+  //   }
+  // };
+//=======================================================================================
+const handleSubmitPost = async (e) => {
+  e.preventDefault();
+  
+  console.log("🎯 Submit started, editingPostId:", editingPostId);
+  
+  const formData = new FormData();
+  formData.append("content", e.target.content.value);
+  formData.append("type", e.target.type.value);
+  formData.append("link", e.target.link.value);
+  
+  if (e.target.image.files[0]) {
+    for (let i = 0; i < e.target.image.files.length; i++) {
+      formData.append("images", e.target.image.files[i]);
     }
-  };
+  }
+
+  try {
+    let response;
+    
+    if (editingPostId) {
+      console.log("🔄 Editing post with ID:", editingPostId);
+      
+      // جرب الـ route الأساسي أولاً
+      response = await API.put(`/posts/${editingPostId}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      console.log("✅ Edit response:", response.data);
+      
+    } else {
+      console.log("🆕 Creating new post");
+      response = await API.post("/posts/create-post", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      console.log("✅ Create response:", response.data);
+    }
+    
+    await fetchPosts();
+    setShowForm(false);
+    setEditingPostId(null);
+    e.target.reset();
+  } catch (err) {
+    console.error("❌ Error saving post:", err);
+    console.error("Error details:", err.response?.data);
+    setError(t("savePostFailed"));
+  }
+};
 
   const handleDelete = async (id) => {
     try {
@@ -105,16 +152,33 @@ const AdminPostsPage = () => {
       console.error("Failed to like post", err);
     }
   };
+//========================================================================================  
+  // const handleEdit = (post) => {
+  //   setShowForm(true);
+  //   setEditingPostId(post.id);
+  //   setTimeout(() => {
+  //     document.querySelector('textarea[name="content"]').value = post.content;
+  //     document.querySelector('select[name="type"]').value = post.category;
+  //     document.querySelector('input[name="link"]').value = post.link || '';
+  //   }, 0);
+  // };
+//========================================================================================
 
-  const handleEdit = (post) => {
-    setShowForm(true);
-    setEditingPostId(post.id);
-    setTimeout(() => {
-      document.querySelector('textarea[name="content"]').value = post.content;
-      document.querySelector('select[name="type"]').value = post.category;
-      document.querySelector('input[name="link"]').value = post.link || '';
-    }, 0);
-  };
+const handleEdit = (post) => {
+  console.log("✏️ Editing post ID:", post.post_id, "Full post:", post);
+  setShowForm(true);
+  setEditingPostId(post.post_id); // استخدم post_id بدل id
+  
+  setTimeout(() => {
+    const contentField = document.querySelector('textarea[name="content"]');
+    const typeField = document.querySelector('select[name="type"]');
+    const linkField = document.querySelector('input[name="link"]');
+    
+    if (contentField) contentField.value = post.content || '';
+    if (typeField) typeField.value = post.category || post.type || '';
+    if (linkField) linkField.value = post.link || '';
+  }, 100);
+};
 
   const filteredPosts = filterType === t('All', { defaultValue: 'All' }) 
     ? posts 
@@ -170,7 +234,7 @@ const AdminPostsPage = () => {
 
           <div className="posts-feed">
             {filteredPosts.map((post) => (
-              <div key={post.id} className="post-card">
+              <div key={post.post_id} className="post-card">
                 <div className="post-header">
                   <img src={AdminPostsImg} alt="profile" className="profile-pic" />
                   <div className="post-header-info">

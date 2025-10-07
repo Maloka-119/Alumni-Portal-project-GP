@@ -443,91 +443,88 @@ const getGraduatePosts = async (req, res) => {
 const editPost = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { category, content, groupId, inLanding, images, removeImages } =
+    const { category, type, content, link, groupId, inLanding, removeImages } =
       req.body;
 
-    // ✅ تحقق إن المستخدم Admin
-    if (!req.user || req.user["user-type"] !== "admin") {
-      return res.status(403).json({
-        status: "error",
-        message: "Only admins can edit posts",
-      });
-    }
+    const finalCategory = category || type;
 
-    // ✅ ندور على البوست القديم
-    const post = await Post.findByPk(postId);
+    // جيب البوست مع الصور
+    const post = await Post.findByPk(postId, {
+      include: [
+        {
+          model: PostImage,
+          attributes: ["image-url"],
+        },
+      ],
+    });
+
     if (!post) {
-      return res.status(404).json({
-        status: "error",
-        message: "Post not found",
-      });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Post not found" });
     }
 
-    // ✅ السماح للأدمن يعدل بوستاته فقط
     if (post["author-id"] !== req.user.id) {
-      return res.status(403).json({
-        status: "error",
-        message: "You can only edit your own posts",
-      });
+      return res
+        .status(403)
+        .json({ status: "error", message: "You can only edit your own posts" });
     }
 
-    // ✅ تعديل البيانات (بدون إنشاء بوست جديد)
-    if (category !== undefined) post.category = category;
+    // تحديث الحقول
+    if (finalCategory !== undefined) post.category = finalCategory;
     if (content !== undefined) post.content = content;
+    if (link !== undefined) post.link = link;
     if (groupId !== undefined)
       post["group-id"] = groupId === null ? null : groupId;
     if (inLanding !== undefined) post["in-landing"] = inLanding;
 
-    // ✅ حفظ التعديلات في نفس البوست
     await post.save();
 
-    // ✅ حذف صور محددة (لو موجودة)
+    // معالجة الصور المحذوفة
     if (
       removeImages &&
       Array.isArray(removeImages) &&
       removeImages.length > 0
     ) {
       await PostImage.destroy({
-        where: {
-          "post-id": postId,
-          "image-url": removeImages,
-        },
+        where: { "post-id": postId, "image-url": removeImages },
       });
     }
 
-    // ✅ إضافة الصور الجديدة (لو فيه)
-    if (images && Array.isArray(images) && images.length > 0) {
-      const newImages = images.map((url) => ({
+    // معالجة الصور الجديدة
+    if (req.files && req.files.length > 0) {
+      const uploadedImages = req.files.map((file) => ({
         "post-id": postId,
-        "image-url": url,
+        "image-url": file.path,
       }));
-      await PostImage.bulkCreate(newImages); // 🔹 نضيفهم مرة واحدة بدل create جوه loop
+      await PostImage.bulkCreate(uploadedImages);
     }
 
-    // ✅ نجيب الصور بعد التعديل
-    const updatedImages = await PostImage.findAll({
-      where: { "post-id": postId },
-      attributes: ["image-url"],
+    // جيب البوست المحدث مع الصور
+    const updatedPost = await Post.findByPk(postId, {
+      include: [
+        {
+          model: PostImage,
+          attributes: ["image-url"],
+        },
+      ],
     });
 
-    // ✅ نرجع البوست بعد التحديث (نفسه مش نسخة جديدة)
     return res.status(200).json({
       status: "success",
       message: "Post updated successfully",
-      post: {
-        ...post.toJSON(),
-        images: updatedImages.map((img) => img["image-url"]),
+      data: {
+        ...updatedPost.toJSON(),
+        images: updatedPost.PostImages
+          ? updatedPost.PostImages.map((img) => img["image-url"])
+          : [],
       },
     });
   } catch (error) {
     console.error("❌ Error in editPost:", error);
-    return res.status(500).json({
-      status: "error",
-      message: error.message,
-    });
+    return res.status(500).json({ status: "error", message: error.message });
   }
 };
-
 // module.exports = { getCategories };
 
 // Like a post
