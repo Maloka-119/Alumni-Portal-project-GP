@@ -57,7 +57,6 @@ app.use(errorHandler);
 // ✅ Clear old permissions and seed new ones
 // ==================================================
 const ensurePermissionsSeeded = async () => {
-  // الترتيب المطلوب
   const permissions = [
     "Graduates Management",
     "Staff Management",
@@ -71,25 +70,41 @@ const ensurePermissionsSeeded = async () => {
 
   try {
     console.log("🧹 Deleting old permissions...");
-    await Permission.destroy({ where: {} }); // حذف كل القديم
+
+    // ✅ حذف كل القديم مع cascade وإعادة العدّاد يبدأ من 1
+    await Permission.destroy({
+      where: {},
+      truncate: true,
+      cascade: true,
+      restartIdentity: true,
+    });
 
     console.log("🪄 Seeding new permissions...");
 
     for (const permName of permissions) {
-      // 🔹 كلهم false في البداية (حتى Reports)
-      // لكن الـ Reports تفضل Edit/Delete = false للأبد
+      let canView = false;
+      let canEdit = false;
+      let canDelete = false;
+
+      // ⚙️ قاعدة خاصة بـ Reports
+      if (permName === "Reports") {
+        canView = false; // ممكن تتغير لاحقًا
+        canEdit = false; // ثابت
+        canDelete = false; // ثابت
+      }
+
       await Permission.create({
         name: permName,
-        "can-view": false,
-        "can-edit": false,
-        "can-delete": false,
+        "can-view": canView,
+        "can-edit": canEdit,
+        "can-delete": canDelete,
       });
 
       console.log(`✅ Added permission: ${permName}`);
     }
 
     console.log(
-      "✅ All new permissions inserted successfully (old ones deleted)."
+      "✅ All new permissions inserted successfully (IDs start from 1)."
     );
   } catch (error) {
     console.error("❌ Error seeding permissions:", error);
@@ -102,7 +117,6 @@ const ensurePermissionsSeeded = async () => {
 sequelize.sync().then(async () => {
   console.log("Database synced successfully.");
 
-  // 🔹 إنشاء الأدمن الافتراضي لو مش موجود
   const existingAdmin = await User.findByPk(1);
   if (!existingAdmin) {
     const hashedPassword = await bcrypt.hash("admin123", 10);
@@ -120,12 +134,10 @@ sequelize.sync().then(async () => {
       "✅ Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123"
     );
 
-    // 🔹 إعادة ضبط الـ sequence
     await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
     console.log("User sequence reset to start from ID=2");
   }
 
-  // 🔹 حذف البيرميشن القديمة وإضافة الجديدة
   await ensurePermissionsSeeded();
 });
 
