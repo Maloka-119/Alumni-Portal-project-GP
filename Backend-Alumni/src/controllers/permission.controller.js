@@ -1,62 +1,6 @@
 // src/controllers/permission.controller.js
 const Permission = require("../models/Permission");
 
-const seedPermissions = async (req, res) => {
-  try {
-    const permissionsData = [
-      {
-        name: "manage_users",
-        "can-view": true,
-        "can-edit": true,
-        "can-delete": true,
-      },
-      {
-        name: "manage_posts",
-        "can-view": true,
-        "can-edit": true,
-        "can-delete": true,
-      },
-      {
-        name: "view_reports",
-        "can-view": true,
-        "can-edit": false,
-        "can-delete": false,
-      },
-      {
-        name: "handle_complaints",
-        "can-view": true,
-        "can-edit": true,
-        "can-delete": false,
-      },
-      {
-        name: "approve_graduates",
-        "can-view": true,
-        "can-edit": true,
-        "can-delete": false,
-      },
-    ];
-
-    // مسح الجدول قبل الإضافة (اختياري)
-    await Permission.destroy({ where: {} });
-
-    // إضافة البيانات
-    await Permission.bulkCreate(permissionsData);
-
-    res.status(201).json({
-      status: "success",
-      message: "Permissions seeded successfully!",
-      data: permissionsData,
-    });
-  } catch (error) {
-    console.error("Error seeding permissions:", error);
-    res.status(500).json({
-      status: "error",
-      message: "Failed to seed permissions",
-      error: error.message,
-    });
-  }
-};
-
 const getAllPermissions = async (req, res) => {
   try {
     // ✅ نجيب كل الصلاحيات
@@ -88,5 +32,4 @@ const getAllPermissions = async (req, res) => {
 
 module.exports = {
   getAllPermissions,
-  seedPermissions,
 };
