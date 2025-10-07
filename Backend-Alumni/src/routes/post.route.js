@@ -36,6 +36,13 @@ router.get("/categories", postController.getCategories);
 
 router.get("/admin", postController.getAdminPosts);
 
+// Get user's own posts (any authenticated user)
+router.get(
+  "/my-posts",
+  authMiddleware.protect,
+  postController.getMyPosts
+);
+
 // جلب بوستات الخريجين (موجودة في الكود الأول)
 
 router.get(

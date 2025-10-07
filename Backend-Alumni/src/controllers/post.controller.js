@@ -9,13 +9,13 @@ const PostImage = require("../models/PostImage");
 const Staff = require("../models/Staff");
 const { Op } = require("sequelize");
 
-//create post
+//create post - Any authenticated user can create posts
 const createPost = async (req, res) => {
   try {
     const { category, content, groupId, inLanding } = req.body;
-    const userId = req.user.id; // جاي من الـ middleware
+    const userId = req.user.id; // From middleware
 
-    // هات بيانات اليوزر
+    // Get user data
     const user = await User.findByPk(userId);
 
     if (!user) {
@@ -25,7 +25,7 @@ const createPost = async (req, res) => {
       });
     }
 
-    // لو Graduate لازم يكون Active
+    // If Graduate, check if they are active
     if (user["user-type"] === "graduate") {
       const graduate = await Graduate.findOne({
         where: { graduate_id: user.id },
@@ -38,7 +38,7 @@ const createPost = async (req, res) => {
         });
       }
 
-      // لو فيه groupId لازم يتأكد إنه عضو ف الجروب
+      // If groupId provided, check if user is member of the group
       if (groupId) {
         const isMember = await GroupMember.findOne({
           where: {
@@ -56,7 +56,7 @@ const createPost = async (req, res) => {
       }
     }
 
-    // إنشاء البوست
+    // Create the post
     const newPost = await Post.create({
       category,
       content,
@@ -65,17 +65,17 @@ const createPost = async (req, res) => {
       "in-landing": inLanding || false,
     });
 
-    // إضافة الصور لو فيه
+    // Add images if provided
     if (req.files && req.files.length > 0) {
       const imagesData = req.files.map((file) => ({
         "post-id": newPost.post_id,
-        "image-url": file.path, // لينك Cloudinary
+        "image-url": file.path, // Cloudinary link
       }));
 
       await PostImage.bulkCreate(imagesData);
     }
 
-    // جلب كل الصور بعد الإنشاء
+    // Get all images after creation
     const savedImages = await PostImage.findAll({
       where: { "post-id": newPost.post_id },
       attributes: ["image-url"],
@@ -374,9 +374,75 @@ const getAdminPosts = async (req, res) => {
   }
 };
 
+// Get user's own posts - Any authenticated user can get their own posts
+const getMyPosts = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get posts created by the current user
+    const posts = await Post.findAll({
+      where: { "author-id": userId },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"],
+            },
+            {
+              model: Staff,
+              attributes: ["status-to-login"],
+            },
+          ],
+        },
+      ],
+      order: [["created-at", "DESC"]],
+    });
+
+    const responseData = posts.map((post) => {
+      let image = null;
+      if (post.User.Graduate) {
+        image = post.User.Graduate["profile-picture-url"];
+      }
+
+      return {
+        post_id: post.post_id,
+        category: post.category,
+        content: post.content,
+        description: post.description,
+        "created-at": post["created-at"],
+        author: {
+          id: post.User.id,
+          "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+          email: post.User.email,
+          type: post.User["user-type"],
+          image: image,
+        },
+        "group-id": post["group-id"],
+        "in-landing": post["in-landing"],
+      };
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: "My posts fetched successfully",
+      data: responseData,
+    });
+  } catch (error) {
+    console.error("Error fetching my posts:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to fetch my posts: " + error.message,
+      data: [],
+    });
+  }
+};
+
 const getGraduatePosts = async (req, res) => {
   try {
-    // نتأكد إنه فعلاً Graduate
+    // Check if user is graduate
     if (!req.user || req.user["user-type"] !== "graduate") {
       return res.status(403).json({
         status: "error",
@@ -385,7 +451,7 @@ const getGraduatePosts = async (req, res) => {
       });
     }
 
-    // نجيب البوستات اللي author-id بتاعها = id اليوزر اللي عامل لوجن
+    // Get posts created by the current graduate
     const posts = await Post.findAll({
       where: { "author-id": req.user.id },
       include: [
@@ -410,7 +476,6 @@ const getGraduatePosts = async (req, res) => {
       description: post.description,
       "created-at": post["created-at"],
       author: {
-        // غيري من "username" إلى "author"
         id: post.User.id,
         "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
         email: post.User.email,
@@ -420,9 +485,9 @@ const getGraduatePosts = async (req, res) => {
       },
       "group-id": post["group-id"],
       "in-landing": post["in-landing"],
-      likes: post.likes || 0, // أضيفي
-      shares: post.shares || 0, // أضيفي
-      comments: post.comments || [], // أضيفي
+      likes: post.likes || 0,
+      shares: post.shares || 0,
+      comments: post.comments || [],
     }));
 
     return res.status(200).json({
@@ -828,19 +893,11 @@ const deleteComment = async (req, res) => {
   }
 };
 
-// Delete post (staff can delete their own posts and graduate posts)
+// Delete post - Users can delete their own posts, Admins can delete any post
 const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
-
-    // Check if user is staff
-    if (req.user["user-type"] !== "staff") {
-      return res.status(403).json({
-        status: "error",
-        message: "Only staff members can delete posts",
-      });
-    }
 
     // Find the post
     const post = await Post.findByPk(postId);
@@ -851,14 +908,9 @@ const deletePost = async (req, res) => {
       });
     }
 
-    // Check if the post was created by the current staff member or by a graduate
-    const postAuthor = await User.findByPk(post["author-id"]);
-    if (!postAuthor) {
-      return res.status(404).json({
-        status: "error",
-        message: "Post author not found",
-      });
-    }
+    // Check ownership: User can only delete their own posts, OR admin can delete any post
+    const isOwner = post["author-id"] === userId;
+    const isAdmin = req.user["user-type"] === "admin";
 
     // Allow deleting if: 1) It's the staff member's own post, OR 2) It's a graduate's post
     const isOwnPost = post["author-id"] === userId;
@@ -875,6 +927,9 @@ const deletePost = async (req, res) => {
     // Delete associated comments and likes first
     await Comment.destroy({ where: { "post-id": postId } });
     await Like.destroy({ where: { "post-id": postId } });
+    
+    // Delete associated images
+    await PostImage.destroy({ where: { "post-id": postId } });
 
     // Delete the post
     await post.destroy();
@@ -1044,7 +1099,9 @@ module.exports = {
   getCategories,
   getAdminPosts,
   getGraduatePosts,
+  getMyPosts,
   getAllPostsOfUsers,
+  getSinglePost,
   editPost,
   getGroupPosts,
   likePost,
