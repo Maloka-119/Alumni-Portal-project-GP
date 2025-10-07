@@ -11,7 +11,8 @@ const protect = asyncHandler(async (req, res, next) => {
   if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
     try {
       token = req.headers.authorization.split(" ")[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const secret = process.env.JWT_SECRET || "your_jwt_secret_key_here";
+      const decoded = jwt.verify(token, secret);
 
       // جرب الأول تجيب اليوزر من جدول Users
       let user = await User.findByPk(decoded.id);
