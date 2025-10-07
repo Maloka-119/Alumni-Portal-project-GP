@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './AdminPostsPage.css';
 import AdminPostsImg from './AdminPosts.jpeg';
-import { Heart, MessageCircle, Share2, Image, FileText, Edit, Trash2, Link as LinkIcon } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Edit, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import API from "../../services/api";
 
@@ -20,165 +20,91 @@ const AdminPostsPage = () => {
     fetchCategories();
   }, []);
 
-  // const fetchPosts = async () => {
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     const res = await API.get("/posts/admin");
-  //     setPosts(res.data.data);
-  //   } catch (err) {
-  //     console.error("Error fetching posts", err);
-  //     setError(t("fetchPostsFailed"));
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.get("/posts/admin");
-      console.log("Response from backend:", res.data); 
-      setPosts(res.data?.data || []); 
+      setPosts(res.data?.data || []);
     } catch (err) {
       console.error("Error fetching posts", err);
       setError(t("fetchPostsFailed"));
     } finally {
       setLoading(false);
     }
-  }; 
-  
+  };
 
   const fetchCategories = async () => {
     try {
       const res = await API.get("/posts/categories");
-      setTypes(res.data.data || []); 
+      setTypes(res.data.data || []);
     } catch (err) {
       console.error("Error fetching categories", err);
       setTypes([]);
     }
   };
-//========================================================================================
-  // const handleSubmitPost = async (e) => {
-  //   e.preventDefault();
-  //   const formData = new FormData();
-  //   formData.append("content", e.target.content.value);
-  //   formData.append("type", e.target.type.value);
-  //   formData.append("link", e.target.link.value);
-  //   if (e.target.image.files[0]) formData.append("image", e.target.image.files[0]);
-  //   if (e.target.file.files[0]) formData.append("file", e.target.file.files[0]);
-  
-  //   try {
-  //     if (editingPostId) {
-  //       await API.put(`/posts/${editingPostId}`, formData);
-  //     } else {
-  //       await API.post("/posts/create-post", formData);
-  //     }
-  //     fetchPosts();
-  //     setShowForm(false);
-  //     setEditingPostId(null);
-  //   } catch (err) {
-  //     console.error("Error saving post", err);
-  //     setError(t("savePostFailed"));
-  //   }
-  // };
-//=======================================================================================
-const handleSubmitPost = async (e) => {
-  e.preventDefault();
-  
-  console.log("🎯 Submit started, editingPostId:", editingPostId);
-  
-  const formData = new FormData();
-  formData.append("content", e.target.content.value);
-  formData.append("type", e.target.type.value);
-  formData.append("link", e.target.link.value);
-  
-  if (e.target.image.files[0]) {
-    for (let i = 0; i < e.target.image.files.length; i++) {
-      formData.append("images", e.target.image.files[i]);
-    }
-  }
 
-  try {
-    let response;
-    
-    if (editingPostId) {
-      console.log("🔄 Editing post with ID:", editingPostId);
-      
-      // جرب الـ route الأساسي أولاً
-      response = await API.put(`/posts/${editingPostId}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-      console.log("✅ Edit response:", response.data);
-      
-    } else {
-      console.log("🆕 Creating new post");
-      response = await API.post("/posts/create-post", formData, {
-        headers: { "Content-Type": "multipart/form-data" }
-      });
-      console.log("✅ Create response:", response.data);
-    }
-    
-    await fetchPosts();
-    setShowForm(false);
-    setEditingPostId(null);
-    e.target.reset();
-  } catch (err) {
-    console.error("❌ Error saving post:", err);
-    console.error("Error details:", err.response?.data);
-    setError(t("savePostFailed"));
-  }
-};
+  const handleSubmitPost = async (e) => {
+    e.preventDefault();
 
-  const handleDelete = async (id) => {
+    const data = {
+      content: e.target.content.value,
+      category: e.target.category.value
+    };
+
     try {
-      await API.delete(`/posts/${id}`);
+      if (editingPostId) {
+        await API.put(`/posts/${editingPostId}`, data); // JSON
+      } else {
+        await API.post("/posts/create-post", data); // JSON
+      }
+
+      await fetchPosts();
+      setShowForm(false);
+      setEditingPostId(null);
+      e.target.reset();
+    } catch (err) {
+      console.error("Error saving post:", err);
+      console.error("Details:", err.response?.data);
+      setError(t("savePostFailed"));
+    }
+  };
+
+  const handleDelete = async (post_id) => {
+    try {
+      await API.delete(`/posts/${post_id}`);
       fetchPosts();
     } catch (err) {
       console.error("Error deleting post", err);
       setError(t("deletePostFailed"));
     }
   };
+
   const handleLikePost = async (post) => {
     try {
-      await API.post(`/posts/${post.id}/like`);
-     
+      await API.post(`/posts/${post.post_id}/like`);
       setPosts(prev =>
         prev.map(p =>
-          p.id === post.id ? { ...p, likes: (p.likes || 0) + 1 } : p
+          p.post_id === post.post_id ? { ...p, likes: (p.likes || 0) + 1 } : p
         )
       );
     } catch (err) {
       console.error("Failed to like post", err);
     }
   };
-//========================================================================================  
-  // const handleEdit = (post) => {
-  //   setShowForm(true);
-  //   setEditingPostId(post.id);
-  //   setTimeout(() => {
-  //     document.querySelector('textarea[name="content"]').value = post.content;
-  //     document.querySelector('select[name="type"]').value = post.category;
-  //     document.querySelector('input[name="link"]').value = post.link || '';
-  //   }, 0);
-  // };
-//========================================================================================
 
-const handleEdit = (post) => {
-  console.log("✏️ Editing post ID:", post.post_id, "Full post:", post);
-  setShowForm(true);
-  setEditingPostId(post.post_id); // استخدم post_id بدل id
-  
-  setTimeout(() => {
-    const contentField = document.querySelector('textarea[name="content"]');
-    const typeField = document.querySelector('select[name="type"]');
-    const linkField = document.querySelector('input[name="link"]');
-    
-    if (contentField) contentField.value = post.content || '';
-    if (typeField) typeField.value = post.category || post.type || '';
-    if (linkField) linkField.value = post.link || '';
-  }, 100);
-};
+  const handleEdit = (post) => {
+    setShowForm(true);
+    setEditingPostId(post.post_id);
+
+    setTimeout(() => {
+      const contentField = document.querySelector('textarea[name="content"]');
+      const categoryField = document.querySelector('select[name="category"]');
+
+      if (contentField) contentField.value = post.content || '';
+      if (categoryField) categoryField.value = post.category || '';
+    }, 100);
+  };
 
   const filteredPosts = filterType === t('All', { defaultValue: 'All' }) 
     ? posts 
@@ -198,23 +124,9 @@ const handleEdit = (post) => {
       {showForm && (
         <form onSubmit={handleSubmitPost} className="compact-post-form">
           <textarea name="content" placeholder={t('Post Content')} required className="input-field" />
-          <select name="type" required className="input-field" defaultValue={types[0] || ''}>
+          <select name="category" required className="input-field" defaultValue={types[0] || ''}>
             {types.map(ti => <option key={ti} value={ti}>{ti}</option>)}
           </select>
-          <input name="link" placeholder={t('Optional Link')} className="input-field" />
-          <div className="optional-icons">
-            <label title={t('Add Image')}>
-              <input type="file" name="image" style={{ display: 'none' }} />
-              <Image size={20} />
-            </label>
-            <label title={t('Add File')}>
-              <input type="file" name="file" style={{ display: 'none' }} />
-              <FileText size={20} />
-            </label>
-            <label title={t('Add Link')}>
-              <LinkIcon size={20} />
-            </label>
-          </div>
           <div className="form-buttons">
             <button type="submit" className="submit-btn">{editingPostId ? t('Update') : t('Post')}</button>
             <button type="button" className="cancel-btn" onClick={() => { setShowForm(false); setEditingPostId(null); }}>{t('Cancel')}</button>
@@ -245,23 +157,15 @@ const handleEdit = (post) => {
                 </div>
                 <div className="post-content">
                   <p>{post.content}</p>
-                  {post.imageUrl && <img src={post.imageUrl} alt="post" className="post-image" />}
-                  {post.fileUrl && <a href={post.fileUrl} download className="post-file-link">{post.fileName}</a>}
-                  {post.link && (
-                    <a href={post.link} target="_blank" rel="noopener noreferrer" className="post-link">
-                      {post.link}
-                    </a>
-                  )}
                 </div>
                 <div className="post-actions">
                   <button onClick={() => handleLikePost(post)}><Heart size={16} /> {post.likes}</button>
                   <button>
-  <MessageCircle size={16} /> {post.comments?.length || 0}
-</button>
-
+                    <MessageCircle size={16} /> {post.comments?.length || 0}
+                  </button>
                   <button><Share2 size={16} /> {post.shares}</button>
                   <button onClick={() => handleEdit(post)} className="edit-btn"><Edit size={16} /></button>
-                  <button onClick={() => handleDelete(post.id)} className="delete-btn"><Trash2 size={16} /></button>
+                  <button onClick={() => handleDelete(post.post_id)} className="delete-btn"><Trash2 size={16} /></button>
                 </div>
               </div>
             ))}
@@ -273,6 +177,7 @@ const handleEdit = (post) => {
 };
 
 export default AdminPostsPage;
+
 
 
 
