@@ -613,6 +613,108 @@ const getRoleDetails = async (req, res) => {
     });
   }
 };
+const getStaffByRoleId = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+
+    if (!roleId) {
+      return res.status(400).json({
+        status: "error",
+        message: "roleId is required",
+      });
+    }
+
+    // نجيب الرول أولاً ونتأكد إنه موجود
+    const role = await Role.findByPk(roleId);
+    if (!role) {
+      return res.status(404).json({
+        status: "error",
+        message: "Role not found",
+      });
+    }
+
+    // نجيب كل الـ Staff المرتبطين بالرول ده
+    const staffList = await Staff.findAll({
+      include: [
+        {
+          model: Role,
+          where: { id: roleId },
+          attributes: ["id", "role-name"],
+          through: { attributes: [] }, // عشان ما يجيبش بيانات StaffRole
+        },
+        {
+          model: User,
+          attributes: ["first-name", "last-name", "email"],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      status: "success",
+      message: `Staff members in role: ${role["role-name"]}`,
+      role: {
+        id: role.id,
+        "role-name": role["role-name"],
+        staff: staffList.map((staff) => ({
+          staff_id: staff.staff_id,
+          full_name: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
+          email: staff.User.email,
+          "status-to-login": staff["status-to-login"],
+        })),
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error fetching staff by role:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to fetch staff by role",
+      error: error.message,
+    });
+  }
+};
+
+const updateRoleName = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+    const { roleName } = req.body;
+
+    if (!roleId || !roleName) {
+      return res.status(400).json({
+        status: "error",
+        message: "roleId and new roleName are required",
+      });
+    }
+
+    // نجيب الرول للتأكد إنه موجود
+    const role = await Role.findByPk(roleId);
+    if (!role) {
+      return res.status(404).json({
+        status: "error",
+        message: "Role not found",
+      });
+    }
+
+    // تحديث اسم الرول فقط
+    role["role-name"] = roleName;
+    await role.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: `Role name updated successfully to: ${roleName}`,
+      role: {
+        id: role.id,
+        "role-name": role["role-name"],
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error updating role name:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to update role name",
+      error: error.message,
+    });
+  }
+};
 
 module.exports = {
   createRole,
@@ -624,4 +726,6 @@ module.exports = {
   deleteRoleFromStaff,
   getAllRoles,
   getRoleDetails,
+  getStaffByRoleId,
+  updateRoleName,
 };
