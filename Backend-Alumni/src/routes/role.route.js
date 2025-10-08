@@ -14,6 +14,11 @@ router.get(
   authMiddleware.protect,
   roleController.getAllRolesWithPermissions
 );
+router.get(
+  "/get-all-roles",
+  authMiddleware.protect,
+  roleController.getAllRoles
+);
 router.post(
   "/assign-role",
   authMiddleware.protect,
@@ -27,5 +32,17 @@ router.put(
   authMiddleware.protect,
   roleController.updateRole
 );
+
+router.delete(
+  "/delete/:roleId",
+  authMiddleware.protect,
+  roleController.deleteRole
+);
+router.delete(
+  "/remove/:staffId/:roleId",
+  authMiddleware.protect,
+  roleController.deleteRoleFromStaff
+);
+router.get("/:roleId", roleController.getRoleDetails);
 
 module.exports = router;

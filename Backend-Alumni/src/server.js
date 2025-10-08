@@ -6,8 +6,12 @@ require("dotenv").config();
 const path = require("path");
 const bcrypt = require("bcryptjs");
 const { errorHandler } = require("./middleware/errorMiddleware");
-const Permission = require("./models/Permission");
 const User = require("./models/User");
+const Staff = require("./models/Staff");
+const Role = require("./models/Role");
+const Permission = require("./models/Permission");
+const RolePermission = require("./models/RolePermission");
+const StaffRole = require("./models/StaffRole");
 const sequelize = require("./config/db");
 
 const app = express();
@@ -63,49 +67,45 @@ const ensurePermissionsSeeded = async () => {
     "Communities Management",
     "Posts Management",
     "Reports",
+    "Verification Graduates Management",
     "Document's Requests Management",
     "Consultation Management",
     "FAQs Management",
   ];
 
   try {
-    console.log("🧹 Deleting old permissions...");
-
-    // ✅ حذف كل القديم مع cascade وإعادة العدّاد يبدأ من 1
-    await Permission.destroy({
-      where: {},
-      truncate: true,
-      cascade: true,
-      restartIdentity: true,
-    });
-
-    console.log("🪄 Seeding new permissions...");
+    console.log("🔍 Checking existing permissions...");
 
     for (const permName of permissions) {
-      let canView = false;
-      let canEdit = false;
-      let canDelete = false;
+      // نشوف هل البيرميشن موجود قبل كده ولا لأ
+      const existing = await Permission.findOne({ where: { name: permName } });
 
-      // ⚙️ قاعدة خاصة بـ Reports
-      if (permName === "Reports") {
-        canView = false; // ممكن تتغير لاحقًا
-        canEdit = false; // ثابت
-        canDelete = false; // ثابت
+      if (!existing) {
+        let canView = false;
+        let canEdit = false;
+        let canDelete = false;
+
+        // 🚨 قاعدة خاصة بـ Reports
+        if (permName === "Reports") {
+          canView = false; // البداية false لكن يمكن تغييره بعدين
+          canEdit = false; // ممنوع تغييره أبداً
+          canDelete = false; // ممنوع تغييره أبداً
+        }
+
+        await Permission.create({
+          name: permName,
+          "can-view": canView,
+          "can-edit": canEdit,
+          "can-delete": canDelete,
+        });
+
+        console.log(`✅ Added missing permission: ${permName}`);
+      } else {
+        console.log(`ℹ️ Permission already exists: ${permName}`);
       }
-
-      await Permission.create({
-        name: permName,
-        "can-view": canView,
-        "can-edit": canEdit,
-        "can-delete": canDelete,
-      });
-
-      console.log(`✅ Added permission: ${permName}`);
     }
 
-    console.log(
-      "✅ All new permissions inserted successfully (IDs start from 1)."
-    );
+    console.log("✅ Permission seeding completed successfully.");
   } catch (error) {
     console.error("❌ Error seeding permissions:", error);
   }
