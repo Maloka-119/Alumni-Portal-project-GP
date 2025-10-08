@@ -118,62 +118,106 @@ const getAllRolesWithPermissions = async (req, res) => {
 
 const assignRoleToStaff = async (req, res) => {
   try {
-    const user = req.user; // من التوكن
-    const { staffId, roleId } = req.body;
+    const { staffId, roles } = req.body;
+    console.log("🟢 Incoming staffId:", staffId, "roles:", roles);
 
-    // ✅ تأكد إن الأدمن فقط هو اللي يقدر يعمل كده
-    if (user["user-type"] !== "admin") {
-      return res.status(403).json({
-        status: "fail",
-        message: "Only admins can assign roles",
-        data: [],
+    if (!staffId || !roles || !Array.isArray(roles)) {
+      console.warn("❌ staffId or roles array missing!");
+      return res.status(400).json({
+        status: "error",
+        message: "staffId and roles array are required",
       });
     }
 
-    // ✅ تأكد إن الموظف موجود
-    const staff = await Staff.findByPk(staffId);
-    if (!staff) {
-      return res.status(404).json({
-        status: "fail",
-        message: "Staff member not found",
-        data: [],
-      });
-    }
-
-    // ✅ تأكد إن الـ role موجود
-    const role = await Role.findByPk(roleId);
-    if (!role) {
-      return res.status(404).json({
-        status: "fail",
-        message: "Role not found",
-        data: [],
-      });
-    }
-
-    // ✅ اربط الموظف بالدور (لو مش مربوط بالفعل)
-    const [staffRole, created] = await StaffRole.findOrCreate({
-      where: { staff_id: staffId, role_id: roleId },
+    // ✅ تحقق أن الـ Staff موجود
+    const staff = await Staff.findByPk(staffId, {
+      include: {
+        model: User,
+        attributes: ["first-name", "last-name", "email"],
+      },
     });
-
-    if (!created) {
-      return res.status(200).json({
-        status: "info",
-        message: "This role is already assigned to the staff member",
-        data: staffRole,
+    if (!staff) {
+      console.warn("❌ Staff not found:", staffId);
+      return res.status(404).json({
+        status: "error",
+        message: "Staff not found",
       });
     }
+    console.log("🟢 Staff found:", staff.staff_id);
+
+    // ✅ تحقق من وجود الـ Roles
+    const validRoles = await Role.findAll({
+      where: { id: roles },
+      attributes: ["id", "role-name"],
+    });
+    console.log(
+      "🟢 Valid roles fetched:",
+      validRoles.map((r) => r.id)
+    );
+    if (validRoles.length === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "No valid roles found",
+      });
+    }
+
+    // 🟡 جلب الـ Roles الحالية للـ Staff
+    const existingStaffRoles = await StaffRole.findAll({
+      where: { staff_id: staffId },
+    });
+    console.log(
+      "🟡 Existing StaffRoles:",
+      existingStaffRoles.map((r) => r.role_id)
+    );
+
+    // 🔗 إنشاء روابط جديدة فقط للـ Roles الغير موجودة مسبقًا
+    const rolesToAdd = validRoles.filter(
+      (r) => !existingStaffRoles.some((er) => er.role_id === r.id)
+    );
+    console.log(
+      "🔹 Roles to add:",
+      rolesToAdd.map((r) => r.id)
+    );
+
+    await Promise.all(
+      rolesToAdd.map((role) =>
+        StaffRole.create({
+          staff_id: staffId,
+          role_id: role.id,
+        })
+      )
+    );
+
+    // ✅ جلب جميع الـ Roles النهائية للـ Staff بعد التحديث
+    const updatedStaffRoles = await StaffRole.findAll({
+      where: { staff_id: staffId },
+      include: {
+        model: Role,
+        attributes: ["id", "role-name"],
+      },
+    });
+    console.log(
+      "✅ Updated StaffRoles:",
+      updatedStaffRoles.map((r) => r.Role["role-name"])
+    );
 
     return res.status(200).json({
       status: "success",
-      message: "Role assigned to staff successfully",
-      data: staffRole,
+      message: "Roles assigned to staff successfully",
+      staff: {
+        staff_id: staff.staff_id,
+        full_name: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
+        email: staff.User.email,
+        "status-to-login": staff["status-to-login"],
+        roles: updatedStaffRoles.map((r) => r.Role),
+      },
     });
-  } catch (err) {
-    console.error("Error assigning role:", err);
+  } catch (error) {
+    console.error("❌ Error assigning roles:", error);
     return res.status(500).json({
       status: "error",
-      message: err.message,
-      data: [],
+      message: "Failed to assign roles",
+      error: error.message,
     });
   }
 };
@@ -242,10 +286,24 @@ const viewEmployeesByRole = async (req, res) => {
 
 const updateRole = async (req, res) => {
   try {
-    const { roleId } = req.params;
-    const { name, permissions } = req.body;
+    const { roleId } = req.params; // ✅ ناخد roleId من URL مش من body
+    const { roleName, permissions } = req.body;
 
-    // 🔹 نتحقق من وجود الرول
+    if (!roleId) {
+      return res.status(400).json({
+        status: "error",
+        message: "Role ID is required",
+      });
+    }
+
+    if (!roleName) {
+      return res.status(400).json({
+        status: "error",
+        message: "Role name is required",
+      });
+    }
+
+    // ✅ تحقق إن الرول موجود
     const role = await Role.findByPk(roleId);
     if (!role) {
       return res.status(404).json({
@@ -254,41 +312,304 @@ const updateRole = async (req, res) => {
       });
     }
 
-    // 🔹 تحديث اسم الرول لو اتغير
-    if (name) {
-      role["role-name"] = name;
-      await role.save();
-    }
+    // ✅ عدل اسم الرول
+    role["role-name"] = roleName;
+    await role.save();
 
-    // 🔹 تحديث الصلاحيات
-    if (permissions && Array.isArray(permissions)) {
-      // احذف الصلاحيات القديمة
-      await RolePermission.destroy({ where: { role_id: roleId } }); // ✅ نفس اسم العمود في الجدول
+    // ✅ احذف البيرميشن القديمة
+    await RolePermission.destroy({ where: { role_id: roleId } });
 
-      // أضف الصلاحيات الجديدة
-      const newPermissions = permissions.map((pid) => ({
-        role_id: roleId, // ✅ استخدم نفس الاسم في الجدول
-        permission_id: pid,
-      }));
+    // ✅ كل البيرميشن الموجودة
+    const allPermissions = await Permission.findAll();
 
-      await RolePermission.bulkCreate(newPermissions);
-    }
+    // ✅ جهز القيم الجديدة
+    const updatedPermissions = allPermissions.map((perm) => {
+      const matched = permissions?.find((p) => p.permission_id === perm.id);
 
-    // ✅ رجّع النتيجة بعد التحديث
+      let canView = matched ? matched["can-view"] : false;
+      let canEdit = matched ? matched["can-edit"] : false;
+      let canDelete = matched ? matched["can-delete"] : false;
+
+      // 🚫 Reports بس لها view فقط
+      if (perm.name === "Reports") {
+        canEdit = false;
+        canDelete = false;
+      }
+
+      return {
+        id: perm.id,
+        name: perm.name,
+        "can-view": canView,
+        "can-edit": canEdit,
+        "can-delete": canDelete,
+      };
+    });
+
+    // ✅ أعد إنشاء العلاقات
+    await Promise.all(
+      updatedPermissions.map(async (perm) => {
+        await RolePermission.create({
+          role_id: roleId,
+          permission_id: perm.id,
+          "can-view": perm["can-view"],
+          "can-edit": perm["can-edit"],
+          "can-delete": perm["can-delete"],
+        });
+      })
+    );
+
+    // ✅ رجع الريسبونس النهائي
     return res.status(200).json({
       status: "success",
       message: "Role updated successfully",
-      data: {
+      role: {
         id: role.id,
-        name: role["role-name"],
-        permissions: permissions || "unchanged",
+        "role-name": role["role-name"],
+        permissions: updatedPermissions,
       },
     });
   } catch (error) {
     console.error("❌ Error updating role:", error);
     return res.status(500).json({
       status: "error",
-      message: error.message,
+      message: "Failed to update role",
+      error: error.message,
+    });
+  }
+};
+const deleteRole = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+
+    if (!roleId) {
+      return res.status(400).json({
+        status: "error",
+        message: "Role ID is required",
+      });
+    }
+
+    // ✅ تحقق أن الرول موجود
+    const role = await Role.findByPk(roleId);
+    if (!role) {
+      return res.status(404).json({
+        status: "error",
+        message: "Role not found",
+      });
+    }
+
+    // 🧹 احذف كل العلاقات الخاصة بالرول:
+    await Promise.all([
+      RolePermission.destroy({ where: { role_id: roleId } }), // يحذف صلاحيات الرول
+      StaffRole.destroy({ where: { role_id: roleId } }), // يحذف الرول من كل الموظفين
+    ]);
+
+    // 🗑️ احذف الرول نفسه
+    await role.destroy();
+
+    // ✅ الريسبونس النهائي
+    return res.status(200).json({
+      status: "success",
+      message: "Role deleted successfully and removed from all staff",
+      deletedRole: {
+        id: role.id,
+        "role-name": role["role-name"],
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error deleting role:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to delete role",
+      error: error.message,
+    });
+  }
+};
+const deleteRoleFromStaff = async (req, res) => {
+  try {
+    const { staffId, roleId } = req.params;
+
+    if (!staffId || !roleId) {
+      return res.status(400).json({
+        status: "error",
+        message: "staffId and roleId are required",
+      });
+    }
+
+    // ✅ تحقق أن الموظف موجود
+    const staff = await Staff.findByPk(staffId);
+    if (!staff) {
+      return res.status(404).json({
+        status: "error",
+        message: "Staff not found",
+      });
+    }
+
+    // ✅ تحقق أن الرول موجود
+    const role = await Role.findByPk(roleId);
+    if (!role) {
+      return res.status(404).json({
+        status: "error",
+        message: "Role not found",
+      });
+    }
+
+    // 🔍 تحقق أن العلاقة موجودة أصلًا
+    const existing = await StaffRole.findOne({
+      where: { staff_id: staffId, role_id: roleId },
+    });
+
+    if (!existing) {
+      return res.status(404).json({
+        status: "error",
+        message: "This role is not assigned to this staff",
+      });
+    }
+
+    // 🗑️ احذف العلاقة فقط من StaffRole
+    await StaffRole.destroy({ where: { staff_id: staffId, role_id: roleId } });
+
+    // ✅ الريسبونس النهائي
+    return res.status(200).json({
+      status: "success",
+      message: `Role '${role["role-name"]}' removed from staff successfully`,
+      removed: {
+        staff_id: staff.staff_id,
+        "staff-status": staff["status-to-login"],
+        role: {
+          id: role.id,
+          "role-name": role["role-name"],
+        },
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error deleting role from staff:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to remove role from staff",
+      error: error.message,
+    });
+  }
+};
+const getAllRoles = async (req, res) => {
+  try {
+    // ✅ جلب كل الرولز مع البيرميشنز المرتبطة
+    const roles = await Role.findAll({
+      include: [
+        {
+          model: Permission,
+          through: {
+            attributes: ["can-view", "can-edit", "can-delete"],
+          },
+        },
+      ],
+    });
+
+    // ✅ لو مفيش أي رولز
+    if (!roles || roles.length === 0) {
+      return res.status(404).json({
+        status: "error",
+        message: "No roles found in the system",
+      });
+    }
+
+    // ✅ تنسيق الريسبونس
+    const formattedRoles = roles.map((role) => ({
+      id: role.id,
+      "role-name": role["role-name"],
+      permissions: role.Permissions.map((perm) => ({
+        id: perm.id,
+        name: perm.name,
+        "can-view": perm.RolePermission["can-view"],
+        "can-edit": perm.RolePermission["can-edit"],
+        "can-delete": perm.RolePermission["can-delete"],
+      })),
+    }));
+
+    // ✅ الريسبونس النهائي
+    return res.status(200).json({
+      status: "success",
+      message: "All roles fetched successfully",
+      roles: formattedRoles,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching all roles:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to fetch roles",
+      error: error.message,
+    });
+  }
+};
+
+const getRoleDetails = async (req, res) => {
+  try {
+    const { roleId } = req.params;
+
+    // ✅ جلب الرول مع كل البرميشنز المرتبطة بيها
+    const role = await Role.findByPk(roleId, {
+      include: [
+        {
+          model: RolePermission,
+          include: [
+            {
+              model: Permission,
+              attributes: ["id", "name"],
+            },
+          ],
+        },
+        {
+          model: Staff,
+          through: { model: StaffRole, attributes: [] }, // يجيب العلاقة بدون بيانات اضافية
+          include: [
+            {
+              model: User,
+              attributes: ["first-name", "last-name", "email"],
+            },
+          ],
+        },
+      ],
+    });
+
+    if (!role) {
+      return res.status(404).json({
+        status: "error",
+        message: "Role not found",
+      });
+    }
+
+    // 🔹 تجهيز البرميشنز
+    const permissions = role.RolePermissions.map((rp) => ({
+      id: rp.Permission.id,
+      name: rp.Permission.name,
+      "can-view": rp["can-view"],
+      "can-edit": rp["can-edit"],
+      "can-delete": rp["can-delete"],
+    }));
+
+    // 🔹 تجهيز الستاف
+    const staff = role.Staffs.map((s) => ({
+      staff_id: s.staff_id,
+      full_name: `${s.User["first-name"]} ${s.User["last-name"]}`,
+      email: s.User.email,
+      "status-to-login": s["status-to-login"],
+    }));
+
+    return res.status(200).json({
+      status: "success",
+      message: `Role details fetched successfully for role: ${role["role-name"]}`,
+      role: {
+        id: role.id,
+        "role-name": role["role-name"],
+        permissions,
+        staff,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Error fetching role details:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to fetch role details",
+      error: error.message,
     });
   }
 };
@@ -299,4 +620,8 @@ module.exports = {
   assignRoleToStaff,
   viewEmployeesByRole,
   updateRole,
+  deleteRole,
+  deleteRoleFromStaff,
+  getAllRoles,
+  getRoleDetails,
 };
