@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './AdminPostsPage.css';
 import AdminPostsImg from './AdminPosts.jpeg';
-import { Heart, MessageCircle, Share2, Image, FileText, Edit, Trash2, Link as LinkIcon } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Edit, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import API from "../../services/api";
 
@@ -20,39 +20,24 @@ const AdminPostsPage = () => {
     fetchCategories();
   }, []);
 
-  // const fetchPosts = async () => {
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     const res = await API.get("/posts/admin");
-  //     setPosts(res.data.data);
-  //   } catch (err) {
-  //     console.error("Error fetching posts", err);
-  //     setError(t("fetchPostsFailed"));
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.get("/posts/admin");
-      console.log("Response from backend:", res.data); 
-      setPosts(res.data?.data || []); 
+      setPosts(res.data?.data || []);
     } catch (err) {
       console.error("Error fetching posts", err);
       setError(t("fetchPostsFailed"));
     } finally {
       setLoading(false);
     }
-  }; 
-  
+  };
 
   const fetchCategories = async () => {
     try {
       const res = await API.get("/posts/categories");
-      setTypes(res.data.data || []); 
+      setTypes(res.data.data || []);
     } catch (err) {
       console.error("Error fetching categories", err);
       setTypes([]);
@@ -61,44 +46,46 @@ const AdminPostsPage = () => {
 
   const handleSubmitPost = async (e) => {
     e.preventDefault();
-    const formData = new FormData();
-    formData.append("content", e.target.content.value);
-    formData.append("type", e.target.type.value);
-    formData.append("link", e.target.link.value);
-    if (e.target.image.files[0]) formData.append("image", e.target.image.files[0]);
-    if (e.target.file.files[0]) formData.append("file", e.target.file.files[0]);
-  
+
+    const data = {
+      content: e.target.content.value,
+      category: e.target.category.value
+    };
+
     try {
       if (editingPostId) {
-        await API.put(`/posts/${editingPostId}`, formData);
+        await API.put(`/posts/${editingPostId}`, data); // JSON
       } else {
-        await API.post("/posts/create-post", formData);
+        await API.post("/posts/create-post", data); // JSON
       }
-      fetchPosts();
+
+      await fetchPosts();
       setShowForm(false);
       setEditingPostId(null);
+      e.target.reset();
     } catch (err) {
-      console.error("Error saving post", err);
+      console.error("Error saving post:", err);
+      console.error("Details:", err.response?.data);
       setError(t("savePostFailed"));
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDelete = async (post_id) => {
     try {
-      await API.delete(`/posts/${id}`);
+      await API.delete(`/posts/${post_id}`);
       fetchPosts();
     } catch (err) {
       console.error("Error deleting post", err);
       setError(t("deletePostFailed"));
     }
   };
+
   const handleLikePost = async (post) => {
     try {
-      await API.post(`/posts/${post.id}/like`);
-     
+      await API.post(`/posts/${post.post_id}/like`);
       setPosts(prev =>
         prev.map(p =>
-          p.id === post.id ? { ...p, likes: (p.likes || 0) + 1 } : p
+          p.post_id === post.post_id ? { ...p, likes: (p.likes || 0) + 1 } : p
         )
       );
     } catch (err) {
@@ -108,12 +95,15 @@ const AdminPostsPage = () => {
 
   const handleEdit = (post) => {
     setShowForm(true);
-    setEditingPostId(post.id);
+    setEditingPostId(post.post_id);
+
     setTimeout(() => {
-      document.querySelector('textarea[name="content"]').value = post.content;
-      document.querySelector('select[name="type"]').value = post.category;
-      document.querySelector('input[name="link"]').value = post.link || '';
-    }, 0);
+      const contentField = document.querySelector('textarea[name="content"]');
+      const categoryField = document.querySelector('select[name="category"]');
+
+      if (contentField) contentField.value = post.content || '';
+      if (categoryField) categoryField.value = post.category || '';
+    }, 100);
   };
 
   const filteredPosts = filterType === t('All', { defaultValue: 'All' }) 
@@ -134,23 +124,9 @@ const AdminPostsPage = () => {
       {showForm && (
         <form onSubmit={handleSubmitPost} className="compact-post-form">
           <textarea name="content" placeholder={t('Post Content')} required className="input-field" />
-          <select name="type" required className="input-field" defaultValue={types[0] || ''}>
+          <select name="category" required className="input-field" defaultValue={types[0] || ''}>
             {types.map(ti => <option key={ti} value={ti}>{ti}</option>)}
           </select>
-          <input name="link" placeholder={t('Optional Link')} className="input-field" />
-          <div className="optional-icons">
-            <label title={t('Add Image')}>
-              <input type="file" name="image" style={{ display: 'none' }} />
-              <Image size={20} />
-            </label>
-            <label title={t('Add File')}>
-              <input type="file" name="file" style={{ display: 'none' }} />
-              <FileText size={20} />
-            </label>
-            <label title={t('Add Link')}>
-              <LinkIcon size={20} />
-            </label>
-          </div>
           <div className="form-buttons">
             <button type="submit" className="submit-btn">{editingPostId ? t('Update') : t('Post')}</button>
             <button type="button" className="cancel-btn" onClick={() => { setShowForm(false); setEditingPostId(null); }}>{t('Cancel')}</button>
@@ -170,7 +146,7 @@ const AdminPostsPage = () => {
 
           <div className="posts-feed">
             {filteredPosts.map((post) => (
-              <div key={post.id} className="post-card">
+              <div key={post.post_id} className="post-card">
                 <div className="post-header">
                   <img src={AdminPostsImg} alt="profile" className="profile-pic" />
                   <div className="post-header-info">
@@ -181,23 +157,15 @@ const AdminPostsPage = () => {
                 </div>
                 <div className="post-content">
                   <p>{post.content}</p>
-                  {post.imageUrl && <img src={post.imageUrl} alt="post" className="post-image" />}
-                  {post.fileUrl && <a href={post.fileUrl} download className="post-file-link">{post.fileName}</a>}
-                  {post.link && (
-                    <a href={post.link} target="_blank" rel="noopener noreferrer" className="post-link">
-                      {post.link}
-                    </a>
-                  )}
                 </div>
                 <div className="post-actions">
                   <button onClick={() => handleLikePost(post)}><Heart size={16} /> {post.likes}</button>
                   <button>
-  <MessageCircle size={16} /> {post.comments?.length || 0}
-</button>
-
+                    <MessageCircle size={16} /> {post.comments?.length || 0}
+                  </button>
                   <button><Share2 size={16} /> {post.shares}</button>
                   <button onClick={() => handleEdit(post)} className="edit-btn"><Edit size={16} /></button>
-                  <button onClick={() => handleDelete(post.id)} className="delete-btn"><Trash2 size={16} /></button>
+                  <button onClick={() => handleDelete(post.post_id)} className="delete-btn"><Trash2 size={16} /></button>
                 </div>
               </div>
             ))}
@@ -209,6 +177,7 @@ const AdminPostsPage = () => {
 };
 
 export default AdminPostsPage;
+
 
 
 
@@ -370,4 +339,5 @@ export default AdminPostsPage;
 // };
 
 // export default AdminPostsPage;
+
 
