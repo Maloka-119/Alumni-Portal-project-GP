@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import GroupsPage from './GroupsPage';
 import FAQManage from './FAQManage';
+import RolesManagement from './RolesManagement';
 
 const pagesMap = {
   reportsAnalysis: <EmptyPage title="Reports & Analysis" />,
@@ -21,7 +22,7 @@ const pagesMap = {
   consultationRequests: <EmptyPage title="Consultation Requests" />,
   alumniManagement: <AlumniManagement />,
   staffManagement: <StaffManagement />,
-  permissionsRoles: <EmptyPage title="Permissions & Roles" />,
+  permissionsRoles: <RolesManagement />,
   adminPosts: <AdminPostsPage />,
   usersPosts: <UsersPostsPage />,
   faqManage: <FAQManage />,
