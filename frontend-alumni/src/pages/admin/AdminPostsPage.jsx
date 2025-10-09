@@ -54,7 +54,7 @@ const AdminPostsPage = () => {
 
     try {
       if (editingPostId) {
-        await API.put(`/posts/${editingPostId}`, data); // JSON
+        await API.put(`/posts/${editingPostId}/edit`, data); // JSON
       } else {
         await API.post("/posts/create-post", data); // JSON
       }
@@ -72,13 +72,19 @@ const AdminPostsPage = () => {
 
   const handleDelete = async (post_id) => {
     try {
-      await API.delete(`/posts/${post_id}`);
+      const token = localStorage.getItem("token");
+      await API.delete(`/posts/${post_id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       fetchPosts();
     } catch (err) {
       console.error("Error deleting post", err);
       setError(t("deletePostFailed"));
     }
   };
+  
 
   const handleLikePost = async (post) => {
     try {
