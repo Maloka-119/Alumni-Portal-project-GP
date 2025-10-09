@@ -3,6 +3,7 @@ import UserManagement from './UserManagement';
 import './AlumniManagement.css';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api';
+import { useNavigate } from 'react-router-dom';
 
 const StaffManagement = () => {
   const [users, setUsers] = useState([]);
@@ -17,6 +18,7 @@ const StaffManagement = () => {
 
   const [statusFilter, setStatusFilter] = useState('All');
   const { t } = useTranslation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchStaff = async () => {
@@ -57,29 +59,40 @@ const StaffManagement = () => {
     setShowModal(true);
 
     try {
-      const res = await API.get('/roles');
-      setRoles(res.data);
+      const res = await API.get('/roles/get-all-roles');
+      setRoles(Array.isArray(res.data.roles) ? res.data.roles : []);
     } catch (err) {
       console.error('Failed to fetch roles:', err);
     }
-  };
+};
 
-  const handleSaveRole = async () => {
-    try {
-      if (selectedRole) {
-        await API.post(`/users/${currentUserId}/add-role`, { roleId: selectedRole });
-      } else if (newRole) {
-        await API.post('/roles', { name: newRole });
-      }
-    } catch (err) {
-      console.error('Failed to save role:', err);
-    } finally {
-      setShowModal(false);
-      setSelectedRole('');
-      setNewRole('');
-      setCurrentUserId(null);
-    }
-  };
+
+const handleSaveRole = async () => {
+  if (!selectedRole || !currentUserId) return;
+
+  try {
+    const user = users.find(u => u.staff_id === currentUserId);
+    const currentRoles = user.roles ? user.roles.map(r => r.id) : [];
+
+    const payload = {
+      staffId: currentUserId,
+      roles: [...currentRoles, parseInt(selectedRole)]
+    };
+
+    const res = await API.post('/roles/assign-role', payload);
+    console.log('Assign response:', res.data);
+
+    const usersRes = await API.get('/staff');
+    setUsers(usersRes.data.data);
+
+  } catch (err) {
+    console.error('Failed to assign role:', err);
+  } finally {
+    setShowModal(false);
+    setSelectedRole('');
+    setCurrentUserId(null);
+  }
+};
 
   const filteredUsers = users.filter(user =>
     statusFilter === 'All' ? true : user['status-to-login'] === statusFilter
@@ -150,24 +163,35 @@ const StaffManagement = () => {
           <div className="modal-content">
             <h3>{t("selectExistingRole")}</h3>
             <select
-              value={selectedRole}
-              onChange={(e) => setSelectedRole(e.target.value)}
-            >
-              <option value="">-- choose role --</option>
-              {roles.map((role) => (
-                <option key={role.id} value={role.id}>
-                  {role.name}
-                </option>
-              ))}
-            </select>
+  value={selectedRole}
+  onChange={(e) => setSelectedRole(e.target.value)}
+>
+  <option value="">-- choose role --</option>
+  {roles.map((role) => (
+    <option key={role.id} value={role.id}>
+      {role['role-name']}
+    </option>
+  ))}
+</select>
 
-            <h3>{t("orCreateNewRole")}</h3>
-            <input
-              type="text"
-              placeholder={t("enterNewRoleName")}
-              value={newRole}
-              onChange={(e) => setNewRole(e.target.value)}
-            />
+
+            <h3>{t("or")}</h3>
+            <button
+  onClick={() => navigate('/helwan-alumni-portal/admin/dashboard/permissionsRoles')}
+  style={{
+    backgroundColor: 'grey',
+    color: 'white',
+    padding: '8px 16px',
+    border: 'none',
+    borderRadius: '42px',
+    cursor: 'pointer',
+    fontSize: '14px'
+  }}
+>
+  {t("createNewRole")}
+</button>
+
+
 
             <div className="modal-actions">
               <button onClick={handleSaveRole}>{t("save")}</button>
