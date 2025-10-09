@@ -179,8 +179,8 @@ const handleSaveRole = async () => {
             <button
   onClick={() => navigate('/helwan-alumni-portal/admin/dashboard/permissionsRoles')}
   style={{
-    backgroundColor: 'grey',
-    color: 'white',
+    backgroundColor: 'transparent',
+    color: '#1e3a8a',
     padding: '8px 16px',
     border: 'none',
     borderRadius: '42px',
