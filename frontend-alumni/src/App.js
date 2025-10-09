@@ -20,7 +20,7 @@ import StaffDashboard from './pages/staff/StaffDashboard'
       <Route path="/helwan-alumni-portal/login" element={<Login />} />
 
       <Route 
-        path="/helwan-alumni-portal/admin/dashboard" 
+        path="/helwan-alumni-portal/admin/dashboard/*" 
         element={
           <ProtectedRoute user={user} requiredRole="admin">
             <AdminPanel />
