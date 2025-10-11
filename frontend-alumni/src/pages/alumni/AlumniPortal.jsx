@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { 
   Home, User, FileText, Bell, IdCard,
   Users, Network, Briefcase,
-  File, MessageSquare, HelpCircle,
+  File, MessageSquare, HelpCircle, MessageCircle,
   Menu, X, LogOut, Globe, Moon, Sun, ChevronDown, ChevronUp
 } from 'lucide-react';
 import './AlumniPortal.css';
@@ -13,13 +13,14 @@ import PostsAlumni from './PostsAlumni';
 import HomeAlumni from './HomeAlumni';
 import DigitalID from './DigitalID';
 import GraduatedProfile from './GraduatedProfile';
-import ExploreGroups from './exploreGroups.js';
+import ExploreGroups from './exploreGroups';
 import MyGroups from './MyGroups';
 import { useTranslation } from "react-i18next";
 import { useNavigate } from 'react-router-dom';
 import API from "../../services/api";
 import ViewFAQ from './ViewFAQ';
 import Notifications from './Notifications.js';
+import ChatSidebar from './ChatSidebar.jsx';
 
 
 const sidebarSections = (darkMode, t) => [
@@ -72,6 +73,8 @@ const Dashboard = () => {
   const footerRef = useRef(null);
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const [chatOpen, setChatOpen] = useState(false);
+
 
   const scrollToFooter = () => {
     footerRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -136,13 +139,17 @@ const Dashboard = () => {
           <h1 className="portal-name">Helwan Alumni Portal</h1>
         </div>
         <div className="alumni-header-right">
-          <button className="header-btn" onClick={()=>setActivePage("Notifications")}>
-            <Bell size={18}/> 
-          </button>
-          <button className="header-btn" onClick={()=>setActivePage("Profile")}>
-            <User size={18}/> 
-          </button>
-        </div>
+  <button className="header-btn" onClick={() => setActivePage("Notifications")}>
+    <Bell size={18}/> 
+  </button>
+  <button className="header-btn" onClick={() => setChatOpen(!chatOpen)}>
+    <MessageCircle size={18}/> 
+  </button>
+  <button className="header-btn" onClick={() => setActivePage("Profile")}>
+    <User size={18}/> 
+  </button>
+</div>
+
       </header>
 
       {/* Layout */}
@@ -193,6 +200,13 @@ const Dashboard = () => {
         </aside>
 
         <main className="alumni-main-content">
+        <ChatSidebar 
+  darkMode={darkMode} 
+  chatOpen={chatOpen} 
+  setChatOpen={setChatOpen} 
+/>
+
+
           {renderContent()}
         </main>
       </div>

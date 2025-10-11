@@ -67,7 +67,7 @@ const Register = () => {
   };
 
   return (
-    <div className="container" style={{ backgroundImage: `url(${Unibackground})` }}>
+    <div className="recontainer" style={{ backgroundImage: `url(${Unibackground})` }}>
       <Header />
 
       <div className="wrapper">

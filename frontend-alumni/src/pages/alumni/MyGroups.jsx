@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../../services/api";
-import GroupDetails from "../alumni/GroupDetails";
+import GroupDetails from "./GroupDetails";
 import "./MyGroups.css";
 
 function MyGroups() {

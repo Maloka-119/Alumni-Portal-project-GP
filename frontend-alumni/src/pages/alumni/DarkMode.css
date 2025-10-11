@@ -596,3 +596,208 @@
 .dark .explorer-btn:hover:not(:disabled) {
   transform: scale(1.02);
 }
+
+/* Dark mode for chat (matches the dark theme you provided) */
+
+.dark .chat-container {
+  background: #111827;
+  color: #f3f4f6;
+  border-left: 1px solid #374151;
+}
+
+.dark .chat-container h2 {
+  background: #0f1724;
+  color: #f3f4f6;
+  padding: 14px 18px;
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+  border-bottom: 1px solid #374151;
+}
+
+/* messages area */
+.dark .messages-box {
+  background: transparent;
+}
+
+/* message bubbles */
+.dark .message {
+  box-shadow: none;
+}
+
+.dark .message.sent {
+  background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%);
+  color: #f8fafc;
+  border: 1px solid rgba(59, 130, 246, 0.14);
+  align-self: flex-end;
+}
+
+.dark .message.received {
+  background: #0b1220;
+  color: #e6eefb;
+  border: 1px solid #1f2937;
+  align-self: flex-start;
+}
+
+.dark .message .msg-text {
+  color: #e6eefb;
+}
+
+/* reply snippet */
+.dark .reply-line {
+  color: #93c5fd;
+  border-left-color: #34d399;
+  padding-left: 6px;
+}
+
+.dark .reply-line svg {
+  color: #60a5fa;
+}
+
+.dark .reply-text {
+  color: #e6eefb;
+  font-weight: 500;
+}
+
+/* media inside messages */
+.dark .chat-media {
+  background: #071026;
+  border-radius: 10px;
+  object-fit: contain;
+  max-height: 400px;
+  display: block;
+}
+
+/* file link */
+.dark .file-link {
+  color: #93c5fd;
+}
+
+.dark .file-link svg {
+  color: #60a5fa;
+}
+
+/* action icons */
+.dark .icon-btn {
+  background: transparent;
+}
+
+.dark .icon-btn svg {
+  opacity: 0.95;
+}
+
+.dark .icon-btn.reply svg {
+  color: #34d399;
+}
+
+.dark .icon-btn.edit svg {
+  color: #facc15;
+}
+
+.dark .icon-btn.delete svg {
+  color: #f87171;
+}
+
+.dark .icon-btn:hover {
+  background: rgba(255,255,255,0.02);
+}
+
+/* reply preview box */
+.dark .reply-preview {
+  background: rgba(59,130,246,0.06);
+  border-left-color: #34d399;
+  color: #e6eefb;
+}
+
+.dark .reply-preview svg {
+  color: #60a5fa;
+}
+
+.dark .reply-preview button {
+  color: #93c5fd;
+}
+
+/* file preview */
+.dark .file-preview {
+  background: #0b1220;
+  border: 1px solid #1f2937;
+  color: #e6eefb;
+}
+
+.dark .preview-thumb {
+  background: #071026;
+}
+
+/* file text */
+.dark .file-name,
+.dark .file-size {
+  color: #e6eefb;
+}
+
+/* preview buttons */
+.dark .preview-btn {
+  background: #2563eb;
+  color: #f3f4f6;
+}
+
+.dark .preview-btn.remove {
+  background: #b91c1c;
+}
+
+/* input area */
+.dark .input-box {
+  background: #111827;
+  border-top: 1px solid #374151;
+}
+
+.dark .input-box input[type="text"] {
+  background: #0f1724;
+  color: #e6eefb;
+  border: 1px solid #374151;
+}
+
+.dark .input-box input::placeholder {
+  color: #9ca3af;
+}
+
+/* attach / send icons in input */
+.dark .icon-btn.attach svg {
+  color: #34d399;
+}
+
+.dark .icon-btn.send {
+  
+  color: #2563eb;
+}
+
+.dark .icon-btn.send svg {
+  color: #f8fafc;
+}
+
+/* overlay / media viewer */
+.dark .overlay {
+  background: rgba(2, 6, 23, 0.85);
+}
+
+.dark .overlay-content {
+  box-shadow: 0 8px 30px rgba(2,6,23,0.8);
+}
+
+/* scrollbar dark */
+.dark .messages-box::-webkit-scrollbar-track {
+  background: #0b1220;
+  border-radius: 8px;
+}
+
+.dark .messages-box::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 8px;
+}
+
+.dark .messages-box::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+.dark .messages-box {
+  scrollbar-color: #374151 #0b1220;
+}
