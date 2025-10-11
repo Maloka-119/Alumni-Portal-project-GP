@@ -5,9 +5,8 @@
       box-sizing: border-box;
     }
 
-    .container {
+    .recontainer {
       font-family: Arial, sans-serif;
-      /* background: linear-gradient(135deg, #f0f7ff 0%, #e6f2ff 100%); */
       min-height: 100vh;
       padding: 2rem 1rem;
       background: repeat-y center center fixed;
