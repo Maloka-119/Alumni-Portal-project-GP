@@ -2,15 +2,21 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('User', 'verification-code', {
-      type: Sequelize.STRING,
-      allowNull: true
-    });
+    const tableDescription = await queryInterface.describeTable('User');
     
-    await queryInterface.addColumn('User', 'verification-code-expires', {
-      type: Sequelize.DATE,
-      allowNull: true
-    });
+    if (!tableDescription['verification-code']) {
+      await queryInterface.addColumn('User', 'verification-code', {
+        type: Sequelize.STRING,
+        allowNull: true
+      });
+    }
+    
+    if (!tableDescription['verification-code-expires']) {
+      await queryInterface.addColumn('User', 'verification-code-expires', {
+        type: Sequelize.DATE,
+        allowNull: true
+      });
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
