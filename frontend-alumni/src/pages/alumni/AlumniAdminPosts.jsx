@@ -40,7 +40,8 @@ const AlumniAdminPosts = () => {
         liked: false,
         comments: [],
         shares: 0,
-        type: p.category
+        type: p.category,
+        images: p.images || [] // 🆕 أضفنا الصور هنا
       }));
   
       setPosts(formattedPosts);
@@ -129,6 +130,22 @@ const AlumniAdminPosts = () => {
 
             <div className="uni-post-body">
               <p>{post.content}</p>
+              {post.images && post.images.length > 0 && (
+    <div className="uni-post-images">
+      {post.images.map((imgUrl, index) => (
+        <img
+          key={index}
+          src={imgUrl}
+          alt={`post-${index}`}
+          className="uni-post-image"
+          onError={(e) => {
+            console.error(`❌ Failed to load image: ${imgUrl}`);
+            e.target.style.display = 'none';
+          }}
+        />
+      ))}
+    </div>
+  )}
             </div>
 
             <div className="uni-post-actions">

@@ -59,14 +59,33 @@ const HttpStatusHelper = require("../utils/HttpStatuHelper");
 // };
 const createGroup = async (req, res) => {
   try {
-    // تشخيص - نشوف البودي الواصل من الفرونت
-    console.log("Received body:", req.body);
+    console.log("🟢 ----- [createGroup] START -----");
+    console.log("📦 Headers Content-Type:", req.headers["content-type"]);
+    console.log("📦 Is multipart/form-data:", req.is("multipart/form-data"));
+    console.log("👤 Auth User:", req.user);
 
-    const { groupName, description, groupImage } = req.body || {};
+    // 👇 نطبع كل حاجة عشان نعرف إذا في body ولا لأ
+    console.log("🧾 req.body:", req.body);
+    console.log("📸 req.file:", req.file);
+    console.log("📦 req.files:", req.files);
+
+    // أمان إضافي: لو الجسم undefined نعرف مكان المشكلة
+    if (!req.body) {
+      console.log(
+        "❌ req.body undefined — ممكن تكون مشكلة Multer أو ترتيب الميدل وير"
+      );
+    }
+
+    // نجرب نستخرج البيانات
+    const { groupName, description } = req.body || {};
+    console.log("🔹 groupName:", groupName);
+    console.log("🔹 description:", description);
+
     const user = req.user;
 
-    // تحقق من البودي
+    // تحقق من البيانات
     if (!groupName || !description) {
+      console.log("❌ Missing groupName or description");
       return res.status(400).json({
         status: "fail",
         message: "Group name and description are required",
@@ -74,8 +93,9 @@ const createGroup = async (req, res) => {
       });
     }
 
-    // تحقق إن فيه يوزر وفيه نوعه
+    // تحقق من صلاحية الأدمن
     if (!user || user["user-type"] !== "admin") {
+      console.log("❌ Unauthorized user or not admin");
       return res.status(403).json({
         status: "fail",
         message: "Only admins can create groups",
@@ -83,18 +103,39 @@ const createGroup = async (req, res) => {
       });
     }
 
-    // إنشاء المجموعة
+    // 🔹 اختبار الصورة
+    let imageUrl = null;
+    if (req.file) {
+      console.log("✅ File detected. Checking available paths...");
+      console.log("req.file.path:", req.file.path);
+      console.log("req.file.url:", req.file.url);
+      console.log("req.file.location:", req.file.location);
+
+      imageUrl = req.file.path || req.file.url || req.file.location || null;
+      console.log("🖼️ Final imageUrl:", imageUrl);
+    } else {
+      console.log("⚠️ No file uploaded.");
+    }
+
+    // إنشاء الجروب
     const group = await Group.create({
       "group-name": groupName,
       description,
       "created-date": new Date(),
-      "group-image": groupImage || null,
+      "group-image": imageUrl,
     });
 
-    // احسب عدد الأعضاء (المفروض 0 عند الإنشاء)
     const memberCount = await GroupMember.count({
       where: { "group-id": group.id },
     });
+
+    console.log("✅ Group created successfully:", {
+      id: group.id,
+      name: group["group-name"],
+      image: group["group-image"],
+    });
+
+    console.log("🟢 ----- [createGroup] END -----");
 
     return res.status(201).json({
       status: "success",
@@ -109,11 +150,12 @@ const createGroup = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("Error in createGroup:", err);
+    console.error("🔥 Error in createGroup:", err);
     return res.status(500).json({
       status: "error",
       message: "Failed to create group",
       error: err.message,
+      stack: err.stack, // 👈 نطبع الستاك كمان عشان نعرف المكان بالظبط
       data: [],
     });
   }
@@ -238,35 +280,31 @@ const editGroup = async (req, res) => {
   try {
     const user = req.user;
     const { groupId } = req.params;
-    const { groupName, description, groupImage } = req.body;
+    const { groupName, description } = req.body;
 
-    // لازم يكون Admin
     if (user["user-type"] !== "admin") {
-      return res.status(403).json({
-        status: "fail",
-        message: "Only admins can edit groups",
-        data: [],
-      });
+      return res
+        .status(403)
+        .json({ status: "fail", message: "Only admins can edit groups" });
     }
 
-    // دور على الجروب
     const group = await Group.findByPk(groupId);
-    if (!group) {
-      return res.status(404).json({
-        status: "fail",
-        message: "Group not found",
-        data: [],
-      });
-    }
+    if (!group)
+      return res
+        .status(404)
+        .json({ status: "fail", message: "Group not found" });
 
-    // عدّل القيم اللي اتبعتت بس
     if (groupName) group["group-name"] = groupName;
     if (description) group.description = description;
-    if (groupImage) group["group-image"] = groupImage;
+
+    // لو اترفع ملف صورة جديدة
+    if (req.file) {
+      const imageUrl = req.file.path || req.file.url || req.file.location;
+      group["group-image"] = imageUrl;
+    }
 
     await group.save();
 
-    // جيب عدد الأعضاء
     const membersCount = await GroupMember.count({
       where: { "group-id": group.id },
     });
@@ -274,24 +312,20 @@ const editGroup = async (req, res) => {
     return res.status(200).json({
       status: "success",
       message: "Group updated successfully",
-      data: [
-        {
-          id: group.id,
-          groupName: group["group-name"],
-          description: group.description,
-          groupImage: group["group-image"],
-          createdDate: group["created-date"],
-          membersCount,
-        },
-      ],
+      data: {
+        id: group.id,
+        groupName: group["group-name"],
+        description: group.description,
+        groupImage: group["group-image"],
+        createdDate: group["created-date"],
+        membersCount,
+      },
     });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({
-      status: "error",
-      message: err.message,
-      data: [],
-    });
+    return res
+      .status(500)
+      .json({ status: "error", message: err.message, data: [] });
   }
 };
 

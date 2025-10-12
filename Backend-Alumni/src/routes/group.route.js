@@ -3,18 +3,27 @@ const express = require("express");
 const router = express.Router();
 const groupController = require("../controllers/group.controller");
 const authMiddleware = require("../middleware/authMiddleware"); // middleware للتحقق من التوكن
+const uploadGroup = require("../middleware/uploadGroup");
 
-router.post("/groups", authMiddleware.protect, groupController.createGroup);
+router.post(
+  "/groups",
+  authMiddleware.protect,
+  uploadGroup.single("groupImage"),
+  groupController.createGroup
+);
+
 router.get("/groups", groupController.getGroups);
 router.post(
   "/groups/add-user",
   authMiddleware.protect,
+
   groupController.addUserToGroup
 );
 // routes/group.route.js
 router.put(
   "/groups/:groupId",
   authMiddleware.protect,
+  uploadGroup.single("groupImage"),
   groupController.editGroup
 );
 // routes/group.route.js
