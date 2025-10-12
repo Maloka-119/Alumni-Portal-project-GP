@@ -155,7 +155,6 @@ const updateProfile = async (req, res) => {
 
     if (!graduate) {
       console.log("Graduate not found for user id:", req.user.id);
-
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -174,7 +173,7 @@ const updateProfile = async (req, res) => {
       faculty,
       graduationYear,
       linkedlnLink,
-      phoneNumber, // 👈 هنا خدنا رقم التليفون من الـ body
+      phoneNumber,
     } = req.body;
 
     if (firstName !== undefined) user["first-name"] = firstName;
@@ -189,22 +188,27 @@ const updateProfile = async (req, res) => {
       graduate["graduation-year"] = graduationYear;
     if (linkedlnLink !== undefined) graduate["linkedln-link"] = linkedlnLink;
 
-    // رفع صورة شخصية
-    if (req.files && req.files.profilePicture) {
-      const result = await cloudinary.uploader.upload(
-        req.files.profilePicture[0].path,
-        { folder: "graduates/profile_pictures" }
+    // ✅ رفع صورة البروفايل (من Multer/Cloudinary)
+    if (req.files && req.files.profilePicture && req.files.profilePicture[0]) {
+      const profilePic = req.files.profilePicture[0];
+
+      // Multer-storage-cloudinary بيرجع لينك الصورة في path أو url
+      graduate["profile-picture-url"] = profilePic.path || profilePic.url;
+
+      console.log(
+        "✅ Profile picture uploaded:",
+        graduate["profile-picture-url"]
       );
-      graduate["profile-picture-url"] = result.secure_url;
     }
 
-    // رفع CV
-    if (req.files && req.files.cv) {
-      const result = await cloudinary.uploader.upload(req.files.cv[0].path, {
-        folder: "graduates/cvs",
-        resource_type: "raw",
-      });
-      graduate["cv-url"] = result.secure_url;
+    // ✅ رفع CV (نفس الفكرة، لو بتستخدم Multer عادي هتحتاج ترفع يدوي)
+    if (req.files && req.files.cv && req.files.cv[0]) {
+      const cvFile = req.files.cv[0];
+
+      // لو برضو بتستخدم CloudinaryStorage للـ cv، نفس النظام:
+      graduate["cv-url"] = cvFile.path || cvFile.url;
+
+      console.log("✅ CV uploaded:", graduate["cv-url"]);
     }
 
     await user.save();
@@ -216,6 +220,7 @@ const updateProfile = async (req, res) => {
       data: { graduate },
     });
   } catch (err) {
+    console.error("❌ Error in updateProfile:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
       message: err.message,
