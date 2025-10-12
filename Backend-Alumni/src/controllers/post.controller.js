@@ -908,19 +908,17 @@ const deletePost = async (req, res) => {
       });
     }
 
+    // Get post author info
+    const postAuthor = await User.findByPk(post["author-id"]);
+
     // Check ownership: User can only delete their own posts, OR admin can delete any post
     const isOwner = post["author-id"] === userId;
     const isAdmin = req.user["user-type"] === "admin";
 
-    // Allow deleting if: 1) It's the staff member's own post, OR 2) It's a graduate's post
-    const isOwnPost = post["author-id"] === userId;
-    const isGraduatePost = postAuthor["user-type"] === "graduate";
-
-    if (!isOwnPost && !isGraduatePost) {
+    if (!isOwner && !isAdmin) {
       return res.status(403).json({
         status: "error",
-        message:
-          "You can only delete your own posts or posts created by graduates",
+        message: "You can only delete your own posts or be an admin to delete any post",
       });
     }
 
@@ -1101,7 +1099,6 @@ module.exports = {
   getGraduatePosts,
   getMyPosts,
   getAllPostsOfUsers,
-  getSinglePost,
   editPost,
   getGroupPosts,
   likePost,

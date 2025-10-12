@@ -3,10 +3,14 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
   async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn("Comment", "edited", {
-      type: Sequelize.BOOLEAN,
-      defaultValue: false,
-    });
+    const tableDescription = await queryInterface.describeTable("Comment");
+    
+    if (!tableDescription.edited) {
+      await queryInterface.addColumn("Comment", "edited", {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      });
+    }
   },
 
   async down(queryInterface, Sequelize) {
