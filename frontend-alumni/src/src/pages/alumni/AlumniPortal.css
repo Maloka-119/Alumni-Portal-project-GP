@@ -1,0 +1,335 @@
+/* General */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Light & Dark Mode */
+.light {
+  background: #f9fafb;
+  color: #1f2937;
+}
+
+.dark {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+/* Header */
+.page-header {
+  flex-shrink: 0;
+  color: white;
+  padding: 0.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: #1e3a8a;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  transition: background 0.3s;
+}
+
+.header-dark {
+  background-color: #374151;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.logo-placeholder {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.25rem;
+  background: white;
+}
+
+.portal-name {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.alumni-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: white;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.header-btn:hover {
+  background: rgba(255,255,255,0.3);
+}
+
+.alumni-menu-btn {
+  background: rgba(255,255,255,0.15);
+  border: none;
+  color: white;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.alumni-menu-btn:hover {
+  background: rgba(255,255,255,0.3);
+  transform: scale(1.05);
+}
+
+.dark .alumni-menu-btn {
+  background: rgba(255,255,255,0.1);
+  color: #f3f4f6;
+}
+
+.dark .alumni-menu-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
+/* Layout */
+.alumni-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  margin-top: 63px; 
+  
+}
+
+/* Sidebar */
+.alumni-sidebar {
+  width: 240px;
+  background: #f3f4f6;
+  padding: 16px;
+  overflow-y: auto;
+  transition: all 0.3s ease;
+}
+
+.dark .alumni-sidebar {
+  background: #1f2937;
+}
+
+.alumni-sidebar.closed {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.alumni-sidebar-section h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+.alumni-sidebar-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.alumni-sidebar-item:hover {
+  background: #e0e7ff;
+}
+
+.dark .alumni-sidebar-item:hover {
+  background: #4b5563;
+}
+
+.alumni-sidebar-item.active {
+  background-color: #dbeafe;
+  font-weight: 600;
+}
+
+.dark .alumni-sidebar-item.active {
+  background-color: #4b5563;
+}
+
+/* Main content */
+.alumni-main-content {
+  flex: 1;
+  padding: 24px;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  text-align: center;
+  margin-top: 0;
+}
+
+.alumni-card {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  max-width: 500px;
+  width: 100%;
+  transition: background 0.3s, color 0.3s;
+}
+
+.dark .alumni-card {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+/* Footer */
+footer {
+  flex-shrink: 0;
+}
+
+/* Scrollbar */
+.alumni-sidebar::-webkit-scrollbar,
+.alumni-main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.alumni-sidebar::-webkit-scrollbar-thumb,
+.alumni-main-content::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.dark .alumni-sidebar::-webkit-scrollbar-thumb,
+.dark .alumni-main-content::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.alumni-sidebar::-webkit-scrollbar-track,
+.alumni-main-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .alumni-sidebar {
+    position: absolute;
+    top: 64px;
+    left: 0;
+    height: calc(100% - 64px);
+    z-index: 1000;
+  }
+
+  .alumni-sidebar.closed {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  .alumni-sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* Scrollbar لكل الصفحة */
+body::-webkit-scrollbar {
+  width: 10px;
+}
+
+body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+body::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+/* Dark Mode scrollbar */
+.dark body::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+}
+
+/* Contact button */
+.contact-btn {
+  position: absolute;
+  bottom: 24px;
+  right: 24px;
+  background: #1e3a8a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 12px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.contact-btn:hover {
+  background: #2563eb;
+}
+
+.dark .contact-btn {
+  background-color: #1f2937; 
+  color: #f3f4f6;
+}
+
+.dark .contact-btn:hover {
+  background-color: #374151; 
+}
+
+/* Submenu */
+.alumni-sidebar-submenu {
+  margin-left: 20px;
+  list-style: none;
+  padding: 5px 0;
+}
+
+.alumni-sidebar-subitem {
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.alumni-sidebar-subitem:hover {
+  background: #e0e7ff;
+}
+
+.alumni-sidebar-subitem.active {
+  font-weight: 600;
+  background: #dbeafe;
+  color: #1e3a8a;
+}
+
+/* Dark Mode for submenu */
+.dark .alumni-sidebar-subitem:hover {
+  background: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark .alumni-sidebar-subitem.active {
+  background: #374151;
+  color: #f9fafb;
+}
