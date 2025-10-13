@@ -16,7 +16,7 @@ function FAQManage() {
 
   const fetchFaqs = async () => {
     try {
-      const res = await API.get("/faqs");
+      const res = await API.get("/admin/faqs");
       setFaqs(res.data);
     } catch (err) {
       console.error("Error loading FAQs:", err);
@@ -28,9 +28,9 @@ function FAQManage() {
 
     try {
       if (editId) {
-        await API.put(`/faqs/${editId}`, newFAQ);
+        await API.put(`/admin/faqs/${editId}`, newFAQ);
       } else {
-        await API.post("/faqs", newFAQ);
+        await API.post("/admin/faqs", newFAQ);
       }
 
       setNewFAQ({ question: "", answer: "" });
@@ -51,7 +51,7 @@ function FAQManage() {
 
   const handleDelete = async (id) => {
     try {
-      await API.delete(`/faqs/${id}`);
+      await API.delete(`/admin/faqs/${id}/hard`);
       setFaqs(faqs.filter((f) => f.id !== id));
     } catch (err) {
       console.error("Error deleting FAQ:", err);
