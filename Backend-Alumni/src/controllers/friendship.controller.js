@@ -2,12 +2,16 @@ const { Op } = require("sequelize");
 const Friendship = require("../models/Friendship");
 const Graduate = require("../models/Graduate");
 
-/**
- * 1️⃣ View Suggestions
- */
-exports.viewSuggestions = async (req, res) => {
+
+//1- View Suggestions
+
+const viewSuggestions = async (req, res) => {
   try {
-    const userId = req.user.graduate_id;
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const userId = req.user.id;
 
     const relations = await Friendship.findAll({
       where: {
@@ -31,12 +35,23 @@ exports.viewSuggestions = async (req, res) => {
   }
 };
 
-/**
- * 2️⃣ Send Friend Request
- */
-exports.sendRequest = async (req, res) => {
+
+//2- Send Friend Request
+
+const sendRequest = async (req, res) => {
   try {
-    const senderId = req.user.graduate_id;
+    // أولاً نتحقق من وجود user
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // نجيب سجل Graduate المرتبط بالـ user.id
+    const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
+    if (!graduate) {
+      return res.status(401).json({ message: "No graduate profile found" });
+    }
+
+    const senderId = graduate.graduate_id;
     const { receiverId } = req.params;
 
     if (senderId == receiverId)
@@ -66,12 +81,24 @@ exports.sendRequest = async (req, res) => {
   }
 };
 
-/**
- * 3️⃣ Cancel Sent Request
- */
-exports.cancelRequest = async (req, res) => {
+
+
+//3- Cancel Sent Request
+
+const cancelRequest = async (req, res) => {
   try {
-    const senderId = req.user.graduate_id;
+    // تأكد من وجود user
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // جلب سجل Graduate المرتبط بالـ User.id
+    const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
+    if (!graduate) {
+      return res.status(401).json({ message: "Graduate profile not found" });
+    }
+
+    const senderId = graduate.graduate_id;
     const { receiverId } = req.params;
 
     await Friendship.destroy({
@@ -84,12 +111,23 @@ exports.cancelRequest = async (req, res) => {
   }
 };
 
-/**
- * 4️⃣ View Friend Requests (الطلبات اللي جاياله)
- */
-exports.viewRequests = async (req, res) => {
+
+//4- View Friend Requests
+
+const viewRequests = async (req, res) => {
   try {
-    const userId = req.user.graduate_id;
+    // تأكد من وجود user
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // جلب سجل Graduate المرتبط بالـ User.id
+    const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
+    if (!graduate) {
+      return res.status(401).json({ message: "Graduate profile not found" });
+    }
+
+    const userId = graduate.graduate_id;
 
     const requests = await Friendship.findAll({
       where: {
@@ -106,12 +144,22 @@ exports.viewRequests = async (req, res) => {
   }
 };
 
-/**
- * 5️⃣ Confirm Friend Request
- */
-exports.confirmRequest = async (req, res) => {
+
+//5- Confirm Friend Request
+
+const confirmRequest = async (req, res) => {
   try {
-    const receiverId = req.user.graduate_id;
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // جلب سجل Graduate المرتبط بالـ User.id
+    const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
+    if (!graduate) {
+      return res.status(401).json({ message: "Graduate profile not found" });
+    }
+
+    const receiverId = graduate.graduate_id;
     const { senderId } = req.params;
 
     const request = await Friendship.findOne({
@@ -130,12 +178,22 @@ exports.confirmRequest = async (req, res) => {
   }
 };
 
-/**
- * 6️⃣ Delete From My Requests
- */
-exports.deleteFromMyRequests = async (req, res) => {
+
+//6- Delete From My Requests
+
+const deleteFromMyRequests = async (req, res) => {
   try {
-    const receiverId = req.user.graduate_id;
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // جلب سجل Graduate المرتبط بالـ User.id
+    const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
+    if (!graduate) {
+      return res.status(401).json({ message: "Graduate profile not found" });
+    }
+
+    const receiverId = graduate.graduate_id;
     const { senderId } = req.params;
 
     await Friendship.update(
@@ -149,12 +207,21 @@ exports.deleteFromMyRequests = async (req, res) => {
   }
 };
 
-/**
- * 7️⃣ View My Friends
- */
-exports.viewFriends = async (req, res) => {
+//7- View My Friends
+ 
+const viewFriends = async (req, res) => {
   try {
-    const userId = req.user.graduate_id;
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // جلب سجل Graduate المرتبط بالـ User.id
+    const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
+    if (!graduate) {
+      return res.status(401).json({ message: "Graduate profile not found" });
+    }
+
+    const userId = graduate.graduate_id;
 
     const friends = await Friendship.findAll({
       where: {
@@ -173,12 +240,22 @@ exports.viewFriends = async (req, res) => {
   }
 };
 
-/**
- * 8️⃣ Delete From My Friends
- */
-exports.deleteFriend = async (req, res) => {
+
+
+//8- Delete From My Friends
+
+const deleteFriend = async (req, res) => {
   try {
-    const userId = req.user.graduate_id;
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
+    if (!graduate) {
+      return res.status(401).json({ message: "Graduate profile not found" });
+    }
+
+    const userId = graduate.graduate_id;
     const { friendId } = req.params;
 
     await Friendship.destroy({
@@ -191,8 +268,22 @@ exports.deleteFriend = async (req, res) => {
       },
     });
 
-    res.json({ message: "Friend removed successfully" });
+    res.json({ message: "Friend deleted permanently" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
+};
+
+
+
+// Export all at the end
+module.exports = {
+  viewSuggestions,
+  sendRequest,
+  cancelRequest,
+  viewRequests,
+  confirmRequest,
+  deleteFromMyRequests,
+  viewFriends,
+  deleteFriend,
 };

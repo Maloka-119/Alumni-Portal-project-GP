@@ -51,14 +51,17 @@ app.use("/alumni-portal/permissions", permissionRoutes);
 const roleRoutes = require("./routes/role.route");
 app.use("/alumni-portal/roles", roleRoutes);
 
-// ✅ Serve uploaded files
+const friendshipRoutes = require("./routes/friendship.route");
+app.use("/alumni-portal/friendships",friendshipRoutes);
+
+//  Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Error Handler
+//  Error Handler
 app.use(errorHandler);
 
 // ==================================================
-// ✅ Clear old permissions and seed new ones
+//  Clear old permissions and seed new ones
 // ==================================================
 const ensurePermissionsSeeded = async () => {
   const permissions = [
@@ -99,15 +102,15 @@ const ensurePermissionsSeeded = async () => {
           "can-delete": canDelete,
         });
 
-        console.log(`✅ Added missing permission: ${permName}`);
+        console.log(`Added missing permission: ${permName}`);
       } else {
-        console.log(`ℹ️ Permission already exists: ${permName}`);
+        console.log(`ℹPermission already exists: ${permName}`);
       }
     }
 
-    console.log("✅ Permission seeding completed successfully.");
+    console.log("Permission seeding completed successfully.");
   } catch (error) {
-    console.error("❌ Error seeding permissions:", error);
+    console.error("Error seeding permissions:", error);
   }
 };
 
@@ -131,7 +134,7 @@ sequelize.sync().then(async () => {
     });
 
     console.log(
-      "✅ Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123"
+      "Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123"
     );
 
     await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
@@ -145,4 +148,4 @@ sequelize.sync().then(async () => {
 // ✅ Start Server
 // ==================================================
 const PORT = process.env.PORT || 5005;
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
