@@ -1,0 +1,471 @@
+/* Container */
+.containerr {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Back button */
+  .back-btn {
+    float: right;
+    padding: 8px 16px;
+    margin: 10px 0 16px 0;
+    cursor: pointer;
+    background-color: #555;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+  }
+  
+  /* New post bar */
+  .new-post-bar {
+    width: 85%;                 
+    max-width: 600px;           
+    margin: 0 auto 10px auto;   
+    padding: 8px 12px;          
+    border-radius: 28px;
+    border: 1px solid #ccc;
+    color: #555;
+    cursor: text;
+    background-color: #f0f2f5;
+    transition: background 0.2s;
+  }
+  
+  .new-post-bar:hover {
+    background-color: #e4e6e9;
+  }
+  
+  
+  /* Group header */
+  .group-header {
+    margin-bottom: 20px;
+    width: 100%;
+    margin-top: 32px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    background-color: #fff;
+    position: relative;
+    border-bottom: 3px solid;
+    border-image: linear-gradient(135deg, #3b82f6, #8b5cf6, #10b981) 1;
+  }
+  .group-header::after {
+    content: "";
+    display: block;
+    height: 3px;
+    width: 80%;
+    margin: 12px auto 16px auto; 
+    border-radius: 2px;         
+  }
+  
+  /* Cover image */
+  .cover-img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    display: block;
+  }
+  
+  /* Placeholder عند عدم وجود صورة */
+  .cover-placeholder {
+    width: 100%;
+    height: 180px;
+    background-color: #f0f2f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #555;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  /* عنوان الجروب ووصفه */
+  .group-header h1 {
+    margin: 12px 16px 6px 16px;
+    font-size: 24px;
+    color: #4f46e5;
+  }
+  
+  .group-header p {
+    margin: 0 16px 12px 16px;
+    font-size: 14px;
+    color: #1e3a8a;
+    background: #e0e7ff;
+    padding: 8px 12px;
+    border-radius: 12px;
+    border: 1px solid #c7d2fe;
+  }
+  
+  /* Action tags أسفل الوصف */
+  .group-header .action-tag {
+    margin-left: 16px;
+    margin-bottom: 12px;
+  }
+  
+  /* Flex لترتيب العنوان والصورة بشكل متناسق */
+  .group-header .header-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  /* تحسين الهيدر عند عرض الأزرار مع الاسم */
+  .group-header .header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 16px 12px 16px;
+  }
+  
+  /* Buttons */
+  .group-header button,
+  .form-card button,
+  .posts-section button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    color: #fff;
+    background-color: #4f46e5; 
+    transition: background 0.2s;
+  }
+  .group-header button:hover,
+  .form-card button:hover,
+  .posts-section button:hover {
+    background-color: #3b3bbb;
+  }
+  
+  /* Members list */
+  .members-list {
+    list-style: none;
+    padding: 0;
+  }
+  .members-list li {
+    padding: 4px 0;
+  }
+  
+  /* Posts section */
+  .posts-section {
+    margin-top: 20px;
+  }
+  
+  /* Form card */
+  .form-card {
+    margin-bottom: 15px;
+    
+  }
+  .form-card textarea {
+    width: 100%;
+    padding: 8px;
+    resize: vertical;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-family: Arial, sans-serif;
+  }
+  
+  /* Post card */
+  .post-card {
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    padding: 10px;
+    margin-bottom: 12px;
+    background-color: #f9f9f9;
+  }
+  
+  .post-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  
+  .username {
+    font-weight: bold;
+    color: #1f2937;
+  }
+  
+  .post-date {
+    font-size: 0.8rem;
+    color: #666;
+    margin-left: auto; 
+  }
+  
+  .post-content {
+    margin-bottom: 8px;
+  }
+  .post-actions button {
+    margin-right: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    background-color: #4f46e5; /* اللون الأساسي */
+    color: #fff;
+    border: 2px solid transparent; /* بوردر شفاف افتراضي */
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  
+  /* أول زر - Like */
+  .post-actions button:nth-child(1):hover {
+    background-color: transparent;
+    color: #e02424;
+    border: 2px solid transparent;
+  }
+  
+  /* ثاني زر - Comment */
+  .post-actions button:nth-child(2):hover {
+    border-color: #2563eb; /* البوردر أزرق فاتح عند الهوفر */
+    border: 2px solid transparent;
+  }
+  
+  
+  /* Modal overlay */
+  .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+  }
+  
+  /* Modals */
+  .modal-window {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    width: 400px;
+    max-height: 80%;
+    overflow-y: auto;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+  
+  .modal-window h3 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #111;
+    margin-bottom: 12px;
+  }
+  
+  .modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: #e0e0e0;
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s;
+  }
+  
+  .modal-close:hover {
+    background-color: #ccc;
+  }
+  
+  .filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  
+  .filters select {
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    cursor: pointer;
+  }
+  
+  .graduates-list,
+  .modal-window ul {
+    list-style: none;
+    padding: 0;
+    max-height: 200px;
+    overflow-y: auto;
+    border-top: 1px solid #eee;
+    padding-top: 10px;
+  }
+  
+  .graduates-list li,
+  .modal-window li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .graduates-list li:last-child,
+  .modal-window li:last-child {
+    border-bottom: none;
+  }
+  
+  .modal-window button {
+    margin-top: 10px;
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    background-color: #4f46e5;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  
+  .modal-window button:hover {
+    background-color: #3730a3;
+  }
+  
+  /* Action tag */
+  .action-tag {
+    display: inline-block;
+    padding: 8px 16px; 
+    border-radius: 24px; 
+    background-color: #e0e7ff; 
+    color: #1e3a8a; 
+    font-size: 0.95rem; 
+    font-weight: 600; 
+    cursor: pointer;
+    margin-right: 8px;
+    transition: background 0.2s, transform 0.2s;
+  }
+  
+  .action-tag:hover {
+    background-color: #c7d2fe; 
+    transform: translateY(-2px); 
+  }
+  
+  /* Group description */
+  .group-description {
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1e3a8a; 
+    background: #e0e7ff; 
+    padding: 12px 16px;
+    border-radius: 12px; 
+    margin-bottom: 15px;
+    border: 1px solid #c7d2fe; 
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05); 
+  }
+  
+  /* Created icon tooltip */
+  .created-icon-wrapper {
+    position: absolute; /* بدل relative */
+    top: 10px;          /* المسافة من أعلى الصورة */
+    left: 10px; 
+    background-color: rgba(255,255,255,0.85);
+    padding: 4px 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    z-index: 10;
+    cursor: pointer;
+    font-size: 12px;
+    color: #4f46e5;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    
+  }
+  
+  
+  .created-icon-wrapper .tooltip {
+    visibility: hidden;
+    background-color:#fff ;
+    color:#4f46e5 ;
+    text-align: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    position: absolute;
+    top: 100%;       
+    left: 50%;
+    transform: translateX(-10%) translateY(-6px);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    z-index: 999;
+    margin-top: 12px;
+  }
+  
+  .created-icon-wrapper:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
+  
+  .post-cont {
+    padding: 0 16px 16px 16px;
+}
+
+.post-cont h4 {
+    margin: 6px 0 14px 0;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.4;
+    color: #1e293b;
+}
+
+.post-image {
+    width: 100%;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+    margin-top: 14px;
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+}
+
+.post-image:hover {
+    transform: scale(1.03);
+    box-shadow: 0 14px 40px rgba(0,0,0,0.15);
+}
+
+/* File link */
+.post-file-link {
+    display: inline-flex;
+    align-items: center;
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+    padding: 10px 16px;
+    border-radius: 12px;
+    margin-top: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0284c7;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid rgba(2, 132, 199, 0.2);
+}
+
+.post-file-link:hover {
+    background: linear-gradient(135deg, #0284c7, #0369a1);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(2, 132, 199, 0.3);
+}
+
+.post-file {
+    background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+    padding: 14px 18px;
+    border-radius: 14px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: #374151;
+    word-break: break-word;
+    border: 2px solid rgba(209, 213, 219, 0.3);
+    font-weight: 500;
+}

@@ -1,0 +1,130 @@
+.explorer-wrapper {
+  
+  padding: 40px 20px;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.explorer-title {
+  font-size: 28px;
+  font-weight: 600;
+  text-align: center;
+  color: #1e293b;
+  margin-bottom: 40px;
+}
+
+.explorer-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  width: 100%;
+}
+
+.explorer-card {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.08);
+  transition: all 0.2s ease;
+}
+
+.explorer-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+}
+
+.explorer-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.explorer-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.explorer-badge {
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+.explorer-desc {
+  color: #475569;
+  font-size: 15px;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.explorer-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.explorer-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.explorer-btn-primary {
+  background: #2563eb;
+  color: #fff;
+}
+
+.explorer-btn-secondary {
+  background: #334155;
+  color: #fff;
+}
+
+.explorer-btn-disabled {
+  background: #cbd5e1;
+  color: #475569;
+  cursor: not-allowed;
+}
+
+.explorer-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+}
+
+@media (max-width: 1024px) {
+  .explorer-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .explorer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .explorer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .explorer-card {
+    padding: 18px;
+  }
+
+  .explorer-title {
+    font-size: 24px;
+  }
+
+  .explorer-btn {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
