@@ -1,0 +1,248 @@
+/* GroupDetails.css */
+:root {
+    --bg: #f7f7f7;
+    --card: #ffffff;
+    --muted: #828282;
+    --primary: #37568d;
+    --border: #e6e7e9;
+    --shadow: 0 4px 12px rgba(0,0,0,0.08);
+    --radius: 10px;
+    --transition: 200ms ease;
+    --max-width: 980px;
+  }
+  
+  .group-details {
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg);
+    padding: 24px;
+    color: #333;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .group-details__container {
+    width: 100%;
+    max-width: var(--max-width);
+  }
+  
+.back-button {
+  position: relative;
+  padding: 6px;
+  font-size: 14px;
+  border: none;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all var(--transition);
+}
+
+.back-button:hover {
+  background: #2a4168;
+}
+
+/* السهم */
+.back-button::before {
+  content: "←";
+  font-size: 16px;
+}
+
+/* Tooltip */
+.back-button::after {
+  content: "Go back to My Communities";
+  position: absolute;
+  top: 50%;
+  left: 110%; /* يظهر يمين الزرار */
+  transform: translateY(-50%);
+  background: rgba(153, 146, 146, 0.6); /* خلفية شبه شفافة */
+  color: #274193; /* لون النص */
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  font-size: 12px;
+  z-index: 10;
+}
+
+/* اظهار الـ tooltip عند hover */
+.back-button:hover::after {
+  opacity: 1;
+}
+
+
+  /* عنوان الجروب */
+  .group-header {
+    margin: 16px 0;
+  }
+  .group-header h2 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    color: var(--primary);
+  }
+  .group-header p {
+    color: var(--muted);
+    margin: 0;
+  }
+  
+  /* إنشاء بوست */
+  .create-post {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 16px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 18px;
+  }
+  .create-post h3 {
+    margin-top: 0;
+  }
+  .create-post__controls select {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .create-post textarea {
+    width: 100%;
+    min-height: 80px;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    resize: vertical;
+  }
+  .create-post input[type="file"] {
+    margin-top: 8px;
+  }
+  .create-post__actions {
+    margin-top: 12px;
+  }
+  .btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .btn--primary {
+    background: var(--primary);
+    color: #fff;
+  }
+  .btn--primary:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* بوستات */
+  .posts-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .post-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 14px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+  }
+  .post-author {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 6px;
+    color: var(--primary);
+  }
+  .post-content {
+    margin-bottom: 8px;
+    line-height: 1.5;
+  }
+  .post-image {
+    margin-top: 8px;
+    max-width: 100%;
+    border-radius: 8px;
+  }
+  .post-meta {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 6px;
+  }
+  
+  /* أزرار البوست */
+  .post-actions {
+    margin-top: 10px;
+  }
+  .like-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    cursor: pointer;
+    transition: all var(--transition);
+  }
+  .like-button:hover {
+    background: #f0f0f0;
+  }
+  
+  /* الكومنتات */
+  .comment-section {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+  }
+  .comment-section input {
+    flex: 1;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .comment-section button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    background: var(--primary);
+    color: #fff;
+    cursor: pointer;
+  }
+  .comment-section button:hover {
+    opacity: 0.9;
+  }
+  
+  .comments-list {
+    margin-top: 10px;
+    padding-left: 12px;
+    border-left: 2px solid #f0f0f0;
+  }
+  .comments-list p {
+    margin: 6px 0;
+    font-size: 14px;
+  }
+  .comments-list b {
+    color: var(--primary);
+  }
+  
+  /* حالة مفيش بوستات */
+  .empty-state {
+    text-align: center;
+    color: var(--muted);
+    padding: 18px;
+  }
+  
+  /* Responsive */
+  @media (max-width: 640px) {
+    .group-details {
+      padding: 14px;
+    }
+    .create-post textarea {
+      min-height: 100px;
+    }
+  }
+  

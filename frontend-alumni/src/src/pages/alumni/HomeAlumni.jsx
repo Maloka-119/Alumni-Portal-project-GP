@@ -22,17 +22,31 @@ const HomeAlumni = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log("Fetching posts...");
+      console.log("Fetching posts..."); // 🔹 بداية الفانكشن
       const res = await API.get(`/posts/user-posts?page=${page}&limit=5`);
 
-      console.log("Response from API:", res);
+      console.log("Response from API:", res); // 🔹 هنا هتشوف الـ response كامل
       
-      const formatted = res.data.data.map(post => {
-        console.log("Mapping post:", post);
-        console.log("📸 Post images:", post.images); // 🔍 شوف الصور
-        
-        let avatar;
 
+
+  
+      // const formatted = res.data.data.map(post => ({
+        
+      //   id: post.post_id,
+      //   userName: post.author["full-name"],
+      //   avatar: PROFILE,
+      //   date: new Date(post["created-at"]).toLocaleDateString(),
+      //   type: post.category,
+      //   content: post.content,
+      //   likes: 0,
+      //   liked: false,
+      //   shares: 0,
+      //   comments: [],
+      // }));
+      const formatted = res.data.data.map(post => {
+        console.log("Mapping post:", post); // 🔹 هنا هتشوف كل بوست قبل ما يتعدل
+        let avatar;
+      
         if (post.author["full-name"] === "Alumni Portal - Helwan University") {
           avatar = AdminPostsImg;
         } else if (post.author.image) {
@@ -40,24 +54,24 @@ const HomeAlumni = () => {
         } else {
           avatar = PROFILE;
         }
-
+      
         return {
-          id: post.post_id || post.id, // 🆕 تأكد من الـ ID
+          id: post.id,
           userName: post.author["full-name"],
           avatar: avatar,
           date: new Date(post['created-at']).toLocaleString(),
           type: post.category,
           isPortal: post.author["full-name"] === "Alumni Portal - Helwan University",
           content: post.content,
-          images: post.images || [], // 🆕 أضفنا الصور هنا
           likes: 0,
           liked: false,
           shares: 0,
           comments: [],
         };
       });
-
-      console.log("📦 Formatted posts with images:", formatted); // 🔍 شوف البيانات بعد التعديل
+      
+      
+  
       
       setPosts(prev => {
         const existingIds = new Set(prev.map(p => p.id));
@@ -65,8 +79,9 @@ const HomeAlumni = () => {
         return [...prev, ...newOnes];
       });
   
+     
       if (res.data.data.length < 5) setHasMore(false);
-
+  
     } catch (err) {
       console.error(err);
       setError(t('errorFetchingPosts'));
@@ -74,6 +89,7 @@ const HomeAlumni = () => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => { fetchPosts(); }, [page]);
 
@@ -131,41 +147,25 @@ const HomeAlumni = () => {
                 <div className="post-header-info" style={{ marginLeft: '10px' }}>
                   <strong>{post.userName}</strong>
                   <div className="post-date">
-                    {post.date}
-                    {!post.isPortal && post.type && (
-                      <span style={{ marginLeft: "8px", color: "#555", fontSize: "0.9em" }}>
-                        {post.type}
-                      </span>
-                    )}
-                  </div>
+  {post.date}
+  {!post.isPortal && post.type && (
+    <span style={{ marginLeft: "8px", color: "#555", fontSize: "0.9em" }}>
+      {post.type}
+    </span>
+  )}
+</div>
+
                 </div>
               </div>
               {post.isPortal && post.type && (
-                <span className="post-type-badge">{post.type}</span>
-              )}
+  <span className="post-type-badge">{post.type}</span>
+)}
+
             </div>
 
             <div className="uni-post-body">
+              {/* <h4>{post.title}</h4> */}
               <p>{post.content}</p>
-              
-              {/* 🆕 جزء عرض الصور - أضفنا هنا */}
-              {post.images && post.images.length > 0 && (
-                <div className="uni-post-images">
-                  {post.images.map((imgUrl, index) => (
-                    <img
-                      key={index}
-                      src={imgUrl}
-                      alt={`post-${index}`}
-                      className="uni-post-preview"
-                      onError={(e) => {
-                        console.error(`❌ Failed to load image: ${imgUrl}`);
-                        e.target.style.display = 'none';
-                      }}
-                      onLoad={() => console.log(`✅ Image loaded: ${imgUrl}`)}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
 
             <div className="uni-post-actions">
@@ -204,12 +204,12 @@ const HomeAlumni = () => {
       </div>
 
       {hasMore && (
-        <div style={{ textAlign: 'center', margin: '20px' }}>
-          <button className="load-more-btn" onClick={() => setPage(page + 1)}>
-            {t('loadMore')}
-          </button>
-        </div>
-      )}
+  <div style={{ textAlign: 'center', margin: '20px' }}>
+    <button className="load-more-btn" onClick={() => setPage(page + 1)}>
+      {t('loadMore')}
+    </button>
+  </div>
+)}
     </div>
   );
 };
