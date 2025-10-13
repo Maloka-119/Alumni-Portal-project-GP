@@ -145,7 +145,7 @@ function GroupsPage() {
   }
 
   return (
-    <div className="grcontainer">
+    <div className="container">
       <h1 style={{ color: "#4f46e5" }}>Groups</h1>
 
       <div className="controls">

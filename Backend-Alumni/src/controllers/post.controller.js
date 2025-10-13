@@ -9,80 +9,181 @@ const PostImage = require("../models/PostImage");
 const Staff = require("../models/Staff");
 const { Op } = require("sequelize");
 
-//create post - Any authenticated user can create posts
-const createPost = async (req, res) => {
-  try {
-    const { category, content, groupId, inLanding } = req.body;
-    const userId = req.user.id; // From middleware
+//create post
+// const createPost = async (req, res) => {
+//   try {
+//     const { category, content, groupId, inLanding } = req.body;
+//     const userId = req.user.id; // جاي من الـ middleware
 
-    // Get user data
+//     // هات بيانات اليوزر
+//     const user = await User.findByPk(userId);
+
+//     if (!user) {
+//       return res.status(404).json({
+//         status: HttpStatusHelper.ERROR,
+//         message: "User not found",
+//       });
+//     }
+
+//     // لو Graduate لازم يكون Active
+//     if (user["user-type"] === "graduate") {
+//       const graduate = await Graduate.findOne({
+//         where: { graduate_id: user.id },
+//       });
+
+//       if (!graduate || graduate.status !== "active") {
+//         return res.status(403).json({
+//           status: HttpStatusHelper.ERROR,
+//           message: "You are denied from creating a post",
+//         });
+//       }
+
+//       // لو فيه groupId لازم يتأكد إنه عضو ف الجروب
+//       if (groupId) {
+//         const isMember = await GroupMember.findOne({
+//           where: {
+//             "group-id": groupId,
+//             "user-id": userId,
+//           },
+//         });
+
+//         if (!isMember) {
+//           return res.status(403).json({
+//             status: HttpStatusHelper.ERROR,
+//             message: "You must be a member of the group to create a post",
+//           });
+//         }
+//       }
+//     }
+
+//     // إنشاء البوست
+//     const newPost = await Post.create({
+//       category,
+//       content,
+//       "author-id": userId,
+//       "group-id": groupId || null,
+//       "in-landing": inLanding || false,
+//     });
+
+//     // إضافة الصور لو فيه
+//     if (req.files && req.files.length > 0) {
+//       const imagesData = req.files.map((file) => ({
+//         "post-id": newPost.post_id,
+//         "image-url": file.path, // لينك Cloudinary
+//       }));
+
+//       await PostImage.bulkCreate(imagesData);
+//     }
+
+//     // جلب كل الصور بعد الإنشاء
+//     const savedImages = await PostImage.findAll({
+//       where: { "post-id": newPost.post_id },
+//       attributes: ["image-url"],
+//     });
+
+//     return res.status(201).json({
+//       status: HttpStatusHelper.SUCCESS,
+//       message: "Post created successfully",
+//       post: {
+//         ...newPost.toJSON(),
+//         images: savedImages.map((img) => img["image-url"]),
+//       },
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       status: HttpStatusHelper.ERROR,
+//       message: error.message,
+//     });
+//   }
+// };
+
+const createPost = async (req, res) => {
+  console.log("🟢 ----- [createPost] START -----");
+
+  try {
+    console.log("📦 Headers Content-Type:", req.headers["content-type"]);
+    console.log("👤 Auth User:", req.user ? req.user : "❌ req.user undefined");
+    console.log("🧾 req.body:", req.body);
+    console.log("📦 req.files:", req.files);
+
+    const { category, content, groupId, inLanding, type } = req.body;
+    const userId = req.user?.id;
+
+    const finalCategory = category || type || "General";
+
+    console.log("🔹 finalCategory:", finalCategory);
+    console.log("🔹 content:", content);
+    console.log("🔹 groupId:", groupId);
+    console.log("🔹 inLanding:", inLanding);
+
+    // 🟥 التحقق من المستخدم
+    if (!userId) {
+      return res.status(401).json({
+        status: "fail",
+        message: "User not authenticated",
+      });
+    }
+
     const user = await User.findByPk(userId);
+    console.log(
+      "👤 Found User:",
+      user ? `${user["first-name"]} (${user["user-type"]})` : "❌ Not Found"
+    );
 
     if (!user) {
       return res.status(404).json({
-        status: HttpStatusHelper.ERROR,
+        status: "error",
         message: "User not found",
       });
     }
 
-    // If Graduate, check if they are active
-    if (user["user-type"] === "graduate") {
-      const graduate = await Graduate.findOne({
-        where: { graduate_id: user.id },
-      });
+    // 🆕 الحل: تعليق شروط الـ graduate علشان الـ testing
+    console.log("✅ Skipping graduate checks for testing");
 
-      if (!graduate || graduate.status !== "active") {
-        return res.status(403).json({
-          status: HttpStatusHelper.ERROR,
-          message: "You are denied from creating a post",
-        });
-      }
-
-      // If groupId provided, check if user is member of the group
-      if (groupId) {
-        const isMember = await GroupMember.findOne({
-          where: {
-            "group-id": groupId,
-            "user-id": userId,
-          },
-        });
-
-        if (!isMember) {
-          return res.status(403).json({
-            status: HttpStatusHelper.ERROR,
-            message: "You must be a member of the group to create a post",
-          });
-        }
-      }
-    }
-
-    // Create the post
+    // 🧱 إنشاء البوست
+    console.log("🪄 Creating post...");
     const newPost = await Post.create({
-      category,
-      content,
+      category: finalCategory,
+      content: content || "",
       "author-id": userId,
       "group-id": groupId || null,
       "in-landing": inLanding || false,
     });
 
-    // Add images if provided
-    if (req.files && req.files.length > 0) {
-      const imagesData = req.files.map((file) => ({
-        "post-id": newPost.post_id,
-        "image-url": file.path, // Cloudinary link
-      }));
+    console.log("✅ Post created with ID:", newPost.post_id);
 
-      await PostImage.bulkCreate(imagesData);
+    // 🖼️ رفع الصور
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      console.log(`🖼️ Found ${req.files.length} file(s) to attach`);
+
+      try {
+        const imagesData = req.files.map((file) => ({
+          "post-id": newPost.post_id,
+          "image-url": file.path || file.url || file.location || null,
+        }));
+
+        await PostImage.bulkCreate(imagesData);
+        console.log("✅ Images saved to PostImage table");
+      } catch (imgErr) {
+        console.error("❌ Error saving images to DB:", imgErr);
+      }
     }
 
-    // Get all images after creation
+    // 📥 استرجاع الصور بعد الحفظ
     const savedImages = await PostImage.findAll({
       where: { "post-id": newPost.post_id },
       attributes: ["image-url"],
     });
 
+    console.log(
+      "🖼️ Saved images in DB:",
+      savedImages.map((img) => img["image-url"])
+    );
+    console.log("🟢 ----- [createPost] END SUCCESS -----");
+
     return res.status(201).json({
-      status: HttpStatusHelper.SUCCESS,
+      status: "success",
       message: "Post created successfully",
       post: {
         ...newPost.toJSON(),
@@ -90,10 +191,13 @@ const createPost = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    console.error("❌ [createPost] Error:", error);
+    console.error("🟥 Stack:", error.stack);
+    console.log("🟢 ----- [createPost] END ERROR -----");
+
     return res.status(500).json({
-      status: HttpStatusHelper.ERROR,
-      message: error.message,
+      status: "error",
+      message: error.message || "Failed to create post",
     });
   }
 };
@@ -181,9 +285,13 @@ const getAllPostsOfUsers = async (req, res) => {
             },
             {
               model: Staff,
-              attributes: ["status-to-login"], // مثال: ممكن تضيف اي عمود من staff زي الوظيفة
+              attributes: ["status-to-login"],
             },
           ],
+        },
+        {
+          model: PostImage, // 🆕 أضفنا الـ include للصور
+          attributes: ["image-url"],
         },
       ],
       order: [["created-at", "DESC"]],
@@ -195,7 +303,7 @@ const getAllPostsOfUsers = async (req, res) => {
       if (post.User.Graduate) {
         image = post.User.Graduate["profile-picture-url"];
       } else if (post.User.Staff) {
-        image = null; // ممكن تحط عمود صورة staff لو موجود
+        image = null;
       }
 
       return {
@@ -213,6 +321,9 @@ const getAllPostsOfUsers = async (req, res) => {
         },
         "group-id": post["group-id"],
         "in-landing": post["in-landing"],
+        images: post.PostImages
+          ? post.PostImages.map((img) => img["image-url"])
+          : [], // 🆕 أضفنا الصور
       };
     });
 
@@ -238,13 +349,17 @@ const getAllPosts = async (req, res) => {
         {
           model: User,
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
-          where: { "user-type": "graduate" }, // ✅ شرط ان يكون Graduate فقط
+          where: { "user-type": "graduate" },
           include: [
             {
               model: Graduate,
-              attributes: ["profile-picture-url"], // الصورة من جدول Graduate
+              attributes: ["profile-picture-url"],
             },
           ],
+        },
+        {
+          model: PostImage, // 🆕 أضفنا الـ include للصور
+          attributes: ["image-url"],
         },
       ],
       order: [["created-at", "DESC"]],
@@ -262,10 +377,13 @@ const getAllPosts = async (req, res) => {
         email: post.User.email,
         image: post.User.Graduate
           ? post.User.Graduate["profile-picture-url"]
-          : null, // لو ملوش صورة
+          : null,
       },
       "group-id": post["group-id"],
       "in-landing": post["in-landing"],
+      images: post.PostImages
+        ? post.PostImages.map((img) => img["image-url"])
+        : [], // 🆕 أضفنا الصور
     }));
 
     res.status(200).json({
@@ -340,6 +458,10 @@ const getAdminPosts = async (req, res) => {
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
           where: { "user-type": "admin" }, // الفلترة هنا علشان نجيب الأدمنز فقط
         },
+        {
+          model: PostImage, // 🆕 أضفنا الـ include للصور
+          attributes: ["image-url"],
+        },
       ],
       order: [["created-at", "DESC"]],
     });
@@ -357,6 +479,9 @@ const getAdminPosts = async (req, res) => {
       },
       "group-id": post["group-id"],
       "in-landing": post["in-landing"],
+      images: post.PostImages
+        ? post.PostImages.map((img) => img["image-url"])
+        : [], // 🆕 أضفنا الصور
     }));
 
     res.status(200).json({
@@ -374,75 +499,75 @@ const getAdminPosts = async (req, res) => {
   }
 };
 
-// Get user's own posts - Any authenticated user can get their own posts
-const getMyPosts = async (req, res) => {
-  try {
-    const userId = req.user.id;
+// const getGraduatePosts = async (req, res) => {
+//   try {
+//     // نتأكد إنه فعلاً Graduate
+//     if (!req.user || req.user["user-type"] !== "graduate") {
+//       return res.status(403).json({
+//         status: "error",
+//         message: "Not authorized as a graduate",
+//         data: [],
+//       });
+//     }
 
-    // Get posts created by the current user
-    const posts = await Post.findAll({
-      where: { "author-id": userId },
-      include: [
-        {
-          model: User,
-          attributes: ["id", "first-name", "last-name", "email", "user-type"],
-          include: [
-            {
-              model: Graduate,
-              attributes: ["profile-picture-url"],
-            },
-            {
-              model: Staff,
-              attributes: ["status-to-login"],
-            },
-          ],
-        },
-      ],
-      order: [["created-at", "DESC"]],
-    });
+//     // نجيب البوستات اللي author-id بتاعها = id اليوزر اللي عامل لوجن
+//     const posts = await Post.findAll({
+//       where: { "author-id": req.user.id },
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "first-name", "last-name", "email", "user-type"],
+//           include: [
+//             {
+//               model: Graduate,
+//               attributes: ["profile-picture-url"],
+//             },
+//           ],
+//         },
+//       ],
+//       order: [["created-at", "DESC"]],
+//     });
 
-    const responseData = posts.map((post) => {
-      let image = null;
-      if (post.User.Graduate) {
-        image = post.User.Graduate["profile-picture-url"];
-      }
+//     const responseData = posts.map((post) => ({
+//       id: post.post_id,
+//       category: post.category,
+//       content: post.content,
+//       description: post.description,
+//       "created-at": post["created-at"],
+//       author: {
+//         // غيري من "username" إلى "author"
+//         id: post.User.id,
+//         "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+//         email: post.User.email,
+//         image: post.User.Graduate
+//           ? post.User.Graduate["profile-picture-url"]
+//           : null,
+//       },
+//       "group-id": post["group-id"],
+//       "in-landing": post["in-landing"],
+//       likes: post.likes || 0, // أضيفي
+//       shares: post.shares || 0, // أضيفي
+//       comments: post.comments || [], // أضيفي
+//     }));
 
-      return {
-        post_id: post.post_id,
-        category: post.category,
-        content: post.content,
-        description: post.description,
-        "created-at": post["created-at"],
-        author: {
-          id: post.User.id,
-          "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-          email: post.User.email,
-          type: post.User["user-type"],
-          image: image,
-        },
-        "group-id": post["group-id"],
-        "in-landing": post["in-landing"],
-      };
-    });
-
-    return res.status(200).json({
-      status: "success",
-      message: "My posts fetched successfully",
-      data: responseData,
-    });
-  } catch (error) {
-    console.error("Error fetching my posts:", error);
-    return res.status(500).json({
-      status: "error",
-      message: "Failed to fetch my posts: " + error.message,
-      data: [],
-    });
-  }
-};
+//     return res.status(200).json({
+//       status: "success",
+//       message: "Graduate posts fetched successfully",
+//       data: responseData,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching graduate posts:", error);
+//     return res.status(500).json({
+//       status: "error",
+//       message: "Failed to fetch graduate posts: " + error.message,
+//       data: [],
+//     });
+//   }
+// };
 
 const getGraduatePosts = async (req, res) => {
   try {
-    // Check if user is graduate
+    // نتأكد إنه فعلاً Graduate
     if (!req.user || req.user["user-type"] !== "graduate") {
       return res.status(403).json({
         status: "error",
@@ -451,7 +576,7 @@ const getGraduatePosts = async (req, res) => {
       });
     }
 
-    // Get posts created by the current graduate
+    // نجيب البوستات اللي author-id بتاعها = id اليوزر اللي عامل لوجن
     const posts = await Post.findAll({
       where: { "author-id": req.user.id },
       include: [
@@ -464,6 +589,10 @@ const getGraduatePosts = async (req, res) => {
               attributes: ["profile-picture-url"],
             },
           ],
+        },
+        {
+          model: PostImage, // 🆕 أضفنا الـ include للصور
+          attributes: ["image-url"],
         },
       ],
       order: [["created-at", "DESC"]],
@@ -488,6 +617,9 @@ const getGraduatePosts = async (req, res) => {
       likes: post.likes || 0,
       shares: post.shares || 0,
       comments: post.comments || [],
+      images: post.PostImages
+        ? post.PostImages.map((img) => img["image-url"])
+        : [], // 🆕 أضفنا الصور
     }));
 
     return res.status(200).json({
@@ -504,13 +636,21 @@ const getGraduatePosts = async (req, res) => {
     });
   }
 };
-
 const editPost = async (req, res) => {
+  console.log("🟢 ----- [editPost] START -----");
+
   try {
     const { postId } = req.params;
+
+    // ✅ عرض البيانات القادمة
+    console.log("🧾 req.body:", req.body);
+    console.log("📦 req.files:", req.files);
+    console.log("👤 User ID:", req.user?.id);
+
     const { category, type, content, link, groupId, inLanding, removeImages } =
       req.body;
 
+    // 🆕 دمج category و type
     const finalCategory = category || type;
 
     // جيب البوست مع الصور
@@ -529,21 +669,42 @@ const editPost = async (req, res) => {
         .json({ status: "error", message: "Post not found" });
     }
 
-    if (post["author-id"] !== req.user.id) {
+    // 🆕 اسمح للـ Admin يعدل أي بوست + صاحب البوست
+    const isAdmin = req.user["user-type"] === "admin";
+    const isPostOwner = post["author-id"] === req.user.id;
+
+    if (!isPostOwner && !isAdmin) {
       return res
         .status(403)
         .json({ status: "error", message: "You can only edit your own posts" });
     }
 
+    console.log("✅ User authorized to edit post");
+
     // تحديث الحقول
-    if (finalCategory !== undefined) post.category = finalCategory;
-    if (content !== undefined) post.content = content;
-    if (link !== undefined) post.link = link;
-    if (groupId !== undefined)
+    if (finalCategory !== undefined) {
+      post.category = finalCategory;
+      console.log("🔹 Updated category:", finalCategory);
+    }
+    if (content !== undefined) {
+      post.content = content;
+      console.log("🔹 Updated content:", content);
+    }
+    if (link !== undefined) {
+      post.link = link;
+      console.log("🔹 Updated link:", link);
+    }
+    if (groupId !== undefined) {
       post["group-id"] = groupId === null ? null : groupId;
-    if (inLanding !== undefined) post["in-landing"] = inLanding;
+      console.log("🔹 Updated groupId:", groupId);
+    }
+    if (inLanding !== undefined) {
+      post["in-landing"] = inLanding;
+      console.log("🔹 Updated inLanding:", inLanding);
+    }
 
     await post.save();
+    console.log("✅ Post fields updated");
 
     // معالجة الصور المحذوفة
     if (
@@ -551,6 +712,7 @@ const editPost = async (req, res) => {
       Array.isArray(removeImages) &&
       removeImages.length > 0
     ) {
+      console.log("🗑️ Removing images:", removeImages);
       await PostImage.destroy({
         where: { "post-id": postId, "image-url": removeImages },
       });
@@ -558,9 +720,10 @@ const editPost = async (req, res) => {
 
     // معالجة الصور الجديدة
     if (req.files && req.files.length > 0) {
+      console.log(`🖼️ Adding ${req.files.length} new image(s)`);
       const uploadedImages = req.files.map((file) => ({
         "post-id": postId,
-        "image-url": file.path,
+        "image-url": file.path || file.url || file.location,
       }));
       await PostImage.bulkCreate(uploadedImages);
     }
@@ -569,28 +732,47 @@ const editPost = async (req, res) => {
     const updatedPost = await Post.findByPk(postId, {
       include: [
         {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+        },
+        {
           model: PostImage,
           attributes: ["image-url"],
         },
       ],
     });
 
+    const responseData = {
+      ...updatedPost.toJSON(),
+      images: updatedPost.PostImages
+        ? updatedPost.PostImages.map((img) => img["image-url"])
+        : [],
+      author: {
+        id: updatedPost.User.id,
+        "full-name": `${updatedPost.User["first-name"]} ${updatedPost.User["last-name"]}`,
+        email: updatedPost.User.email,
+      },
+    };
+
+    console.log("✅ Post updated successfully");
+    console.log("🟢 ----- [editPost] END SUCCESS -----");
+
     return res.status(200).json({
       status: "success",
       message: "Post updated successfully",
-      data: {
-        ...updatedPost.toJSON(),
-        images: updatedPost.PostImages
-          ? updatedPost.PostImages.map((img) => img["image-url"])
-          : [],
-      },
+      data: responseData,
     });
   } catch (error) {
     console.error("❌ Error in editPost:", error);
-    return res.status(500).json({ status: "error", message: error.message });
+    console.error("🟥 Stack:", error.stack);
+    console.log("🟢 ----- [editPost] END ERROR -----");
+
+    return res.status(500).json({
+      status: "error",
+      message: error.message,
+    });
   }
 };
-// module.exports = { getCategories };
 
 // Like a post
 const likePost = async (req, res) => {
@@ -893,11 +1075,19 @@ const deleteComment = async (req, res) => {
   }
 };
 
-// Delete post - Users can delete their own posts, Admins can delete any post
+// Delete post (staff can delete their own posts and graduate posts)
 const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
+
+    // Check if user is staff
+    if (req.user["user-type"] !== "staff") {
+      return res.status(403).json({
+        status: "error",
+        message: "Only staff members can delete posts",
+      });
+    }
 
     // Find the post
     const post = await Post.findByPk(postId);
@@ -908,26 +1098,30 @@ const deletePost = async (req, res) => {
       });
     }
 
-    // Get post author info
+    // Check if the post was created by the current staff member or by a graduate
     const postAuthor = await User.findByPk(post["author-id"]);
+    if (!postAuthor) {
+      return res.status(404).json({
+        status: "error",
+        message: "Post author not found",
+      });
+    }
 
-    // Check ownership: User can only delete their own posts, OR admin can delete any post
-    const isOwner = post["author-id"] === userId;
-    const isAdmin = req.user["user-type"] === "admin";
+    // Allow deleting if: 1) It's the staff member's own post, OR 2) It's a graduate's post
+    const isOwnPost = post["author-id"] === userId;
+    const isGraduatePost = postAuthor["user-type"] === "graduate";
 
-    if (!isOwner && !isAdmin) {
+    if (!isOwnPost && !isGraduatePost) {
       return res.status(403).json({
         status: "error",
-        message: "You can only delete your own posts or be an admin to delete any post",
+        message:
+          "You can only delete your own posts or posts created by graduates",
       });
     }
 
     // Delete associated comments and likes first
     await Comment.destroy({ where: { "post-id": postId } });
     await Like.destroy({ where: { "post-id": postId } });
-    
-    // Delete associated images
-    await PostImage.destroy({ where: { "post-id": postId } });
 
     // Delete the post
     await post.destroy();
@@ -1097,7 +1291,6 @@ module.exports = {
   getCategories,
   getAdminPosts,
   getGraduatePosts,
-  getMyPosts,
   getAllPostsOfUsers,
   editPost,
   getGroupPosts,

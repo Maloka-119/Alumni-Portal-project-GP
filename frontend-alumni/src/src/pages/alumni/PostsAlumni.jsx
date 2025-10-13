@@ -23,28 +23,17 @@ const PostsAlumni = ({ user: propUser }) => {
   const formatPosts = (data) => {
     return data
       .sort((a, b) => new Date(b['created-at']) - new Date(a['created-at']))
-      .map(post => {
-        console.log(`📋 Formatting post ${post.id || post.post_id}:`, {
-          id: post.id || post.post_id,
-          images: post.images,
-          hasImages: !!post.images,
-          imagesCount: post.images?.length || 0,
-          rawPost: post // 🆕 علشان نشوف شكل البيانات كامل
-        });
-        
-        return {
-          ...post,
-          id: post.id || post.post_id, // تأكد من الـ ID
-          date: post['created-at'],
-          comments: post.comments || [],
-          images: post.images || [], // استخدم الصور من الـ API
-          author: {
-            id: post.author?.id,
-            name: post.author?.['full-name'] || 'Unknown',
-            photo: post.author?.image || PROFILE
-          }
-        };
-      });
+      .map(post => ({
+        ...post,
+        id: post.id,
+        date: post['created-at'],
+        comments: post.comments || [],
+        author: {
+          id: post.author?.id,
+          name: post.author?.['full-name'] || 'Unknown',
+          photo: post.author?.image || PROFILE
+        }
+      }));
   };
 
   const fetchPosts = async () => {
@@ -55,8 +44,6 @@ const PostsAlumni = ({ user: propUser }) => {
       const res = await API.get('/posts/my-graduate-posts', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      console.log("📸 Raw posts data:", res.data.data);
-      console.log("🖼️ First post images:", res.data.data[0]?.images);
       setPosts(formatPosts(res.data.data));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -71,60 +58,48 @@ useEffect(() => {
 }, [token]);
 
 
-const handleAddPost = async (e) => {
-  e.preventDefault();
-  setError(null);
-  setSuccessMsg(null);
+  const handleAddPost = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccessMsg(null);
 
-  if (!token) {
-    setError("You must be logged in to post");
-    return;
-  }
+    if (!token) {
+      setError("You must be logged in to post");
+      return;
+    }
 
-  if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) {
-    setError("Post cannot be empty");
-    return;
-  }
+    if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) {
+      setError("Post cannot be empty");
+      return;
+    }
 
-  const formData = new FormData();
-  formData.append('content', newPost.content);
-  formData.append('type', newPost.category);
-  
-  // 🆕 غير من image إلى images
-  if (newPost.image) formData.append('images', newPost.image);
-  if (newPost.file) formData.append('file', newPost.file);
-  if (newPost.link) formData.append('link', newPost.link);
+    const formData = new FormData();
+    formData.append('content', newPost.content);
+    if (newPost.image) formData.append('image', newPost.image);
+    if (newPost.file) formData.append('file', newPost.file);
+    if (newPost.link) formData.append('link', newPost.link);
+    formData.append('category', newPost.category);
 
-  console.log("📤 Sending form data:", {
-    content: newPost.content,
-    type: newPost.category,
-    hasImage: !!newPost.image,
-    hasFile: !!newPost.file,
-    link: newPost.link
-  });
+    try {
+      const res = await API.post('/posts/create-post', formData, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
 
-  try {
-    const res = await API.post('/posts/create-post', formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
-      }
-    });
+      // جلب البيانات الجديدة فورًا من السيرفر بدل الإضافة اليدوية
+      await fetchPosts();
 
-    console.log("✅ Post created successfully:", res.data);
-    
-    await fetchPosts();
-    setSuccessMsg("Post created successfully");
-    setNewPost({ content: '', category: 'General', image: null, file: null, link: '' });
-    setShowForm(false);
-    setShowLinkInput(false);
+      setSuccessMsg("Post created successfully");
+      setNewPost({ content: '', image: null, file: null, link: '', category: 'General' });
+      setShowForm(false);
+      setShowLinkInput(false);
 
-  } catch (err) {
-    console.error("❌ Error creating post:", err);
-    console.error("🔍 Error details:", err.response?.data);
-    setError(err.response?.data?.message || "Failed to create post");
-  }
-};
+    } catch (err) {
+      setError(err.response?.data?.message || "Failed to create post");
+    }
+  };
 
   const categories = [
     { value: "General", label: "General" },
@@ -312,15 +287,6 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
   const [editContent, setEditContent] = useState(post.content);
   const [editLink, setEditLink] = useState(post.link || '');
 
-  // 🔍 Debug: شوف شكل البيانات في كل بوست
-  useEffect(() => {
-    console.log(`🎯 Post ${post.id} data:`, {
-      images: post.images,
-      imagesType: typeof post.images,
-      imagesLength: post.images?.length
-    });
-  }, [post]);
-
   const saveEdit = () => {
     onEdit(editContent, editLink);
     setIsEditing(false);
@@ -330,7 +296,7 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
     <div className="uni-post-card">
       <div className="uni-post-header">
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          <img src={post.author?.photo || PROFILE} className="profile-pic" alt="profile" />
+          <img src={post.author?.photo || PROFILE } className="profile-pic" />
           <strong>{post.author?.name || t('unknown')}</strong>
           <div className="uni-post-date">
             {new Date(post.date).toLocaleString()} - {post.category}
@@ -364,26 +330,7 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
         ) : (
           <>
             <p>{post.content}</p>
-            
-            {/* 🖼️ عرض الصور - النسخة المبسطة */}
-            {post.images && post.images.length > 0 && (
-              <div className="uni-post-images">
-                {post.images.map((imgUrl, index) => (
-                  <img
-                    key={index}
-                    src={imgUrl}
-                    alt={`post-${index}`}
-                    className="uni-post-preview"
-                    onError={(e) => {
-                      console.error(`❌ Failed to load image: ${imgUrl}`);
-                      e.target.style.display = 'none';
-                    }}
-                    onLoad={() => console.log(`✅ Image loaded: ${imgUrl}`)}
-                  />
-                ))}
-              </div>
-            )}
-
+            {post.image && <img src={post.image} alt="post" className="uni-post-preview" />}
             {post.file && <a href={post.file} download className="uni-post-file">{t('file')}</a>}
             {post.link && <a href={post.link} target="_blank" rel="noopener noreferrer" className="uni-post-file">{t('link')}</a>}
           </>
