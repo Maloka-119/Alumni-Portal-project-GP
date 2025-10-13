@@ -1,15 +1,17 @@
 const express = require("express");
 const router = express.Router();
-const friendshipController = require("../controllers/friendshipController");
+const friendshipController = require("../controllers/friendship.controller");
+const { protect } = require('../middleware/authMiddleware');
 
-// لازم يكون عندك middleware auth يضيف req.user.graduate_id
-router.get("/suggestions", friendshipController.viewSuggestions);
-router.post("/request/:receiverId", friendshipController.sendRequest);
-router.delete("/cancel/:receiverId", friendshipController.cancelRequest);
-router.get("/requests", friendshipController.viewRequests);
-router.put("/confirm/:senderId", friendshipController.confirmRequest);
-router.put("/hide/:senderId", friendshipController.deleteFromMyRequests);
-router.get("/friends", friendshipController.viewFriends);
-router.delete("/friends/:friendId", friendshipController.deleteFriend);
+
+router.get('/suggestions', protect, friendshipController.viewSuggestions);
+router.post('/request/:receiverId', protect, friendshipController.sendRequest);
+router.delete('/cancel/:receiverId', protect, friendshipController.cancelRequest);
+router.get('/requests', protect, friendshipController.viewRequests);
+router.put('/confirm/:senderId', protect, friendshipController.confirmRequest);
+router.put('/hide/:senderId', protect, friendshipController.deleteFromMyRequests);
+router.get('/friends', protect, friendshipController.viewFriends);
+router.delete('/friends/:friendId', protect, friendshipController.deleteFriend);
+
 
 module.exports = router;
