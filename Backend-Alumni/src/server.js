@@ -54,6 +54,9 @@ app.use("/alumni-portal/roles", roleRoutes);
 const friendshipRoutes = require("./routes/friendship.route");
 app.use("/alumni-portal/friendships",friendshipRoutes);
 
+const invitationRoutes = require('./routes/invitation.route');
+app.use('/alumni-portal/invitations', invitationRoutes);
+
 //  Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -77,7 +80,7 @@ const ensurePermissionsSeeded = async () => {
   ];
 
   try {
-    console.log("🔍 Checking existing permissions...");
+    console.log("Checking existing permissions...");
 
     for (const permName of permissions) {
       // نشوف هل البيرميشن موجود قبل كده ولا لأ
