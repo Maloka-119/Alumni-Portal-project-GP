@@ -551,8 +551,8 @@ html {
 }
 
 
-
 .hidden-post {
-    background-color: rgba(255,0,0,0.1);
+    background-color: rgba(54, 52, 52, 0.15);
+    border: 1px solid rgba(255, 0, 0, 0.3);
   }
   
