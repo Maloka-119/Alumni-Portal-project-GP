@@ -334,21 +334,23 @@ const getAllPostsOfUsers = async (req, res) => {
 
 const getAllPosts = async (req, res) => {
   try {
+    const user = req.user; // ⬅️ المستخدم الحالي (من التوكن)
+    const isAdmin = user && user["user-type"] === "admin"; // ⬅️ نتحقق هل هو أدمن
+
+    // ⬅️ الشرط الأساسي: لو أدمن يشوف الكل، لو مش أدمن يشوف غير المخفي فقط
+    const whereCondition = isAdmin ? {} : { "is-hidden": false };
+
     const posts = await Post.findAll({
+      where: whereCondition, // ⬅️ نطبق الفلتر هنا
       include: [
         {
           model: User,
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
           where: { "user-type": "graduate" },
-          include: [
-            {
-              model: Graduate,
-              attributes: ["profile-picture-url"],
-            },
-          ],
+          include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
         },
         {
-          model: PostImage, // 🆕 أضفنا الـ include للصور
+          model: PostImage,
           attributes: ["image-url"],
         },
       ],
@@ -373,19 +375,20 @@ const getAllPosts = async (req, res) => {
       "in-landing": post["in-landing"],
       images: post.PostImages
         ? post.PostImages.map((img) => img["image-url"])
-        : [], // 🆕 أضفنا الصور
+        : [],
+      "is-hidden": post["is-hidden"],
     }));
 
     res.status(200).json({
       status: "success",
-      message: "Graduate posts fetched successfully",
+      message: "Posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
     console.error("Error details:", error);
     res.status(500).json({
       status: "error",
-      message: "Failed to fetch graduate posts: " + error.message,
+      message: "Failed to fetch posts: " + error.message,
       data: [],
     });
   }
