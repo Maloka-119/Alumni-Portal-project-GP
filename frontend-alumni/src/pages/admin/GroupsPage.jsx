@@ -220,8 +220,8 @@ function GroupsPage() {
               <div style={{ height: "180px", background: "#ddd" }}></div>
             )}
 
-            <div className="overlay">
-              <h2>{g.name}</h2>
+            <div className="groverlay">
+              <h2 >{g.name}</h2>
             </div>
 
             <span className="badge">{g.membersCount} members</span>
