@@ -46,14 +46,24 @@ const UsersPostsPage = () => {
     }
     try {
       const response = await API.put(`/posts/${id}/hide`);
+      console.log("Hide response:", response.data); // 👈 علشان نتأكد أنه رجع success
+  
       if (response.data.status === "success") {
-        setPosts(posts.map(p => p.id === id ? { ...p, isHidden: true } : p));
+        // ✅ استخدم post_id بدل id
+        setPosts(posts.map(p => 
+          p.post_id === id ? { ...p, isHidden: true } : p
+        ));
+  
+        console.log(`✅ Post ${id} hidden successfully`);
+      } else {
+        console.warn("⚠️ Hide failed:", response.data);
       }
     } catch (err) {
       console.error("Error hiding post", err);
       setError(t("hidePostFailed"));
     }
   };
+  
 
   const openComments = (post) => setSelectedPost(post);
   const closeComments = () => {
@@ -65,7 +75,7 @@ const UsersPostsPage = () => {
     if (!newComment || !selectedPost) return;
 
     try {
-      await API.post(`/posts/${selectedPost.id}/comment`, { content: newComment });
+      await API.post(`/posts/${selectedPost.post_id}/comment`, { content: newComment });
 
       const commentObj = {
         id: Date.now(),
@@ -93,7 +103,7 @@ const UsersPostsPage = () => {
     try {
       await API.post(`/posts/${post.id}/like`);
       setPosts(posts.map(p =>
-        p.id === post.id ? { ...p, likes: (p.likes || 0) + 1 } : p
+        p.post_id === post.id ? { ...p, likes: (p.likes || 0) + 1 } : p
       ));
       if (selectedPost?.id === post.id) {
         setSelectedPost({ ...selectedPost, likes: (selectedPost.likes || 0) + 1 });
@@ -127,7 +137,7 @@ const UsersPostsPage = () => {
 
       <div className="posts-feed">
         {filteredPosts.map((post) => (
-          <div key={post.id} className={`post-card ${post.isHidden ? 'hidden-post' : ''}`}>
+          <div key={post.post_id} className={`post-card ${post.isHidden ? 'hidden-post' : ''}`}>
             <div className="post-header">
               <div className="post-header-info">
                 <img src={post.author?.image || PROFILE} alt="profile" className="profile-pic" />
@@ -137,7 +147,7 @@ const UsersPostsPage = () => {
                 </div>
               </div>
               {!post.isHidden && (
-                <button onClick={() => handleHide(post.id)} className="hide-btn-top">
+                <button onClick={() => handleHide(post.post_id)} className="hide-btn-top">
                   <EyeOff size={16} />
                 </button>
               )}
