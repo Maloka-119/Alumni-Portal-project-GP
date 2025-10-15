@@ -114,6 +114,8 @@ const AdminPanel = () => {
       {/* Main Content */}
       <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         <Routes>
+        <Route index element={<EmptyPage title="welcome to admin panel" />} />
+
           <Route path="reportsAnalysis" element={<EmptyPage title="Reports & Analysis" />} />
           <Route path="communityManagement" element={<GroupsPage />} />
           <Route path="documentManagement" element={<EmptyPage title="Document Management" />} />
