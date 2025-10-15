@@ -737,3 +737,46 @@
   font-weight: 500;
   color: #2a4370;
 }
+
+.uni-post-card.is-hidden {
+  background: rgba(0, 0, 0, 0.226);
+  border: 1px dashed #666666;
+  opacity: 0.6;
+  filter: grayscale(80%);
+  position: relative;
+  transition: all 0.3s ease-in-out;
+}
+
+.uni-post-card.is-hidden::after {
+  content: "Hidden";
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: rgba(50, 50, 50, 0.8);
+  color: #fff;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  letter-spacing: 0.5px;
+}
+
+.uni-post-card.is-hidden:hover {
+  opacity: 0.8;
+  filter: grayscale(50%);
+}
+
+.uni-post-card.is-hidden p,
+.uni-post-card.is-hidden strong,
+.uni-post-card.is-hidden a {
+  color: #666;
+}
+
+.uni-post-card.is-hidden img {
+  opacity: 0.5;
+  filter: grayscale(100%);
+  transition: opacity 0.3s;
+}
+
+.uni-post-card.is-hidden:hover img {
+  opacity: 0.7;
+}
