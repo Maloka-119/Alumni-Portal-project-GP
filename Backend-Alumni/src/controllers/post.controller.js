@@ -208,7 +208,10 @@ const getGroupPosts = async (req, res) => {
     const { groupId } = req.params;
 
     const posts = await Post.findAll({
-      where: { "group-id": groupId },
+      where: {
+        "group-id": groupId,
+        "is-hidden": false, // ⬅️ فقط البوستات اللي مش معمولة هيدن
+      },
       include: [
         {
           model: User,
@@ -220,7 +223,7 @@ const getGroupPosts = async (req, res) => {
             },
             {
               model: Staff,
-              attributes: ["status-to-login"], // مثال: ممكن تضيف أي عمود من staff
+              attributes: ["status-to-login"],
             },
           ],
         },
@@ -252,12 +255,13 @@ const getGroupPosts = async (req, res) => {
         },
         "group-id": post["group-id"],
         "in-landing": post["in-landing"],
+        "is-hidden": post["is-hidden"],
       };
     });
 
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
-      message: "Group posts fetched successfully",
+      message: "Visible group posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
