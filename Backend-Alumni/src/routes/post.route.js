@@ -93,5 +93,10 @@ router.put(
   authMiddleware.protect,
   postController.hideNegativePost
 );
+router.put(
+  "/:postId/unhide",
+  authMiddleware.protect,
+  postController.unhidePost
+);
 
 module.exports = router;
