@@ -26,7 +26,7 @@ router.post(
 );
 
 // جلب كل البوستات
-router.get("/", postController.getAllPosts);
+router.get("/", authMiddleware.protect, postController.getAllPosts);
 
 // جلب كل البوستات الخاصة بالمستخدمين (موجودة في الكود الأول)
 router.get("/user-posts", postController.getAllPostsOfUsers);

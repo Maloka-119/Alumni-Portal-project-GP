@@ -335,10 +335,14 @@ const getAllPostsOfUsers = async (req, res) => {
 const getAllPosts = async (req, res) => {
   try {
     const user = req.user; // ⬅️ المستخدم الحالي (من التوكن)
+    console.log("🟩 Current user from token:", user); // 🔍 نطبع بيانات المستخدم
+
     const isAdmin = user && user["user-type"] === "admin"; // ⬅️ نتحقق هل هو أدمن
+    console.log("🟦 isAdmin:", isAdmin); // 🔍 نطبع هل هو أدمن ولا لا
 
     // ⬅️ الشرط الأساسي: لو أدمن يشوف الكل، لو مش أدمن يشوف غير المخفي فقط
     const whereCondition = isAdmin ? {} : { "is-hidden": false };
+    console.log("🟨 whereCondition used:", whereCondition); // 🔍 نعرف الفلتر المستخدم فعلاً
 
     const posts = await Post.findAll({
       where: whereCondition, // ⬅️ نطبق الفلتر هنا
@@ -356,6 +360,12 @@ const getAllPosts = async (req, res) => {
       ],
       order: [["created-at", "DESC"]],
     });
+
+    console.log("🟧 Posts fetched count:", posts.length); // 🔍 نطبع عدد البوستات اللي رجعت
+    console.log(
+      "🟪 Sample post is-hidden values:",
+      posts.slice(0, 3).map((p) => p["is-hidden"])
+    ); // 🔍 نشوف أول 3 قيم من is-hidden
 
     const responseData = posts.map((post) => ({
       post_id: post.post_id,
@@ -385,7 +395,7 @@ const getAllPosts = async (req, res) => {
       data: responseData,
     });
   } catch (error) {
-    console.error("Error details:", error);
+    console.error("❌ Error details:", error);
     res.status(500).json({
       status: "error",
       message: "Failed to fetch posts: " + error.message,
