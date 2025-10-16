@@ -110,6 +110,8 @@ const fetchRequests = async () => {
       setFriends(prev => prev.filter(f => f.friendId !== friendId));
   
       alert(`${userName} removed successfully.`);
+      await fetchSuggestions();
+
     } catch (err) {
       console.error("Delete Friend API Error:", err);
       alert(err.response?.data?.message || err.message);
@@ -125,6 +127,8 @@ const fetchRequests = async () => {
     } catch (err) {
       console.error("Remove Request API Error:", err);
       alert(err.response?.data?.message || err.message);
+      await fetchSuggestions();
+
     }
   };
 
