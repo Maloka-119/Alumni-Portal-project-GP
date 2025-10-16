@@ -419,3 +419,40 @@
     height: 45px;
   }
 }
+/* 🔍 Search Input Styling */
+.search-input {
+  width: 100%;
+  max-width: 350px;
+  padding: 10px 14px;
+  margin: 15px auto 25px;
+  display: block;
+  border: 1.8px solid #cdd6e0;
+  border-radius: 25px;
+  font-size: 15px;
+  color: #333;
+  background-color: #f9fafc;
+  outline: none;
+  transition: all 0.25s ease;
+  direction: inherit; /* يحافظ على اتجاه الصفحة حسب اللغة */
+}
+
+/* عند الوقوف على السيرش */
+.search-input:focus {
+  border-color: #37568d;
+  background-color: #fff;
+  box-shadow: 0 0 5px rgba(55, 86, 141, 0.25);
+}
+
+/* Placeholder text */
+.search-input::placeholder {
+  color: #aaa;
+  font-size: 14px;
+}
+
+/* Responsive behavior */
+@media (max-width: 600px) {
+  .search-input {
+    width: 90%;
+    font-size: 14px;
+  }
+}
