@@ -1,15 +1,14 @@
 const { Op } = require("sequelize");
 const Friendship = require("../models/Friendship");
 const Graduate = require("../models/Graduate");
+const User = require("../models/User");
 
 
 //1- View Suggestions
-
 const viewSuggestions = async (req, res) => {
   try {
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
-    }
 
     const userId = req.user.id;
 
@@ -27,9 +26,22 @@ const viewSuggestions = async (req, res) => {
           [Op.notIn]: [...relatedIds, userId],
         },
       },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name"],
+        },
+      ],
     });
 
-    res.json(suggestions);
+    const formatted = suggestions.map((g) => ({
+      graduate_id: g.graduate_id,
+      fullName: `${g.User["first-name"]} ${g.User["last-name"]}`,
+      faculty: g.faculty,
+      "profile-picture-url": g["profile-picture-url"],
+    }));
+
+    res.json(formatted);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -37,19 +49,14 @@ const viewSuggestions = async (req, res) => {
 
 
 //2- Send Friend Request
-
 const sendRequest = async (req, res) => {
   try {
-    // أولاً نتحقق من وجود user
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
-    }
 
-    // نجيب سجل Graduate المرتبط بالـ user.id
     const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
-    if (!graduate) {
+    if (!graduate)
       return res.status(401).json({ message: "No graduate profile found" });
-    }
 
     const senderId = graduate.graduate_id;
     const { receiverId } = req.params;
@@ -75,28 +82,30 @@ const sendRequest = async (req, res) => {
       status: "pending",
     });
 
-    res.json(request);
+    const receiverGraduate = await Graduate.findOne({
+      where: { graduate_id: receiverId },
+      include: [{ model: User, attributes: ["first-name", "last-name"] }],
+    });
+
+    res.json({
+      message: "Request sent successfully",
+      receiverFullName: `${receiverGraduate.User["first-name"]} ${receiverGraduate.User["last-name"]}`,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
 
-
 //3- Cancel Sent Request
-
 const cancelRequest = async (req, res) => {
   try {
-    // تأكد من وجود user
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
-    }
 
-    // جلب سجل Graduate المرتبط بالـ User.id
     const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
-    if (!graduate) {
+    if (!graduate)
       return res.status(401).json({ message: "Graduate profile not found" });
-    }
 
     const senderId = graduate.graduate_id;
     const { receiverId } = req.params;
@@ -113,19 +122,14 @@ const cancelRequest = async (req, res) => {
 
 
 //4- View Friend Requests
-
 const viewRequests = async (req, res) => {
   try {
-    // تأكد من وجود user
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
-    }
 
-    // جلب سجل Graduate المرتبط بالـ User.id
     const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
-    if (!graduate) {
+    if (!graduate)
       return res.status(401).json({ message: "Graduate profile not found" });
-    }
 
     const userId = graduate.graduate_id;
 
@@ -135,10 +139,22 @@ const viewRequests = async (req, res) => {
         status: "pending",
         hidden_for_receiver: false,
       },
-      include: [{ model: Graduate, as: "sender" }],
+      include: [
+        {
+          model: Graduate,
+          as: "sender",
+          include: [{ model: User, attributes: ["first-name", "last-name"] }],
+        },
+      ],
     });
 
-    res.json(requests);
+    const formatted = requests.map((r) => ({
+      id: r.id,
+      senderId: r.sender_id,
+      fullName: `${r.sender.User["first-name"]} ${r.sender.User["last-name"]}`,
+    }));
+
+    res.json(formatted);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -146,18 +162,14 @@ const viewRequests = async (req, res) => {
 
 
 //5- Confirm Friend Request
-
 const confirmRequest = async (req, res) => {
   try {
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
-    }
 
-    // جلب سجل Graduate المرتبط بالـ User.id
     const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
-    if (!graduate) {
+    if (!graduate)
       return res.status(401).json({ message: "Graduate profile not found" });
-    }
 
     const receiverId = graduate.graduate_id;
     const { senderId } = req.params;
@@ -166,13 +178,22 @@ const confirmRequest = async (req, res) => {
       where: { sender_id: senderId, receiver_id: receiverId, status: "pending" },
     });
 
-    if (!request) return res.status(404).json({ message: "Request not found" });
+    if (!request)
+      return res.status(404).json({ message: "Request not found" });
 
     request.status = "accepted";
     request.updated_at = new Date();
     await request.save();
 
-    res.json({ message: "Friend request accepted" });
+    const senderGraduate = await Graduate.findOne({
+      where: { graduate_id: senderId },
+      include: [{ model: User, attributes: ["first-name", "last-name"] }],
+    });
+
+    res.json({
+      message: "Friend request accepted",
+      friendFullName: `${senderGraduate.User["first-name"]} ${senderGraduate.User["last-name"]}`,
+    });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -180,18 +201,14 @@ const confirmRequest = async (req, res) => {
 
 
 //6- Delete From My Requests
-
 const deleteFromMyRequests = async (req, res) => {
   try {
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
-    }
 
-    // جلب سجل Graduate المرتبط بالـ User.id
     const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
-    if (!graduate) {
+    if (!graduate)
       return res.status(401).json({ message: "Graduate profile not found" });
-    }
 
     const receiverId = graduate.graduate_id;
     const { senderId } = req.params;
@@ -207,19 +224,16 @@ const deleteFromMyRequests = async (req, res) => {
   }
 };
 
+
 //7- View My Friends
- 
 const viewFriends = async (req, res) => {
   try {
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
-    }
 
-    // جلب سجل Graduate المرتبط بالـ User.id
     const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
-    if (!graduate) {
+    if (!graduate)
       return res.status(401).json({ message: "Graduate profile not found" });
-    }
 
     const userId = graduate.graduate_id;
 
@@ -229,31 +243,38 @@ const viewFriends = async (req, res) => {
         [Op.or]: [{ sender_id: userId }, { receiver_id: userId }],
       },
       include: [
-        { model: Graduate, as: "sender" },
-        { model: Graduate, as: "receiver" },
+        { model: Graduate, as: "sender", include: [{ model: User }] },
+        { model: Graduate, as: "receiver", include: [{ model: User }] },
       ],
     });
 
-    res.json(friends);
+    const formatted = friends.map((f) => {
+      const friend =
+        f.sender_id === userId ? f.receiver : f.sender;
+      return {
+        friendId: friend.graduate_id,
+        fullName: `${friend.User["first-name"]} ${friend.User["last-name"]}`,
+        faculty: friend.faculty,
+        profilePicture: friend["profile-picture-url"],
+      };
+    });
+
+    res.json(formatted);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
 
-
 //8- Delete From My Friends
-
 const deleteFriend = async (req, res) => {
   try {
-    if (!req.user) {
+    if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
-    }
 
     const graduate = await Graduate.findOne({ where: { graduate_id: req.user.id } });
-    if (!graduate) {
+    if (!graduate)
       return res.status(401).json({ message: "Graduate profile not found" });
-    }
 
     const userId = graduate.graduate_id;
     const { friendId } = req.params;
@@ -268,15 +289,13 @@ const deleteFriend = async (req, res) => {
       },
     });
 
-    res.json({ message: "Friend deleted permanently" });
+    res.json({ message: "Friend deleted successfully" });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
 
-
-// Export all at the end
 module.exports = {
   viewSuggestions,
   sendRequest,

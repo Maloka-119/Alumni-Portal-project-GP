@@ -1,6 +1,10 @@
 const Invitation = require('../models/Invitation');
 const GroupMember = require('../models/GroupMember');
 const Group = require('../models/Group');
+const { Op } = require("sequelize");
+const User = require("../models/User");
+const sequelize = require("../config/db");
+
 // send invitation
 const sendInvitation = async (req, res) => {
   try {
@@ -73,28 +77,58 @@ const cancelInvitation = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
-// view invitations
+//view Invitations
 const getReceivedInvitations = async (req, res) => {
   try {
-    const receiver_id = req.user.id; 
+    const receiver_id = req.user.id;
 
     const invitations = await Invitation.findAll({
-      where: { receiver_id, status: 'pending' },
-      attributes: ['id', 'sender_id', 'group_id', 'status', 'sent_date'],
+      where: { receiver_id, status: "pending" },
+      attributes: ["id", "status", "sent_date"],
       include: [
         {
           model: Group,
-          attributes: ['id', 'group-name'] 
-        }
-      ]
+          attributes: ["id", "group-name"], // اسم الجروب
+        },
+        {
+          model: User,
+          as: "sender", // استخدمنا alias من الموديل
+          attributes: ["id", "first-name", "last-name"],
+          include: [
+            {
+              model: require("../models/Graduate"), // نجيب بيانات الخريج لو موجودة
+              attributes: ["faculty", "graduation-year", "current-job"],
+            },
+          ],
+        },
+      ],
     });
 
-    res.json(invitations);
+    // نركب النتيجة بشكل منسق
+    const result = invitations.map((inv) => {
+      const firstName = inv.sender?.["first-name"] || "";
+      const lastName = inv.sender?.["last-name"] || "";
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      return {
+        id: inv.id,
+        status: inv.status,
+        sent_date: inv.sent_date,
+        groupName: inv.Group ? inv.Group["group-name"] : null,
+        senderFullName: fullName,
+        senderFaculty: inv.sender?.Graduate?.faculty || null,
+        senderGraduationYear: inv.sender?.Graduate?.["graduation-year"] || null,
+        senderJob: inv.sender?.Graduate?.["current-job"] || null,
+      };
+    });
+
+    res.json(result);
   } catch (err) {
+    console.error("Error in getReceivedInvitations:", err);
     res.status(500).json({ error: err.message });
   }
 };
+
 
 // export all at once
 module.exports = {
