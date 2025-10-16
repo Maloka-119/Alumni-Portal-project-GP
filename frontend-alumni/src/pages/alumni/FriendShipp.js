@@ -23,45 +23,46 @@ const filteredSuggestions = suggestions.filter(f =>
 
 
   // ======== Fetch Data ========
-  const fetchFriends = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const res = await API.get("/friendships/friends");
+const fetchFriends = async () => {
+  try {
+    setLoading(true);
+    setError("");
+    const res = await API.get("/friendships/friends");
 
-      const mapped = res.data.map(f => ({
-        id: f.id,
-        // اختر الـ friendId حسب response backend
-        friendId: f.friend?.id || f.friend_id || f.id,
-        userName: f.friend?.fullName || f.sender?.fullName || "No Name",
-        image: f.friend?.["profile-picture-url"] || f.sender?.["profile-picture-url"] ||PROFILE
-      }));
+    const mapped = res.data.map(f => ({
+      id: f.friendId, // أو f.id لو backend بيرجعه كده
+      friendId: f.friendId,
+      userName: f.fullName || "No Name",
+      image: f.profilePicture || PROFILE,
+      faculty: f.faculty || "Not specified"
+    }));
 
-      setFriends(mapped);
-    } catch (err) {
-      console.error("Friends API Error:", err);
-      setError("Failed to load friends");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setFriends(mapped);
+  } catch (err) {
+    console.error("Friends API Error:", err);
+    setError("Failed to load friends");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const fetchRequests = async () => {
-    try {
-      const res = await API.get("/friendships/requests");
+const fetchRequests = async () => {
+  try {
+    const res = await API.get("/friendships/requests");
 
-      const mapped = res.data.map(f => ({
-        id: f.id,
-        senderId: f.sender_id, // مهم لل confirm/hide
-        userName: f.sender?.fullName || "No Name",
-        image: f.sender?.["profile-picture-url"] || PROFILE
-      }));
+    const mapped = res.data.map(f => ({
+      id: f.id,
+      senderId: f.senderId, // نفس الاسم اللي راجع من الـ backend
+      userName: f.fullName || "No Name",
+      image: f.profilePicture || PROFILE // لو ضفتي الصورة في الـ backend بعدين
+    }));
 
-      setFriendRequests(mapped);
-    } catch (err) {
-      console.error("Requests API Error:", err);
-    }
-  };
+    setFriendRequests(mapped);
+  } catch (err) {
+    console.error("Requests API Error:", err);
+  }
+};
+
 
   const fetchSuggestions = async () => {
     try {
@@ -72,7 +73,7 @@ const filteredSuggestions = suggestions.filter(f =>
         userName: f.fullName || "No Name",
         image: f["profile-picture-url"] || PROFILE,
         added: false,
-        time: Date.now()
+       
       }));
 
       setSuggestions(mapped);
@@ -122,7 +123,7 @@ const filteredSuggestions = suggestions.filter(f =>
       await API.put(`/friendships/hide/${senderId}`);
       fetchRequests();
     } catch (err) {
-      console.error("Hide Request API Error:", err);
+      console.error("Remove Request API Error:", err);
       alert(err.response?.data?.message || err.message);
     }
   };
@@ -156,7 +157,7 @@ const filteredSuggestions = suggestions.filter(f =>
         return (
           <div>
             <p className="Title">{t("Friends")} ({friends.length})</p>
-            {friends.length === 0 ? <p>{t("noFriends")}</p> :
+            {friends.length === 0 ? <p>{t("You have no friends yet")}</p> :
               friends.map(f => (
                 <div className="user" key={f.id}>
                   <img className="img" src={f.image} alt={f.userName} />
@@ -174,22 +175,30 @@ const filteredSuggestions = suggestions.filter(f =>
 
       case "requests":
         return (
-          <div>
-            <p className="Title">{t("Requests")} ({friendRequests.length})</p>
-            {friendRequests.map(f => (
-              <div className="user" key={f.id}>
-                <img className="img" src={f.image} alt={f.userName} />
-                {f.userName}
-                <p className="data"></p>
-                <button className="button" onClick={() => confirmFriend(f.senderId)}>
-                  {t("confirm")}
-                </button>
-                <button className="Removebutton" onClick={() => removeRequest(f.senderId)}>
-                  {t("remove")}
-                </button>
-              </div>
-            ))}
-          </div>
+        <div>
+  <p className="Title">
+    {t("Requests")} ({friendRequests.length})
+  </p>
+
+  {friendRequests.length === 0 ? (
+    <p className="no-requests-message">No friend requests</p>
+  ) : (
+    friendRequests.map((f) => (
+      <div className="user" key={f.id}>
+        <img className="img" src={f.image} alt={f.userName} />
+        {f.userName}
+        <p className="data"></p>
+        <button className="button" onClick={() => confirmFriend(f.senderId)}>
+          {t("confirm")}
+        </button>
+        <button className="Removebutton" onClick={() => removeRequest(f.senderId)}>
+          {t("remove")}
+        </button>
+      </div>
+    ))
+  )}
+</div>
+
         );
 
         case "suggestions":
@@ -213,9 +222,7 @@ const filteredSuggestions = suggestions.filter(f =>
                   <img className="img" src={f.image} alt={f.userName} />
                   {f.userName}
                   <p className="data"></p>
-                  <span className="time">
-                    {formatDistanceToNow(new Date(f.time), { addSuffix: true })}
-                  </span>
+                  
                   {!f.added ? (
                     <div>
                       <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
