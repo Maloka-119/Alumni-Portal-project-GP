@@ -157,11 +157,17 @@
     color: #2563eb;
   }
   
-  .friendship-link.active {
-    background-color: #2563eb;
-    color: white;
-    box-shadow: 0 3px 6px rgba(37, 99, 235, 0.3);
-  }
+.friendship-link {
+  transition: all 0.3s ease; /* انتقال ناعم لأي تغيير في اللون أو الظل */
+}
+
+.friendship-link.active {
+     background: linear-gradient(90deg, #2563eb, #4f7ef5, #f59e0b);
+     box-shadow: 0 3px 6px rgba(37, 99, 235, 0.3);
+     color:#f2f0f0;
+  transform: translateY(-2px); /* حركة خفيفة لأعلى لما يكون نشط */
+}
+
   
   /* 🧍 المستخدم الواحد */
   .user {

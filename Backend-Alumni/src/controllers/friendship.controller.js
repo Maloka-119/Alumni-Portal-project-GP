@@ -143,7 +143,9 @@ const viewRequests = async (req, res) => {
         {
           model: Graduate,
           as: "sender",
-          include: [{ model: User, attributes: ["first-name", "last-name"] }],
+          include: [
+            { model: User, attributes: ["first-name", "last-name"] },
+          ],
         },
       ],
     });
@@ -152,6 +154,7 @@ const viewRequests = async (req, res) => {
       id: r.id,
       senderId: r.sender_id,
       fullName: `${r.sender.User["first-name"]} ${r.sender.User["last-name"]}`,
+      profilePicture: r.sender["profile-picture-url"] || null, // ✅ هنا التعديل
     }));
 
     res.json(formatted);
