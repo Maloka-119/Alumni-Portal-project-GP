@@ -36,7 +36,6 @@ const alumni = {
       "myCommunities": "My Communities",
 
       // ===== Profile =====
-      "profile": "Profile",
       "faculty": "Faculty",
       "graduationYear": "Graduation Year",
       "bio": "Bio",
@@ -104,23 +103,23 @@ const alumni = {
       "like": "Like",
       "alreadyLiked": "You already liked this post!",
 
- // ===== Friendship Page =====
-"Friends": "Friends",
-"Requests": "Friend Requests",
-"Suggestions": "Suggestions",
-"add": "Add",
-"remove": "Remove",
-"confirm": "Confirm",
-"requested": "Requested",
-"chat": "Chat",
-"noFriends": "You don't have any friends yet.",
-"loadingFriends": "Loading friends...",
-"loadingRequests": "Loading requests...",
-"loadingSuggestions": "Loading suggestions...",
-"searchByName": "Search by name...",
-"noSuggestionsFound": "No suggestions found",
-"removedSuccessfully": "{{name}} removed successfully.",
-
+      // ===== Friendship Page =====
+      "Friends": "Friends",
+      "Requests": "Friend Requests",
+      "Suggestions": "Suggestions",
+      "add": "Add",
+      "remove": "Remove",
+      "confirm": "Confirm",
+      "requested": "Requested",
+      "chat": "Chat",
+      "noFriends": "You don't have any friends yet.",
+      "loadingFriends": "Loading friends...",
+      "loadingRequests": "Loading friend requests...",
+      "loadingSuggestions": "Loading suggestions...",
+      "noRequests": "You have no friend requests.",
+      "noSuggestionsFound": "No suggestions found.",
+      "removedSuccessfully": "{{name}} has been removed successfully.",
+      "searchByName": "Search by name...",
     },
   },
 
@@ -161,7 +160,6 @@ const alumni = {
       "myCommunities": "مجتمعاتي",
 
       // ===== Profile =====
-      "profile": "الملف الشخصي",
       "faculty": "الكلية",
       "graduationYear": "سنة التخرج",
       "bio": "نبذة",
@@ -229,25 +227,26 @@ const alumni = {
       "like": "إعجاب",
       "alreadyLiked": "لقد أعجبت بهذا المنشور بالفعل!",
 
-// ===== Friendship Page =====
-"Friends": "الأصدقاء",
-"Requests": "طلبات الصداقة",
-"Suggestions": "اقتراحات الأصدقاء",
-"add": "إضافة",
-"remove": "إزالة",
-"confirm": "تأكيد",
-"requested": "تم الإرسال",
-"chat": "محادثة",
-"noFriends": "ليس لديك أصدقاء بعد.",
-"loadingFriends": "جارٍ تحميل الأصدقاء...",
-"loadingRequests": "جارٍ تحميل الطلبات...",
-"loadingSuggestions": "جارٍ تحميل الاقتراحات...",
-"searchByName": "ابحث بالاسم...",
-"noSuggestionsFound": "لا توجد اقتراحات",
-"removedSuccessfully": "تمت إزالة {{name}} بنجاح.",
-
+      // ===== Friendship Page =====
+      "Friends": "الأصدقاء",
+      "Requests": "طلبات الصداقة",
+      "Suggestions": "اقتراحات الأصدقاء",
+      "add": "إضافة",
+      "remove": "إزالة",
+      "confirm": "تأكيد",
+      "requested": "تم الإرسال",
+      "chat": "محادثة",
+      "noFriends": "ليس لديك أصدقاء بعد.",
+      "loadingFriends": "جارٍ تحميل الأصدقاء...",
+      "loadingRequests": "جارٍ تحميل الطلبات...",
+      "loadingSuggestions": "جارٍ تحميل الاقتراحات...",
+      "noRequests": "ليس لديك طلبات صداقة.",
+      "noSuggestionsFound": "لا توجد اقتراحات.",
+      "removedSuccessfully": "تمت إزالة {{name}} بنجاح.",
+      "searchByName": "ابحث بالاسم...",
     },
   },
 };
 
 export default alumni;
+

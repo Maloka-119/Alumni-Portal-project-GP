@@ -13,12 +13,17 @@ function FriendshipPage() {
   const [suggestions, setSuggestions] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // حالات التحميل
+  const [loadingFriends, setLoadingFriends] = useState(true);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(true);
+
   // تغيير اتجاه الصفحة حسب اللغة
   useEffect(() => {
     document.body.dir = i18n.language === "ar" ? "rtl" : "ltr";
   }, [i18n.language]);
 
-  // جلب بيانات الأصدقاء والطلبات والاقتراحات
+  // جلب البيانات
   useEffect(() => {
     fetchFriends();
     fetchRequests();
@@ -27,28 +32,37 @@ function FriendshipPage() {
 
   const fetchFriends = async () => {
     try {
+      setLoadingFriends(true);
       const response = await API.get("/friends");
       setFriends(response.data);
     } catch (error) {
       console.error("Error fetching friends:", error);
+    } finally {
+      setLoadingFriends(false);
     }
   };
 
   const fetchRequests = async () => {
     try {
+      setLoadingRequests(true);
       const response = await API.get("/friend-requests");
       setFriendRequests(response.data);
     } catch (error) {
       console.error("Error fetching friend requests:", error);
+    } finally {
+      setLoadingRequests(false);
     }
   };
 
   const fetchSuggestions = async () => {
     try {
+      setLoadingSuggestions(true);
       const response = await API.get("/friend-suggestions");
       setSuggestions(response.data);
     } catch (error) {
       console.error("Error fetching suggestions:", error);
+    } finally {
+      setLoadingSuggestions(false);
     }
   };
 
@@ -82,7 +96,7 @@ function FriendshipPage() {
     }
   };
 
-  // فلترة الاقتراحات حسب البحث
+  // فلترة الاقتراحات
   const filteredSuggestions = suggestions.filter((user) =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -114,7 +128,9 @@ function FriendshipPage() {
       {/* الأصدقاء */}
       {currentTab === "friends" && (
         <div className="tab-content">
-          {friends.length === 0 ? (
+          {loadingFriends ? (
+            <p>{t("loadingFriends")}</p>
+          ) : friends.length === 0 ? (
             <p>{t("noFriends")}</p>
           ) : (
             friends.map((friend) => (
@@ -126,12 +142,14 @@ function FriendshipPage() {
                 />
                 <div className="friend-info">
                   <h4>{friend.name}</h4>
-                  <p>
-                    {t("chat")}:{" "}
-                    {formatDistanceToNow(new Date(friend.lastMessageTime), {
-                      addSuffix: true,
-                    })}
-                  </p>
+                  {friend.lastMessageTime && (
+                    <p>
+                      {t("chat")}:{" "}
+                      {formatDistanceToNow(new Date(friend.lastMessageTime), {
+                        addSuffix: true,
+                      })}
+                    </p>
+                  )}
                 </div>
                 <button
                   className="remove-btn"
@@ -148,8 +166,10 @@ function FriendshipPage() {
       {/* طلبات الصداقة */}
       {currentTab === "requests" && (
         <div className="tab-content">
-          {friendRequests.length === 0 ? (
+          {loadingRequests ? (
             <p>{t("loadingRequests")}</p>
+          ) : friendRequests.length === 0 ? (
+            <p>{t("noRequests")}</p>
           ) : (
             friendRequests.map((req) => (
               <div key={req._id} className="friend-card">
@@ -184,7 +204,9 @@ function FriendshipPage() {
             className="search-input"
           />
 
-          {filteredSuggestions.length === 0 ? (
+          {loadingSuggestions ? (
+            <p>{t("loadingSuggestions")}</p>
+          ) : filteredSuggestions.length === 0 ? (
             <p>{t("noSuggestionsFound")}</p>
           ) : (
             filteredSuggestions.map((user) => (
@@ -197,10 +219,7 @@ function FriendshipPage() {
                 <div className="friend-info">
                   <h4>{user.name}</h4>
                 </div>
-                <button
-                  className="add-btn"
-                  onClick={() => addFriend(user._id)}
-                >
+                <button className="add-btn" onClick={() => addFriend(user._id)}>
                   {t("add")}
                 </button>
               </div>
