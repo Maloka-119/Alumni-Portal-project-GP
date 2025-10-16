@@ -144,55 +144,60 @@
 // }
 
 // export default Notifications;
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import API from "../../services/api";
 import "./Notification.css";
 
 function Notifications() {
   const [activeTab, setActiveTab] = useState("all");
+  const [allNotifications, setAllNotifications] = useState([]);
 
-  const [allNotifications, setAllNotifications] = useState([
-    {
-      id: 1,
-      message: "Yara liked your post",
-      time: "10:30 AM",
-      type: "general",
-    },
-    {
-      id: 2,
-      sender: "Ahmed",
-      group: "Frontend Developers",
-      time: "11:15 AM",
-      type: "invitation",
-      status: "pending",
-    },
-    {
-      id: 3,
-      sender: "Mona",
-      group: "React Learners",
-      time: "12:40 PM",
-      type: "invitation",
-      status: "pending",
-    },
-  ]);
+  // Fetch received invitations on load
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
 
-  const deleteNotification = (id) => {
-    setAllNotifications((prev) => prev.filter((n) => n.id !== id));
+  const fetchNotifications = async () => {
+    try {
+      const res = await API.get("/invitation/received");
+      // تحويل البيانات للـ format اللي إحنا شغالين عليه في الـ frontend
+      const formatted = res.data.map((inv) => ({
+        id: inv.id,
+        sender: inv.sender_name, // تأكدي من اسم الحقل في الباك
+        group: inv.group_name,   // تأكدي من اسم الحقل في الباك
+        time: new Date(inv.sent_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        type: "invitation",
+        status: inv.status,
+      }));
+      setAllNotifications(formatted);
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const acceptInvitation = (id) => {
-    setAllNotifications((prev) =>
-      prev.map((n) =>
-        n.id === id ? { ...n, status: "accepted" } : n
-      )
-    );
+  const deleteNotification = async (id) => {
+    try {
+      await API.delete(`/invitation/${id}`);
+      setAllNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  const rejectInvitation = (id) => {
-    setAllNotifications((prev) =>
-      prev.map((n) =>
-        n.id === id ? { ...n, status: "rejected" } : n
-      )
-    );
+  const acceptInvitation = async (id) => {
+    try {
+      await API.post(`/invitation/${id}/accept`);
+      setAllNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, status: "accepted" } : n))
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const rejectInvitation = async (id) => {
+    // هنا نستخدم delete عشان رفض الدعوة يعني مماثل للحذف عند الـ backend
+    deleteNotification(id);
   };
 
   const filteredNotifications =
@@ -261,9 +266,7 @@ function Notifications() {
                       n.status === "accepted" ? "accepted" : "rejected"
                     }`}
                   >
-                    {n.status === "accepted"
-                      ? "✅ Accepted"
-                      : "❌ Rejected"}
+                    {n.status === "accepted" ? "✅ Accepted" : "❌ Rejected"}
                   </p>
                 )}
 
