@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import './AlumniPortal.css';
 import UniLogo from './Uni Logo.jpeg';
-import Footer from '../../components/Footer';
+import Footer from '../../components/Footer'; 
 import AlumniAdminPosts from './AlumniAdminPosts';
 import PostsAlumni from './PostsAlumni';
 import HomeAlumni from './HomeAlumni';
@@ -21,7 +21,7 @@ import API from "../../services/api";
 import ViewFAQ from './ViewFAQ';
 import Notifications from './Notifications.js';
 import ChatSidebar from './ChatSidebar.jsx';
-
+import FriendshipPage from './FriendShipp.js';
 
 const sidebarSections = (darkMode, t) => [
   {
@@ -117,6 +117,8 @@ const Dashboard = () => {
     if(activePage === "my Communities") return <MyGroups darkMode={darkMode}/>;
     if(activePage === "FAQ & Help") return <ViewFAQ darkMode={darkMode}/>;
     if(activePage === "Notifications") return <Notifications darkMode={darkMode}/>;
+    if(activePage === "People & Friends") return <FriendshipPage />;
+
      
 
     return (
