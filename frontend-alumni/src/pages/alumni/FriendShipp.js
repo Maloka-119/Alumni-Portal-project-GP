@@ -33,7 +33,7 @@ const filteredSuggestions = suggestions.filter(f =>
         id: f.id,
         // اختر الـ friendId حسب response backend
         friendId: f.friend?.id || f.friend_id || f.id,
-        userName: f.friend?.fullName || f.sender?.fullName || f.friend?.bio || "No Name",
+        userName: f.friend?.fullName || f.sender?.fullName || "No Name",
         image: f.friend?.["profile-picture-url"] || f.sender?.["profile-picture-url"] ||PROFILE
       }));
 
@@ -53,7 +53,7 @@ const filteredSuggestions = suggestions.filter(f =>
       const mapped = res.data.map(f => ({
         id: f.id,
         senderId: f.sender_id, // مهم لل confirm/hide
-        userName: f.sender?.fullName || f.sender?.bio || "No Name",
+        userName: f.sender?.fullName || "No Name",
         image: f.sender?.["profile-picture-url"] || PROFILE
       }));
 
@@ -69,7 +69,7 @@ const filteredSuggestions = suggestions.filter(f =>
 
       const mapped = res.data.map(f => ({
         id: f.graduate_id,
-        userName: f.bio || "No Name",
+        userName: f.fullName || "No Name",
         image: f["profile-picture-url"] || PROFILE,
         added: false,
         time: Date.now()
@@ -160,8 +160,9 @@ const filteredSuggestions = suggestions.filter(f =>
               friends.map(f => (
                 <div className="user" key={f.id}>
                   <img className="img" src={f.image} alt={f.userName} />
-                  <p className="data">{f.userName}</p>
-                  <button className="button">🗨️ {t("chat")}</button>
+                  {f.userName}
+                  <p className="data"></p>
+                  <button className="button"> {t("chat")}</button>
                   <button className="Removebutton" onClick={() => removeFriend(f.friendId, f.userName)}>
                     {t("remove")}
                   </button>
@@ -178,7 +179,8 @@ const filteredSuggestions = suggestions.filter(f =>
             {friendRequests.map(f => (
               <div className="user" key={f.id}>
                 <img className="img" src={f.image} alt={f.userName} />
-                <p className="data">{f.userName}</p>
+                {f.userName}
+                <p className="data"></p>
                 <button className="button" onClick={() => confirmFriend(f.senderId)}>
                   {t("confirm")}
                 </button>
