@@ -38,4 +38,8 @@ User.hasMany(Invitation, { foreignKey: 'receiver_id', as: 'receivedInvitations' 
 Group.hasMany(Invitation, { foreignKey: 'group_id' });
 Invitation.belongsTo(Group, { foreignKey: 'group_id' });
 
+Invitation.belongsTo(User, { foreignKey: 'sender_id', as: 'sender' });
+Invitation.belongsTo(User, { foreignKey: 'receiver_id', as: 'receiver' });
+
+
 module.exports = Invitation;
