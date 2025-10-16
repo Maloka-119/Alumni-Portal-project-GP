@@ -2,274 +2,212 @@ import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import API from "../../services/api";
-import './FriendShip.css';
-import PROFILE from './PROFILE.jpeg';
+import "./FriendShip.css";
+import PROFILE from "./PROFILE.jpeg";
 
 function FriendshipPage() {
   const { i18n, t } = useTranslation();
-
-useEffect(() => {
-  document.body.dir = i18n.language === "ar" ? "rtl" : "ltr";
-}, [i18n.language]);
-
   const [currentTab, setCurrentTab] = useState("friends");
-
   const [friends, setFriends] = useState([]);
   const [friendRequests, setFriendRequests] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
   const [searchTerm, setSearchTerm] = useState("");
-const filteredSuggestions = suggestions.filter(f =>
-  f.userName.toLowerCase().includes(searchTerm.toLowerCase())
-);
 
+  // تغيير اتجاه الصفحة حسب اللغة
+  useEffect(() => {
+    document.body.dir = i18n.language === "ar" ? "rtl" : "ltr";
+  }, [i18n.language]);
 
-  // ======== Fetch Data ========
-  const fetchFriends = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const res = await API.get("/friendships/friends");
-
-      const mapped = res.data.map(f => ({
-        id: f.id,
-        // اختر الـ friendId حسب response backend
-        friendId: f.friend?.id || f.friend_id || f.id,
-        userName: f.friend?.fullName || f.sender?.fullName || "No Name",
-        image: f.friend?.["profile-picture-url"] || f.sender?.["profile-picture-url"] ||PROFILE
-      }));
-
-      setFriends(mapped);
-    } catch (err) {
-      console.error("Friends API Error:", err);
-      setError("Failed to load friends");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchRequests = async () => {
-    try {
-      const res = await API.get("/friendships/requests");
-
-      const mapped = res.data.map(f => ({
-        id: f.id,
-        senderId: f.sender_id, // مهم لل confirm/hide
-        userName: f.sender?.fullName || "No Name",
-        image: f.sender?.["profile-picture-url"] || PROFILE
-      }));
-
-      setFriendRequests(mapped);
-    } catch (err) {
-      console.error("Requests API Error:", err);
-    }
-  };
-
-  const fetchSuggestions = async () => {
-    try {
-      const res = await API.get("/friendships/suggestions");
-
-      const mapped = res.data.map(f => ({
-        id: f.graduate_id,
-        userName: f.fullName || "No Name",
-        image: f["profile-picture-url"] || PROFILE,
-        added: false,
-        time: Date.now()
-      }));
-
-      setSuggestions(mapped);
-    } catch (err) {
-      console.error("Suggestions API Error:", err);
-    }
-  };
-
+  // جلب بيانات الأصدقاء والطلبات والاقتراحات
   useEffect(() => {
     fetchFriends();
     fetchRequests();
     fetchSuggestions();
   }, []);
 
-  // ======== Actions ========
-  const confirmFriend = async (senderId) => {
+  const fetchFriends = async () => {
     try {
-      if (!senderId) return alert("Sender ID is missing!");
-      await API.put(`/friendships/confirm/${senderId}`);
+      const response = await API.get("/friends");
+      setFriends(response.data);
+    } catch (error) {
+      console.error("Error fetching friends:", error);
+    }
+  };
+
+  const fetchRequests = async () => {
+    try {
+      const response = await API.get("/friend-requests");
+      setFriendRequests(response.data);
+    } catch (error) {
+      console.error("Error fetching friend requests:", error);
+    }
+  };
+
+  const fetchSuggestions = async () => {
+    try {
+      const response = await API.get("/friend-suggestions");
+      setSuggestions(response.data);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+    }
+  };
+
+  const addFriend = async (userId) => {
+    try {
+      await API.post(`/friends/${userId}`);
+      fetchSuggestions();
+      fetchRequests();
+    } catch (error) {
+      console.error("Add friend error:", error);
+    }
+  };
+
+  const confirmFriend = async (userId) => {
+    try {
+      await API.put(`/friend-requests/${userId}`);
       fetchFriends();
       fetchRequests();
-    } catch (err) {
-      console.error("Confirm Friend API Error:", err);
-      alert(err.response?.data?.message || err.message);
+    } catch (error) {
+      console.error("Confirm friend error:", error);
     }
   };
 
-  const removeFriend = async (friendId, userName) => {
+  const removeFriend = async (friendId, friendName) => {
     try {
-      if (!friendId) return alert("Friend ID is missing!");
-      await API.delete(`/friendships/friends/${friendId}`);
-  
-      // حدّث state مباشرة
-      setFriends(prev => prev.filter(f => f.friendId !== friendId));
-  
-      alert(`${userName} removed successfully.`);
-    } catch (err) {
-      console.error("Delete Friend API Error:", err);
-      alert(err.response?.data?.message || err.message);
-    }
-  };
-  
-
-  const removeRequest = async (senderId) => {
-    try {
-      if (!senderId) return alert("Sender ID is missing!");
-      await API.put(`/friendships/hide/${senderId}`);
-      fetchRequests();
-    } catch (err) {
-      console.error("Hide Request API Error:", err);
-      alert(err.response?.data?.message || err.message);
+      await API.delete(`/friends/${friendId}`);
+      setFriends((prev) => prev.filter((f) => f._id !== friendId));
+      alert(t("removedSuccessfully", { name: friendName }));
+    } catch (error) {
+      console.error("Delete Friend API Error:", error);
     }
   };
 
-  const toggleRequest = async (receiverId, added) => {
-    try {
-      if (!receiverId) return alert("Receiver ID is missing!");
-      if (!added) {
-        await API.post(`/friendships/request/${receiverId}`);
-      } else {
-        await API.delete(`/friendships/cancel/${receiverId}`);
-      }
-      setSuggestions(prev => prev.map(f => f.id === receiverId ? { ...f, added: !added } : f));
-    } catch (err) {
-      console.error("Add/Cancel Request API Error:", err);
-      alert(err.response?.data?.message || err.message);
-    }
-  };
+  // فلترة الاقتراحات حسب البحث
+  const filteredSuggestions = suggestions.filter((user) =>
+    user.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  const removeSuggestion = (id) => {
-    setSuggestions(prev => prev.filter(f => f.id !== id));
-  };
+  return (
+    <div className="friendship-page">
+      {/* Tabs */}
+      <div className="tabs">
+        <button
+          className={currentTab === "friends" ? "active" : ""}
+          onClick={() => setCurrentTab("friends")}
+        >
+          {t("Friends")}
+        </button>
+        <button
+          className={currentTab === "requests" ? "active" : ""}
+          onClick={() => setCurrentTab("requests")}
+        >
+          {t("Requests")}
+        </button>
+        <button
+          className={currentTab === "suggestions" ? "active" : ""}
+          onClick={() => setCurrentTab("suggestions")}
+        >
+          {t("Suggestions")}
+        </button>
+      </div>
 
-  // ======== Render ========
-  const renderContent = () => {
-    if (loading) return <p>Loading...</p>;
-    if (error) return <p className="error">{error}</p>;
-
-    switch (currentTab) {
-      case "friends":
-        return (
-          <div>
-            <p className="Title">{t("Friends")} ({friends.length})</p>
-            {friends.length === 0 ? <p>{t("noFriends")}</p> :
-              friends.map(f => (
-                <div className="user" key={f.id}>
-                  <img className="img" src={f.image} alt={f.userName} />
-                  {f.userName}
-                  <p className="data"></p>
-                  <button className="button"> {t("chat")}</button>
-                  <button className="Removebutton" onClick={() => removeFriend(f.friendId, f.userName)}>
-                    {t("remove")}
-                  </button>
+      {/* الأصدقاء */}
+      {currentTab === "friends" && (
+        <div className="tab-content">
+          {friends.length === 0 ? (
+            <p>{t("noFriends")}</p>
+          ) : (
+            friends.map((friend) => (
+              <div key={friend._id} className="friend-card">
+                <img
+                  src={friend.profilePicture || PROFILE}
+                  alt={friend.name}
+                  className="friend-img"
+                />
+                <div className="friend-info">
+                  <h4>{friend.name}</h4>
+                  <p>
+                    {t("chat")}:{" "}
+                    {formatDistanceToNow(new Date(friend.lastMessageTime), {
+                      addSuffix: true,
+                    })}
+                  </p>
                 </div>
-              ))
-            }
-          </div>
-        );
-
-      case "requests":
-        return (
-          <div>
-            <p className="Title">{t("Requests")} ({friendRequests.length})</p>
-            {friendRequests.map(f => (
-              <div className="user" key={f.id}>
-                <img className="img" src={f.image} alt={f.userName} />
-                {f.userName}
-                <p className="data"></p>
-                <button className="button" onClick={() => confirmFriend(f.senderId)}>
-                  {t("confirm")}
-                </button>
-                <button className="Removebutton" onClick={() => removeRequest(f.senderId)}>
+                <button
+                  className="remove-btn"
+                  onClick={() => removeFriend(friend._id, friend.name)}
+                >
                   {t("remove")}
                 </button>
               </div>
-            ))}
-          </div>
-        );
+            ))
+          )}
+        </div>
+      )}
 
-        case "suggestions":
-          return (
-            <div>
-              <p className="Title">{t("Suggestions")}</p>
-        
-              <div className="friendship-search">
-                <input
-                  type="text"
-                  placeholder="Search by name..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+      {/* طلبات الصداقة */}
+      {currentTab === "requests" && (
+        <div className="tab-content">
+          {friendRequests.length === 0 ? (
+            <p>{t("loadingRequests")}</p>
+          ) : (
+            friendRequests.map((req) => (
+              <div key={req._id} className="friend-card">
+                <img
+                  src={req.profilePicture || PROFILE}
+                  alt={req.name}
+                  className="friend-img"
                 />
-              </div>
-        
-              {filteredSuggestions.length === 0 && <p>No suggestions found</p>}
-        
-              {filteredSuggestions.map(f => (
-                <div className="user" key={f.id}>
-                  <img className="img" src={f.image} alt={f.userName} />
-                  {f.userName}
-                  <p className="data"></p>
-                  <span className="time">
-                    {formatDistanceToNow(new Date(f.time), { addSuffix: true })}
-                  </span>
-                  {!f.added ? (
-                    <div>
-                      <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
-                        {t("add")}
-                      </button>
-                      <button className="Removebutton" onClick={() => removeSuggestion(f.id)}>
-                        {t("remove")}
-                      </button>
-                    </div>
-                  ) : (
-                    <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
-                      {t("requested")}
-                    </button>
-                  )}
+                <div className="friend-info">
+                  <h4>{req.name}</h4>
                 </div>
-              ))}
-            </div>
-          );
-        
+                <button
+                  className="confirm-btn"
+                  onClick={() => confirmFriend(req._id)}
+                >
+                  {t("confirm")}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
-      default:
-        return null;
-    }
-  };
+      {/* الاقتراحات */}
+      {currentTab === "suggestions" && (
+        <div className="tab-content">
+          <input
+            type="text"
+            placeholder={t("searchByName")}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="search-input"
+          />
 
-  return (
-    <div className="page">
-      <div className="friendship-bar">
-      <button
-          className={`friendship-link ${currentTab === "suggestions" ? "active" : ""}`}
-          onClick={() => setCurrentTab("suggestions")}
-        >
-          Suggestions
-        </button>
-        <button
-          className={`friendship-link ${currentTab === "friends" ? "active" : ""}`}
-          onClick={() => setCurrentTab("friends")}
-        >
-          Friends
-        </button>
-        <button
-          className={`friendship-link ${currentTab === "requests" ? "active" : ""}`}
-          onClick={() => setCurrentTab("requests")}
-        >
-          Friend Requests
-        </button>
-        
-      </div>
-      <div className="content-area">{renderContent()}</div>
+          {filteredSuggestions.length === 0 ? (
+            <p>{t("noSuggestionsFound")}</p>
+          ) : (
+            filteredSuggestions.map((user) => (
+              <div key={user._id} className="friend-card">
+                <img
+                  src={user.profilePicture || PROFILE}
+                  alt={user.name}
+                  className="friend-img"
+                />
+                <div className="friend-info">
+                  <h4>{user.name}</h4>
+                </div>
+                <button
+                  className="add-btn"
+                  onClick={() => addFriend(user._id)}
+                >
+                  {t("add")}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   );
 }
