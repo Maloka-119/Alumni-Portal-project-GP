@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { formatDistanceToNow } from "date-fns";
 import API from "../../services/api";
 import './FriendShip.css';
+import PROFILE from './PROFILE.jpeg';
 
 function FriendshipPage() {
   const { t } = useTranslation();
@@ -14,6 +15,12 @@ function FriendshipPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [searchTerm, setSearchTerm] = useState("");
+const filteredSuggestions = suggestions.filter(f =>
+  f.userName.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
 
   // ======== Fetch Data ========
   const fetchFriends = async () => {
@@ -27,7 +34,7 @@ function FriendshipPage() {
         // اختر الـ friendId حسب response backend
         friendId: f.friend?.id || f.friend_id || f.id,
         userName: f.friend?.fullName || f.sender?.fullName || f.friend?.bio || "No Name",
-        image: f.friend?.["profile-picture-url"] || f.sender?.["profile-picture-url"] || "/default-avatar.png"
+        image: f.friend?.["profile-picture-url"] || f.sender?.["profile-picture-url"] ||PROFILE
       }));
 
       setFriends(mapped);
@@ -47,7 +54,7 @@ function FriendshipPage() {
         id: f.id,
         senderId: f.sender_id, // مهم لل confirm/hide
         userName: f.sender?.fullName || f.sender?.bio || "No Name",
-        image: f.sender?.["profile-picture-url"] || "/default-avatar.png"
+        image: f.sender?.["profile-picture-url"] || PROFILE
       }));
 
       setFriendRequests(mapped);
@@ -63,7 +70,7 @@ function FriendshipPage() {
       const mapped = res.data.map(f => ({
         id: f.graduate_id,
         userName: f.bio || "No Name",
-        image: f["profile-picture-url"] || "/default-avatar.png",
+        image: f["profile-picture-url"] || PROFILE,
         added: false,
         time: Date.now()
       }));
@@ -183,37 +190,49 @@ function FriendshipPage() {
           </div>
         );
 
-      case "suggestions":
-        return (
-          <div>
-            <p className="Title">{t("Suggestions")}</p>
-            {suggestions.map(f => (
-              <div className="user" key={f.id}>
-                <img className="img" src={f.image} alt={f.userName} />
-                <p className="data">
-                  {f.userName}<br />
+        case "suggestions":
+          return (
+            <div>
+              <p className="Title">{t("Suggestions")}</p>
+        
+              <div className="friendship-search">
+                <input
+                  type="text"
+                  placeholder="Search by name..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+        
+              {filteredSuggestions.length === 0 && <p>No suggestions found</p>}
+        
+              {filteredSuggestions.map(f => (
+                <div className="user" key={f.id}>
+                  <img className="img" src={f.image} alt={f.userName} />
+                  {f.userName}
+                  <p className="data"></p>
                   <span className="time">
                     {formatDistanceToNow(new Date(f.time), { addSuffix: true })}
                   </span>
-                </p>
-                {!f.added ? (
-                  <div>
+                  {!f.added ? (
+                    <div>
+                      <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
+                        {t("add")}
+                      </button>
+                      <button className="Removebutton" onClick={() => removeSuggestion(f.id)}>
+                        {t("remove")}
+                      </button>
+                    </div>
+                  ) : (
                     <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
-                      {t("add")}
+                      {t("requested")}
                     </button>
-                    <button className="Removebutton" onClick={() => removeSuggestion(f.id)}>
-                      {t("remove")}
-                    </button>
-                  </div>
-                ) : (
-                  <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
-                    {t("requested")}
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-        );
+                  )}
+                </div>
+              ))}
+            </div>
+          );
+        
 
       default:
         return null;
@@ -223,6 +242,12 @@ function FriendshipPage() {
   return (
     <div className="page">
       <div className="friendship-bar">
+      <button
+          className={`friendship-link ${currentTab === "suggestions" ? "active" : ""}`}
+          onClick={() => setCurrentTab("suggestions")}
+        >
+          Suggestions
+        </button>
         <button
           className={`friendship-link ${currentTab === "friends" ? "active" : ""}`}
           onClick={() => setCurrentTab("friends")}
@@ -235,12 +260,7 @@ function FriendshipPage() {
         >
           Friend Requests
         </button>
-        <button
-          className={`friendship-link ${currentTab === "suggestions" ? "active" : ""}`}
-          onClick={() => setCurrentTab("suggestions")}
-        >
-          Suggestions
-        </button>
+        
       </div>
       <div className="content-area">{renderContent()}</div>
     </div>

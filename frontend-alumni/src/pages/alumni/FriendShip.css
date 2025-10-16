@@ -1,19 +1,20 @@
 .friendship-container {
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 20px;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    font-family: 'Poppins', sans-serif;
-    transition: all 0.3s ease;
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 20px;
+  
+  border-radius: 0;
+  box-shadow: none;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
   }
   
   .friendship-container h2 {
     text-align: center;
-    font-size: 1.8rem;
-    color: #37568d;
-    margin-bottom: 25px;
+  font-size: 1.8rem;
+  color: #37568d;
+  margin-bottom: 25px;
   }
   
   /* Friend card style */
@@ -119,14 +120,15 @@
   
   /* 🌐 الصفحة العامة */
   .page {
-    max-width: 900px;
-    margin: 30px auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    font-family: "Poppins", sans-serif;
-    transition: all 0.3s ease;
+    width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 20px;
+  
+  border-radius: 0;
+  box-shadow: none;
+  font-family: "Poppins", sans-serif;
+  transition: all 0.3s ease;
   }
   
   /* ✅ شريط التنقل بين التبويبات */
@@ -238,9 +240,15 @@
     color: #37568d;
     margin-bottom: 15px;
     text-align: left;
-    border-left: 4px solid #2563eb;
+    border-left: 4px solid transparent;
+    border-image: linear-gradient(181deg, #2563eb, #4f7ef5, #7cf50b);
+    border-image-slice: 1;
     padding-left: 10px;
+    
+    border-radius: 6px;
+    transition: all 0.3s ease;
   }
+  
   
   /* 📱 Responsive */
   @media (max-width: 600px) {
@@ -260,5 +268,36 @@
     .Removebutton {
       width: 100%;
     }
+  }
+  
+  .friendship-search {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 22px;
+  }
+  
+  .friendship-search input {
+    width: 80%;
+    max-width: 460px;
+    padding: 11px 15px;
+    border: 1px solid #dcdfe4;
+    border-radius: 12px;
+    outline: none;
+    font-size: 0.95rem;
+    color: #333;
+    background-color: #fafbfc;
+    transition: all 0.25s ease;
+  }
+  
+  .friendship-search input:focus {
+    border-color: #2563eb;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+    transform: scale(1.01);
+  }
+  
+  .friendship-search input::placeholder {
+    color: #aaa;
   }
   
