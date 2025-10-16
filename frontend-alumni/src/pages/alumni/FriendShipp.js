@@ -5,7 +5,12 @@ import API from "../../services/api";
 import './FriendShip.css';
 
 function FriendshipPage() {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
+
+useEffect(() => {
+  document.body.dir = i18n.language === "ar" ? "rtl" : "ltr";
+}, [i18n.language]);
+
   const [currentTab, setCurrentTab] = useState("friends");
 
   const [friends, setFriends] = useState([]);
