@@ -36,5 +36,28 @@
     transform: rotate(360deg);
   }
 }
+/* App.css */
+.my-alert {
+  padding: 12px 20px;
+  margin: 10px 0;
+  border-radius: 6px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #2563eb; /* أزرق */
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+}
+
+.my-alert.success {
+  background-color: #16a34a; /* أخضر */
+}
+
+.my-alert.error {
+  background-color: #dc2626; /* أحمر */
+}
+
+.my-alert.warning {
+  background-color: #f59e0b; /* برتقالي */
+}
 
 
