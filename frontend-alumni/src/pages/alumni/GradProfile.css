@@ -226,3 +226,40 @@ body.dark-mode .file-input {
 body.dark-mode .file-input:hover {
   border-color: #1a73e8;
 }
+
+
+.saveprof,
+.cancelprof {
+  font-family: 'Poppins', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-right: 10px;
+}
+
+/* Save button */
+.saveprof {
+  background-color: #4A90E2; /* bright blue */
+  color: white;
+}
+
+.saveprof:hover {
+  background-color: #3a78c2;
+  transform: scale(1.05);
+}
+
+/* Cancel button */
+.cancelprof {
+  background-color: #f5f5f5;
+  color: #333;
+  border: 2px solid #ccc;
+}
+
+.cancelprof:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.05);
+}

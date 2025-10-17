@@ -162,7 +162,7 @@
 }
 
 .friendship-link.active {
-     background: linear-gradient(90deg, #2563eb, #4f7ef5, #f59e0b);
+     background: #4f7ef5;
      box-shadow: 0 3px 6px rgba(37, 99, 235, 0.3);
      color:#f2f0f0;
   transform: translateY(-2px); /* حركة خفيفة لأعلى لما يكون نشط */
@@ -461,4 +461,25 @@
     width: 90%;
     font-size: 14px;
   }
+}
+
+.imgreq {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #2563eb;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.imgreq:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.3);
+}
+
+.req-count {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #5b9129;
+  margin-left: 6px;
 }
