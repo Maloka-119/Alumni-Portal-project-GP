@@ -248,8 +248,8 @@ function GraduatedProfile() {
             />
           </label>
 
-          <button onClick={handleSave}>{t("save")}</button>
-          <button onClick={handleCancel}>{t("cancel")}</button>
+          <button  className="savebut" onClick={handleSave}>{t("save")}</button>
+          <button className="cancelbut" onClick={handleCancel}>{t("cancel")}</button>
         </div>
       )}
     </div>
