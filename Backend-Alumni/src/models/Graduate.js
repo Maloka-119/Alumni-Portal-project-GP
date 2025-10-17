@@ -1,7 +1,7 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
 const User = require("./User");
-
+const Invitation = require("./Invitation");
 const Graduate = sequelize.define(
   "Graduate",
   {
@@ -34,5 +34,6 @@ const Graduate = sequelize.define(
 
 Graduate.belongsTo(User, { foreignKey: "graduate_id" });
 User.hasOne(Graduate, { foreignKey: "graduate_id" });
-
+// العلاقة بين Graduate والدعوات (عشان نقدر نعمل include)
+Graduate.hasMany(Invitation, { foreignKey: "receiver_id", as: "pendingInvitation" });
 module.exports = Graduate;
