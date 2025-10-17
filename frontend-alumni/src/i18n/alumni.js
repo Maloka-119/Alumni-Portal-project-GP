@@ -107,6 +107,9 @@ const alumni = {
       "Friends": "Friends",
       "Requests": "Friend Requests",
       "Suggestions": "Suggestions",
+      "friendsList": "Friends List",
+      "friendRequests": "Friend Requests",
+      "suggestedFriends": "Suggested Friends",
       "add": "Add",
       "remove": "Remove",
       "confirm": "Confirm",
@@ -231,6 +234,9 @@ const alumni = {
       "Friends": "الأصدقاء",
       "Requests": "طلبات الصداقة",
       "Suggestions": "اقتراحات الأصدقاء",
+      "friendsList": "قائمة الأصدقاء",
+      "friendRequests": "طلبات الصداقة",
+      "suggestedFriends": "اقتراحات الأصدقاء",
       "add": "إضافة",
       "remove": "إزالة",
       "confirm": "تأكيد",
@@ -249,4 +255,3 @@ const alumni = {
 };
 
 export default alumni;
-
