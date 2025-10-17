@@ -148,37 +148,33 @@ import React, { useState, useEffect } from "react";
 import API from "../../services/api";
 import "./Notification.css";
 
-function Notifications() {
-  const [activeTab, setActiveTab] = useState("all");
-  const [allNotifications, setAllNotifications] = useState([]);
+function InvitationsPage() {
+  const [invitations, setInvitations] = useState([]);
 
-  // Fetch received invitations on load
   useEffect(() => {
-    fetchNotifications();
+    fetchInvitations();
   }, []);
 
-  const fetchNotifications = async () => {
+  const fetchInvitations = async () => {
     try {
       const res = await API.get("/invitation/received");
-      // تحويل البيانات للـ format اللي إحنا شغالين عليه في الـ frontend
       const formatted = res.data.map((inv) => ({
         id: inv.id,
-        sender: inv.sender_name, // تأكدي من اسم الحقل في الباك
-        group: inv.group_name,   // تأكدي من اسم الحقل في الباك
+        sender: inv.sender_name,
+        group: inv.group_name,
         time: new Date(inv.sent_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        type: "invitation",
         status: inv.status,
       }));
-      setAllNotifications(formatted);
+      setInvitations(formatted);
     } catch (err) {
       console.error(err);
     }
   };
 
-  const deleteNotification = async (id) => {
+  const deleteInvitation = async (id) => {
     try {
       await API.delete(`/invitation/${id}`);
-      setAllNotifications((prev) => prev.filter((n) => n.id !== id));
+      setInvitations((prev) => prev.filter((inv) => inv.id !== id));
     } catch (err) {
       console.error(err);
     }
@@ -187,8 +183,8 @@ function Notifications() {
   const acceptInvitation = async (id) => {
     try {
       await API.post(`/invitation/${id}/accept`);
-      setAllNotifications((prev) =>
-        prev.map((n) => (n.id === id ? { ...n, status: "accepted" } : n))
+      setInvitations((prev) =>
+        prev.map((inv) => (inv.id === id ? { ...inv, status: "accepted" } : inv))
       );
     } catch (err) {
       console.error(err);
@@ -196,84 +192,43 @@ function Notifications() {
   };
 
   const rejectInvitation = async (id) => {
-    // هنا نستخدم delete عشان رفض الدعوة يعني مماثل للحذف عند الـ backend
-    deleteNotification(id);
+    deleteInvitation(id); // رفض الدعوة يتم عن طريق حذفها
   };
-
-  const filteredNotifications =
-    activeTab === "all"
-      ? allNotifications
-      : allNotifications.filter((n) => n.type === "invitation");
 
   return (
     <div className="notifications-container">
-      <h1 className="Title">Notifications</h1>
-
-      <div className="tabs">
-        <button
-          className={activeTab === "all" ? "active" : ""}
-          onClick={() => setActiveTab("all")}
-        >
-          All
-        </button>
-        <button
-          className={activeTab === "invitation" ? "active" : ""}
-          onClick={() => setActiveTab("invitation")}
-        >
-          Invitations
-        </button>
-      </div>
+      <h1 className="Title">Invitations</h1>
 
       <div className="notification-list">
-        {filteredNotifications.length === 0 ? (
-          <p className="empty">No notifications</p>
+        {invitations.length === 0 ? (
+          <p className="empty">No invitations</p>
         ) : (
-          filteredNotifications.map((n) => (
-            <div key={n.id} className="notification-item">
+          invitations.map((inv) => (
+            <div key={inv.id} className="notification-item">
               <div className="notif-content">
-                {n.type === "invitation" ? (
-                  <p>
-                    <strong>{n.sender}</strong> invited you to join{" "}
-                    <strong>{n.group}</strong>
-                  </p>
-                ) : (
-                  <p>{n.message}</p>
-                )}
-                <small className="time">{n.time}</small>
+                <p>
+                  <strong>{inv.sender}</strong> invited you to join <strong>{inv.group}</strong>
+                </p>
+                <small className="time">{inv.time}</small>
               </div>
 
               <div className="notif-actions">
-                {n.type === "invitation" && n.status === "pending" && (
+                {inv.status === "pending" ? (
                   <>
-                    <button
-                      className="accept-btn"
-                      onClick={() => acceptInvitation(n.id)}
-                    >
+                    <button className="accept-btn" onClick={() => acceptInvitation(inv.id)}>
                       Accept
                     </button>
-                    <button
-                      className="reject-btn"
-                      onClick={() => rejectInvitation(n.id)}
-                    >
+                    <button className="reject-btn" onClick={() => rejectInvitation(inv.id)}>
                       Reject
                     </button>
                   </>
-                )}
-
-                {n.type === "invitation" && n.status !== "pending" && (
-                  <p
-                    className={`status ${
-                      n.status === "accepted" ? "accepted" : "rejected"
-                    }`}
-                  >
-                    {n.status === "accepted" ? "✅ Accepted" : "❌ Rejected"}
+                ) : (
+                  <p className={`status ${inv.status === "accepted" ? "accepted" : "rejected"}`}>
+                    {inv.status === "accepted" ? "✅ Accepted" : "❌ Rejected"}
                   </p>
                 )}
 
-                <button
-                  className="delete-btn"
-                  onClick={() => deleteNotification(n.id)}
-                >
+                <button className="delete-btn" onClick={() => deleteInvitation(inv.id)}>
                   🗑
                 </button>
               </div>
@@ -285,4 +240,4 @@ function Notifications() {
   );
 }
 
-export default Notifications;
+export default InvitationsPage;
