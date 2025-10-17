@@ -99,8 +99,7 @@ const getDigitalID = async (req, res) => {
     });
   }
 };
-
-//get profile
+// GET Graduate Profile
 const getGraduateProfile = async (req, res) => {
   try {
     const graduate = await Graduate.findByPk(req.params.id, {
@@ -117,22 +116,23 @@ const getGraduateProfile = async (req, res) => {
 
     const user = graduate.User;
 
-    const graduatePfrofile = {
+    const graduateProfile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${user["first-name"]} ${user["last-name"]}`,
       faculty: graduate.faculty,
       graduationYear: graduate["graduation-year"],
       bio: graduate.bio,
       CV: graduate["cv-url"],
-      skills: graduate.skills,
+      skills: graduate.skills, // نص string
       currentJob: graduate["current-job"],
-      linkedlnLink: graduate["linkedln-link"],
+    
+      phoneNumber: user.phoneNumber,  
     };
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate Profile fetched successfully",
-      data: graduatePfrofile,
+      data: graduateProfile,
     });
   } catch (err) {
     return res.status(500).json({
@@ -143,18 +143,15 @@ const getGraduateProfile = async (req, res) => {
   }
 };
 
-// updateProfile
+
+// UPDATE Graduate Profile
 const updateProfile = async (req, res) => {
   try {
-    console.log("req.user:", req.user);
-    console.log("req.user.id:", req.user?.id);
-
     const graduate = await Graduate.findByPk(req.user.id, {
       include: [{ model: User }],
     });
 
     if (!graduate) {
-      console.log("Graduate not found for user id:", req.user.id);
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -163,52 +160,43 @@ const updateProfile = async (req, res) => {
     }
 
     const user = graduate.User;
-    const {
-      firstName,
-      lastName,
-      bio,
-      skills,
-      currentJob,
-      cvUrl,
-      faculty,
-      graduationYear,
-      linkedlnLink,
-      phoneNumber,
-    } = req.body;
 
-    if (firstName !== undefined) user["first-name"] = firstName;
-    if (lastName !== undefined) user["last-name"] = lastName;
-    if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
-    if (bio !== undefined) graduate.bio = bio;
-    if (skills !== undefined) graduate.skills = skills;
-    if (currentJob !== undefined) graduate["current-job"] = currentJob;
-    if (cvUrl !== undefined) graduate["cv-url"] = cvUrl;
-    if (faculty !== undefined) graduate.faculty = faculty;
-    if (graduationYear !== undefined)
-      graduate["graduation-year"] = graduationYear;
-    if (linkedlnLink !== undefined) graduate["linkedln-link"] = linkedlnLink;
+    // تحديث بيانات User
+    const userFields = ["firstName", "lastName", "phoneNumber"];
+    userFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        if (field === "firstName") user["first-name"] = req.body[field];
+        else if (field === "lastName") user["last-name"] = req.body[field];
+        else if (field === "phoneNumber") user.phoneNumber = req.body[field];
+      }
+    });
 
-    // ✅ رفع صورة البروفايل (من Multer/Cloudinary)
-    if (req.files && req.files.profilePicture && req.files.profilePicture[0]) {
+    // تحديث بيانات Graduate
+    const graduateFields = [
+      { bodyKey: "bio", dbKey: "bio" },
+      { bodyKey: "skills", dbKey: "skills" },
+      { bodyKey: "currentJob", dbKey: "current-job" },
+      { bodyKey: "faculty", dbKey: "faculty" },
+      { bodyKey: "graduationYear", dbKey: "graduation-year" },
+      { bodyKey: "linkedlnLink", dbKey: "linkedln-link" },
+    ];
+
+    graduateFields.forEach(({ bodyKey, dbKey }) => {
+      if (req.body[bodyKey] !== undefined) {
+        graduate[dbKey] = req.body[bodyKey];
+      }
+    });
+
+    // رفع صورة البروفايل
+    if (req.files?.profilePicture?.[0]) {
       const profilePic = req.files.profilePicture[0];
-
-      // Multer-storage-cloudinary بيرجع لينك الصورة في path أو url
       graduate["profile-picture-url"] = profilePic.path || profilePic.url;
-
-      console.log(
-        "✅ Profile picture uploaded:",
-        graduate["profile-picture-url"]
-      );
     }
 
-    // ✅ رفع CV (نفس الفكرة، لو بتستخدم Multer عادي هتحتاج ترفع يدوي)
-    if (req.files && req.files.cv && req.files.cv[0]) {
+    // رفع CV
+    if (req.files?.cv?.[0]) {
       const cvFile = req.files.cv[0];
-
-      // لو برضو بتستخدم CloudinaryStorage للـ cv، نفس النظام:
       graduate["cv-url"] = cvFile.path || cvFile.url;
-
-      console.log("✅ CV uploaded:", graduate["cv-url"]);
     }
 
     await user.save();
@@ -217,10 +205,23 @@ const updateProfile = async (req, res) => {
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate profile updated successfully",
-      data: { graduate },
+      data: {
+        graduate: {
+          profilePicture: graduate["profile-picture-url"],
+          fullName: `${user["first-name"]} ${user["last-name"]}`,
+          faculty: graduate.faculty,
+          graduationYear: graduate["graduation-year"],
+          bio: graduate.bio,
+          CV: graduate["cv-url"],
+          skills: graduate.skills,
+          currentJob: graduate["current-job"],
+          linkedlnLink: graduate["linkedln-link"],
+          phoneNumber: user.phoneNumber,
+        },
+      },
     });
   } catch (err) {
-    console.error("❌ Error in updateProfile:", err);
+    console.error("Error in updateProfile:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
       message: err.message,
@@ -228,6 +229,7 @@ const updateProfile = async (req, res) => {
     });
   }
 };
+
 
 // Activate / Inactivate Graduate
 const updateGraduateStatus = async (req, res) => {

@@ -11,8 +11,52 @@ const jwt = require("jsonwebtoken");
 // @desc    Register user automatically as graduate or staff
 // @route   POST /alumni-portal/register
 // @access  Public
+// helper: يستخرج تاريخ الميلاد بصيغة "YYYY-MM-DD" أو يرمي خطأ لو الرقم غير صالح
+function extractDOBFromEgyptianNID(nationalId) {
+  const id = String(nationalId).trim();
+  if (!/^\d{14}$/.test(id)) {
+    throw new Error("Invalid national ID format (must be 14 digits).");
+  }
+
+  const centuryDigit = id[0];
+  let century;
+  if (centuryDigit === '2') century = 1900;
+  else if (centuryDigit === '3') century = 2000;
+  else if (centuryDigit === '4') century = 2100; // احتياطي لو احتجت
+  else throw new Error("Unsupported century digit in national ID.");
+
+  const yy = parseInt(id.substr(1, 2), 10);
+  const mm = parseInt(id.substr(3, 2), 10);
+  const dd = parseInt(id.substr(5, 2), 10);
+
+  const year = century + yy;
+
+  // Validate actual date (handles حالات زي 2021-02-30)
+  const date = new Date(Date.UTC(year, mm - 1, dd));
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== mm - 1 ||
+    date.getUTCDate() !== dd
+  ) {
+    throw new Error("Invalid birth date extracted from national ID.");
+  }
+
+  // إرجاع بصيغة ISO بدون الوقت
+  return `${year.toString().padStart(4, '0')}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+}
+
+// registerUser بعد التعديل
 const registerUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, password, nationalId, phoneNumber, birthDate } = req.body;
+  const { firstName, lastName, email, password, nationalId, phoneNumber /*, birthDate */ } = req.body;
+
+  // نحاول نطلع تاريخ الميلاد من الرقم القومي
+  let birthDateFromNid;
+  try {
+    birthDateFromNid = extractDOBFromEgyptianNID(nationalId);
+  } catch (err) {
+    res.status(400);
+    throw new Error("Invalid national ID: " + err.message);
+  }
 
   let externalData;
   let userType;
@@ -22,13 +66,11 @@ const registerUser = asyncHandler(async (req, res) => {
     const gradResponse = await axios.get(
       `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
     );
-     console.log("Graduate API response:", gradResponse.data);
+    console.log("Graduate API response:", gradResponse.data);
     externalData = gradResponse.data;
- console.log("Graduate API response:", externalData);
-    if (externalData && externalData.faculty) { 
+    if (externalData && externalData.faculty) {
       userType = "graduate";
     }
-    console.log(gradResponse);
   } catch (err) {
     console.log("Graduate API error:", err.message);
   }
@@ -41,13 +83,11 @@ const registerUser = asyncHandler(async (req, res) => {
       );
       console.log("Staff API response:", staffResponse.data);
       externalData = staffResponse.data;
-console.log("Staff API response:", externalData);
-
       if (externalData && externalData.department) {
         userType = "staff";
       }
     } catch (err) {
-        console.log("Staff API error:", err.message);
+      console.log("Staff API error:", err.message);
     }
   }
 
@@ -70,14 +110,14 @@ console.log("Staff API response:", externalData);
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // حفظ البيانات في جدول User
+  // حفظ البيانات في جدول User --- نستخدم birthDateFromNid بدل الحقل المرسل
   const user = await User.create({
     "first-name": firstName,
     "last-name": lastName,
     email,
-    "phone-number": phoneNumber,
+    phoneNumber: phoneNumber,
     "hashed-password": hashedPassword,
-    "birth-date": birthDate,
+    "birth-date": birthDateFromNid, // <-- هنا
     "user-type": userType,
     "national-id": nationalId,
   });
@@ -86,13 +126,13 @@ console.log("Staff API response:", externalData);
   if (userType === "graduate") {
     await Graduate.create({
       graduate_id: user.id,
-      faculty: externalData.faculty, // بدل college
-      "graduation-year": externalData["graduation-year"], // بدل graduationYear
+      faculty: externalData.faculty,
+      "graduation-year": externalData["graduation-year"],
     });
   } else if (userType === "staff") {
     await Staff.create({
       staff_id: user.id,
-      "status-to-login": "inactive", // inactive حتى يتم الموافقة
+      "status-to-login": "inactive",
     });
   }
 
@@ -104,6 +144,100 @@ console.log("Staff API response:", externalData);
     token: generateToken(user.id),
   });
 });
+
+// const registerUser = asyncHandler(async (req, res) => {
+//   const { firstName, lastName, email, password, nationalId, phoneNumber, birthDate } = req.body;
+
+//   let externalData;
+//   let userType;
+
+//   // تحقق من Graduate API باستخدام الرقم القومي فقط
+//   try {
+//     const gradResponse = await axios.get(
+//       `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
+//     );
+//      console.log("Graduate API response:", gradResponse.data);
+//     externalData = gradResponse.data;
+//  console.log("Graduate API response:", externalData);
+//     if (externalData && externalData.faculty) { 
+//       userType = "graduate";
+//     }
+//     console.log(gradResponse);
+//   } catch (err) {
+//     console.log("Graduate API error:", err.message);
+//   }
+
+//   // إذا لم يكن خريج، تحقق من Staff API
+//   if (!userType) {
+//     try {
+//       const staffResponse = await axios.get(
+//         `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
+//       );
+//       console.log("Staff API response:", staffResponse.data);
+//       externalData = staffResponse.data;
+// console.log("Staff API response:", externalData);
+
+//       if (externalData && externalData.department) {
+//         userType = "staff";
+//       }
+//     } catch (err) {
+//         console.log("Staff API error:", err.message);
+//     }
+//   }
+
+//   // إذا لم نجد userType، ارفض التسجيل
+//   if (!userType) {
+//     res.status(400);
+//     throw new Error(
+//       "Registration failed: National ID not recognized in Helwan University records."
+//     );
+//   }
+
+//   // تحقق إذا البريد موجود مسبقًا
+//   const userExists = await User.findOne({ where: { email } });
+//   if (userExists) {
+//     res.status(400);
+//     throw new Error("User already exists");
+//   }
+
+//   // تشفير الباسورد
+//   const salt = await bcrypt.genSalt(10);
+//   const hashedPassword = await bcrypt.hash(password, salt);
+
+//   // حفظ البيانات في جدول User
+//   const user = await User.create({
+//     "first-name": firstName,
+//     "last-name": lastName,
+//     email,
+//     phoneNumber: phoneNumber,
+//     "hashed-password": hashedPassword,
+//     "birth-date": birthDate,
+//     "user-type": userType,
+//     "national-id": nationalId,
+//   });
+
+//   // حفظ بيانات إضافية في Graduate أو Staff
+//   if (userType === "graduate") {
+//     await Graduate.create({
+//       graduate_id: user.id,
+//       faculty: externalData.faculty, // بدل college
+//       "graduation-year": externalData["graduation-year"], // بدل graduationYear
+//     });
+//   } else if (userType === "staff") {
+//     await Staff.create({
+//       staff_id: user.id,
+//       "status-to-login": "inactive", // inactive حتى يتم الموافقة
+//     });
+//   }
+
+//   // رجع الرد للـ frontend
+//   res.status(201).json({
+//     id: user.id,
+//     email: user.email,
+//     userType: userType,
+//     token: generateToken(user.id),
+//   });
+// });
 
 
 // @desc    Login user
