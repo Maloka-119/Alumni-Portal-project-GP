@@ -3,25 +3,23 @@ import API from "../../services/api";
 import "./GroupDetails.css";
 
 function GroupDetails({ group, goBack, currentUserId }) {
-  // ====== State ======
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
   const [category, setCategory] = useState("General");
   const [image, setImage] = useState(null);
   const [commentText, setCommentText] = useState({});
   const [likedPosts, setLikedPosts] = useState([]);
-  const [showInviteModal, setShowInviteModal] = useState(false);
   const [friends, setFriends] = useState([]);
-  const [invitations, setInvitations] = useState([]); // invitations sent by me
+  const [invitations, setInvitations] = useState([]);
+  const [showInviteSection, setShowInviteSection] = useState(false);
 
-  // ====== Fetch Data ======
+  // ====================== Fetch Data ======================
   useEffect(() => {
     fetchPosts();
     fetchFriends();
     fetchInvitations();
   }, [group.id]);
 
-  // ====== Fetch Posts ======
   const fetchPosts = async () => {
     try {
       const res = await API.get(`/posts/${group.id}`);
@@ -31,49 +29,28 @@ function GroupDetails({ group, goBack, currentUserId }) {
     }
   };
 
-  // ====== Fetch Friends Not in Group ======
   const fetchFriends = async () => {
     try {
-      const res = await API.get("/friends"); // API عندك
-      const friendsData = res.data;
-
-      console.log("friends from API:", friendsData);
-      console.log("group members:", group.members);
-
-      // تحويل العلاقات إلى أصدقاء حقيقيين بالنسبة ليك
-      const actualFriends = friendsData.map((rel) =>
-        rel.sender_id === currentUserId ? rel.receiver : rel.sender
-      );
-
-      // فلترة الأصدقاء اللي مش موجودين في الجروب
-      const groupMemberIds = (group.members || []).map(
-        (m) => m.id || m.graduate_id
-      );
-
-      const nonMembers = actualFriends.filter(
-        (f) => !groupMemberIds.includes(f.graduate_id)
-      );
-
-      setFriends(nonMembers);
+      const res = await API.get("/friendships/friends");
+      setFriends(res.data || []);
     } catch (err) {
       console.error("Error fetching friends:", err);
+      alert("Failed to fetch friends");
     }
   };
 
-  // ====== Fetch Invitations Sent By Me ======
   const fetchInvitations = async () => {
     try {
       const res = await API.get("/invitations/received");
-      setInvitations(res.data);
+      setInvitations(res.data || []);
     } catch (err) {
       console.error("Error fetching invitations:", err);
     }
   };
 
-  // ====== Create Post ======
+  // ====================== Create Post ======================
   const handleCreatePost = async () => {
     if (!newPost.trim()) return alert("Post content is required");
-
     try {
       const formData = new FormData();
       formData.append("category", category);
@@ -95,7 +72,7 @@ function GroupDetails({ group, goBack, currentUserId }) {
     }
   };
 
-  // ====== Like Post ======
+  // ====================== Likes ======================
   useEffect(() => {
     const savedLikes = JSON.parse(localStorage.getItem("likedPosts") || "[]");
     setLikedPosts(savedLikes);
@@ -106,23 +83,23 @@ function GroupDetails({ group, goBack, currentUserId }) {
   }, [likedPosts]);
 
   const handleLike = (postId) => {
-    if (likedPosts.includes(postId)) return alert("You already liked this post!");
-    setPosts(
-      posts.map((p) =>
-        p.post_id === postId
-          ? { ...p, likesCount: (p.likesCount || 0) + 1 }
-          : p
+    if (likedPosts.includes(postId)) return;
+    setPosts((p) =>
+      p.map((post) =>
+        post.post_id === postId
+          ? { ...post, likesCount: (post.likesCount || 0) + 1 }
+          : post
       )
     );
     setLikedPosts([...likedPosts, postId]);
   };
 
-  // ====== Comment Post ======
+  // ====================== Comments ======================
   const handleComment = (postId) => {
     const comment = commentText[postId];
     if (!comment?.trim()) return;
-    setPosts(
-      posts.map((p) =>
+    setPosts((prev) =>
+      prev.map((p) =>
         p.post_id === postId
           ? {
               ...p,
@@ -137,95 +114,68 @@ function GroupDetails({ group, goBack, currentUserId }) {
     setCommentText((prev) => ({ ...prev, [postId]: "" }));
   };
 
-  // ====== Invite Friend ======
-  const handleSendInvitation = async (friendId) => {
-    try {
-      await API.post("/invitations/send", {
-        receiver_id: friendId,
-        group_id: group.id,
-      });
-      fetchInvitations();
-    } catch (err) {
-      console.error("Error sending invitation:", err);
-      alert("Failed to send invitation");
-    }
-  };
+  // ====================== Invitations ======================
+  const isInvited = (friendId) =>
+    invitations.some((inv) => inv.receiver_id === friendId && inv.status === "pending");
 
-  const handleCancelInvitation = async (inviteId) => {
-    try {
-      await API.post(`/invitations/${inviteId}/cancel`);
-      fetchInvitations();
-    } catch (err) {
-      console.error("Error canceling invitation:", err);
-      alert("Failed to cancel invitation");
-    }
-  };
-
-  const isInvited = (friendId) => {
-    return invitations.some(
+  const handleToggleInvitation = async (friendId) => {
+    const invite = invitations.find(
       (inv) => inv.receiver_id === friendId && inv.status === "pending"
     );
+    try {
+      if (invite) {
+        await API.post(`/invitations/${invite.id}/cancel`);
+        setInvitations((prev) => prev.filter((inv) => inv.id !== invite.id));
+      } else {
+        const res = await API.post("/invitations/send", {
+          receiver_id: friendId,
+          group_id: group.id,
+        });
+        setInvitations((prev) => [...prev, res.data]);
+      }
+    } catch (err) {
+      console.error("Error toggling invitation:", err);
+      alert("Failed to process invitation");
+    }
   };
 
-  // ====== Render ======
+  // ====================== Render ======================
   return (
     <div className="group-details">
       <div className="group-details__container">
-        <button onClick={goBack} className="back-button">Back</button>
+        <button onClick={goBack} className="back-button">← Back</button>
 
         <div className="group-header">
           <h2>{group.groupName}</h2>
           <p>{group.description}</p>
           <button
             className="invite-button"
-            onClick={() => setShowInviteModal(true)}
+            onClick={() => setShowInviteSection(!showInviteSection)}
           >
-            Invite
+            {showInviteSection ? "Hide Invites" : "Invite Friends"}
           </button>
         </div>
 
-        {/* ===== Invite Modal ===== */}
-        {showInviteModal && (
-          <div className="invite-modal">
+        {/* Invite Friends Section */}
+        {showInviteSection && (
+          <div className="invite-section">
             <h3>Invite Friends</h3>
-            <button
-              className="close-modal"
-              onClick={() => setShowInviteModal(false)}
-            >
-              X
-            </button>
             {friends.length === 0 ? (
-              <p>No friends to invite</p>
+              <p>No friends available to invite.</p>
             ) : (
               <ul className="invite-list">
                 {friends.map((f) => (
-                  <li key={f.graduate_id}>
-                    {f.fullName || f["full-name"]}
-                    {isInvited(f.graduate_id) ? (
-                      <button
-                        className="invite-action cancel"
-                        onClick={() =>
-                          handleCancelInvitation(
-                            invitations.find(
-                              (inv) =>
-                                inv.receiver_id === f.graduate_id &&
-                                inv.status === "pending"
-                            ).id
-                          )
-                        }
-                      >
-                        Cancel
-                      </button>
-                    ) : (
-                      <button
-                        className="invite-action invite"
-                        onClick={() =>
-                          handleSendInvitation(f.graduate_id)
-                        }
-                      >
-                        Invite
-                      </button>
-                    )}
+                  <li key={f.friendId}>
+                    <div className="friend-info">
+                      <img src={f.profilePicture} alt="Profile" />
+                      <span>{f.fullName}</span>
+                    </div>
+                    <button
+                      className={`invite-action ${isInvited(f.friendId) ? "cancel" : "invite"}`}
+                      onClick={() => handleToggleInvitation(f.friendId)}
+                    >
+                      {isInvited(f.friendId) ? "Cancel" : "Invite"}
+                    </button>
                   </li>
                 ))}
               </ul>
@@ -233,36 +183,26 @@ function GroupDetails({ group, goBack, currentUserId }) {
           </div>
         )}
 
-        {/* ===== Create Post ===== */}
+        {/* Create Post Section */}
         <div className="create-post">
           <h3>Create a Post</h3>
-          <div className="create-post__controls">
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="Internship">Internship</option>
-              <option value="Success story">Success story</option>
-              <option value="General">General</option>
-            </select>
-          </div>
+          <select value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="Internship">Internship</option>
+            <option value="Success story">Success story</option>
+            <option value="General">General</option>
+          </select>
           <textarea
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             placeholder="Write a new post..."
           />
-          <input
-            type="file"
-            onChange={(e) => setImage(e.target.files[0])}
-          />
-          <div className="create-post__actions">
-            <button className="btn btn--primary" onClick={handleCreatePost}>
-              Post
-            </button>
-          </div>
+          <input type="file" onChange={(e) => setImage(e.target.files[0])} />
+          <button onClick={handleCreatePost} className="btn btn--primary">
+            Post
+          </button>
         </div>
 
-        {/* ===== Group Posts ===== */}
+        {/* Posts List */}
         <h3>Group Posts</h3>
         {posts.length === 0 ? (
           <p className="empty-state">No posts yet in this group.</p>
@@ -270,43 +210,24 @@ function GroupDetails({ group, goBack, currentUserId }) {
           <div className="posts-list">
             {posts.map((p) => (
               <div key={p.post_id} className="post-card">
-                <div className="post-author">{p.author["full-name"]}</div>
+                <div className="post-author">{p.author.fullName}</div>
                 <div className="post-content">{p.content}</div>
                 {p.image && <img src={p.image} alt="Post" className="post-image" />}
-                <div className="post-meta">
-                  {new Date(p["created-at"]).toLocaleString()}
-                </div>
-                <div className="post-actions">
-                  <button
-                    className="like-button"
-                    onClick={() => handleLike(p.post_id)}
-                  >
-                    👍 Like ({p.likesCount || 0})
-                  </button>
-                </div>
+                <div className="post-meta">{new Date(p["created-at"]).toLocaleString()}</div>
+                <button onClick={() => handleLike(p.post_id)} className="like-button">
+                  👍 Like ({p.likesCount || 0})
+                </button>
                 <div className="comment-section">
                   <input
                     type="text"
                     placeholder="Add a comment"
                     value={commentText[p.post_id] || ""}
                     onChange={(e) =>
-                      setCommentText((prev) => ({
-                        ...prev,
-                        [p.post_id]: e.target.value,
-                      }))
+                      setCommentText((prev) => ({ ...prev, [p.post_id]: e.target.value }))
                     }
                   />
                   <button onClick={() => handleComment(p.post_id)}>Comment</button>
                 </div>
-                {p.comments && p.comments.length > 0 && (
-                  <div className="comments-list">
-                    {p.comments.map((c) => (
-                      <p key={c.id}>
-                        <b>{c.user.fullName}</b>: {c.content}
-                      </p>
-                    ))}
-                  </div>
-                )}
               </div>
             ))}
           </div>
@@ -317,6 +238,8 @@ function GroupDetails({ group, goBack, currentUserId }) {
 }
 
 export default GroupDetails;
+
+
 /*import { useState, useEffect } from "react";
 import API from "../../services/api";
 import "./GroupDetails.css";
