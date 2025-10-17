@@ -107,7 +107,7 @@ const ensurePermissionsSeeded = async () => {
 
         console.log(`Added missing permission: ${permName}`);
       } else {
-        console.log(`ℹPermission already exists: ${permName}`);
+        console.log(`Permission already exists: ${permName}`);
       }
     }
 

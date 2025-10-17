@@ -84,7 +84,7 @@ const getReceivedInvitations = async (req, res) => {
 
     const invitations = await Invitation.findAll({
       where: { receiver_id, status: "pending" },
-      attributes: ["id", "status", "sent_date"],
+      attributes: ["id", "status", "sent_date", "sender_id", "receiver_id", "group_id"],
       include: [
         {
           model: Group,
@@ -92,11 +92,11 @@ const getReceivedInvitations = async (req, res) => {
         },
         {
           model: User,
-          as: "sender", // استخدمنا alias من الموديل
+          as: "sender",
           attributes: ["id", "first-name", "last-name"],
           include: [
             {
-              model: require("../models/Graduate"), // نجيب بيانات الخريج لو موجودة
+              model: require("../models/Graduate"),
               attributes: ["faculty", "graduation-year", "current-job"],
             },
           ],
@@ -104,21 +104,21 @@ const getReceivedInvitations = async (req, res) => {
       ],
     });
 
-    // نركب النتيجة بشكل منسق
+    // تنسيق النتيجة
     const result = invitations.map((inv) => {
       const firstName = inv.sender?.["first-name"] || "";
       const lastName = inv.sender?.["last-name"] || "";
       const fullName = `${firstName} ${lastName}`.trim();
 
       return {
-        id: inv.id,
+        invitationId: inv.id,
         status: inv.status,
         sent_date: inv.sent_date,
+        sender_id: inv.sender_id,
+        receiver_id: inv.receiver_id,
+        group_id: inv.group_id,
         groupName: inv.Group ? inv.Group["group-name"] : null,
         senderFullName: fullName,
-        senderFaculty: inv.sender?.Graduate?.faculty || null,
-        senderGraduationYear: inv.sender?.Graduate?.["graduation-year"] || null,
-        senderJob: inv.sender?.Graduate?.["current-job"] || null,
       };
     });
 

@@ -5,6 +5,11 @@ const groupController = require("../controllers/group.controller");
 const authMiddleware = require("../middleware/authMiddleware"); // middleware للتحقق من التوكن
 const uploadGroup = require("../middleware/uploadGroup");
 
+
+
+
+router.get("/groups/:groupId/available-graduates", authMiddleware.protect,groupController.getGraduatesForGroup);
+
 router.post(
   "/groups",
   authMiddleware.protect,

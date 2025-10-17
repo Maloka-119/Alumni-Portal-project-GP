@@ -1,62 +1,97 @@
 const Group = require("../models/Group");
 const Staff = require("../models/Staff"); // للتأكد ان الي عامل العملية admin
 const User = require("../models/User");
-const GroupMember = require("../models/GroupMember");
 const Post = require("../models/Post");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
+const { Op } = require("sequelize");
+const Graduate = require("../models/Graduate");
+const GroupMember = require("../models/GroupMember");
+const Invitation = require("../models/Invitation");
+
+// getGraduatesForGroup اللي مسموحلهم تبعتلهم دعوه للجروب دا او معموله دعوه لسه متقبلتش
+//available to invite
+const getGraduatesForGroup = async (req, res) => {
+  try {
+    const { groupId } = req.params;
+    const currentUserId = req.user.id; // المستخدم الحالي من التوكن
+
+    // تحقق إن المستخدم عضو في الجروب
+    const isMember = await GroupMember.findOne({
+      where: {
+        "group-id": groupId,
+        "user-id": currentUserId,
+      },
+    });
+
+    if (!isMember) {
+      return res.status(403).json({
+        error: "You must be a member of this group to invite others.",
+      });
+    }
+
+    //  IDs الأعضاء الموجودين في الجروب
+    const groupMembers = await GroupMember.findAll({
+      where: { "group-id": groupId },
+      attributes: ["user-id"],
+    });
+    const memberIds = groupMembers.map((m) => m["user-id"]);
+
+    //  الدعوات اللي المستخدم الحالي بعتها وحالتها pending
+    const userPendingInvitations = await Invitation.findAll({
+      where: {
+        group_id: groupId,
+        sender_id: currentUserId,
+        status: "pending",
+      },
+      attributes: ["id", "receiver_id"], // نجيب id الدعوة كمان
+    });
+
+    // خريطة (receiver_id → invitation_id)
+    const pendingMap = {};
+    userPendingInvitations.forEach((i) => {
+      pendingMap[i.receiver_id] = i.id;
+    });
+    const pendingIds = Object.keys(pendingMap).map((id) => parseInt(id));
+
+    // نجيب الخريجين اللي مش أعضاء
+    const graduates = await User.findAll({
+      where: {
+        "user-type": "graduate",
+        id: {
+          [Op.notIn]: memberIds,
+        },
+      },
+      include: [
+        {
+          model: Graduate,
+          attributes: ["profile-picture-url"],
+        },
+      ],
+      attributes: ["id", "first-name", "last-name"],
+    });
+
+    // نبني النتيجة المطلوبة
+    const result = graduates.map((g) => ({
+      id: g.id,
+      fullName: `${g["first-name"]} ${g["last-name"]}`,
+      profilePicture: g.Graduate?.["profile-picture-url"] || null,
+      invitationStatus: pendingIds.includes(g.id)
+        ? "pending"
+        : "not_invited",
+      invitationId: pendingMap[g.id] || null,
+    }));
+
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error in getGraduatesForGroup:", error);
+    res.status(500).json({ error: "Something went wrong" });
+  }
+};
+
+
+
 
 //as an admin, i want to create group
-// const createGroup = async (req, res) => {
-//   try {
-//     const { groupName, description, groupImage } = req.body; // استقبل الصورة من الـ body
-//     const user = req.user; // middleware بيرجع الـ user
-
-//     // تأكد إن الشخص admin
-//     if (user["user-type"] !== "admin") {
-//       return res.status(403).json({
-//         status: "fail",
-//         message: "Only admins can create groups",
-//         data: [],
-//       });
-//     }
-
-//     // إنشاء المجموعة
-//     const group = await Group.create({
-//       "group-name": groupName,
-//       description,
-//       "created-date": new Date(),
-//       "group-image": groupImage || null, // نحط الصورة لو موجودة
-//     });
-
-//     // احسب عدد الأعضاء الحاليين في الجروب
-//     const memberCount = await GroupMember.count({
-//       where: { "group-id": group.id },
-//     });
-
-//     // ريسبونس بالشكل المطلوب
-//     return res.status(201).json({
-//       status: "success",
-//       message: "Group created successfully",
-//       data: [
-//         {
-//           id: group.id,
-//           groupName: group["group-name"],
-//           description: group.description,
-//           createdDate: group["created-date"],
-//           groupImage: group["group-image"], // نرجع الصورة كمان
-//           memberCount: memberCount, // العدد الحالي للأعضاء
-//         },
-//       ],
-//     });
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(500).json({
-//       status: "error",
-//       message: err.message,
-//       data: [],
-//     });
-//   }
-// };
 const createGroup = async (req, res) => {
   try {
     console.log("🟢 ----- [createGroup] START -----");
@@ -660,4 +695,5 @@ module.exports = {
   leaveGroup,
   getMyGroups,
   getGroupUsers,
+  getGraduatesForGroup,
 };
