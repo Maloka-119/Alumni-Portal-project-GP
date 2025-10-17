@@ -175,7 +175,7 @@
 
 /* زرار التعديل - الوضع العادي */
 .edit-btnn {
-  background-color: #007bff;
+  background-color: #b38e19;
   color: white;
   padding: 8px 16px;
   border: none;
@@ -225,4 +225,56 @@ body.dark-mode .file-input {
 
 body.dark-mode .file-input:hover {
   border-color: #1a73e8;
+}
+
+/* زر Save - الوضع العادي */
+.savebut {
+  background-color: #007bff;
+  color: white;
+  padding: 8px 16px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.3s, color 0.3s;
+}
+
+.savebut:hover {
+  background-color: #0056b3;
+}
+
+/* زر Cancel - الوضع العادي */
+.cancelbut {
+  background-color: #6c757d;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: background 0.3s, color 0.3s;
+}
+
+.cancelbut:hover {
+  background-color: #5a6268;
+}
+
+/* زر Save و Cancel - دارك مود */
+body.dark-mode .savebut {
+  background-color: #2563eb;
+}
+
+body.dark-mode .savebut:hover {
+  background-color: #1d4ed8;
+}
+
+body.dark-mode .cancelbut {
+  background-color: #4b5563;
+}
+
+body.dark-mode .cancelbut:hover {
+  background-color: #374151;
 }
