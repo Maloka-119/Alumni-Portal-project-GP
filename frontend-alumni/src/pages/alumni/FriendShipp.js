@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import API from "../../services/api";
 import PROFILE from "./PROFILE.jpeg";
 import "./FriendShip.css";
+import { MessageCircle } from "lucide-react";
+
 
 function FriendshipPage() {
   const { t, i18n } = useTranslation();
@@ -155,7 +157,10 @@ function FriendshipPage() {
   <span className="user-name">{f.userName}</span>
 </div>
                   <div className="friend-actions">
-                  <button className="button">{t("chat")}</button>
+                  <button className=" chat-icon-btn">
+  <MessageCircle size={18} />
+</button>
+
             <button
               className="Removebutton"
               onClick={() => removeFriend(f.friendId, f.userName)}
