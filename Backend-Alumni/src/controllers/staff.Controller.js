@@ -2,7 +2,7 @@
 const Staff = require("../models/Staff");
 const User = require("../models/User");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
-
+const Role = require("../models/Role");
 // get all staff
 const getAllStaff = async (req, res) => {
   try {
