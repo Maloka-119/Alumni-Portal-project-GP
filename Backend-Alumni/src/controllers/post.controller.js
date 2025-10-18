@@ -779,13 +779,7 @@ const likePost = async (req, res) => {
     const { postId } = req.params;
     const userId = req.user.id;
 
-    // Check if user is staff
-    if (req.user["user-type"] !== "staff") {
-      return res.status(403).json({
-        status: "error",
-        message: "Only staff members can like posts",
-      });
-    }
+    // Any authenticated user can like posts
 
     // Check if post exists
     const post = await Post.findByPk(postId);
@@ -837,13 +831,7 @@ const unlikePost = async (req, res) => {
     const { postId } = req.params;
     const userId = req.user.id;
 
-    // Check if user is staff
-    if (req.user["user-type"] !== "staff") {
-      return res.status(403).json({
-        status: "error",
-        message: "Only staff members can unlike posts",
-      });
-    }
+    // Any authenticated user can unlike posts
 
     // Find and delete the like
     const like = await Like.findOne({
@@ -882,13 +870,7 @@ const addComment = async (req, res) => {
     const { content } = req.body;
     const userId = req.user.id;
 
-    // Check if user is staff
-    if (req.user["user-type"] !== "staff") {
-      return res.status(403).json({
-        status: "error",
-        message: "Only staff members can comment on posts",
-      });
-    }
+    // Any authenticated user can comment on posts
 
     // Check if post exists
     const post = await Post.findByPk(postId);
@@ -955,13 +937,7 @@ const editComment = async (req, res) => {
     const { content } = req.body;
     const userId = req.user.id;
 
-    // Check if user is staff
-    if (req.user["user-type"] !== "staff") {
-      return res.status(403).json({
-        status: "error",
-        message: "Only staff members can edit comments",
-      });
-    }
+    // Any authenticated user can edit their own comments
 
     // Find the comment
     const comment = await Comment.findByPk(commentId);
@@ -1027,19 +1003,13 @@ const editComment = async (req, res) => {
   }
 };
 
-// Delete comment (staff can delete their own comments)
+// Delete comment (users can delete their own comments)
 const deleteComment = async (req, res) => {
   try {
     const { commentId } = req.params;
     const userId = req.user.id;
 
-    // Check if user is staff
-    if (req.user["user-type"] !== "staff") {
-      return res.status(403).json({
-        status: "error",
-        message: "Only staff members can delete comments",
-      });
-    }
+    // Any authenticated user can delete their own comments
 
     // Find the comment
     const comment = await Comment.findByPk(commentId);
@@ -1074,20 +1044,12 @@ const deleteComment = async (req, res) => {
   }
 };
 
-// Delete post (staff can delete their own posts and graduate posts)
+// Delete post - Users can delete their own posts, Admins can delete any post
 const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
-
-    // Check if user is staff
-    if (req.user["user-type"] !== "staff") {
-      return res.status(403).json({
-        status: "error",
-        message: "Only staff members can delete posts",
-      });
-    }
-
+    
     // Find the post
     const post = await Post.findByPk(postId);
     if (!post) {
