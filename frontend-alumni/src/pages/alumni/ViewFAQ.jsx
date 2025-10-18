@@ -14,7 +14,12 @@ const ViewFAQ = () => {
   const fetchFaqs = async () => {
     try {
       const res = await API.get("/faqs");
-      setFaqs(res.data);
+      console.log("Raw API response:", res);
+
+      // احصل على array من data
+      const faqArray = Array.isArray(res.data.data) ? res.data.data : [];
+      setFaqs(faqArray);
+      console.log("FAQs state:", faqArray);
     } catch (err) {
       console.error("Error loading FAQs:", err);
     }
@@ -29,7 +34,7 @@ const ViewFAQ = () => {
       <h2 className="uni-header">Frequently Asked Questions</h2>
       <div className="faq-list">
         {faqs.map((faq, index) => (
-          <div key={faq.id} className="faq-item">
+          <div key={faq.faq_id} className="faq-item">
             <div className="faq-header" onClick={() => toggleFAQ(index)}>
               <h4>{faq.question}</h4>
               {openIndex === index ? (
