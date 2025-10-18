@@ -52,9 +52,22 @@ function GroupDetails({ group, goBack, currentUserId }) {
         API.get("/invitations/received"),
       ]);
 
-      // combine both and keep only this group's invites
-      const allInvites = [...(sentRes.data || []), ...(receivedRes.data || [])];
-      const groupInvites = allInvites.filter(
+      // Normalize both responses to have same keys
+      const sentInvites = (sentRes.data || []).map((inv) => ({
+        id: inv.id,
+        receiver_id: inv.receiver_id,
+        group_id: inv.group_id,
+        status: inv.status,
+      }));
+
+      const receivedInvites = (receivedRes.data || []).map((inv) => ({
+        id: inv.id,
+        receiver_id: currentUserId, // أنت المستلم
+        group_id: group.id, // افتراضياً نفس الـ group الحالي
+        status: inv.status,
+      }));
+
+      const groupInvites = [...sentInvites, ...receivedInvites].filter(
         (inv) => inv.group_id === group.id
       );
 
@@ -150,7 +163,7 @@ function GroupDetails({ group, goBack, currentUserId }) {
     try {
       if (existingInvite) {
         // Cancel existing invite
-        await API.post(`/invitations/${existingInvite.invitationId || existingInvite.id}/cancel`);
+        await API.post(`/invitations/${existingInvite.id}/cancel`);
         setInvitations((prev) =>
           prev.filter((inv) => inv.id !== existingInvite.id)
         );
@@ -161,8 +174,13 @@ function GroupDetails({ group, goBack, currentUserId }) {
           group_id: group.id,
         });
 
-        // إذا الـ API رجع الدعوة الجديدة بنفس الشكل
-        const newInvite = res.data;
+        const newInvite = {
+          id: res.data.id,
+          receiver_id: res.data.receiver_id,
+          group_id: res.data.group_id,
+          status: res.data.status,
+        };
+
         setInvitations((prev) => [...prev, newInvite]);
       }
     } catch (err) {
@@ -291,7 +309,6 @@ function GroupDetails({ group, goBack, currentUserId }) {
 }
 
 export default GroupDetails;
-
 
 /*import { useState, useEffect } from "react";
 import API from "../../services/api";
