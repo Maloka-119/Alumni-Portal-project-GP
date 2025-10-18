@@ -38,3 +38,38 @@
 }
 
 
+
+/* Override default alert style */
+:root {
+  --alert-bg: #2563eb;
+  --alert-text: #fff;
+  --alert-border: #1e4ed8;
+}
+
+/* Base alert style */
+.alert-custom {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: var(--alert-bg);
+  color: var(--alert-text);
+  padding: 12px 18px;
+  border: 1px solid var(--alert-border);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

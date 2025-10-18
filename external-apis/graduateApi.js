@@ -23,6 +23,12 @@ const graduates = [
     faculty: "CS",
     "graduation-year": 2026
   },
+    {
+    nationalId: "40278371927389",
+    "birth-date": "2002-09-10",
+    faculty: "CS",
+    "graduation-year": 2026
+  },
 ];
 
 

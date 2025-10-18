@@ -86,7 +86,7 @@ h1 {
   transform: scale(1.05);
 }
 
-.group-card .overlay {
+.group-card .groverlay {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -96,7 +96,7 @@ h1 {
     pointer-events: none; 
   }
   
-  .group-card .overlay h2 {
+  .group-card .groverlay h2 {
     color: #ffffff;
     font-size: 1.5rem;
     font-weight: 600;
@@ -104,7 +104,7 @@ h1 {
     margin: 0;
   }
   
-  .group-card:hover .overlay h2 {
+  .group-card:hover .groverlay h2 {
     text-shadow: 0 2px 10px rgba(0,0,0,0.8);
   }
   

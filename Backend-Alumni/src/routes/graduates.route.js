@@ -2,18 +2,16 @@ const express = require("express");
 const router = express.Router();
 const graduateController = require("../controllers/graduates.controller");
 const { protect } = require("../middleware/authMiddleware");
-const upload = require("../middleware/uploadProfile");
+const { uploadFiles } = require("../middleware/uploadProfile");
 
 // Update graduate profile (protected)
 router.put(
   "/profile",
   protect,
-  upload.fields([
-    { name: "profilePicture", maxCount: 1 },
-    { name: "cv", maxCount: 1 },
-  ]),
+  uploadFiles, 
   graduateController.updateProfile
 );
+
 
 // Get all graduates (public)
 router.route("/").get(graduateController.getAllGraduates);

@@ -1,0 +1,485 @@
+.friendship-container {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 20px;
+  
+  border-radius: 0;
+  box-shadow: none;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.3s ease;
+  }
+  
+  .friendship-container h2 {
+    text-align: center;
+  font-size: 1.8rem;
+  color: #37568d;
+  margin-bottom: 25px;
+  }
+  
+  /* Friend card style */
+  .friend-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f9fafb;
+    padding: 15px 20px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  
+  .friend-card:hover {
+    background: #eef3ff;
+    transform: translateY(-3px);
+  }
+  
+  /* Friend info section */
+  .friend-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+  
+  .friend-info img {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ccc;
+  }
+  
+  .friend-details h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color:#37568d;
+  }
+  
+  .friend-details p {
+    margin: 3px 0 0;
+    font-size: 0.9rem;
+    color: #666;
+  }
+  
+  /* Action buttons */
+  .friend-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .friend-actions button {
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+  
+  .friend-actions .accept {
+    background: #2563eb;
+    color: white;
+  }
+  
+  .friend-actions .accept:hover {
+    background: #1e40af;
+    transform: scale(1.05);
+  }
+  
+  .friend-actions .decline {
+    background: #ef4444;
+    color: white;
+  }
+  
+  .friend-actions .decline:hover {
+    background: #b91c1c;
+    transform: scale(1.05);
+  }
+  
+  /* Search bar */
+  .friendship-search {
+    width: 100%;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .friendship-search input {
+    width: 80%;
+    max-width: 500px;
+    padding: 10px 14px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    outline: none;
+    transition: border 0.2s ease;
+  }
+  
+  .friendship-search input:focus {
+    border-color: #2563eb;
+  }
+  
+  /* 🌐 الصفحة العامة */
+  .page {
+    width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 40px 20px;
+  
+  border-radius: 0;
+  box-shadow: none;
+  font-family: "Poppins", sans-serif;
+  transition: all 0.3s ease;
+  }
+  
+  /* ✅ شريط التنقل بين التبويبات */
+  .friendship-bar {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 10px;
+  }
+  
+  .friendship-link {
+    background: transparent;
+    border: none;
+    font-size: 1rem;
+    padding: 10px 18px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #37568d;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+  }
+  
+  .friendship-link:hover {
+    color: #2563eb;
+  }
+  
+.friendship-link {
+  transition: all 0.3s ease; /* انتقال ناعم لأي تغيير في اللون أو الظل */
+}
+
+.friendship-link.active {
+     background: #4f7ef5;
+     box-shadow: 0 3px 6px rgba(37, 99, 235, 0.3);
+     color:#f2f0f0;
+  transform: translateY(-2px); /* حركة خفيفة لأعلى لما يكون نشط */
+}
+
+  
+  /* 🧍 المستخدم الواحد */
+  .user {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f9fafb;
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    transition: transform 0.2s ease, background 0.3s ease;
+  }
+  
+  .user:hover {
+    background: #eef3ff;
+    transform: translateY(-2px);
+  }
+  
+  /* 👤 صورة المستخدم */
+  .img {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #ddd;
+    margin-right: 15px;
+  }
+  
+  /* 📋 بيانات المستخدم */
+  .data {
+    flex: 1;
+    font-size: 1rem;
+    color: #222;
+    font-weight: 500;
+  }
+  
+  .time {
+    display: block;
+    font-size: 0.85rem;
+    color: #888;
+  }
+  
+  /* 🔘 الأزرار */
+  .button,
+  .Removebutton {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .button {
+    background-color: #2563eb;
+    color: white;
+  }
+  
+  .button:hover {
+    background-color: #1e40af;
+  }
+  
+  .Removebutton {
+    background-color: #ef4444;
+    color: white;
+  }
+  
+  .Removebutton:hover {
+    background-color: #b91c1c;
+  }
+  
+  /* 🧭 العناوين */
+  .Title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #37568d;
+    margin-bottom: 15px;
+    text-align: left;
+    border-left: 4px solid transparent;
+    border-image: linear-gradient(181deg, #2563eb, #4f7ef5, #7cf50b);
+    border-image-slice: 1;
+    padding-left: 10px;
+    
+    border-radius: 6px;
+    transition: all 0.3s ease;
+  }
+  
+  .friendship-search {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 22px;
+  }
+  
+  .friendship-search input {
+    width: 80%;
+    max-width: 460px;
+    padding: 11px 15px;
+    border: 1px solid #dcdfe4;
+    border-radius: 12px;
+    outline: none;
+    font-size: 0.95rem;
+    color: #333;
+    background-color: #fafbfc;
+    transition: all 0.25s ease;
+  }
+  
+  .friendship-search input:focus {
+    border-color: #2563eb;
+    background-color: #fff;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.15);
+    transform: scale(1.01);
+  }
+  
+  .friendship-search input::placeholder {
+    color: #aaa;
+  }
+  
+ /* 📱 Responsive Enhancements */
+
+/* الأجهزة المتوسطة (تابلت) */
+@media (max-width: 992px) {
+  .friendship-container {
+    padding: 30px 15px;
+  }
+
+  .friend-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .friend-actions {
+    width: 100%;
+    justify-content: flex-end;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .friend-actions button {
+    min-width: 90px;
+    max-width: 130px;
+    text-align: center;
+    border-radius: 8px;
+  }
+
+  .friendship-bar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .friendship-link {
+    font-size: 0.95rem;
+    padding: 8px 14px;
+  }
+
+  .Title {
+    font-size: 1.2rem;
+  }
+}
+
+/* الأجهزة الصغيرة (موبايل) */
+@media (max-width: 600px) {
+  .friendship-container {
+    padding: 25px 10px;
+  }
+
+  .friend-card {
+    padding: 12px 14px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .friend-info img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .friend-details h3 {
+    font-size: 1rem;
+  }
+
+  .friend-details p {
+    font-size: 0.85rem;
+  }
+
+  .friend-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .friend-actions button {
+    flex: 1;
+    padding: 8px 10px;
+    font-size: 0.9rem;
+    min-width: 80px;
+    max-width: 120px;
+    text-align: center;
+    border-radius: 8px;
+  }
+
+  .friend-actions button:active {
+    transform: scale(0.96);
+    opacity: 0.9;
+  }
+
+  .friendship-search input {
+    width: 90%;
+    max-width: none;
+  }
+
+  .friendship-bar {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .Title {
+    font-size: 1.1rem;
+    padding-left: 8px;
+  }
+  .friend-actions button {
+    font-size: 0.9rem;
+    padding: 8px 14px;
+    border-radius: 8px;
+    min-width: 90px;
+    transition: all 0.2s ease;
+  }
+}
+
+/* الشاشات الصغيرة جداً */
+@media (max-width: 400px) {
+  .friend-card {
+    padding: 10px;
+  }
+
+  .friend-details h3 {
+    font-size: 0.95rem;
+  }
+
+  .friend-actions button {
+    flex: 1;
+    min-width: 80px;
+    max-width: 100px;
+    padding: 7px 10px;
+    font-size: 0.85rem;
+    border-radius: 7px;
+    transition: transform 0.15s ease, opacity 0.15s ease;
+  }
+
+  .friend-info img {
+    width: 45px;
+    height: 45px;
+  }
+}
+/* 🔍 Search Input Styling */
+.search-input {
+  width: 100%;
+  max-width: 350px;
+  padding: 10px 14px;
+  margin: 15px auto 25px;
+  display: block;
+  border: 1.8px solid #cdd6e0;
+  border-radius: 25px;
+  font-size: 15px;
+  color: #333;
+  background-color: #f9fafc;
+  outline: none;
+  transition: all 0.25s ease;
+  direction: inherit; /* يحافظ على اتجاه الصفحة حسب اللغة */
+}
+
+/* عند الوقوف على السيرش */
+.search-input:focus {
+  border-color: #37568d;
+  background-color: #fff;
+  box-shadow: 0 0 5px rgba(55, 86, 141, 0.25);
+}
+
+/* Placeholder text */
+.search-input::placeholder {
+  color: #aaa;
+  font-size: 14px;
+}
+
+/* Responsive behavior */
+@media (max-width: 600px) {
+  .search-input {
+    width: 90%;
+    font-size: 14px;
+  }
+}
+
+.imgreq {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #2563eb;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.imgreq:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 6px rgba(37, 99, 235, 0.3);
+}
+
+.req-count {
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #5b9129;
+  margin-left: 4px;
+}

@@ -121,6 +121,7 @@ const handleSaveRole = async () => {
               <tr>
                 <th>{t("name")}</th>
                 <th>{t("nationalId")}</th>
+                <th>{t("staffId")}</th>
                 <th>{t("role")}</th>
                 <th>{t("status")}</th>
                 <th>{t("actions")}</th>
@@ -131,6 +132,8 @@ const handleSaveRole = async () => {
                 <tr key={user['staff_id']} className="table-row">
                   <td>{user.User['first-name']} {user.User['last-name']}</td>
                   <td>{user.User['national-id']}</td>
+                  <td>{user['staff_id']}</td>
+
                   <td>{user.Role || '-'}</td>
                   <td>
                     <span className={`status-badge ${user['status-to-login'].toLowerCase()}`}>
@@ -140,6 +143,7 @@ const handleSaveRole = async () => {
                   <td className="actions-cell">
                     <button
                       className="add-button"
+                      title="Add Role"
                       onClick={() => openRoleModal(user['staff_id'])}
                     >
                       +
