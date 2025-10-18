@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import "./GradProfile.css";
 import PROFILE from "./PROFILE.jpeg";
 import API from "../../services/api";
+import { Upload } from "lucide-react";
 
 function GraduatedProfile() {
   const [user, setUser] = useState(null);
@@ -24,14 +25,14 @@ function GraduatedProfile() {
       const res = await API.get(`/graduates/${userId}/profile`);
       const data = res.data.data;
 
-      // لو fullName موجود والاسم الأول والآخر فاضي
+      
       if (data.fullName && (!data.firstName || !data.lastName)) {
         const parts = data.fullName.split(" ");
         data.firstName = parts[0] || "";
         data.lastName = parts.slice(1).join(" ") || "";
       }
 
-      // تحويل skills من string JSON لمصفوفة لو محتاجة
+      
       if (typeof data.skills === "string") {
         try {
           data.skills = JSON.parse(data.skills);
@@ -57,11 +58,63 @@ function GraduatedProfile() {
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFormData({ ...formData, profilePictureFile: file });
-      console.log("Selected profile picture:", file);
+    if (!file) return;
+  
+    const validExtensions = ["image/jpeg", "image/jpg"];
+    if (!validExtensions.includes(file.type)) {
+      alert("Only JPG images are allowed");
+      e.target.value = "";
+      return;
     }
+  
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+  
+        const maxWidth = 800;
+        const maxHeight = 800;
+  
+        let width = img.width;
+        let height = img.height;
+  
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height *= maxWidth / width));
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width *= maxHeight / height));
+            height = maxHeight;
+          }
+        }
+  
+        canvas.width = width;
+        canvas.height = height;
+        ctx.drawImage(img, 0, 0, width, height);
+  
+        canvas.toBlob(
+          (blob) => {
+            const compressedFile = new File([blob], file.name, {
+              type: "image/jpeg",
+              lastModified: Date.now(),
+            });
+  
+            setFormData({ ...formData, profilePictureFile: compressedFile });
+            console.log("Compressed profile picture:", compressedFile);
+          },
+          "image/jpeg",
+          0.7 // جودة الضغط من 0 إلى 1
+        );
+      };
+    };
   };
+  
 
   const handleCvChange = (e) => {
     const file = e.target.files[0];
@@ -96,7 +149,7 @@ function GraduatedProfile() {
       payload.append("skills", JSON.stringify(formData.skills || []));
       payload.append("faculty", formData.faculty || "");
       payload.append("graduationYear", formData.graduationYear || "");
-      payload.append("linkedInLink", formData.linkedInLink || "");
+      
     payload.append("phoneNumber", formData.phoneNumber || "");
 
       // الملفات
@@ -173,16 +226,7 @@ function GraduatedProfile() {
           <p>
             <strong>{t("currentJob")}:</strong> {formData.currentJob}
           </p>
-          <p>
-  <strong>{t("linkedIn")}:</strong>{" "}
-  {formData.linkedInLink ? (
-    <a href={formData.linkedInLink} target="_blank" rel="noopener noreferrer">
-      {formData.linkedInLink}
-    </a>
-  ) : (
-    t("noLinkedIn")
-  )}
-</p>
+          
 
 <p>
   <strong>{t("phoneNumber")}:</strong> {formData.phoneNumber || t("noPhone")}
@@ -246,33 +290,28 @@ function GraduatedProfile() {
               onChange={handleChange}
             />
           </label>
-          <label>
-            {t("profilePhoto")}:
-            <input
-              className="file-input"
-              type="file"
-              accept="image/*"
-              onChange={handlePhotoChange}
-            />
-          </label>
-          <label>
-            {t("cv")}:
-            <input
-              className="file-input"
-              type="file"
-              accept=".pdf,.doc,.docx"
-              onChange={handleCvChange}
-            />
-          </label>
-          <label>
-  {t("linkedIn")}:
+          <label className="upload-label">
+  <Upload size={18} />
+  <span className="upload-text">{t("profilePhoto")}</span>
   <input
-    type="text"
-    name="linkedInLink"
-    value={formData.linkedInLink || ""}
-    onChange={handleChange}
+    className="upload-input"
+    type="file"
+    accept="image/jpeg"
+    onChange={handlePhotoChange}
   />
 </label>
+
+<label className="upload-label">
+  <Upload size={18} />
+  <span className="upload-text">{t("cv")}</span>
+  <input
+    className="upload-input"
+    type="file"
+    accept=".pdf,.doc,.docx"
+    onChange={handleCvChange}
+  />
+</label>
+         
 
 <label>
   {t("phoneNumber")}:
@@ -285,8 +324,8 @@ function GraduatedProfile() {
 </label>
 
 
-          <button onClick={handleSave}>{t("save")}</button>
-          <button onClick={handleCancel}>{t("cancel")}</button>
+          <button className="saveprof"  onClick={handleSave}>{t("save")}</button>
+          <button className="cancelprof"  onClick={handleCancel}>{t("cancel")}</button>
         </div>
       )}
     </div>
@@ -294,8 +333,4 @@ function GraduatedProfile() {
 }
 
 export default GraduatedProfile;
-
-
-
-
 

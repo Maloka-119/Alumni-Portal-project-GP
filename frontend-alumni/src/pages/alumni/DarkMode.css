@@ -801,3 +801,139 @@
 .dark .messages-box {
   scrollbar-color: #374151 #0b1220;
 }
+
+/* ===== Dark Mode Friendship Page ===== */
+.dark .friendship-container,
+.dark .page {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+.dark .friendship-container h2 {
+  color: #60a5fa;
+}
+
+/* Cards */
+.dark .friend-card,
+.dark .user {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+.dark .friend-card:hover,
+.dark .user:hover {
+  background: #1f2937c0;
+  box-shadow: 0 6px 14px rgba(0,0,0,0.5);
+}
+
+/* Friend details */
+.dark .friend-details h3,
+.dark .data {
+  color: #f3f4f6;
+}
+
+.dark .friend-details p,
+.dark .time {
+  color: #9ca3af;
+}
+
+/* Buttons */
+.dark .friend-actions button,
+.dark .button,
+.dark .Removebutton {
+  border: none;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.dark .friend-actions .accept,
+.dark .button {
+  background: #2563eb;
+  color: #f3f4f6;
+}
+
+.dark .friend-actions .accept:hover,
+.dark .button:hover {
+  background: #1d4ed8;
+}
+
+.dark .friend-actions .decline,
+.dark .Removebutton {
+  background: #b91c1c;
+  color: #f3f4f6;
+}
+
+.dark .friend-actions .decline:hover,
+.dark .Removebutton:hover {
+  background: #ef4444;
+}
+
+/* Search bar */
+.dark .friendship-search input {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+}
+
+.dark .friendship-search input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 6px rgba(37,99,235,0.4);
+}
+
+.dark .friendship-search input::placeholder {
+  color: #9ca3af;
+}
+/* Focused search state in dark mode */
+.dark .friendship-search input:focus {
+  background: #111827;
+  border-color: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+  transform: scale(1.02);
+  color: #f9fafb;
+}
+
+.dark .req-count {
+  color: rgba(59, 130, 246, 0.5);
+ 
+}
+/* Tabs */
+.dark .friendship-bar {
+  border-bottom: 2px solid #374151;
+}
+
+.dark .friendship-link {
+  color: #f3f4f6;
+}
+
+.dark .friendship-link:hover {
+  color: #60a5fa;
+}
+
+.dark .friendship-link.active {
+  background: #2563eb;
+  color: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(37,99,235,0.4);
+}
+
+/* Title */
+.dark .Title {
+  color: #f3f4f6;
+  
+  border-left: 4px solid #2563eb;
+  border-image: none;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+
+/* Profile Image */
+.dark .friend-info img,
+.dark .img {
+  border: 2px solid #374151;
+}
+
+/* Responsive fix */
+@media (max-width: 600px) {
+  .dark .user {
+    background: #1f2937;
+  }
+}

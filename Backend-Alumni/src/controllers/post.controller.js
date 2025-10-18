@@ -208,7 +208,10 @@ const getGroupPosts = async (req, res) => {
     const { groupId } = req.params;
 
     const posts = await Post.findAll({
-      where: { "group-id": groupId },
+      where: {
+        "group-id": groupId,
+        "is-hidden": false, // ⬅️ فقط البوستات اللي مش معمولة هيدن
+      },
       include: [
         {
           model: User,
@@ -220,7 +223,7 @@ const getGroupPosts = async (req, res) => {
             },
             {
               model: Staff,
-              attributes: ["status-to-login"], // مثال: ممكن تضيف أي عمود من staff
+              attributes: ["status-to-login"],
             },
           ],
         },
@@ -252,12 +255,13 @@ const getGroupPosts = async (req, res) => {
         },
         "group-id": post["group-id"],
         "in-landing": post["in-landing"],
+        "is-hidden": post["is-hidden"],
       };
     });
 
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
-      message: "Group posts fetched successfully",
+      message: "Visible group posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
@@ -273,59 +277,49 @@ const getGroupPosts = async (req, res) => {
 // get all posts
 const getAllPostsOfUsers = async (req, res) => {
   try {
+    const user = req.user;
+    const isAdmin = user && user["user-type"] === "admin";
+
+    const whereCondition = isAdmin ? {} : { "is-hidden": false };
+
     const posts = await Post.findAll({
+      where: whereCondition,
       include: [
         {
           model: User,
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
           include: [
-            {
-              model: Graduate,
-              attributes: ["profile-picture-url"],
-            },
-            {
-              model: Staff,
-              attributes: ["status-to-login"],
-            },
+            { model: Graduate, attributes: ["profile-picture-url"] },
+            { model: Staff, attributes: ["status-to-login"] },
           ],
         },
-        {
-          model: PostImage, // 🆕 أضفنا الـ include للصور
-          attributes: ["image-url"],
-        },
+        { model: PostImage, attributes: ["image-url"] },
       ],
       order: [["created-at", "DESC"]],
     });
 
-    const responseData = posts.map((post) => {
-      let image = null;
-
-      if (post.User.Graduate) {
-        image = post.User.Graduate["profile-picture-url"];
-      } else if (post.User.Staff) {
-        image = null;
-      }
-
-      return {
-        post_id: post.post_id,
-        category: post.category,
-        content: post.content,
-        description: post.description,
-        "created-at": post["created-at"],
-        author: {
-          id: post.User.id,
-          "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-          email: post.User.email,
-          type: post.User["user-type"],
-          image: image,
-        },
-        "group-id": post["group-id"],
-        "in-landing": post["in-landing"],
-        images: post.PostImages
-          ? post.PostImages.map((img) => img["image-url"])
-          : [], // 🆕 أضفنا الصور
-      };
-    });
+    const responseData = posts.map((post) => ({
+      post_id: post.post_id,
+      category: post.category,
+      content: post.content,
+      description: post.description,
+      "created-at": post["created-at"],
+      author: {
+        id: post.User.id,
+        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+        email: post.User.email,
+        type: post.User["user-type"],
+        image: post.User.Graduate
+          ? post.User.Graduate["profile-picture-url"]
+          : null,
+      },
+      "group-id": post["group-id"],
+      "in-landing": post["in-landing"],
+      images: post.PostImages
+        ? post.PostImages.map((img) => img["image-url"])
+        : [],
+      "is-hidden": post["is-hidden"],
+    }));
 
     res.status(200).json({
       status: "success",
@@ -344,26 +338,38 @@ const getAllPostsOfUsers = async (req, res) => {
 
 const getAllPosts = async (req, res) => {
   try {
+    const user = req.user; // ⬅️ المستخدم الحالي (من التوكن)
+    console.log("🟩 Current user from token:", user); // 🔍 نطبع بيانات المستخدم
+
+    const isAdmin = user && user["user-type"] === "admin"; // ⬅️ نتحقق هل هو أدمن
+    console.log("🟦 isAdmin:", isAdmin); // 🔍 نطبع هل هو أدمن ولا لا
+
+    // ⬅️ الشرط الأساسي: لو أدمن يشوف الكل، لو مش أدمن يشوف غير المخفي فقط
+    const whereCondition = isAdmin ? {} : { "is-hidden": false };
+    console.log("🟨 whereCondition used:", whereCondition); // 🔍 نعرف الفلتر المستخدم فعلاً
+
     const posts = await Post.findAll({
+      where: whereCondition, // ⬅️ نطبق الفلتر هنا
       include: [
         {
           model: User,
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
           where: { "user-type": "graduate" },
-          include: [
-            {
-              model: Graduate,
-              attributes: ["profile-picture-url"],
-            },
-          ],
+          include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
         },
         {
-          model: PostImage, // 🆕 أضفنا الـ include للصور
+          model: PostImage,
           attributes: ["image-url"],
         },
       ],
       order: [["created-at", "DESC"]],
     });
+
+    console.log("🟧 Posts fetched count:", posts.length); // 🔍 نطبع عدد البوستات اللي رجعت
+    console.log(
+      "🟪 Sample post is-hidden values:",
+      posts.slice(0, 3).map((p) => p["is-hidden"])
+    ); // 🔍 نشوف أول 3 قيم من is-hidden
 
     const responseData = posts.map((post) => ({
       post_id: post.post_id,
@@ -383,19 +389,20 @@ const getAllPosts = async (req, res) => {
       "in-landing": post["in-landing"],
       images: post.PostImages
         ? post.PostImages.map((img) => img["image-url"])
-        : [], // 🆕 أضفنا الصور
+        : [],
+      "is-hidden": post["is-hidden"],
     }));
 
     res.status(200).json({
       status: "success",
-      message: "Graduate posts fetched successfully",
+      message: "Posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
-    console.error("Error details:", error);
+    console.error("❌ Error details:", error);
     res.status(500).json({
       status: "error",
-      message: "Failed to fetch graduate posts: " + error.message,
+      message: "Failed to fetch posts: " + error.message,
       data: [],
     });
   }
@@ -567,7 +574,6 @@ const getAdminPosts = async (req, res) => {
 
 const getGraduatePosts = async (req, res) => {
   try {
-    // نتأكد إنه فعلاً Graduate
     if (!req.user || req.user["user-type"] !== "graduate") {
       return res.status(403).json({
         status: "error",
@@ -576,24 +582,15 @@ const getGraduatePosts = async (req, res) => {
       });
     }
 
-    // نجيب البوستات اللي author-id بتاعها = id اليوزر اللي عامل لوجن
     const posts = await Post.findAll({
       where: { "author-id": req.user.id },
       include: [
         {
           model: User,
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
-          include: [
-            {
-              model: Graduate,
-              attributes: ["profile-picture-url"],
-            },
-          ],
+          include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
         },
-        {
-          model: PostImage, // 🆕 أضفنا الـ include للصور
-          attributes: ["image-url"],
-        },
+        { model: PostImage, attributes: ["image-url"] },
       ],
       order: [["created-at", "DESC"]],
     });
@@ -614,28 +611,30 @@ const getGraduatePosts = async (req, res) => {
       },
       "group-id": post["group-id"],
       "in-landing": post["in-landing"],
+      "is-hidden": post["is-hidden"],
       likes: post.likes || 0,
       shares: post.shares || 0,
       comments: post.comments || [],
       images: post.PostImages
         ? post.PostImages.map((img) => img["image-url"])
-        : [], // 🆕 أضفنا الصور
+        : [],
     }));
 
-    return res.status(200).json({
+    res.status(200).json({
       status: "success",
       message: "Graduate posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
     console.error("Error fetching graduate posts:", error);
-    return res.status(500).json({
+    res.status(500).json({
       status: "error",
       message: "Failed to fetch graduate posts: " + error.message,
       data: [],
     });
   }
 };
+
 const editPost = async (req, res) => {
   console.log("🟢 ----- [editPost] START -----");
 
@@ -1250,7 +1249,7 @@ const hideNegativePost = async (req, res) => {
       });
     }
 
-    // 🔍 نجيب البوست
+    // 🔍 تأكد أن البوست موجود
     const post = await Post.findByPk(postId);
     if (!post) {
       return res.status(404).json({
@@ -1260,9 +1259,8 @@ const hideNegativePost = async (req, res) => {
       });
     }
 
-    // ✅ نخفي البوست
-    post["is-hidden"] = true;
-    await post.save();
+    // ✅ نحدث العمود يدويًا في قاعدة البيانات (بدون post.save)
+    await Post.update({ "is-hidden": true }, { where: { post_id: postId } });
 
     return res.status(200).json({
       status: "success",
@@ -1271,12 +1269,60 @@ const hideNegativePost = async (req, res) => {
         {
           postId: post.post_id,
           content: post.content,
-          isHidden: post["is-hidden"],
+          isHidden: true,
         },
       ],
     });
   } catch (err) {
     console.error("Error in hideNegativePost:", err);
+    return res.status(500).json({
+      status: "error",
+      message: err.message,
+      data: [],
+    });
+  }
+};
+
+const unhidePost = async (req, res) => {
+  try {
+    const user = req.user;
+    const { postId } = req.params;
+
+    // ✅ لازم يكون Admin
+    if (!user || user["user-type"] !== "admin") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only admins can unhide posts",
+        data: [],
+      });
+    }
+
+    // 🔍 تأكد أن البوست موجود
+    const post = await Post.findByPk(postId);
+    if (!post) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Post not found",
+        data: [],
+      });
+    }
+
+    // ✅ نحدث العمود يدويًا
+    await Post.update({ "is-hidden": false }, { where: { post_id: postId } });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Post unhidden successfully",
+      data: [
+        {
+          postId: post.post_id,
+          content: post.content,
+          isHidden: false,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("Error in unhidePost:", err);
     return res.status(500).json({
       status: "error",
       message: err.message,
@@ -1302,4 +1348,5 @@ module.exports = {
   deletePost,
   getPostWithDetails,
   hideNegativePost,
+  unhidePost,
 };

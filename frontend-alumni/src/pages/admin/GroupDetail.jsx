@@ -254,20 +254,14 @@ function GroupDetail({ group, goBack, updateGroup }) {
             <select value={postType} onChange={e => setPostType(e.target.value)} required className="input-field">
               {types.map(ti => <option key={ti}>{ti}</option>)}
             </select>
-            <input value={postLink} onChange={e => setPostLink(e.target.value)} placeholder={'Optional Link'} className="input-field" />
+           
 
             <div className="optional-icons">
               <label title={'Add Image'}>
                 <input type="file" onChange={handleImageChange} multiple style={{ display: 'none' }} />
                 <Image size={20} />
               </label>
-              <label title={'Add File'}>
-                <input type="file" onChange={handleFileChange} multiple style={{ display: 'none' }} />
-                <FileText size={20} />
-              </label>
-              <label title={'Add Link'}>
-                <LinkIcon size={20} />
-              </label>
+             
             </div>
 
             <div className="images-preview">
@@ -302,12 +296,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
               <div className="post-cont">
                     
                 {p.images && <img src={p.images} alt="post" className="post-image" />}
-                {p.fileUrl && <a href={p.fileUrl} download className="post-file-link">{p.fileName}</a>}
-                {p.link && (
-                  <a href={p.link} target="_blank" rel="noopener noreferrer" className="post-link">
-                    {p.link}
-                  </a>
-                )}
+                
               </div>
               <div className="post-actions">
                 <button onClick={() => handleLikePost(p)}><Heart size={16} />Like</button>

@@ -1,4 +1,3 @@
-//last correct
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import "./GradProfile.css";
@@ -15,31 +14,31 @@ function GraduatedProfile() {
   const userId = storedUser?.id;
 
   useEffect(() => {
-    console.log("userId passed to GraduatedProfile:", userId);
     if (userId) fetchUser();
   }, [userId]);
+
+  // دالة لتوحيد بيانات المستخدم بعد GET أو PUT
+  const normalizeData = (data) => ({
+    profilePicture: data.profilePicture || data["profile-picture-url"] || PROFILE,
+    fullName:
+      data.fullName ||
+      `${data.User?.["first-name"] || ""} ${data.User?.["last-name"] || ""}`,
+    faculty: data.faculty,
+    graduationYear: data.graduationYear || data["graduation-year"],
+    bio: data.bio || "",
+    CV: data.CV || data["cv-url"] || null,
+    skills:
+      typeof data.skills === "string"
+        ? JSON.parse(data.skills || "[]")
+        : data.skills || [],
+    currentJob: data.currentJob || data["current-job"] || "",
+    phoneNumber: data.phoneNumber || data.User?.["phone-number"] || "",
+  });
 
   const fetchUser = async () => {
     try {
       const res = await API.get(`/graduates/${userId}/profile`);
-      const data = res.data.data;
-
-      // لو fullName موجود والاسم الأول والآخر فاضي
-      if (data.fullName && (!data.firstName || !data.lastName)) {
-        const parts = data.fullName.split(" ");
-        data.firstName = parts[0] || "";
-        data.lastName = parts.slice(1).join(" ") || "";
-      }
-
-      // تحويل skills من string JSON لمصفوفة لو محتاجة
-      if (typeof data.skills === "string") {
-        try {
-          data.skills = JSON.parse(data.skills);
-        } catch {
-          data.skills = [];
-        }
-      }
-
+      const data = normalizeData(res.data.data);
       setUser(data);
       setFormData(data);
     } catch (err) {
@@ -57,18 +56,12 @@ function GraduatedProfile() {
 
   const handlePhotoChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFormData({ ...formData, profilePictureFile: file });
-      console.log("Selected profile picture:", file);
-    }
+    if (file) setFormData({ ...formData, profilePictureFile: file });
   };
 
   const handleCvChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFormData({ ...formData, cvFile: file });
-      console.log("Selected CV file:", file);
-    }
+    if (file) setFormData({ ...formData, cvFile: file });
   };
 
   const handleEdit = () => {
@@ -87,8 +80,6 @@ function GraduatedProfile() {
     try {
       const token = localStorage.getItem("token");
       const payload = new FormData();
-
-      // البيانات النصية
       payload.append("firstName", formData.firstName);
       payload.append("lastName", formData.lastName);
       payload.append("bio", formData.bio || "");
@@ -96,30 +87,25 @@ function GraduatedProfile() {
       payload.append("skills", JSON.stringify(formData.skills || []));
       payload.append("faculty", formData.faculty || "");
       payload.append("graduationYear", formData.graduationYear || "");
-      payload.append("linkedInLink", formData.linkedInLink || "");
-    payload.append("phoneNumber", formData.phoneNumber || "");
+      payload.append("phoneNumber", formData.phoneNumber || "");
 
-      // الملفات
       if (formData.profilePictureFile)
         payload.append("profilePicture", formData.profilePictureFile);
       if (formData.cvFile) payload.append("cv", formData.cvFile);
 
-      // تأكيد كل البيانات قبل الإرسال
-      for (let pair of payload.entries()) {
-        console.log(pair[0], pair[1]);
-      }
-
       const res = await API.put("/graduates/profile", payload, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
-      console.log("Update response:", res.data);
-      await fetchUser(); // تحديث البيانات بعد الحفظ
+      const updatedData = normalizeData(res.data.data.graduate || res.data.data);
+      setUser(updatedData);
+      setFormData(updatedData);
       setEditing(false);
     } catch (err) {
-      console.error("Failed to update user:", err.response?.data || err.message);
+      console.error(
+        "Failed to update user:",
+        err.response?.data || err.message
+      );
     }
   };
 
@@ -140,7 +126,7 @@ function GraduatedProfile() {
       {!editing ? (
         <div className="profile-card">
           <img
-            src={formData.profilePicture || PROFILE}
+            src={formData.profilePicture}
             alt="Profile"
             className="profile-img"
           />
@@ -166,27 +152,15 @@ function GraduatedProfile() {
           </p>
           <p>
             <strong>{t("skills")}:</strong>{" "}
-            {formData.skills && formData.skills.length > 0
-              ? formData.skills.join(", ")
-              : t("noSkills")}
+            {formData.skills.length > 0 ? formData.skills.join(", ") : t("noSkills")}
           </p>
           <p>
             <strong>{t("currentJob")}:</strong> {formData.currentJob}
           </p>
           <p>
-  <strong>{t("linkedIn")}:</strong>{" "}
-  {formData.linkedInLink ? (
-    <a href={formData.linkedInLink} target="_blank" rel="noopener noreferrer">
-      {formData.linkedInLink}
-    </a>
-  ) : (
-    t("noLinkedIn")
-  )}
-</p>
-
-<p>
-  <strong>{t("phoneNumber")}:</strong> {formData.phoneNumber || t("noPhone")}
-</p>
+            <strong>{t("phoneNumber")}:</strong>{" "}
+            {formData.phoneNumber || t("noPhone")}
+          </p>
           <button className="edit-btnn" onClick={handleEdit}>
             {t("updateInfo")}
           </button>
@@ -198,7 +172,7 @@ function GraduatedProfile() {
             <input
               type="text"
               name="firstName"
-              value={formData.firstName}
+              value={formData.firstName || ""}
               onChange={handleChange}
             />
           </label>
@@ -207,7 +181,7 @@ function GraduatedProfile() {
             <input
               type="text"
               name="lastName"
-              value={formData.lastName}
+              value={formData.lastName || ""}
               onChange={handleChange}
             />
           </label>
@@ -233,7 +207,7 @@ function GraduatedProfile() {
             <input
               type="text"
               name="skills"
-              value={formData.skills ? formData.skills.join(",") : ""}
+              value={formData.skills.join(",")}
               onChange={handleSkillsChange}
             />
           </label>
@@ -265,28 +239,17 @@ function GraduatedProfile() {
             />
           </label>
           <label>
-  {t("linkedIn")}:
-  <input
-    type="text"
-    name="linkedInLink"
-    value={formData.linkedInLink || ""}
-    onChange={handleChange}
-  />
-</label>
+            {t("phoneNumber")}:
+            <input
+              type="text"
+              name="phoneNumber"
+              value={formData.phoneNumber || ""}
+              onChange={handleChange}
+            />
+          </label>
 
-<label>
-  {t("phoneNumber")}:
-  <input
-    type="text"
-    name="phoneNumber"
-    value={formData.phoneNumber || ""}
-    onChange={handleChange}
-  />
-</label>
-
-
-          <button onClick={handleSave}>{t("save")}</button>
-          <button onClick={handleCancel}>{t("cancel")}</button>
+          <button  className="savebut" onClick={handleSave}>{t("save")}</button>
+          <button className="cancelbut" onClick={handleCancel}>{t("cancel")}</button>
         </div>
       )}
     </div>
@@ -294,8 +257,6 @@ function GraduatedProfile() {
 }
 
 export default GraduatedProfile;
-
-
 
 
 

@@ -66,10 +66,10 @@ const AdminPostsPage = () => {
     const formData = new FormData();
     formData.append("content", e.target.content.value);
     formData.append("type", e.target.type.value);
-    formData.append("link", e.target.link.value);
+    
     
     if (e.target.image.files[0]) formData.append("images", e.target.image.files[0]);
-    if (e.target.file.files[0]) formData.append("file", e.target.file.files[0]);
+    
   
     try {
       if (editingPostId) {
@@ -167,19 +167,13 @@ const AdminPostsPage = () => {
           <select name="type" required className="input-field" defaultValue={types[0] || ''}>
             {types.map(type => <option key={type} value={type}>{type}</option>)}
           </select>
-          <input name="link" placeholder={t('Optional Link')} className="input-field" />
+          
           <div className="optional-icons">
             <label title={t('Add Image')}>
               <input type="file" name="image" accept="image/*" style={{ display: 'none' }} />
               <Image size={20} />
             </label>
-            <label title={t('Add File')}>
-              <input type="file" name="file" style={{ display: 'none' }} />
-              <FileText size={20} />
-            </label>
-            <label title={t('Add Link')}>
-              <LinkIcon size={20} /> 
-            </label>
+            
           </div>
 
           <div className="form-buttons">
@@ -250,16 +244,7 @@ const AdminPostsPage = () => {
                       </div>
                     )}
                     
-                    {post.link && (
-                      <a 
-                        href={post.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        className="post-link"
-                      >
-                        {post.link}
-                      </a>
-                    )}
+                    
                   </div>
                   
                   <div className="post-actions">
