@@ -9,20 +9,14 @@ function GroupDetails({ group, goBack, currentUserId }) {
   const [image, setImage] = useState(null);
   const [commentText, setCommentText] = useState({});
   const [likedPosts, setLikedPosts] = useState([]);
-  const [friends, setFriends] = useState([]);
-  const [invitations, setInvitations] = useState([]);
+  const [graduates, setGraduates] = useState([]);
   const [showInviteSection, setShowInviteSection] = useState(false);
 
   // ====================== Fetch Data ======================
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      fetchPosts();
-      fetchFriends();
-      fetchInvitations();
-    } else {
-      console.warn("No token found, skipping fetch calls");
-    }
+    if (!group?.id) return;
+    fetchPosts();
+    fetchGraduates();
   }, [group.id]);
 
   const fetchPosts = async () => {
@@ -30,50 +24,18 @@ function GroupDetails({ group, goBack, currentUserId }) {
       const res = await API.get(`/posts/${group.id}`);
       if (res.data.status === "success") setPosts(res.data.data);
     } catch (err) {
-      console.error("Error fetching posts:", err);
+      console.error("Error fetching posts:", err.response?.data || err.message);
     }
   };
 
-  const fetchFriends = async () => {
+  const fetchGraduates = async () => {
     try {
-      const res = await API.get("/friendships/friends");
-      setFriends(res.data || []);
+      const res = await API.get(`/groups/${group.id}/available-graduates`);
+      console.log("Graduates response:", res.data);
+      setGraduates(res.data || []);
     } catch (err) {
-      console.error("Error fetching friends:", err);
-      alert("Failed to fetch friends");
-    }
-  };
-
-  // ✅ Get all invitations related to this group
-  const fetchInvitations = async () => {
-    try {
-      const [sentRes, receivedRes] = await Promise.all([
-        API.get("/invitations/sent"),
-        API.get("/invitations/received"),
-      ]);
-
-      // Normalize both responses to have same keys
-      const sentInvites = (sentRes.data || []).map((inv) => ({
-        id: inv.id,
-        receiver_id: inv.receiver_id,
-        group_id: inv.group_id,
-        status: inv.status,
-      }));
-
-      const receivedInvites = (receivedRes.data || []).map((inv) => ({
-        id: inv.id,
-        receiver_id: currentUserId, // أنت المستلم
-        group_id: group.id, // افتراضياً نفس الـ group الحالي
-        status: inv.status,
-      }));
-
-      const groupInvites = [...sentInvites, ...receivedInvites].filter(
-        (inv) => inv.group_id === group.id
-      );
-
-      setInvitations(groupInvites);
-    } catch (err) {
-      console.error("Error fetching invitations:", err);
+      console.error("Error fetching graduates:", err.response?.data || err.message);
+      alert("Failed to fetch graduates");
     }
   };
 
@@ -96,7 +58,7 @@ function GroupDetails({ group, goBack, currentUserId }) {
       setImage(null);
       fetchPosts();
     } catch (err) {
-      console.error("Error creating post:", err);
+      console.error("Error creating post:", err.response?.data || err.message);
       alert("Failed to create post");
     }
   };
@@ -144,47 +106,19 @@ function GroupDetails({ group, goBack, currentUserId }) {
   };
 
   // ====================== Invitations ======================
-  const isInvited = (friendId) =>
-    invitations.some(
-      (inv) =>
-        inv.receiver_id === friendId &&
-        inv.group_id === group.id &&
-        inv.status === "pending"
-    );
-
-  const handleToggleInvitation = async (friendId) => {
-    const existingInvite = invitations.find(
-      (inv) =>
-        inv.receiver_id === friendId &&
-        inv.group_id === group.id &&
-        inv.status === "pending"
-    );
-
+  const handleToggleInvitation = async (graduate) => {
     try {
-      if (existingInvite) {
-        // Cancel existing invite
-        await API.post(`/invitations/${existingInvite.id}/cancel`);
-        setInvitations((prev) =>
-          prev.filter((inv) => inv.id !== existingInvite.id)
-        );
+      if (graduate.invitationStatus === "pending") {
+        await API.post(`/invitations/${graduate.invitationId}/cancel`);
       } else {
-        // Send new invite
-        const res = await API.post("/invitations/send", {
-          receiver_id: friendId,
+        await API.post("/invitations/send", {
+          receiver_id: graduate.id,
           group_id: group.id,
         });
-
-        const newInvite = {
-          id: res.data.id,
-          receiver_id: res.data.receiver_id,
-          group_id: res.data.group_id,
-          status: res.data.status,
-        };
-
-        setInvitations((prev) => [...prev, newInvite]);
       }
+      fetchGraduates(); // تحديث الحالة فورًا بعد العملية
     } catch (err) {
-      console.error("Error toggling invitation:", err);
+      console.error(err.response?.data || err.message);
       alert("Failed to process invitation");
     }
   };
@@ -204,31 +138,30 @@ function GroupDetails({ group, goBack, currentUserId }) {
             className="invite-button"
             onClick={() => setShowInviteSection(!showInviteSection)}
           >
-            {showInviteSection ? "Hide Invites" : "Invite Friends"}
+            {showInviteSection ? "Hide Invites" : "Invite Graduates"}
           </button>
         </div>
 
-        {/* Invite Friends Section */}
         {showInviteSection && (
           <div className="invite-section">
-            <h3>Invite Friends</h3>
-            {friends.length === 0 ? (
-              <p>No friends available to invite.</p>
+            <h3>Invite Graduates</h3>
+            {graduates.length === 0 ? (
+              <p>No graduates available to invite.</p>
             ) : (
               <ul className="invite-list">
-                {friends.map((f) => (
-                  <li key={f.friendId}>
+                {graduates.map((g) => (
+                  <li key={g.id}>
                     <div className="friend-info">
-                      <img src={f.profilePicture} alt="Profile" />
-                      <span>{f.fullName}</span>
+                      <img src={g.profilePicture} alt="Profile" />
+                      <span>{g.fullName}</span>
                     </div>
                     <button
                       className={`invite-action ${
-                        isInvited(f.friendId) ? "cancel" : "invite"
+                        g.invitationStatus === "pending" ? "cancel" : "invite"
                       }`}
-                      onClick={() => handleToggleInvitation(f.friendId)}
+                      onClick={() => handleToggleInvitation(g)}
                     >
-                      {isInvited(f.friendId)
+                      {g.invitationStatus === "pending"
                         ? "Cancel Invitation"
                         : "Invite to Group"}
                     </button>
@@ -239,7 +172,6 @@ function GroupDetails({ group, goBack, currentUserId }) {
           </div>
         )}
 
-        {/* Create Post Section */}
         <div className="create-post">
           <h3>Create a Post</h3>
           <select
@@ -261,7 +193,6 @@ function GroupDetails({ group, goBack, currentUserId }) {
           </button>
         </div>
 
-        {/* Posts List */}
         <h3>Group Posts</h3>
         {posts.length === 0 ? (
           <p className="empty-state">No posts yet in this group.</p>
