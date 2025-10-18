@@ -57,6 +57,15 @@ app.use("/alumni-portal/friendships",friendshipRoutes);
 const invitationRoutes = require('./routes/invitation.route');
 app.use('/alumni-portal/invitations', invitationRoutes);
 
+const faqRoutes = require("./routes/faq.route");
+app.use("/alumni-portal/faqs", faqRoutes);
+
+const adminFaqRoutes = require("./routes/admin-faq.route");
+app.use("/alumni-portal/admin/faqs", adminFaqRoutes);
+
+const chatRoutes = require("./routes/chat.route");
+app.use("/alumni-portal/chat", chatRoutes);
+
 //  Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
