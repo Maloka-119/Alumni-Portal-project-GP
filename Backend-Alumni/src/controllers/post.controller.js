@@ -1293,6 +1293,74 @@ const unhidePost = async (req, res) => {
   }
 };
 
+// Get user's own posts
+const getMyPosts = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const posts = await Post.findAll({
+      where: { "author-id": userId },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"],
+            },
+            {
+              model: Staff,
+              attributes: ["status-to-login"],
+            },
+          ],
+        },
+        {
+          model: PostImage,
+          attributes: ["image-url"],
+        },
+      ],
+      order: [["created-at", "DESC"]],
+    });
+
+    const responseData = posts.map((post) => ({
+      post_id: post.post_id,
+      category: post.category,
+      content: post.content,
+      description: post.description,
+      "created-at": post["created-at"],
+      author: {
+        id: post.User.id,
+        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+        email: post.User.email,
+        type: post.User["user-type"],
+        image: post.User.Graduate
+          ? post.User.Graduate["profile-picture-url"]
+          : null,
+      },
+      "group-id": post["group-id"],
+      "in-landing": post["in-landing"],
+      "is-hidden": post["is-hidden"],
+      images: post.PostImages
+        ? post.PostImages.map((img) => img["image-url"])
+        : [],
+    }));
+
+    res.status(200).json({
+      status: "success",
+      message: "User posts fetched successfully",
+      data: responseData,
+    });
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch user posts: " + error.message,
+      data: [],
+    });
+  }
+};
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -1311,4 +1379,5 @@ module.exports = {
   getPostWithDetails,
   hideNegativePost,
   unhidePost,
+  getMyPosts,
 };
