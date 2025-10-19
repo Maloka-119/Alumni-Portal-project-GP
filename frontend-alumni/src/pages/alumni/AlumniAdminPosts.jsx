@@ -76,21 +76,30 @@ const AlumniAdminPosts = () => {
   };
 
   const handleLike = async (postId) => {
+    const postIndex = posts.findIndex(p => p.id === postId);
+    const post = posts[postIndex];
+  
     try {
-      const post = posts.find(p => p.id === postId);
-      if (!post) return;
-
       if (post.liked) {
+        // لو عمل like قبل كده، اشيله
         await API.delete(`/posts/${postId}/like`);
-        setPosts(prevPosts => prevPosts.map(p => p.id === postId ? { ...p, likes: p.likes - 1, liked: false } : p));
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex].likes -= 1;
+        updatedPosts[postIndex].liked = false;
+        setPosts(updatedPosts);
       } else {
+        // لو ما عملش like، اعمله
         await API.post(`/posts/${postId}/like`);
-        setPosts(prevPosts => prevPosts.map(p => p.id === postId ? { ...p, likes: p.likes + 1, liked: true } : p));
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex].likes += 1;
+        updatedPosts[postIndex].liked = true;
+        setPosts(updatedPosts);
       }
     } catch (err) {
-      console.error(err);
+      console.error("Error toggling like:", err.response?.data || err);
     }
   };
+  
 
   const toggleComments = (postId) => {
     setPosts(prevPosts => prevPosts.map(p => p.id === postId ? { ...p, showComments: !p.showComments } : p));
@@ -113,7 +122,6 @@ const AlumniAdminPosts = () => {
       setPosts(prevPosts =>
         prevPosts.map(p =>
           p.id === postId
-
             ? {
                 ...p,
                 comments: [

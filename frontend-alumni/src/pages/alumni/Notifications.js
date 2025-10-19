@@ -144,6 +144,7 @@
 // }
 
 // export default Notifications;
+
 import React, { useState, useEffect } from "react";
 import API from "../../services/api";
 import "./Notification.css";
@@ -155,45 +156,57 @@ function InvitationsPage() {
     fetchInvitations();
   }, []);
 
-  const fetchInvitations = async () => {
-    try {
-      const res = await API.get("/invitation/received");
-      const formatted = res.data.map((inv) => ({
-        id: inv.id,
-        sender: inv.sender_name,
-        group: inv.group_name,
-        time: new Date(inv.sent_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        status: inv.status,
-      }));
-      setInvitations(formatted);
-    } catch (err) {
-      console.error(err);
-    }
-  };
+const fetchInvitations = async () => {
+  try {
+    const res = await API.get("/invitations/received"); // لاحظي هنا نفس اللي على الباك
+    const formatted = res.data.map((inv) => ({
+      id: inv.invitationId, // بدل inv.id
+      sender: inv.senderFullName, // بدل inv.sender_name
+      group: inv.groupName, // بدل inv.group_name
+      time: new Date(inv.sent_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: inv.status,
+    }));
+    setInvitations(formatted);
+  } catch (err) {
+    console.error(err);
+  }
+};
 
-  const deleteInvitation = async (id) => {
-    try {
-      await API.delete(`/invitation/${id}`);
-      setInvitations((prev) => prev.filter((inv) => inv.id !== id));
-    } catch (err) {
-      console.error(err);
-    }
-  };
 
-  const acceptInvitation = async (id) => {
-    try {
-      await API.post(`/invitation/${id}/accept`);
-      setInvitations((prev) =>
-        prev.map((inv) => (inv.id === id ? { ...inv, status: "accepted" } : inv))
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  };
+ const deleteInvitation = async (id) => {
+  try {
+    await API.delete(`/invitations/${id}`);
+    setInvitations((prev) => prev.filter((inv) => inv.id !== id));
+  } catch (err) {
+    console.error(err);
+  }
+};
+const acceptInvitation = async (id) => {
+  try {
+    // جلب البيانات اللي محتاجها الباك فقط
+    const inv = invitations.find((inv) => inv.id === id);
+    const body = {
+      id: inv.id,
+      sender_id: inv.senderId || null,    // لو موجود
+      receiver_id: inv.receiverId || null,
+      group_id: inv.groupId || null,
+    };
 
-  const rejectInvitation = async (id) => {
-    deleteInvitation(id); // رفض الدعوة يتم عن طريق حذفها
-  };
+    // لو الباك بيشتغل من غير body ممكن تكتبي: await API.post(`/invitations/${id}/accept`);
+    await API.post(`/invitations/${id}/accept`, body);
+
+    // تحديث الحالة محليًا
+    setInvitations((prev) =>
+      prev.map((inv) => (inv.id === id ? { ...inv, status: "accepted" } : inv))
+    );
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+const rejectInvitation = async (id) => {
+  deleteInvitation(id); // رفض الدعوة يتم عن طريق حذفها
+};
 
   return (
     <div className="notifications-container">
