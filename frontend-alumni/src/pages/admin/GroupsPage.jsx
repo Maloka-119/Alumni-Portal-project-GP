@@ -3,6 +3,8 @@ import "./GroupsPage.css";
 import GroupDetail from "./GroupDetail";
 import { Edit, Trash2 } from "lucide-react";
 import API from "../../services/api";
+import imageCompression from "browser-image-compression";
+
 
 function GroupsPage() {
   const [groups, setGroups] = useState([]);
@@ -188,20 +190,37 @@ function GroupsPage() {
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
 
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              cleanupPreview();
-              const file = e.target.files[0];
-              setFormData({ ...formData, cover: file });
-              if (file) {
-                const url = URL.createObjectURL(file);
-                setPreview(url);
-                previewUrlRef.current = url;
-              }
-            }}
-          />
+<input
+  type="file"
+  accept="image/*"
+  onChange={async (e) => {
+    cleanupPreview();
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // ضغط الصورة
+    try {
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1, // أقصى حجم 1 ميجا
+        maxWidthOrHeight: 1024, // أقصى عرض أو ارتفاع
+        useWebWorker: true,
+      });
+
+      setFormData({ ...formData, cover: compressedFile });
+      const url = URL.createObjectURL(compressedFile);
+      setPreview(url);
+      previewUrlRef.current = url;
+    } catch (err) {
+      console.error("Error compressing image", err);
+      // لو فشل الضغط، استخدم الصورة الأصلية
+      setFormData({ ...formData, cover: file });
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+      previewUrlRef.current = url;
+    }
+  }}
+/>
+
 
           {preview && (
             <img
