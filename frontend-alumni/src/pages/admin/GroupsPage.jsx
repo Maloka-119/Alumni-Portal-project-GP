@@ -192,17 +192,31 @@ function GroupsPage() {
 
 <input
   type="file"
-  accept="image/*"
+  accept="image/png, image/jpeg, image/jpg"
   onChange={async (e) => {
     cleanupPreview();
     const file = e.target.files[0];
     if (!file) return;
 
+    // التحقق من نوع الملف
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
+    if (!allowedTypes.includes(file.type)) {
+      alert("Please select a PNG or JPG image.");
+      return;
+    }
+
+    // التحقق من الحجم (2 ميجا مثال)
+    const maxSizeMB = 2;
+    if (file.size / 1024 / 1024 > maxSizeMB) {
+      alert("File is too large. Please use an image smaller than 2 MB.");
+      return;
+    }
+
     // ضغط الصورة
     try {
       const compressedFile = await imageCompression(file, {
-        maxSizeMB: 1, // أقصى حجم 1 ميجا
-        maxWidthOrHeight: 1024, // أقصى عرض أو ارتفاع
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
         useWebWorker: true,
       });
 
@@ -212,7 +226,6 @@ function GroupsPage() {
       previewUrlRef.current = url;
     } catch (err) {
       console.error("Error compressing image", err);
-      // لو فشل الضغط، استخدم الصورة الأصلية
       setFormData({ ...formData, cover: file });
       const url = URL.createObjectURL(file);
       setPreview(url);
