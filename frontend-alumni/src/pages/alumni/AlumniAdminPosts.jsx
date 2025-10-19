@@ -34,7 +34,16 @@ const AlumniAdminPosts = () => {
       const formattedPosts = filtered.map(p => ({
         id: p.post_id,
         content: p.content,
-        date: new Date(p['created-at']).toLocaleString(), 
+        date: new Date(p['created-at']).toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }),
+        
+        
         authorName: "Alumni Portal – Helwan University",
         likes: p.likes || 0,
         liked: false,
