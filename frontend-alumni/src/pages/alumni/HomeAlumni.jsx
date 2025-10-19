@@ -45,7 +45,15 @@ const HomeAlumni = () => {
           id: post.post_id || post.id, // 🆕 تأكد من الـ ID
           userName: post.author["full-name"],
           avatar: avatar,
-          date: new Date(post['created-at']).toLocaleString(),
+          date: new Date(post['created-at']).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          
           type: post.category,
           isPortal: post.author["full-name"] === "Alumni Portal - Helwan University",
           content: post.content,
@@ -125,25 +133,60 @@ const HomeAlumni = () => {
       <div className="uni-posts">
         {posts.map(post => (
           <div key={post.id} className="uni-post-card">
-            <div className="post-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <img src={post.avatar} alt={post.userName} className="profile-pic" />
-                <div className="post-header-info" style={{ marginLeft: '10px' }}>
-                  <strong>{post.userName}</strong>
-                  <div className="post-date">
-                    {post.date}
-                    {!post.isPortal && post.type && (
-                      <span style={{ marginLeft: "8px", color: "#555", fontSize: "0.9em" }}>
-                        {post.type}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {post.isPortal && post.type && (
-                <span className="post-type-badge">{post.type}</span>
-              )}
-            </div>
+           <div
+  className="post-header"
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+  }}
+>
+  {/* الصورة */}
+  <img
+    src={post.avatar}
+    alt={post.userName}
+    className="profile-pic"
+    style={{ width: '40px', height: '40px', borderRadius: '50%' }}
+  />
+
+  {/* الاسم + التاريخ */}
+  <div
+    className="post-user-info"
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      lineHeight: '1.2',
+    }}
+  >
+    <strong>{post.userName}</strong>
+    <div
+      className="post-date"
+      style={{
+        marginTop: '2px',
+        marginLeft: '4px', // ← يحرك التاريخ يمين لوحده بدون ما يأثر على الاسم
+        color: '#555',
+        fontSize: '0.9em',
+      }}
+    >
+      {post.date}
+      {!post.isPortal && post.type && (
+        <span
+          style={{
+            marginLeft: '8px',
+            color: '#777',
+            fontSize: '0.9em',
+          }}
+        >
+          {post.type}
+        </span>
+      )}
+    </div>
+  </div>
+</div>
+
+
+
 
             <div className="uni-post-body">
               <p>{post.content}</p>
