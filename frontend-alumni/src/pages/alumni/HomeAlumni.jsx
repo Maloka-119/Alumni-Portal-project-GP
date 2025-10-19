@@ -133,65 +133,25 @@ const HomeAlumni = () => {
       <div className="uni-posts">
         {posts.map(post => (
           <div key={post.id} className="uni-post-card">
-           <div
-  className="post-header"
-  style={{
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-  }}
->
-  {/* الصورة */}
-  <img
-    src={post.avatar}
-    alt={post.userName}
-    className="profile-pic"
-    style={{ width: '40px', height: '40px', borderRadius: '50%' }}
-  />
-
-  {/* الاسم + التاريخ */}
-  <div
-    className="post-user-info"
-    style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'flex-start',
-      lineHeight: '1.2',
-    }}
-  >
-    <strong>{post.userName}</strong>
-    <div
-      className="post-date"
-      style={{
-        marginTop: '2px',
-        marginLeft: '4px', // ← يحرك التاريخ يمين لوحده بدون ما يأثر على الاسم
-        color: '#555',
-        fontSize: '0.9em',
-      }}
-    >
-      {post.date}
-      {!post.isPortal && post.type && (
-        <span
-          style={{
-            marginLeft: '8px',
-            color: '#777',
-            fontSize: '0.9em',
-          }}
-        >
-          {post.type}
-        </span>
-      )}
-    </div>
-  </div>
-</div>
-
-
-
+            <div className="post-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <img
+                src={post.avatar}
+                alt={post.userName}
+                className="profile-pic"
+                style={{ width: '40px', height: '40px', borderRadius: '50%' }}
+                onError={(e) => { e.target.src = PROFILE; }}
+              />
+              <div className="post-user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2' }}>
+                <strong>{post.userName}</strong>
+                <div style={{ marginTop: '2px', marginLeft: '4px', color: '#555', fontSize: '0.9em' }}>
+                  {post.date}
+                  {!post.isPortal && post.type && <span style={{ marginLeft: '8px', color: '#777', fontSize: '0.9em' }}> - {post.type}</span>}
+                </div>
+              </div>
+            </div>
 
             <div className="uni-post-body">
               <p>{post.content}</p>
-              
-              {/* 🆕 جزء عرض الصور - أضفنا هنا */}
               {post.images && post.images.length > 0 && (
                 <div className="uni-post-images">
                   {post.images.map((imgUrl, index) => (
@@ -200,11 +160,7 @@ const HomeAlumni = () => {
                       src={imgUrl}
                       alt={`post-${index}`}
                       className="uni-post-preview"
-                      onError={(e) => {
-                        console.error(`❌ Failed to load image: ${imgUrl}`);
-                        e.target.style.display = 'none';
-                      }}
-                      onLoad={() => console.log(`✅ Image loaded: ${imgUrl}`)}
+                      onError={(e) => { e.target.style.display = 'none'; }}
                     />
                   ))}
                 </div>
@@ -227,7 +183,7 @@ const HomeAlumni = () => {
               <div className="uni-comments-section">
                 {post.comments.map((c, idx) => (
                   <div key={idx} className="uni-comment-item">
-                    <img src={c.avatar} alt={c.userName} className="uni-comment-avatar"/>
+                    <img src={c.avatar} alt={c.userName} className="uni-comment-avatar" onError={(e) => { e.target.src = PROFILE; }} />
                     <div className="uni-comment-text"><strong>{c.userName}</strong>: {c.content}</div>
                   </div>
                 ))}
