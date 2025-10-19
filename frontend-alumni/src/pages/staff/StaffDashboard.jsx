@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react'
 import { LogOut, User, Menu, X } from 'lucide-react'
 import './StaffDashboard.css'
 import API from '../../services/api'
+import { useNavigate } from 'react-router-dom';
+
 
 const StaffDashboard = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [profileOpen, setProfileOpen] = useState(false)
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -46,8 +49,8 @@ const StaffDashboard = () => {
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen)
   const toggleProfile = () => setProfileOpen(!profileOpen)
   const handleLogout = () => {
-    localStorage.removeItem('token')
-    alert('Logging out...')
+    localStorage.removeItem('token');
+    navigate('/helwan-alumni-portal/login');
   }
 
   if (loading) {
