@@ -80,6 +80,12 @@ function ExploreGroups() {
           const joined = myGroups.some((mg) => mg.id === g.id);
           return (
             <div key={g.id} className="explorer-card">
+              {g.groupImage && (
+                <div className="explorer-card-image">
+                  <img src={g.groupImage} alt={g.groupName} />
+                </div>
+              )}
+
               <div className="explorer-card-top">
                 <h3 className="explorer-name">{g.groupName}</h3>
                 <span className="explorer-badge">
@@ -105,7 +111,7 @@ function ExploreGroups() {
                     onClick={() => setSelectedGroup(g)}
                     className="explorer-btn explorer-btn-secondary"
                   >
-                    {t("goToGroup")}
+                    {t("Go to Community")}
                   </button>
                 )}
               </div>

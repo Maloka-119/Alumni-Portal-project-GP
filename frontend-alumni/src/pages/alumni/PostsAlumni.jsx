@@ -21,37 +21,31 @@ const PostsAlumni = ({ user: propUser }) => {
   const token = localStorage.getItem("token");
 
   const formatPosts = (data) => {
-    console.log("📦 Full backend response:", data);
     return data
       .sort((a, b) => new Date(b['created-at']) - new Date(a['created-at']))
-      .map(post => {
-        return {
-          ...post,
-          id: post.id || post.post_id,
-          date: post['created-at'],
-          comments: post.comments || [],
-          images: post.images || [],
-          author: {
-            id: post.author?.id,
-            name: post.author?.['full-name'] || 'Unknown',
-            photo: post.author?.image || PROFILE
-          }
-        };
-      });
+      .map(post => ({
+        ...post,
+        id: post.id || post.post_id,
+        date: post['created-at'],
+        comments: post.comments || [],
+        images: post.images || [],
+        likes: post.likes || 0,
+        liked: post.liked || false,
+        author: {
+          id: post.author?.id,
+          name: post.author?.['full-name'] || 'Unknown',
+          photo: post.author?.image || PROFILE
+        }
+      }));
   };
 
   const fetchPosts = async () => {
     if (!token) return;
     try {
       setLoading(true);
-      setError(null);
       const res = await API.get('/posts/my-graduate-posts', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-
-      console.log("🧾 Raw backend response:", res.data);
-      console.log("📄 Data array:", res.data.data);
-
       setPosts(formatPosts(res.data.data));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -91,14 +85,12 @@ const PostsAlumni = ({ user: propUser }) => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      console.log("✅ Post created response:", res.data);
       await fetchPosts();
       setSuccessMsg("Post created successfully");
       setNewPost({ content: '', category: 'General', image: null, file: null, link: '' });
       setShowForm(false);
       setShowLinkInput(false);
     } catch (err) {
-      console.error("❌ Error creating post:", err);
       setError(err.response?.data?.message || "Failed to create post");
     }
   };
@@ -109,7 +101,6 @@ const PostsAlumni = ({ user: propUser }) => {
       const res = await API.patch(`/posts/${postId}`, { content, link }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      console.log("✏️ Edit post response:", res.data);
       const updated = res.data.data;
       setPosts(posts.map(p => (p.id === updated.id ? formatPosts([updated])[0] : p)));
     } catch (err) {
@@ -123,26 +114,33 @@ const PostsAlumni = ({ user: propUser }) => {
       await API.delete(`/posts/${postId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      console.log(`🗑️ Post ${postId} deleted`);
       setPosts(posts.filter(p => p.id !== postId));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
     }
   };
 
-  const handleLikeToggle = async (post) => {
-    if (!token) return;
+  const handleLikeToggle = async (postId) => {
+    const postIndex = posts.findIndex(p => p.id === postId);
+    if (postIndex === -1) return;
+    const post = posts[postIndex];
+
     try {
-      const method = post.liked ? 'delete' : 'post';
-      const res = await API[method](`/posts/${post.id}/like`, {}, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      console.log("❤️ Like toggle response:", res.data);
-      setPosts(posts.map(p =>
-        p.id === post.id ? { ...p, likes: post.liked ? post.likes - 1 : post.likes + 1, liked: !post.liked } : p
-      ));
+      const updatedPosts = [...posts];
+
+      if (post.liked) {
+        await API.delete(`/posts/${postId}/like`, { headers: { Authorization: `Bearer ${token}` } });
+        updatedPosts[postIndex].likes -= 1;
+        updatedPosts[postIndex].liked = false;
+      } else {
+        await API.post(`/posts/${postId}/like`, {}, { headers: { Authorization: `Bearer ${token}` } });
+        updatedPosts[postIndex].likes += 1;
+        updatedPosts[postIndex].liked = true;
+      }
+
+      setPosts(updatedPosts);
     } catch (err) {
-      setError(err.response?.data?.message || err.message);
+      console.error("Error toggling like:", err.response?.data || err);
     }
   };
 
@@ -155,7 +153,6 @@ const PostsAlumni = ({ user: propUser }) => {
       const res = await API.post(`/posts/${selectedPost.id}/comment`, { content: newComment }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      console.log("💬 New comment response:", res.data);
       const updatedPost = res.data.data;
       setPosts(posts.map(p => (p.id === updatedPost.id ? formatPosts([updatedPost])[0] : p)));
       setSelectedPost(formatPosts([updatedPost])[0]);
@@ -220,7 +217,7 @@ const PostsAlumni = ({ user: propUser }) => {
               onEdit={(content, link) => handleEdit(post.id, content, link)}
               onDelete={() => handleDelete(post.id)}
               onOpenComments={() => openComments(post)}
-              onLike={() => handleLikeToggle(post)}
+              onLike={handleLikeToggle}
             />
           ))}
 
@@ -268,8 +265,6 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
 
   return (
     <div className={`uni-post-card ${post['is-hidden'] ? 'is-hidden' : ''}`}>
-      {post['is-hidden'] && <div className="hidden-label"></div>}
-
       <div className="uni-post-header">
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <img src={post.author?.photo || PROFILE} className="profile-pic" alt="profile" />
@@ -309,22 +304,23 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
             {post.images && post.images.length > 0 && (
               <div className="uni-post-images">
                 {post.images.map((imgUrl, index) => (
-                  <img
-                    key={index}
-                    src={imgUrl}
-                    alt={`post-${index}`}
-                    className="uni-post-preview"
-                  />
+                  <img key={index} src={imgUrl} alt={`post-${index}`} className="uni-post-preview" />
                 ))}
               </div>
             )}
-            
           </>
         )}
       </div>
 
       <div className="uni-post-actions">
-        <button onClick={onLike}><Heart size={16} /> {post.likes}</button>
+        <button onClick={() => onLike(post.id)}>
+          <Heart
+            size={16}
+            color={post.liked ? 'red' : 'black'}
+            fill={post.liked ? 'red' : 'none'}
+          />
+          {post.likes}
+        </button>
         <button onClick={onOpenComments}><MessageCircle size={16} /> {post.comments.length}</button>
         <button><Share2 size={16} /> {post.shares}</button>
       </div>
@@ -340,7 +336,7 @@ export default PostsAlumni;
 // import { useTranslation } from 'react-i18next';
 // import './AlumniAdminPosts.css';
 // import API from "../../services/api";
-// import PROFILE from './PROFILE.jpeg'
+// import PROFILE from './PROFILE.jpeg';
 
 // const PostsAlumni = ({ user: propUser }) => {
 //   const { t } = useTranslation();
@@ -349,32 +345,25 @@ export default PostsAlumni;
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
 //   const [successMsg, setSuccessMsg] = useState(null);
-//   const [newPost, setNewPost] = useState({ content: '', image: null, file: null, link: '' , category: 'General' });
+//   const [newPost, setNewPost] = useState({ content: '', image: null, file: null, link: '', category: 'General' });
 //   const [showLinkInput, setShowLinkInput] = useState(false);
 //   const [selectedPost, setSelectedPost] = useState(null);
 //   const [newComment, setNewComment] = useState('');
 
 //   const user = JSON.parse(localStorage.getItem("user")) || null;
-//   const token = localStorage.getItem("token"); 
+//   const token = localStorage.getItem("token");
 
 //   const formatPosts = (data) => {
+//     console.log("📦 Full backend response:", data);
 //     return data
 //       .sort((a, b) => new Date(b['created-at']) - new Date(a['created-at']))
 //       .map(post => {
-//         console.log(`📋 Formatting post ${post.id || post.post_id}:`, {
-//           id: post.id || post.post_id,
-//           images: post.images,
-//           hasImages: !!post.images,
-//           imagesCount: post.images?.length || 0,
-//           rawPost: post // 🆕 علشان نشوف شكل البيانات كامل
-//         });
-        
 //         return {
 //           ...post,
-//           id: post.id || post.post_id, // تأكد من الـ ID
+//           id: post.id || post.post_id,
 //           date: post['created-at'],
 //           comments: post.comments || [],
-//           images: post.images || [], // استخدم الصور من الـ API
+//           images: post.images || [],
 //           author: {
 //             id: post.author?.id,
 //             name: post.author?.['full-name'] || 'Unknown',
@@ -392,8 +381,10 @@ export default PostsAlumni;
 //       const res = await API.get('/posts/my-graduate-posts', {
 //         headers: { 'Authorization': `Bearer ${token}` }
 //       });
-//       console.log("📸 Raw posts data:", res.data.data);
-//       console.log("🖼️ First post images:", res.data.data[0]?.images);
+
+//       console.log("🧾 Raw backend response:", res.data);
+//       console.log("📄 Data array:", res.data.data);
+
 //       setPosts(formatPosts(res.data.data));
 //     } catch (err) {
 //       setError(err.response?.data?.message || err.message);
@@ -401,72 +392,49 @@ export default PostsAlumni;
 //       setLoading(false);
 //     }
 //   };
-// useEffect(() => {
-//   if (!token) return;
 
-//   fetchPosts(); // جلب البيانات مرة واحدة عند تحميل المكون
-// }, [token]);
+//   useEffect(() => {
+//     if (token) fetchPosts();
+//   }, [token]);
 
+//   const handleAddPost = async (e) => {
+//     e.preventDefault();
+//     setError(null);
+//     setSuccessMsg(null);
 
-// const handleAddPost = async (e) => {
-//   e.preventDefault();
-//   setError(null);
-//   setSuccessMsg(null);
+//     if (!token) {
+//       setError("You must be logged in to post");
+//       return;
+//     }
 
-//   if (!token) {
-//     setError("You must be logged in to post");
-//     return;
-//   }
+//     if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) {
+//       setError("Post cannot be empty");
+//       return;
+//     }
 
-//   if (!newPost.content && !newPost.image && !newPost.file && !newPost.link) {
-//     setError("Post cannot be empty");
-//     return;
-//   }
+//     const formData = new FormData();
+//     formData.append('content', newPost.content);
+//     formData.append('type', newPost.category);
+//     if (newPost.image) formData.append('images', newPost.image);
 
-//   const formData = new FormData();
-//   formData.append('content', newPost.content);
-//   formData.append('type', newPost.category);
-  
-//   // 🆕 غير من image إلى images
-//   if (newPost.image) formData.append('images', newPost.image);
-  
-
-//   console.log("📤 Sending form data:", {
-//     content: newPost.content,
-//     type: newPost.category,
-//     hasImage: !!newPost.image,
-//     hasFile: !!newPost.file,
-//     link: newPost.link
-//   });
-
-//   try {
-//     const res = await API.post('/posts/create-post', formData, {
-//       headers: {
-//         'Authorization': `Bearer ${token}`,
-//         'Content-Type': 'multipart/form-data'
-//       }
-//     });
-
-//     console.log("✅ Post created successfully:", res.data);
-    
-//     await fetchPosts();
-//     setSuccessMsg("Post created successfully");
-//     setNewPost({ content: '', category: 'General', image: null, file: null, link: '' });
-//     setShowForm(false);
-//     setShowLinkInput(false);
-
-//   } catch (err) {
-//     console.error("❌ Error creating post:", err);
-//     console.error("🔍 Error details:", err.response?.data);
-//     setError(err.response?.data?.message || "Failed to create post");
-//   }
-// };
-
-//   const categories = [
-//     { value: "General", label: "General" },
-//     { value: "Internship", label: "Internship" },
-//     { value: "Success story", label: "Success story" }
-//   ];
+//     try {
+//       const res = await API.post('/posts/create-post', formData, {
+//         headers: {
+//           'Authorization': `Bearer ${token}`,
+//           'Content-Type': 'multipart/form-data'
+//         }
+//       });
+//       console.log("✅ Post created response:", res.data);
+//       await fetchPosts();
+//       setSuccessMsg("Post created successfully");
+//       setNewPost({ content: '', category: 'General', image: null, file: null, link: '' });
+//       setShowForm(false);
+//       setShowLinkInput(false);
+//     } catch (err) {
+//       console.error("❌ Error creating post:", err);
+//       setError(err.response?.data?.message || "Failed to create post");
+//     }
+//   };
 
 //   const handleEdit = async (postId, content, link) => {
 //     if (!token) return;
@@ -474,6 +442,7 @@ export default PostsAlumni;
 //       const res = await API.patch(`/posts/${postId}`, { content, link }, {
 //         headers: { 'Authorization': `Bearer ${token}` }
 //       });
+//       console.log("✏️ Edit post response:", res.data);
 //       const updated = res.data.data;
 //       setPosts(posts.map(p => (p.id === updated.id ? formatPosts([updated])[0] : p)));
 //     } catch (err) {
@@ -487,28 +456,37 @@ export default PostsAlumni;
 //       await API.delete(`/posts/${postId}`, {
 //         headers: { 'Authorization': `Bearer ${token}` }
 //       });
+//       console.log(`🗑️ Post ${postId} deleted`);
 //       setPosts(posts.filter(p => p.id !== postId));
 //     } catch (err) {
 //       setError(err.response?.data?.message || err.message);
 //     }
 //   };
 
-//   const handleLikeToggle = async (post) => {
-//     if (!token) return;
-//     try {
-//       const method = post.liked ? 'delete' : 'post';
-//       const res = await API[method](`/posts/${post.id}/like`, {}, {
-//         headers: { 'Authorization': `Bearer ${token}` }
-//       });
-//       const updated = res.data.data;
-//       setPosts(posts.map(p => 
-//         p.id === post.id ? { ...p, likes: post.liked ? post.likes - 1 : post.likes + 1, liked: !post.liked } : p
-//       ));
-//     } catch (err) {
-//       setError(err.response?.data?.message || err.message);
+// const handleLikeToggle= async (postId) => {
+//   const postIndex = posts.findIndex(p => p.id === postId);
+//   const post = posts[postIndex];
+
+//   try {
+//     if (post.liked) {
+//       // لو عمل like قبل كده، اشيله
+//       await API.delete(`/posts/${postId}/like`);
+//       const updatedPosts = [...posts];
+//       updatedPosts[postIndex].likes -= 1;
+//       updatedPosts[postIndex].liked = false;
+//       setPosts(updatedPosts);
+//     } else {
+//       // لو ما عملش like، اعمله
+//       await API.post(`/posts/${postId}/like`);
+//       const updatedPosts = [...posts];
+//       updatedPosts[postIndex].likes += 1;
+//       updatedPosts[postIndex].liked = true;
+//       setPosts(updatedPosts);
 //     }
-//   };
-  
+//   } catch (err) {
+//     console.error("Error toggling like:", err.response?.data || err);
+//   }
+// };
 //   const openComments = (post) => setSelectedPost(post);
 //   const closeComments = () => { setSelectedPost(null); setNewComment(''); };
 
@@ -518,6 +496,7 @@ export default PostsAlumni;
 //       const res = await API.post(`/posts/${selectedPost.id}/comment`, { content: newComment }, {
 //         headers: { 'Authorization': `Bearer ${token}` }
 //       });
+//       console.log("💬 New comment response:", res.data);
 //       const updatedPost = res.data.data;
 //       setPosts(posts.map(p => (p.id === updatedPost.id ? formatPosts([updatedPost])[0] : p)));
 //       setSelectedPost(formatPosts([updatedPost])[0]);
@@ -557,24 +536,16 @@ export default PostsAlumni;
 //                   value={newPost.category}
 //                   onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
 //                 >
-//                   {categories.map(c => (
-//                     <option key={c.value} value={c.value}>{c.label}</option>
-//                   ))}
+//                   <option value="General">General</option>
+//                   <option value="Internship">Internship</option>
+//                   <option value="Success story">Success story</option>
 //                 </select>
-//                 {newPost.category === "Success story" && (
-//                   <small style={{ color: "#555" }}>
-//                     If you choose this, it means you agree that the post will appear on the landing page
-//                   </small>
-//                 )}
 //               </div>
-
-              
 //               <div className="uni-optional-icons">
 //                 <label title={t('addImage')}>
 //                   <input type="file" style={{ display: 'none' }} onChange={(e) => setNewPost({ ...newPost, image: e.target.files[0] })} />
 //                   <Image size={20} />
 //                 </label>
-               
 //               </div>
 //               <div className="uni-form-buttons">
 //                 <button type="submit">{t('post')}</button>
@@ -590,7 +561,7 @@ export default PostsAlumni;
 //               onEdit={(content, link) => handleEdit(post.id, content, link)}
 //               onDelete={() => handleDelete(post.id)}
 //               onOpenComments={() => openComments(post)}
-//               onLike={() =>handleLikeToggle(post)}
+//               onLike={() => handleLikeToggle(post)}
 //             />
 //           ))}
 
@@ -604,7 +575,7 @@ export default PostsAlumni;
 //                 <div className="comments-list">
 //                   {selectedPost.comments.map(c => (
 //                     <div key={c.id} className="comment-item">
-//                       <img src={c.user?.photo || PROFILE } alt="avatar" className="comment-avatar" />
+//                       <img src={c.user?.photo || PROFILE} alt="avatar" className="comment-avatar" />
 //                       <div className="comment-text">
 //                         <strong>{c.user?.name || t('unknown')}</strong>
 //                         <p>{c.content}</p>
@@ -636,22 +607,10 @@ export default PostsAlumni;
 //   const [editContent, setEditContent] = useState(post.content);
 //   const [editLink, setEditLink] = useState(post.link || '');
 
-//   // 🔍 Debug: شوف شكل البيانات في كل بوست
-//   useEffect(() => {
-//     console.log(`🎯 Post ${post.id} data:`, {
-//       images: post.images,
-//       imagesType: typeof post.images,
-//       imagesLength: post.images?.length
-//     });
-//   }, [post]);
-
-//   const saveEdit = () => {
-//     onEdit(editContent, editLink);
-//     setIsEditing(false);
-//   };
-
 //   return (
-//     <div className="uni-post-card">
+//     <div className={`uni-post-card ${post['is-hidden'] ? 'is-hidden' : ''}`}>
+//       {post['is-hidden'] && <div className="hidden-label"></div>}
+
 //       <div className="uni-post-header">
 //         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
 //           <img src={post.author?.photo || PROFILE} className="profile-pic" alt="profile" />
@@ -682,14 +641,12 @@ export default PostsAlumni;
 //           <>
 //             <textarea value={editContent} onChange={(e) => setEditContent(e.target.value)} />
 //             <input value={editLink} onChange={(e) => setEditLink(e.target.value)} placeholder={t('editLink')} />
-//             <button onClick={saveEdit}>{t('save')}</button>
+//             <button onClick={() => { onEdit(editContent, editLink); setIsEditing(false); }}>{t('save')}</button>
 //             <button onClick={() => setIsEditing(false)}>{t('cancel')}</button>
 //           </>
 //         ) : (
 //           <>
 //             <p>{post.content}</p>
-            
-//             {/* 🖼️ عرض الصور - النسخة المبسطة */}
 //             {post.images && post.images.length > 0 && (
 //               <div className="uni-post-images">
 //                 {post.images.map((imgUrl, index) => (
@@ -698,18 +655,11 @@ export default PostsAlumni;
 //                     src={imgUrl}
 //                     alt={`post-${index}`}
 //                     className="uni-post-preview"
-//                     onError={(e) => {
-//                       console.error(`❌ Failed to load image: ${imgUrl}`);
-//                       e.target.style.display = 'none';
-//                     }}
-//                     onLoad={() => console.log(`✅ Image loaded: ${imgUrl}`)}
 //                   />
 //                 ))}
 //               </div>
 //             )}
-
-//             {post.file && <a href={post.file} download className="uni-post-file">{t('file')}</a>}
-//             {post.link && <a href={post.link} target="_blank" rel="noopener noreferrer" className="uni-post-file">{t('link')}</a>}
+            
 //           </>
 //         )}
 //       </div>
@@ -724,3 +674,5 @@ export default PostsAlumni;
 // };
 
 // export default PostsAlumni;
+
+
