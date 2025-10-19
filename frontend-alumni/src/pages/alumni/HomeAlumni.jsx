@@ -85,13 +85,27 @@ const HomeAlumni = () => {
   useEffect(() => { fetchPosts(); }, [page]);
 
   const handleLike = async (postId) => {
+    const postIndex = posts.findIndex(p => p.id === postId);
+    const post = posts[postIndex];
+  
     try {
-      await API.post(`/posts/${postId}/like`);
-      setPosts(posts.map(p =>
-        p.id === postId && !p.liked ? { ...p, likes: p.likes + 1, liked: true } : p
-      ));
+      if (post.liked) {
+        // لو عمل like قبل كده، اشيله
+        await API.delete(`/posts/${postId}/like`);
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex].likes -= 1;
+        updatedPosts[postIndex].liked = false;
+        setPosts(updatedPosts);
+      } else {
+        // لو ما عملش like، اعمله
+        await API.post(`/posts/${postId}/like`);
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex].likes += 1;
+        updatedPosts[postIndex].liked = true;
+        setPosts(updatedPosts);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Error toggling like:", err.response?.data || err);
     }
   };
 
