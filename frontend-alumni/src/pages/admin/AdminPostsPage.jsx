@@ -154,6 +154,7 @@ const AdminPostsPage = () => {
                       <strong>Alumni Portal – Helwan University</strong>
                       <div className="post-date">
                         {new Date(post['created-at']).toLocaleString()}
+                        {post['group-id'] ? ' - In Group' : ''}
                       </div>
                     </div>
                     <span className="post-type-badge">{post.category}</span>
