@@ -97,8 +97,10 @@
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid #3498db;
+  background-color: #dcdde1; /* لون افتراضي لو الصورة مش موجودة */
 }
 
+/* ====== Invite Buttons ====== */
 .invite-action {
   padding: 8px 16px;
   border: none;
@@ -200,10 +202,13 @@
 }
 
 .post-image {
-  max-width: 100%;
+  width: 100%;
+  max-height: 400px;
   border-radius: 12px;
   margin: 10px 0;
+  object-fit: cover;
   transition: 0.3s;
+  background-color: #dcdde1; /* لون افتراضي للصورة */
 }
 
 .post-image:hover {
@@ -216,7 +221,7 @@
   color: #7f8c8d;
 }
 
-/* ====== Like Button as Heart ====== */
+/* ====== Like Button ====== */
 .like-button {
   background-color: transparent;
   color: #e74c3c;
@@ -271,4 +276,59 @@
   color: #7f8c8d;
   font-style: italic;
   text-align: center;
+}
+
+/* ====== Responsive ====== */
+@media (max-width: 1024px) {
+  .group-details__container {
+    padding: 25px 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .group-header h2 {
+    font-size: 24px;
+  }
+
+  .group-header p {
+    font-size: 14px;
+  }
+
+  .invite-section {
+    padding: 15px;
+  }
+
+  .invite-list li {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .invite-action {
+    width: 100%;
+  }
+
+  .create-post select,
+  .create-post textarea,
+  .create-post input[type="file"] {
+    font-size: 13px;
+  }
+
+  .btn--primary {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .group-details {
+    padding: 15px 10px;
+  }
+
+  .group-details__container {
+    padding: 20px 15px;
+  }
+
+  .post-image {
+    max-height: 250px;
+  }
 }

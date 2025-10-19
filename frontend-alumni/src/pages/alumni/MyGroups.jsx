@@ -51,7 +51,7 @@ function MyGroups() {
 
 return (
   <div className="mycommunity-panel">
-    <h2 className="mycommunity-header">My Communities</h2>
+    <h2 className="uni-header">My Communities</h2>
 
     {groups.length === 0 ? (
       <p className="mycommunity-empty">No Communities found</p>
