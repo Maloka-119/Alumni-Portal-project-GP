@@ -170,3 +170,13 @@
     }
   }
   
+  .nav-item.active {
+    background-color: #e5e7eb;
+    font-weight: 600;
+    border-left: 4px solid #2563eb;
+    color: rgb(44, 82, 187);
+  }
+  .nav-item.active:hover {
+    background-color: #dbeafe;
+  }
+  
