@@ -6,6 +6,7 @@ import "./MyGroups.css";
 function MyGroups() {
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [showInviteOnly, setShowInviteOnly] = useState(false);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -33,319 +34,80 @@ function MyGroups() {
     }
   };
 
+  const openGroupDetails = (group, inviteOnly = false) => {
+    setSelectedGroup(group);
+    setShowInviteOnly(inviteOnly);
+  };
+
   if (selectedGroup) {
-    return <GroupDetails group={selectedGroup} goBack={() => setSelectedGroup(null)} />;
+    return (
+      <GroupDetails
+        group={selectedGroup}
+        goBack={() => setSelectedGroup(null)}
+        showInviteOnly={showInviteOnly} // لتفعيل Invite section مباشرة
+      />
+    );
   }
 
-  return (
-    <div className="community-panel">
-      <h2 className="uni-header">My Communities</h2>
+return (
+  <div className="mycommunity-panel">
+    <h2 className="mycommunity-header">My Communities</h2>
 
-      {groups.length === 0 ? (
-        <p className="community-empty">No Communities found</p>
-      ) : (
-        <div className="community-grid">
-          {groups.map((g) => (
-            <div key={g.id} className="community-card">
-              <span className="community-members">{g.membersCount} Members</span>
+    {groups.length === 0 ? (
+      <p className="mycommunity-empty">No Communities found</p>
+    ) : (
+      <div className="mycommunity-grid">
+        {groups.map((g) => (
+          <div key={g.id} className="mycommunity-card">
+            {/* صورة الجروب + البادجات + الاسم */}
+            <div className="mycommunity-image-wrapper">
+              {g.groupImage ? (
+                <img
+                  src={g.groupImage}
+                  alt={g.groupName}
+                  className="mycommunity-image"
+                />
+              ) : (
+                <div style={{ height: "160px", background: "#ddd" }}></div>
+              )}
 
-              <h3 className="community-name">{g.groupName}</h3>
-              <p className="community-desc">{g.description}</p>
-              <p className="community-date">
-                <strong>Created:</strong>{" "}
-                {new Date(g.createdDate).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </p>
+              {/* الاسم على الصورة بخلفية شفافة */}
+              <div className="mycommunity-overlay">
+                <h2>{g.groupName}</h2>
+              </div>
 
-              <div className="community-actions">
-                <button
-                  onClick={() => setSelectedGroup(g)}
-                  className="action-btn view-btn"
-                >
-                  View
-                </button>
-                <button
-                  onClick={() => handleLeave(g.id)}
-                  className="action-btn leave-btn"
-                >
-                  Leave
-                </button>
+              {/* عدد الأعضاء */}
+              <span className="mycommunity-members">
+                {g.membersCount} Members
+              </span>
+
+              {/* Invite Badge */}
+              <div
+                className="myinvite-badge"
+                onClick={() => openGroupDetails(g, true)}
+              >
+                +
+                <span className="tooltip-text">
+                  Invite people to this community
+                </span>
               </div>
             </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+
+            {/* أزرار View و Leave */}
+            <button onClick={() => openGroupDetails(g)}>View Details</button>
+            <button
+              style={{ backgroundColor: "#ef4444", marginTop: "5px" }}
+              onClick={() => handleLeave(g.id)}
+            >
+              Leave
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+);
+
 }
 
 export default MyGroups;
-
-// correct without group details
-// import { useEffect, useState } from "react";
-// import { Link } from "react-router-dom";
-// import API from "../../services/api"; 
-// import "./MyGroups.css"; 
-
-// function MyGroups() {
-//   const [groups, setGroups] = useState([]);
-
-// useEffect(() => {
-//   const fetchGroups = async () => {
-//     try {
-//       const res = await API.get("/groups/my-groups");
-//       console.log("Groups from API:", res.data);
-//       setGroups(res.data.data || []); // ✅ ضمان إنها تبقى array
-//     } catch (err) {
-//       console.error("Error fetching groups:", err);
-//       setGroups([]); // ✅ fallback في حالة الخطأ
-//     }
-//   };
-
-//   fetchGroups();
-// }, []);
-
-//  const handleLeave = async (groupId) => {
-//   try {
-//     const res = await API.delete(`/groups/leave/${groupId}`);
-//     console.log("Leave response:", res.data);
-
-//     if (res.data.status === "success") {
-//       const updatedGroups = groups.filter((g) => g.id !== groupId);
-//       setGroups(updatedGroups);
-//       alert("You left the group successfully!");
-//     } else {
-//       alert(res.data.message || "Failed to leave the group.");
-//     }
-//   } catch (err) {
-//     console.error("Error leaving group:", err.response?.data || err.message);
-//     alert("Failed to leave the group, please try again.");
-//   }
-// };
-
-//   return (
-//     <div className="mygroups-container">
-//       <h2 className="title">My Communities</h2>
-
-//       {groups.length === 0 ? (
-//         <p className="no-groups">No Communities found</p>
-//       ) : (
-//         <div className="groups-list">
-//           {groups.map((g) => (
-//             <div key={g.id} className="group-card">
-//               {/* Badge عدد الأعضاء */}
-//               <span className="members-badge">{g.membersCount} Members</span>
-
-
-//               <h3>{g.groupName}</h3>
-//               <p>{g.description}</p>
-//               <p>
-//                 <strong>Created:</strong>{" "}
-//                 {new Date(g.createdDate).toLocaleDateString("en-US", {
-//                   year: "numeric",
-//                   month: "short",
-//                   day: "numeric",
-//                 })}
-//               </p>
-
-//               <div className="actions">
-//                 <Link to={`/groups/${g.id}`} className="btn go-btn">
-//                   View 
-//                 </Link>
-//                 <button
-//                   onClick={() => handleLeave(g.id)}
-//                   className="btn leave-btn"
-//                 >
-//                   Leave community
-//                 </button>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-// export default MyGroups;
-
-// import { useEffect, useState } from "react";
-// import API from "../../services/api"; 
-// import GroupDetails from "../alumni/GroupDetails"; 
-// import "./MyGroups.css"; 
-
-// function MyGroups() {
-//   const [groups, setGroups] = useState([]);
-//   const [selectedGroup, setSelectedGroup] = useState(null); // ✅ عشان نعرض تفاصيل جروب معين
-
-//   useEffect(() => {
-//     const fetchGroups = async () => {
-//       try {
-//         const res = await API.get("/groups/my-groups");
-//         console.log("Groups from API:", res.data);
-//         setGroups(res.data.data || []); 
-//       } catch (err) {
-//         console.error("Error fetching groups:", err);
-//         setGroups([]); 
-//       }
-//     };
-
-//     fetchGroups();
-//   }, []);
-
-//   const handleLeave = async (groupId) => {
-//     try {
-//       const res = await API.delete(`/groups/leave/${groupId}`);
-//       console.log("Leave response:", res.data);
-
-//       if (res.data.status === "success") {
-//         const updatedGroups = groups.filter((g) => g.id !== groupId);
-//         setGroups(updatedGroups);
-//         alert("You left the community successfully!");
-//       } else {
-//         alert(res.data.message || "Failed to leave the community.");
-//       }
-//     } catch (err) {
-//       console.error("Error leaving community:", err.response?.data || err.message);
-//       alert("Failed to leave the community, please try again.");
-//     }
-//   };
-
-//   if (selectedGroup) {
-//     // ✅ لو فيه جروب متحدد نعرض GroupDetails
-//     return <GroupDetails group={selectedGroup} goBack={() => setSelectedGroup(null)} />;
-//   }
-
-//   return (
-//     <div className="mygroups-container">
-//       <h2 className="title">My Communities</h2>
-
-//       {groups.length === 0 ? (
-//         <p className="no-groups">No Communities found</p>
-//       ) : (
-//         <div className="groups-list">
-//           {groups.map((g) => (
-//             <div key={g.id} className="group-card">
-//               <span className="members-badge">{g.membersCount} Members</span>
-
-//               <h3>{g.groupName}</h3>
-//               <p>{g.description}</p>
-//               <p>
-//                 <strong>Created:</strong>{" "}
-//                 {new Date(g.createdDate).toLocaleDateString("en-US", {
-//                   year: "numeric",
-//                   month: "short",
-//                   day: "numeric",
-//                 })}
-//               </p>
-
-//               <div className="actions">
-//                 <button onClick={() => setSelectedGroup(g)} className="btn go-btn">
-//                   View
-//                 </button>
-//                 <button
-//                   onClick={() => handleLeave(g.id)}
-//                   className="btn leave-btn"
-//                 >
-//                   Leave community
-//                 </button>
-//               </div>
-//             </div>
-//           ))}
-//         </div>
-//       )}
-//     </div>
-//   );
-// }
-
-// export default MyGroups;
-// // correct without group details
-// // import { useEffect, useState } from "react";
-// // import { Link } from "react-router-dom";
-// // import API from "../../services/api"; 
-// // import "./MyGroups.css"; 
-
-// // function MyGroups() {
-// //   const [groups, setGroups] = useState([]);
-
-// // useEffect(() => {
-// //   const fetchGroups = async () => {
-// //     try {
-// //       const res = await API.get("/groups/my-groups");
-// //       console.log("Groups from API:", res.data);
-// //       setGroups(res.data.data || []); // ✅ ضمان إنها تبقى array
-// //     } catch (err) {
-// //       console.error("Error fetching groups:", err);
-// //       setGroups([]); // ✅ fallback في حالة الخطأ
-// //     }
-// //   };
-
-// //   fetchGroups();
-// // }, []);
-
-// //  const handleLeave = async (groupId) => {
-// //   try {
-// //     const res = await API.delete(`/groups/leave/${groupId}`);
-// //     console.log("Leave response:", res.data);
-
-// //     if (res.data.status === "success") {
-// //       const updatedGroups = groups.filter((g) => g.id !== groupId);
-// //       setGroups(updatedGroups);
-// //       alert("You left the group successfully!");
-// //     } else {
-// //       alert(res.data.message || "Failed to leave the group.");
-// //     }
-// //   } catch (err) {
-// //     console.error("Error leaving group:", err.response?.data || err.message);
-// //     alert("Failed to leave the group, please try again.");
-// //   }
-// // };
-
-// //   return (
-// //     <div className="mygroups-container">
-// //       <h2 className="title">My Communities</h2>
-
-// //       {groups.length === 0 ? (
-// //         <p className="no-groups">No Communities found</p>
-// //       ) : (
-// //         <div className="groups-list">
-// //           {groups.map((g) => (
-// //             <div key={g.id} className="group-card">
-// //               {/* Badge عدد الأعضاء */}
-// //               <span className="members-badge">{g.membersCount} Members</span>
-
-
-// //               <h3>{g.groupName}</h3>
-// //               <p>{g.description}</p>
-// //               <p>
-// //                 <strong>Created:</strong>{" "}
-// //                 {new Date(g.createdDate).toLocaleDateString("en-US", {
-// //                   year: "numeric",
-// //                   month: "short",
-// //                   day: "numeric",
-// //                 })}
-// //               </p>
-
-// //               <div className="actions">
-// //                 <Link to={`/groups/${g.id}`} className="btn go-btn">
-// //                   View 
-// //                 </Link>
-// //                 <button
-// //                   onClick={() => handleLeave(g.id)}
-// //                   className="btn leave-btn"
-// //                 >
-// //                   Leave community
-// //                 </button>
-// //               </div>
-// //             </div>
-// //           ))}
-// //         </div>
-// //       )}
-// //     </div>
-// //   );
-// // }
-
-// // export default MyGroups;
