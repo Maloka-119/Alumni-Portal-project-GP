@@ -152,6 +152,7 @@ const UsersPostsPage = () => {
                 <strong>{post.author?.["full-name"] || t('unknown')}</strong>
                 <div className="post-date">
                   {new Date(post["created-at"]).toLocaleString()} - {post.category}
+                  {post['group-id'] ? ' - In Group' : ''}
                   </div>
                 
               </div>
