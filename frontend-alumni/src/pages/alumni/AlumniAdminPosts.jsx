@@ -84,7 +84,7 @@ const AlumniAdminPosts = () => {
         await API.delete(`/posts/${postId}/like`);
         setPosts(prevPosts => prevPosts.map(p => p.id === postId ? { ...p, likes: p.likes - 1, liked: false } : p));
       } else {
-        await API.put(`/posts/${postId}/like`);
+        await API.post(`/posts/${postId}/like`);
         setPosts(prevPosts => prevPosts.map(p => p.id === postId ? { ...p, likes: p.likes + 1, liked: true } : p));
       }
     } catch (err) {
@@ -106,18 +106,44 @@ const AlumniAdminPosts = () => {
   
     try {
       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
+
       console.log("Comment response from backend:", res.data);
   
-      // نعيد جلب كل البوستات من الباك
-      await fetchPosts();
+      // ✅ ضيف الكومينت الجديد مباشرة في الـ state
+      setPosts(prevPosts =>
+        prevPosts.map(p =>
+          p.id === postId
+
+            ? {
+                ...p,
+                comments: [
+                  ...(p.comments || []),
+                  {
+                    comment_id: res.data.comment.comment_id,
+                    content: res.data.comment.content,
+                    createdAt: res.data.comment["created-at"],
+                    edited: res.data.comment.edited,
+                    author: {
+                      id: res.data.comment.author.id,
+                      fullName: res.data.comment.author["full-name"],
+                      email: res.data.comment.author.email,
+                      image: PROFILE
+                    }
+                  }
+                ]
+              }
+            : p
+        )
+      );
   
-      // نفرغ input الكومنت
+      // ✅ امسح حقل الكتابة بعد الإرسال
       setCommentInputs({ ...commentInputs, [postId]: '' });
   
     } catch (err) {
-      console.error(err);
+      console.error("Error submitting comment:", err);
     }
   };
+  
   
 
   const filteredPosts = filterType === 'All' ? posts : posts.filter(p => p.type === filterType);
