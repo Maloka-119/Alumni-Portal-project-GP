@@ -455,56 +455,56 @@ const getCategories = async (req, res) => {
     });
   }
 };
-const getAdminPosts = async (req, res) => {
-  try {
-    // جلب البوستات الخاصة بالمستخدمين من نوع admin فقط
-    const posts = await Post.findAll({
-      include: [
-        {
-          model: User,
-          attributes: ["id", "first-name", "last-name", "email", "user-type"],
-          where: { "user-type": "admin" }, // الفلترة هنا علشان نجيب الأدمنز فقط
-        },
-        {
-          model: PostImage, // 🆕 أضفنا الـ include للصور
-          attributes: ["image-url"],
-        },
-      ],
-      order: [["created-at", "DESC"]],
-    });
+// const getAdminPosts = async (req, res) => {
+//   try {
+//     // جلب البوستات الخاصة بالمستخدمين من نوع admin فقط
+//     const posts = await Post.findAll({
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "first-name", "last-name", "email", "user-type"],
+//           where: { "user-type": "admin" }, // الفلترة هنا علشان نجيب الأدمنز فقط
+//         },
+//         {
+//           model: PostImage, // 🆕 أضفنا الـ include للصور
+//           attributes: ["image-url"],
+//         },
+//       ],
+//       order: [["created-at", "DESC"]],
+//     });
 
-    const responseData = posts.map((post) => ({
-      post_id: post.post_id,
-      category: post.category,
-      content: post.content,
-      description: post.description,
-      "created-at": post["created-at"],
-      author: {
-        id: post.User.id,
-        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-        email: post.User.email,
-      },
-      "group-id": post["group-id"],
-      "in-landing": post["in-landing"],
-      images: post.PostImages
-        ? post.PostImages.map((img) => img["image-url"])
-        : [], // 🆕 أضفنا الصور
-    }));
+//     const responseData = posts.map((post) => ({
+//       post_id: post.post_id,
+//       category: post.category,
+//       content: post.content,
+//       description: post.description,
+//       "created-at": post["created-at"],
+//       author: {
+//         id: post.User.id,
+//         "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+//         email: post.User.email,
+//       },
+//       "group-id": post["group-id"],
+//       "in-landing": post["in-landing"],
+//       images: post.PostImages
+//         ? post.PostImages.map((img) => img["image-url"])
+//         : [], // 🆕 أضفنا الصور
+//     }));
 
-    res.status(200).json({
-      status: "success",
-      message: "Admin posts fetched successfully",
-      data: responseData,
-    });
-  } catch (error) {
-    console.error("Error fetching admin posts:", error);
-    res.status(500).json({
-      status: "error",
-      message: "Failed to fetch admin posts",
-      data: [],
-    });
-  }
-};
+//     res.status(200).json({
+//       status: "success",
+//       message: "Admin posts fetched successfully",
+//       data: responseData,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching admin posts:", error);
+//     res.status(500).json({
+//       status: "error",
+//       message: "Failed to fetch admin posts",
+//       data: [],
+//     });
+//   }
+// };
 
 // const getGraduatePosts = async (req, res) => {
 //   try {
@@ -572,6 +572,121 @@ const getAdminPosts = async (req, res) => {
 //   }
 // };
 
+// src/controllers/post.controller.js
+
+const getAdminPosts = async (req, res) => {
+  try {
+    const posts = await Post.findAll({
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+          where: { "user-type": "admin" },
+        },
+        {
+          model: PostImage,
+          attributes: ["image-url"],
+        },
+        {
+          model: Like,
+          attributes: ["like_id", "author-id"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name"],
+            },
+          ],
+        },
+        {
+          model: Comment,
+          attributes: [
+            "comment_id",
+            "content",
+            "created-at",
+            "edited",
+            "author-id",
+          ],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name", "email"],
+            },
+          ],
+          order: [["created-at", "DESC"]],
+        },
+      ],
+      order: [["created-at", "DESC"]],
+    });
+
+    const responseData = posts.map((post) => ({
+      post_id: post.post_id,
+      category: post.category,
+      content: post.content,
+      description: post.description,
+      "created-at": post["created-at"],
+      author: {
+        id: post.User?.id || "unknown", // ✅ Added optional chaining
+        "full-name":
+          `${post.User?.["first-name"] || ""} ${
+            post.User?.["last-name"] || ""
+          }`.trim() || "Unknown User", // ✅ Added optional chaining
+        email: post.User?.email || "unknown", // ✅ Added optional chaining
+      },
+      "group-id": post["group-id"],
+      "in-landing": post["in-landing"],
+      images: post.PostImages
+        ? post.PostImages.map((img) => img["image-url"])
+        : [],
+      // إحصائيات اللايكات
+      likes_count: post.Likes ? post.Likes.length : 0,
+      // معلومات اللايكات
+      likes: post.Likes
+        ? post.Likes.map((like) => ({
+            like_id: like.like_id,
+            user: {
+              id: like.User?.id || "unknown", // ✅ Added optional chaining
+              "full-name":
+                `${like.User?.["first-name"] || ""} ${
+                  like.User?.["last-name"] || ""
+                }`.trim() || "Unknown User", // ✅ Added optional chaining
+            },
+          }))
+        : [],
+      // إحصائيات الكومنتات
+      comments_count: post.Comments ? post.Comments.length : 0,
+      // معلومات الكومنتات
+      comments: post.Comments
+        ? post.Comments.map((comment) => ({
+            comment_id: comment.comment_id,
+            content: comment.content,
+            "created-at": comment["created-at"],
+            edited: comment.edited,
+            author: {
+              id: comment.User?.id || "unknown", // ✅ Added optional chaining
+              "full-name":
+                `${comment.User?.["first-name"] || ""} ${
+                  comment.User?.["last-name"] || ""
+                }`.trim() || "Unknown User", // ✅ Added optional chaining
+              email: comment.User?.email || "unknown", // ✅ Added optional chaining
+            },
+          }))
+        : [],
+    }));
+
+    res.status(200).json({
+      status: "success",
+      message: "Admin posts fetched successfully",
+      data: responseData,
+    });
+  } catch (error) {
+    console.error("Error fetching admin posts:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch admin posts",
+      data: [],
+    });
+  }
+};
 const getGraduatePosts = async (req, res) => {
   try {
     if (!req.user || req.user["user-type"] !== "graduate") {
@@ -1049,7 +1164,7 @@ const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
-    
+
     // Find the post
     const post = await Post.findByPk(postId);
     if (!post) {
@@ -1297,7 +1412,7 @@ const unhidePost = async (req, res) => {
 const getMyPosts = async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
     const posts = await Post.findAll({
       where: { "author-id": userId },
       include: [

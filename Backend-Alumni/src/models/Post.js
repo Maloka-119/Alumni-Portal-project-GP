@@ -1,7 +1,5 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../config/db");
-const User = require("./User");
-const Group = require("./Group");
 
 const Post = sequelize.define(
   "Post",
@@ -19,24 +17,20 @@ const Post = sequelize.define(
       allowNull: false,
       defaultValue: "General",
     },
-
     content: { type: DataTypes.TEXT },
     "created-at": { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     "author-id": {
       type: DataTypes.INTEGER,
-      references: { model: User, key: "id" },
+      references: { model: "User", key: "id" }, // اسم الجدول كـ string
     },
     "group-id": {
       type: DataTypes.INTEGER,
-      references: { model: Group, key: "id" },
+      references: { model: "Group", key: "id" }, // اسم الجدول كـ string
     },
     "in-landing": { type: DataTypes.BOOLEAN, defaultValue: false },
     "is-hidden": { type: DataTypes.BOOLEAN, defaultValue: false },
   },
   { tableName: "Post", timestamps: false }
 );
-
-Post.belongsTo(User, { foreignKey: "author-id" });
-Post.belongsTo(Group, { foreignKey: "group-id" });
 
 module.exports = Post;

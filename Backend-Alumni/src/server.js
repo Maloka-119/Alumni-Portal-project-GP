@@ -13,7 +13,7 @@ const Permission = require("./models/Permission");
 const RolePermission = require("./models/RolePermission");
 const StaffRole = require("./models/StaffRole");
 const sequelize = require("./config/db");
-
+require("./models/associations");
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -52,18 +52,16 @@ const roleRoutes = require("./routes/role.route");
 app.use("/alumni-portal/roles", roleRoutes);
 
 const friendshipRoutes = require("./routes/friendship.route");
-app.use("/alumni-portal/friendships",friendshipRoutes);
+app.use("/alumni-portal/friendships", friendshipRoutes);
 
-const invitationRoutes = require('./routes/invitation.route');
-app.use('/alumni-portal/invitations', invitationRoutes);
+const invitationRoutes = require("./routes/invitation.route");
+app.use("/alumni-portal/invitations", invitationRoutes);
 
 const faqRoutes = require("./routes/faq.route");
 app.use("/alumni-portal/faqs", faqRoutes);
 
 const adminFaqRoutes = require("./routes/admin-faq.route");
 app.use("/alumni-portal/admin/faqs", adminFaqRoutes);
-
-
 
 //  Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
