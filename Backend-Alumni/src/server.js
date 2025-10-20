@@ -22,11 +22,10 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 // WebSocket setup
-const http = require('http');
+const http = require("http");
 const server = http.createServer(app);
-const ChatSocketServer = require('./sockte/chatSocket');
+const ChatSocketServer = require("./socket/chatSocket");
 const chatSocket = new ChatSocketServer(server);
-
 
 // ✅ Test Route
 app.get("/", (req, res) => {
