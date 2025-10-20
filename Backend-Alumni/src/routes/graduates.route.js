@@ -12,7 +12,8 @@ router.put(
   graduateController.updateProfile
 );
 
-
+// admin يوافق على خريج
+router.put("/approve/:id", protect, graduateController.approveGraduate);
 // Get all graduates (public)
 router.route("/").get(graduateController.getAllGraduates);
 
