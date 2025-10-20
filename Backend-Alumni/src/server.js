@@ -27,12 +27,12 @@ const server = http.createServer(app);
 const ChatSocketServer = require("./socket/chatSocket");
 const chatSocket = new ChatSocketServer(server);
 
-// ✅ Test Route
+//  Test Route
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// ✅ Routes
+// Routes
 const graduateRoutes = require("./routes/graduates.route");
 app.use("/alumni-portal/graduates", graduateRoutes);
 

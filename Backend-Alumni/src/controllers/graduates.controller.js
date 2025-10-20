@@ -99,6 +99,46 @@ const getDigitalID = async (req, res) => {
     });
   }
 };
+
+//Approve Graduate by admin
+const approveGraduate = async (req, res) => {
+  try {
+    const { id } = req.params; // graduate_id
+
+    // تأكيد إن اللي بينفذ هو admin
+    if (!req.user || req.user["user-type"] !== "admin") {
+      return res.status(403).json({
+        message: "Access denied: Only admin can approve graduates.",
+      });
+    }
+
+    // نبحث عن الخريج
+    const graduate = await Graduate.findOne({ where: { graduate_id: id } });
+
+    if (!graduate) {
+      return res.status(404).json({ message: "Graduate not found." });
+    }
+
+    // تحديث الحالة
+    graduate["status-to-login"] = "active";
+    await graduate.save();
+
+    return res.status(200).json({
+      message: "Graduate approved successfully.",
+      graduateId: id,
+      newStatus: graduate["status-to-login"],
+    });
+  } catch (error) {
+    console.error("Error approving graduate:", error.message);
+    return res.status(500).json({
+      message: "Server error while approving graduate.",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { approveGraduate };
+
 // GET Graduate Profile
 const getGraduateProfile = async (req, res) => {
   try {
@@ -344,4 +384,5 @@ module.exports = {
   updateGraduateStatus,
   getAllGraduates,
   searchGraduates,
+  approveGraduate,
 };

@@ -188,4 +188,64 @@
         padding: 1rem 0.5rem;
       }
     }
- 
+/* جعل حقل رقم التليفون في منتصف الصفحة تمامًا والاسم فوقه بنفس استايل الباقي */
+.phone-center {
+  grid-column: 3 / span 4; /* يخليه بالضبط في منتصف الشبكة */
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* يوسّط كل العناصر */
+  justify-content: center;
+  text-align: center;
+}
+
+.phone-center .form-label {
+  color: #37568d;
+  font-weight: 600; /* أخف */
+  margin-bottom: 0.5rem;
+  font-size: 0.95rem;
+}
+
+
+.phone-center .form-input {
+  width: 100%; /* وسط الصفحة */
+  text-align: center;
+}
+
+
+
+/* كارت الرسالة */
+.message {
+  margin-top: 1.5rem;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  text-align: center;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+  animation: fadeIn 0.4s ease, fadeOut 0.5s ease 4.5s forwards;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.message.success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #10b981;
+}
+
+.message.error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #ef4444;
+}
+
+/* تأثيرات الدخول والخروج */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; transform: translateY(-10px); }
+}
