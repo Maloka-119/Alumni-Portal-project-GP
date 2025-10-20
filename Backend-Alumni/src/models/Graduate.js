@@ -25,6 +25,14 @@ const Graduate = sequelize.define(
       type: DataTypes.ENUM("active", "inactive"),
       defaultValue: "active",
     },
+    show_cv: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
+    show_linkedin: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
   },
   {
     tableName: "Graduate",
@@ -35,5 +43,8 @@ const Graduate = sequelize.define(
 Graduate.belongsTo(User, { foreignKey: "graduate_id" });
 User.hasOne(Graduate, { foreignKey: "graduate_id" });
 // العلاقة بين Graduate والدعوات (عشان نقدر نعمل include)
-Graduate.hasMany(Invitation, { foreignKey: "receiver_id", as: "pendingInvitation" });
+Graduate.hasMany(Invitation, {
+  foreignKey: "receiver_id",
+  as: "pendingInvitation",
+});
 module.exports = Graduate;

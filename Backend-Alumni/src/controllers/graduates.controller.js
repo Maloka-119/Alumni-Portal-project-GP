@@ -116,18 +116,32 @@ const getGraduateProfile = async (req, res) => {
 
     const user = graduate.User;
 
+    // 🔹 نتحقق هل اللي طالب البروفايل هو نفسه صاحبه
+    const isOwner = req.user && req.user.id === graduate.graduate_id;
+
+    // 🔹 نبدأ نبني بيانات البروفايل
     const graduateProfile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${user["first-name"]} ${user["last-name"]}`,
       faculty: graduate.faculty,
       graduationYear: graduate["graduation-year"],
       bio: graduate.bio,
-      CV: graduate["cv-url"],
-      skills: graduate.skills, // نص string
+      skills: graduate.skills,
       currentJob: graduate["current-job"],
-    
-      phoneNumber: user.phoneNumber,  
     };
+
+    // 🔹 صاحب البروفايل يشوف كل حاجة دايمًا
+    if (isOwner || graduate.show_cv === true) {
+      graduateProfile.CV = graduate["cv-url"];
+    }
+
+    if (isOwner || graduate.show_linkedin === true) {
+      graduateProfile.linkedlnLink = graduate["linkedln-link"];
+    }
+
+    if (isOwner || user.show_phone === true) {
+      graduateProfile.phoneNumber = user.phoneNumber;
+    }
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -135,6 +149,7 @@ const getGraduateProfile = async (req, res) => {
       data: graduateProfile,
     });
   } catch (err) {
+    console.error("Error in getGraduateProfile:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
       message: err.message,
@@ -143,8 +158,6 @@ const getGraduateProfile = async (req, res) => {
   }
 };
 
-
-// UPDATE Graduate Profile
 const updateProfile = async (req, res) => {
   try {
     const graduate = await Graduate.findByPk(req.user.id, {
@@ -161,7 +174,7 @@ const updateProfile = async (req, res) => {
 
     const user = graduate.User;
 
-    // تحديث بيانات User
+    // 🔹 تحديث بيانات User
     const userFields = ["firstName", "lastName", "phoneNumber"];
     userFields.forEach((field) => {
       if (req.body[field] !== undefined) {
@@ -171,7 +184,7 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    // تحديث بيانات Graduate
+    // 🔹 تحديث بيانات Graduate
     const graduateFields = [
       { bodyKey: "bio", dbKey: "bio" },
       { bodyKey: "skills", dbKey: "skills" },
@@ -187,13 +200,19 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    // رفع صورة البروفايل
+    // 🔹 تحديث إعدادات الخصوصية الجديدة
+    if (req.body.showCV !== undefined) graduate.show_cv = req.body.showCV;
+    if (req.body.showLinkedIn !== undefined)
+      graduate.show_linkedin = req.body.showLinkedIn;
+    if (req.body.showPhone !== undefined) user.show_phone = req.body.showPhone;
+
+    // 🔹 رفع صورة البروفايل
     if (req.files?.profilePicture?.[0]) {
       const profilePic = req.files.profilePicture[0];
       graduate["profile-picture-url"] = profilePic.path || profilePic.url;
     }
 
-    // رفع CV
+    // 🔹 رفع CV
     if (req.files?.cv?.[0]) {
       const cvFile = req.files.cv[0];
       graduate["cv-url"] = cvFile.path || cvFile.url;
@@ -201,6 +220,9 @@ const updateProfile = async (req, res) => {
 
     await user.save();
     await graduate.save();
+
+    // 🔹 صاحب البروفايل يشوف كل حاجة دايمًا، والباقي حسب الخصوصية
+    const isOwner = true; // بما إن ده updateProfile فهو دايمًا صاحب الحساب
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -212,11 +234,19 @@ const updateProfile = async (req, res) => {
           faculty: graduate.faculty,
           graduationYear: graduate["graduation-year"],
           bio: graduate.bio,
-          CV: graduate["cv-url"],
+          CV: isOwner || graduate.show_cv ? graduate["cv-url"] : null,
           skills: graduate.skills,
           currentJob: graduate["current-job"],
-          linkedlnLink: graduate["linkedln-link"],
-          phoneNumber: user.phoneNumber,
+          linkedlnLink:
+            isOwner || graduate.show_linkedin
+              ? graduate["linkedln-link"]
+              : null,
+          phoneNumber: isOwner || user.show_phone ? user.phoneNumber : null,
+
+          // 🔹 إعدادات الخصوصية المحدثة
+          showCV: graduate.show_cv,
+          showLinkedIn: graduate.show_linkedin,
+          showPhone: user.show_phone,
         },
       },
     });
@@ -229,7 +259,6 @@ const updateProfile = async (req, res) => {
     });
   }
 };
-
 
 // Activate / Inactivate Graduate
 const updateGraduateStatus = async (req, res) => {

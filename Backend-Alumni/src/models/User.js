@@ -15,6 +15,10 @@ const User = sequelize.define(
     "user-type": { type: DataTypes.ENUM("graduate", "staff", "admin") },
     "verification-code": { type: DataTypes.STRING, allowNull: true },
     "verification-code-expires": { type: DataTypes.DATE, allowNull: true },
+    show_phone: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: true,
+    },
   },
   {
     tableName: "User",

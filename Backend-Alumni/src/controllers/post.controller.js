@@ -751,90 +751,58 @@ const getGraduatePosts = async (req, res) => {
 };
 
 const editPost = async (req, res) => {
-  console.log("🟢 ----- [editPost] START -----");
-
   try {
     const { postId } = req.params;
-
-    // ✅ عرض البيانات القادمة
-    console.log("🧾 req.body:", req.body);
-    console.log("📦 req.files:", req.files);
-    console.log("👤 User ID:", req.user?.id);
-
     const { category, type, content, link, groupId, inLanding, removeImages } =
       req.body;
 
-    // 🆕 دمج category و type
+    // تحديد الكاتيجوري النهائي
     const finalCategory = category || type;
 
-    // جيب البوست مع الصور
+    // الحصول على البوست من قاعدة البيانات
     const post = await Post.findByPk(postId, {
-      include: [
-        {
-          model: PostImage,
-          attributes: ["image-url"],
-        },
-      ],
+      include: [{ model: PostImage, attributes: ["image-url"] }],
     });
 
     if (!post) {
-      return res
-        .status(404)
-        .json({ status: "error", message: "Post not found" });
+      return res.status(404).json({
+        status: "error",
+        message: "Post not found",
+      });
     }
 
-    // 🆕 اسمح للـ Admin يعدل أي بوست + صاحب البوست
-    const isAdmin = req.user["user-type"] === "admin";
+    // السماح فقط لصاحب البوست بالتعديل (بغض النظر عن نوع المستخدم)
     const isPostOwner = post["author-id"] === req.user.id;
-
-    if (!isPostOwner && !isAdmin) {
-      return res
-        .status(403)
-        .json({ status: "error", message: "You can only edit your own posts" });
+    if (!isPostOwner) {
+      return res.status(403).json({
+        status: "error",
+        message: "You can only edit your own posts",
+      });
     }
-
-    console.log("✅ User authorized to edit post");
 
     // تحديث الحقول
-    if (finalCategory !== undefined) {
-      post.category = finalCategory;
-      console.log("🔹 Updated category:", finalCategory);
-    }
-    if (content !== undefined) {
-      post.content = content;
-      console.log("🔹 Updated content:", content);
-    }
-    if (link !== undefined) {
-      post.link = link;
-      console.log("🔹 Updated link:", link);
-    }
-    if (groupId !== undefined) {
+    if (finalCategory !== undefined) post.category = finalCategory;
+    if (content !== undefined) post.content = content;
+    if (link !== undefined) post.link = link;
+    if (groupId !== undefined)
       post["group-id"] = groupId === null ? null : groupId;
-      console.log("🔹 Updated groupId:", groupId);
-    }
-    if (inLanding !== undefined) {
-      post["in-landing"] = inLanding;
-      console.log("🔹 Updated inLanding:", inLanding);
-    }
+    if (inLanding !== undefined) post["in-landing"] = inLanding;
 
     await post.save();
-    console.log("✅ Post fields updated");
 
-    // معالجة الصور المحذوفة
+    // حذف الصور المطلوبة
     if (
       removeImages &&
       Array.isArray(removeImages) &&
       removeImages.length > 0
     ) {
-      console.log("🗑️ Removing images:", removeImages);
       await PostImage.destroy({
         where: { "post-id": postId, "image-url": removeImages },
       });
     }
 
-    // معالجة الصور الجديدة
+    // إضافة صور جديدة (لو موجودة)
     if (req.files && req.files.length > 0) {
-      console.log(`🖼️ Adding ${req.files.length} new image(s)`);
       const uploadedImages = req.files.map((file) => ({
         "post-id": postId,
         "image-url": file.path || file.url || file.location,
@@ -842,7 +810,7 @@ const editPost = async (req, res) => {
       await PostImage.bulkCreate(uploadedImages);
     }
 
-    // جيب البوست المحدث مع الصور
+    // جلب البوست بعد التحديث
     const updatedPost = await Post.findByPk(postId, {
       include: [
         {
@@ -868,19 +836,12 @@ const editPost = async (req, res) => {
       },
     };
 
-    console.log("✅ Post updated successfully");
-    console.log("🟢 ----- [editPost] END SUCCESS -----");
-
     return res.status(200).json({
       status: "success",
       message: "Post updated successfully",
       data: responseData,
     });
   } catch (error) {
-    console.error("❌ Error in editPost:", error);
-    console.error("🟥 Stack:", error.stack);
-    console.log("🟢 ----- [editPost] END ERROR -----");
-
     return res.status(500).json({
       status: "error",
       message: error.message,
