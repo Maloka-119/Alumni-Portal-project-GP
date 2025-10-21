@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import UserManagement from './UserManagement';
 import './GradProfile.css';
@@ -18,14 +17,15 @@ const AlumniManagement = () => {
   useEffect(() => {
     if (activeTab !== "inPortal") return;
     setLoading(true);
-    API.get("/graduates")
+
+    API.get("/graduates/approved")
       .then(res => {
         const mappedUsers = res.data.data.map(g => ({
           id: g.User.id,
-          name: `${g.User["first-name"]} ${g.User["last-name"]}`,
-          nationalId: g.User["national-id"],
-          graduationYear: g["graduation-year"],
-          status: g.status,
+          name: `${g.User.firstName} ${g.User.lastName}`,
+          nationalId: g.User.nationalId,
+          graduationYear: g["graduation-year"] || "-",
+          status: g.status || "inactive",
           alumniId: g.graduate_id
         }));
         setUsers(mappedUsers);
@@ -36,26 +36,35 @@ const AlumniManagement = () => {
         setError(t("loadingError"));
         setLoading(false);
       });
-  }, [activeTab]);
+  }, [activeTab, t]);
 
   const toggleUserStatus = async (alumniId) => {
     const user = users.find(u => u.alumniId === alumniId);
     if (!user) return;
+
     const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    const token = localStorage.getItem("token");
+
     try {
-      const token = localStorage.getItem("token");
-      await API.put(
+      const res = await API.put(
         `/graduates/${alumniId}/status`,
         { status: newStatus },
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
-      setUsers(users.map(u =>
-        u.alumniId === alumniId ? { ...u, status: newStatus } : u
-      ));
+
+      if (res.data.status === "success") {
+        setUsers(users.map(u =>
+          u.alumniId === alumniId ? { ...u, status: newStatus } : u
+        ));
+      } else {
+        console.error("Error response:", res.data);
+      }
     } catch (err) {
-      console.error('Error updating status:', err);
+      console.error("Error updating status:", err);
     }
   };
 
@@ -100,17 +109,18 @@ const AlumniManagement = () => {
             <table className="users-table">
               <thead>
                 <tr>
+                  <th>{t("alumniId")}</th>
                   <th>{t("name")}</th>
                   <th>{t("nationalId")}</th>
                   <th>{t("graduationYear")}</th>
                   <th>{t("status")}</th>
-                  <th>{t("alumniId")}</th>
                   <th>{t("actions")}</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
                   <tr key={user.id} className="table-row">
+                    <td>{user.alumniId}</td>
                     <td>{user.name}</td>
                     <td>{user.nationalId}</td>
                     <td>{user.graduationYear}</td>
@@ -119,7 +129,6 @@ const AlumniManagement = () => {
                         {t(user.status)}
                       </span>
                     </td>
-                    <td>{user.alumniId}</td>
                     <td className="actions-cell">
                       <button
                         className="show-button"
@@ -159,5 +168,3 @@ const AlumniManagement = () => {
 };
 
 export default AlumniManagement;
-
-

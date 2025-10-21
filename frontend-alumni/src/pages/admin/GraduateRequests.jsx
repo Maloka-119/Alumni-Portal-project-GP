@@ -10,49 +10,52 @@ const GraduateRequests = () => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    setLoading(true);
-    API.get("/graduates/requests")
-      .then((res) => {
+    const fetchRequests = async () => {
+      setLoading(true);
+      try {
+        const res = await API.get("/graduates/requested");
         const mapped = res.data.data.map((g) => ({
           id: g.User.id,
-          name: `${g.User["first-name"]} ${g.User["last-name"]}`,
-          nationalId: g.User["national-id"],
-          graduationYear: g["graduation-year"],
+          name: `${g.User.firstName} ${g.User.lastName}`,
+          nationalId: g.User.nationalId,
+          graduationYear: g["graduation-year"] || "N/A",
           alumniId: g.graduate_id,
         }));
         setRequests(mapped);
-        setLoading(false);
-      })
-      .catch((err) => {
+      } catch (err) {
         console.error("Error fetching graduate requests:", err);
         setError(t("loadingError"));
+      } finally {
         setLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    fetchRequests();
+  }, [t]);
 
   const handleAccept = async (alumniId) => {
     try {
       const token = localStorage.getItem("token");
       await API.put(
-        `/graduates/${alumniId}/approve`,
+        `/graduates/approve/${alumniId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setRequests(requests.filter((r) => r.alumniId !== alumniId));
+      setRequests((prev) => prev.filter((r) => r.alumniId !== alumniId));
     } catch (err) {
       console.error("Error approving request:", err);
     }
   };
 
-  const handleRemove = async (alumniId) => {
+  const handleReject = async (alumniId) => {
     try {
       const token = localStorage.getItem("token");
       await API.put(
-        `/graduates/${alumniId}/reject`,
+        `/graduates/reject/${alumniId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setRequests(requests.filter((r) => r.alumniId !== alumniId));
+      setRequests((prev) => prev.filter((r) => r.alumniId !== alumniId));
     } catch (err) {
       console.error("Error rejecting request:", err);
     }
@@ -67,36 +70,44 @@ const GraduateRequests = () => {
         <table className="users-table">
           <thead>
             <tr>
+              <th>{t("alumniId")}</th>
               <th>{t("name")}</th>
               <th>{t("nationalId")}</th>
               <th>{t("graduationYear")}</th>
-              <th>{t("alumniId")}</th>
               <th>{t("actions")}</th>
             </tr>
           </thead>
           <tbody>
-            {requests.map((user) => (
-              <tr key={user.id} className="table-row">
-                <td>{user.name}</td>
-                <td>{user.nationalId}</td>
-                <td>{user.graduationYear}</td>
-                <td>{user.alumniId}</td>
-                <td className="actions-cell">
-                  <button
-                    className="show-button"
-                    onClick={() => handleAccept(user.alumniId)}
-                  >
-                    {t("Accept")}
-                  </button>
-                  <button
-                    className="delete-button"
-                    onClick={() => handleRemove(user.alumniId)}
-                  >
-                    {t("Remove")}
-                  </button>
+            {requests.length > 0 ? (
+              requests.map((user) => (
+                <tr key={user.id} className="table-row">
+                  <td>{user.alumniId}</td>
+                  <td>{user.name}</td>
+                  <td>{user.nationalId}</td>
+                  <td>{user.graduationYear}</td>
+                  <td className="actions-cell">
+                    <button
+                      className="show-button"
+                      onClick={() => handleAccept(user.alumniId)}
+                    >
+                      {t("Accept")}
+                    </button>
+                    <button
+                      className="delete-button"
+                      onClick={() => handleReject(user.alumniId)}
+                    >
+                      {t("Reject")}
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" style={{ textAlign: "center" }}>
+                  {t("No Requests In Alumni Portal")}
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       )}

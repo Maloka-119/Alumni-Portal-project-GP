@@ -50,10 +50,29 @@ const createPost = async (req, res) => {
       });
     }
 
-    // 🆕 الحل: تعليق شروط الـ graduate علشان الـ testing
-    console.log("✅ Skipping graduate checks for testing");
+  // 🧩 تحقق من نوع المستخدم
+if (user["user-type"] === "graduate") {
+  const graduate = await Graduate.findOne({
+    where: { "graduate_id": user.id },
+  });
 
-    // 🧱 إنشاء البوست
+  if (!graduate) {
+    return res.status(404).json({
+      status: "fail",
+      message: "Graduate record not found",
+    });
+  }
+
+  // تحقق من الحالة
+  if (graduate.status !== "active") {
+    return res.status(403).json({
+      status: "fail",
+      message: "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
+    });
+  }
+}
+
+    //  إنشاء البوست
     console.log("🪄 Creating post...");
     const newPost = await Post.create({
       category: finalCategory,

@@ -124,6 +124,48 @@ const getRequestedGraduates = async (req, res) => {
   }
 };
 
+//reject graduate by admin
+const rejectGraduate = async (req, res) => {
+  try {
+    // تأكيد إن المستخدم Admin
+    if (req.user['user-type'] !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied. Admin only",
+      });
+    }
+
+    const graduateId = req.params.id;
+
+    // جلب الخريج من قاعدة البيانات
+    const graduate = await Graduate.findByPk(graduateId);
+
+    if (!graduate) {
+      return res.status(404).json({
+        status: "error",
+        message: "Graduate not found",
+      });
+    }
+
+    // تحديث الحالة إلى "rejected"
+    graduate["status-to-login"] = "rejected"; 
+    await graduate.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Graduate request rejected successfully",
+      data: graduate,
+    });
+  } catch (error) {
+    console.error(" Error rejecting graduate:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to reject graduate request",
+      error: error.message,
+    });
+  }
+};
+
 //get digital id
 const getDigitalID = async (req, res) => {
   try {
@@ -225,7 +267,7 @@ const approveGraduate = async (req, res) => {
   }
 };
 
-module.exports = { approveGraduate };
+
 
 // GET Graduate Profile
 const getGraduateProfile = async (req, res) => {
@@ -475,4 +517,5 @@ module.exports = {
   updateGraduateStatus,
   searchGraduates,
   approveGraduate,
+  rejectGraduate
 };
