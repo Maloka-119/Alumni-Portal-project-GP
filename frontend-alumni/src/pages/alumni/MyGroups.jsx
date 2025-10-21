@@ -105,7 +105,7 @@ return (
   <div
   className="leave-icon"
   onClick={() => handleLeave(g.id)}
-  title="Leave"
+  title="Leave group"
 >
   <UserMinus size={18} />
 </div>

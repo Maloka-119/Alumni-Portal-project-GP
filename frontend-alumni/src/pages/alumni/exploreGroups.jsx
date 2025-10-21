@@ -9,6 +9,7 @@ function ExploreGroups() {
   const [groups, setGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -47,9 +48,7 @@ function ExploreGroups() {
       );
 
       const res = await API.get("/groups/my-groups", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
       setMyGroups(res.data.data || []);
 
@@ -71,12 +70,26 @@ function ExploreGroups() {
     return <GroupDetails group={selectedGroup} goBack={() => setSelectedGroup(null)} />;
   }
 
+  // فلترة المجموعات بناءً على السيرش
+  const filteredGroups = groups.filter((g) =>
+    g.groupName.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="explorer-wrapper">
       <h2 className="uni-header">{t("communities")}</h2>
 
+      {/* Search Bar */}
+      <input
+        type="text"
+        placeholder={t("Search communities")}
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="explorer-search"
+      />
+
       <div className="explorer-grid">
-        {groups.map((g) => {
+        {filteredGroups.map((g) => {
           const joined = myGroups.some((mg) => mg.id === g.id);
           return (
             <div key={g.id} className="explorer-card">
@@ -85,9 +98,8 @@ function ExploreGroups() {
                   <img src={g.groupImage} alt={g.groupName} />
                 </div>
               )}
-
+              <h3 className="explorer-name">{g.groupName}</h3>
               <div className="explorer-card-top">
-                <h3 className="explorer-name">{g.groupName}</h3>
                 <span className="explorer-badge">
                   {g.membersCount} {t("members")}
                 </span>
