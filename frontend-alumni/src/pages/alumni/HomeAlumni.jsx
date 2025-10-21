@@ -4,7 +4,7 @@ import './AlumniAdminPosts.css';
 import { DarkModeContext } from './DarkModeContext';
 import { useTranslation } from 'react-i18next';
 import API from '../../services/api';
-import PROFILE  from './PROFILE.jpeg';
+import PROFILE from './PROFILE.jpeg';
 import AdminPostsImg from './AdminPosts.jpeg';
 
 const HomeAlumni = () => {
@@ -22,16 +22,13 @@ const HomeAlumni = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log("Fetching posts...");
+      console.log("🟡 fetchPosts called - Page:", page);
       const res = await API.get(`/posts/user-posts?page=${page}&limit=5`);
-      console.log("Response from API:", res);
-
-      // فلترة البوستات: تظهر فقط لو group-id null أو undefined
+      
       const filteredData = res.data.data.filter(post => post['group-id'] == null);
 
       const formatted = filteredData.map(post => {
-        console.log("Mapping post:", post);
-
+        // ⬇️⬇️⬇️ تجاهل تماماً التحقق من الـ like من البيانات القادمة ⬇️⬇️⬇️
         let avatar;
         if (post.author["full-name"] === "Alumni Portal - Helwan University") {
           avatar = AdminPostsImg;
@@ -41,7 +38,14 @@ const HomeAlumni = () => {
           avatar = PROFILE;
         }
 
-        return {
+        const formattedComments = (post.comments || []).map(comment => ({
+          userName: comment.author ? comment.author["full-name"] : 'Unknown',
+          content: comment.content,
+          avatar: comment.author?.image || PROFILE,
+          date: comment['created-at']
+        }));
+
+        const formattedPost = {
           id: post.post_id || post.id,
           userName: post.author["full-name"],
           avatar: avatar,
@@ -57,14 +61,15 @@ const HomeAlumni = () => {
           isPortal: post.author["full-name"] === "Alumni Portal - Helwan University",
           content: post.content,
           images: post.images || [],
-          likes: 0,
-          liked: false,
+          likes: post.likes_count || 0,
+          liked: false, // ⬅️ دائماً false في البداية - زي الصفحة الناجحة
           shares: 0,
-          comments: [],
+          comments: formattedComments,
+          showComments: false
         };
+        
+        return formattedPost;
       });
-
-      console.log("📦 Formatted posts:", formatted);
 
       setPosts(prev => {
         const existingIds = new Set(prev.map(p => p.id));
@@ -72,40 +77,64 @@ const HomeAlumni = () => {
         return [...prev, ...newOnes];
       });
 
-      if (filteredData.length < 5) setHasMore(false);
+      if (filteredData.length < 5) {
+        setHasMore(false);
+      }
 
     } catch (err) {
-      console.error(err);
+      console.error("🔴 Error in fetchPosts:", err);
       setError(t('errorFetchingPosts'));
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { fetchPosts(); }, [page]);
+  useEffect(() => { 
+    fetchPosts(); 
+  }, [page]);
 
   const handleLike = async (postId) => {
     const postIndex = posts.findIndex(p => p.id === postId);
-    const post = posts[postIndex];
+    if (postIndex === -1) return;
   
     try {
-      if (post.liked) {
-        // لو عمل like قبل كده، اشيله
+      const post = posts[postIndex];
+      
+      // ⬇️⬇️⬇️ نفس منطق الصفحة الناجحة - حاول unlike أولاً ⬇️⬇️⬇️
+      try {
         await API.delete(`/posts/${postId}/like`);
+        // إذا نجح الـ unlike، هذا معناه أن البوست كان معجب بيه
         const updatedPosts = [...posts];
-        updatedPosts[postIndex].likes -= 1;
-        updatedPosts[postIndex].liked = false;
+        updatedPosts[postIndex] = {
+          ...post,
+          likes: Math.max(0, post.likes - 1),
+          liked: false
+        };
         setPosts(updatedPosts);
-      } else {
-        // لو ما عملش like، اعمله
-        await API.post(`/posts/${postId}/like`);
-        const updatedPosts = [...posts];
-        updatedPosts[postIndex].likes += 1;
-        updatedPosts[postIndex].liked = true;
-        setPosts(updatedPosts);
+        console.log("✅ Successfully unliked post:", postId);
+        
+      } catch (unlikeError) {
+        // إذا فشل الـ unlike، جرب like
+        if (unlikeError.response?.status === 404) {
+          await API.post(`/posts/${postId}/like`);
+          const updatedPosts = [...posts];
+          updatedPosts[postIndex] = {
+            ...post,
+            likes: post.likes + 1,
+            liked: true
+          };
+          setPosts(updatedPosts);
+          console.log("✅ Successfully liked post:", postId);
+        } else {
+          throw unlikeError;
+        }
       }
+      
     } catch (err) {
-      console.error("Error toggling like:", err.response?.data || err);
+      console.error("🔴 Error in handleLike:", err.response?.data || err);
+      
+      // في حالة أي خطأ، أعد جلب البيانات من السيرفر
+      await fetchPosts();
     }
   };
 
@@ -124,15 +153,26 @@ const HomeAlumni = () => {
     if (!comment) return;
 
     try {
-      await API.post(`/posts/${postId}/comment`, { content: comment });
-      setPosts(posts.map(p =>
-        p.id === postId
-          ? { ...p, comments: [...p.comments, { userName: 'You', content: comment, avatar: p.avatar }] }
-          : p
-      ));
-      setCommentInputs({ ...commentInputs, [postId]: '' });
+      const response = await API.post(`/posts/${postId}/comments`, { content: comment });
+
+      if (response.data.comment) {
+        const newComment = {
+          userName: response.data.comment.author["full-name"] || "You",
+          content: response.data.comment.content,
+          avatar: PROFILE,
+          date: new Date().toLocaleString()
+        };
+
+        setPosts(prev => prev.map(post => 
+          post.id === postId 
+            ? { ...post, comments: [...post.comments, newComment] }
+            : post
+        ));
+      }
+
+      setCommentInputs(prev => ({ ...prev, [postId]: '' }));
     } catch (err) {
-      console.error(err);
+      console.error("🔴 Error submitting comment:", err);
     }
   };
 
@@ -146,7 +186,13 @@ const HomeAlumni = () => {
         {posts.map(post => (
           <div key={post.id} className="uni-post-card">
             <div className="post-header" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <img src={post.avatar} alt={post.userName} className="profile-pic" style={{ width: '40px', height: '40px', borderRadius: '50%' }} onError={(e)=>{e.target.src=PROFILE}} />
+              <img 
+                src={post.avatar} 
+                alt={post.userName} 
+                className="profile-pic" 
+                style={{ width: '40px', height: '40px', borderRadius: '50%' }} 
+                onError={(e) => { e.target.src = PROFILE }} 
+              />
               <div className="post-user-info" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', lineHeight: '1.2' }}>
                 <strong>{post.userName}</strong>
                 <div style={{ marginTop:'2px', marginLeft:'4px', color:'#555', fontSize:'0.9em' }}>
@@ -161,29 +207,61 @@ const HomeAlumni = () => {
               {post.images && post.images.length > 0 && (
                 <div className="uni-post-images">
                   {post.images.map((imgUrl, index) => (
-                    <img key={index} src={imgUrl} alt={`post-${index}`} className="uni-post-preview" onError={(e)=>{e.target.style.display='none'}} />
+                    <img 
+                      key={index} 
+                      src={imgUrl} 
+                      alt={`post-${index}`} 
+                      className="uni-post-preview" 
+                      onError={(e) => { e.target.style.display = 'none' }} 
+                    />
                   ))}
                 </div>
               )}
             </div>
 
             <div className="uni-post-actions">
-              <button className={post.liked?'uni-liked':''} onClick={()=>handleLike(post.id)}><Heart size={16}/> {post.likes}</button>
-              <button onClick={()=>toggleComments(post.id)}><MessageCircle size={16}/> {post.comments.length}</button>
-              <button><Share2 size={16}/> {post.shares}</button>
+              <button 
+                className={post.liked ? 'uni-liked' : ''} 
+                onClick={() => handleLike(post.id)}
+              >
+                <Heart size={16} fill={post.liked ? 'currentColor' : 'none'} /> 
+                {post.likes}
+              </button>
+              <button onClick={() => toggleComments(post.id)}>
+                <MessageCircle size={16} /> 
+                {post.comments.length}
+              </button>
+              <button>
+                <Share2 size={16} /> 
+                {post.shares}
+              </button>
             </div>
 
             {post.showComments && (
               <div className="uni-comments-section">
-                {post.comments.map((c, idx)=>(
+                {post.comments.map((c, idx) => (
                   <div key={idx} className="uni-comment-item">
-                    <img src={c.avatar} alt={c.userName} className="uni-comment-avatar" onError={(e)=>{e.target.src=PROFILE}}/>
-                    <div className="uni-comment-text"><strong>{c.userName}</strong>: {c.content}</div>
+                    <img 
+                      src={c.avatar} 
+                      alt={c.userName} 
+                      className="uni-comment-avatar" 
+                      onError={(e) => { e.target.src = PROFILE }} 
+                    />
+                    <div className="uni-comment-text">
+                      <strong>{c.userName}</strong>: {c.content}
+                    </div>
                   </div>
                 ))}
                 <div className="uni-comment-input">
-                  <input type="text" placeholder={t('writeComment')} value={commentInputs[post.id]||''} onChange={(e)=>handleCommentChange(post.id, e.target.value)} />
-                  <button onClick={()=>handleCommentSubmit(post.id)}>{t('send')}</button>
+                  <input 
+                    type="text" 
+                    placeholder={t('writeComment')} 
+                    value={commentInputs[post.id] || ''} 
+                    onChange={(e) => handleCommentChange(post.id, e.target.value)} 
+                  />
+                  <button onClick={() => handleCommentSubmit(post.id)}>
+                    {t('send')}
+                  </button>
                 </div>
               </div>
             )}
@@ -193,7 +271,9 @@ const HomeAlumni = () => {
 
       {hasMore && (
         <div style={{ textAlign:'center', margin:'20px' }}>
-          <button className="load-more-btn" onClick={()=>setPage(page+1)}>{t('loadMore')}</button>
+          <button className="load-more-btn" onClick={() => setPage(page + 1)}>
+            {t('loadMore')}
+          </button>
         </div>
       )}
     </div>

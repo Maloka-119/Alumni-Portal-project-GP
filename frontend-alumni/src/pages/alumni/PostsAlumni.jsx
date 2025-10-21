@@ -29,8 +29,10 @@ const PostsAlumni = ({ user: propUser }) => {
         date: post['created-at'],
         comments: post.comments || [],
         images: post.images || [],
-        likes: post.likes || 0,
-        liked: post.liked || false,
+        // ⬇️⬇️⬇️ نفس منطق HomeAlumni ⬇️⬇️⬇️
+        likes: post.likes_count || 0,
+        liked: false, // ⬅️ دائماً false في البداية
+        shares: 0,
         author: {
           id: post.author?.id,
           name: post.author?.['full-name'] || 'Unknown',
@@ -120,45 +122,89 @@ const PostsAlumni = ({ user: propUser }) => {
     }
   };
 
+  // ⬇️⬇️⬇️ نفس منطق HomeAlumni للـ like ⬇️⬇️⬇️
   const handleLikeToggle = async (postId) => {
     const postIndex = posts.findIndex(p => p.id === postId);
     if (postIndex === -1) return;
-    const post = posts[postIndex];
 
     try {
-      const updatedPosts = [...posts];
-
-      if (post.liked) {
+      const post = posts[postIndex];
+      
+      // حاول unlike أولاً
+      try {
         await API.delete(`/posts/${postId}/like`, { headers: { Authorization: `Bearer ${token}` } });
-        updatedPosts[postIndex].likes -= 1;
-        updatedPosts[postIndex].liked = false;
-      } else {
-        await API.post(`/posts/${postId}/like`, {}, { headers: { Authorization: `Bearer ${token}` } });
-        updatedPosts[postIndex].likes += 1;
-        updatedPosts[postIndex].liked = true;
+        // إذا نجح الـ unlike، هذا معناه أن البوست كان معجب بيه
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex] = {
+          ...post,
+          likes: Math.max(0, post.likes - 1),
+          liked: false
+        };
+        setPosts(updatedPosts);
+        console.log("✅ Successfully unliked post:", postId);
+        
+      } catch (unlikeError) {
+        // إذا فشل الـ unlike، جرب like
+        if (unlikeError.response?.status === 404) {
+          await API.post(`/posts/${postId}/like`, {}, { headers: { Authorization: `Bearer ${token}` } });
+          const updatedPosts = [...posts];
+          updatedPosts[postIndex] = {
+            ...post,
+            likes: post.likes + 1,
+            liked: true
+          };
+          setPosts(updatedPosts);
+          console.log("✅ Successfully liked post:", postId);
+        } else {
+          throw unlikeError;
+        }
       }
-
-      setPosts(updatedPosts);
+      
     } catch (err) {
-      console.error("Error toggling like:", err.response?.data || err);
+      console.error("🔴 Error in handleLikeToggle:", err.response?.data || err);
+      // في حالة أي خطأ، أعد جلب البيانات من السيرفر
+      await fetchPosts();
     }
   };
 
   const openComments = (post) => setSelectedPost(post);
   const closeComments = () => { setSelectedPost(null); setNewComment(''); };
 
+  // ⬇️⬇️⬇️ نفس منطق HomeAlumni للكومنتات ⬇️⬇️⬇️
   const handleAddComment = async () => {
     if (!token || !newComment.trim() || !selectedPost) return;
+    
     try {
-      const res = await API.post(`/posts/${selectedPost.id}/comment`, { content: newComment }, {
+      const res = await API.post(`/posts/${selectedPost.id}/comments`, { content: newComment }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      const updatedPost = res.data.data;
-      setPosts(posts.map(p => (p.id === updatedPost.id ? formatPosts([updatedPost])[0] : p)));
-      setSelectedPost(formatPosts([updatedPost])[0]);
+
+      if (res.data.comment) {
+        const newCommentObj = {
+          userName: res.data.comment.author?.['full-name'] || "You",
+          content: res.data.comment.content,
+          avatar: PROFILE,
+          date: new Date().toLocaleString()
+        };
+
+        // تحديث فوري للكومنتات
+        setPosts(prev => prev.map(post => 
+          post.id === selectedPost.id 
+            ? { ...post, comments: [...post.comments, newCommentObj] }
+            : post
+        ));
+
+        // تحديث الـ selectedPost
+        setSelectedPost(prev => prev ? {
+          ...prev,
+          comments: [...prev.comments, newCommentObj]
+        } : null);
+      }
+
       setNewComment('');
     } catch (err) {
-      setError(err.response?.data?.message || err.message);
+      console.error("🔴 Error submitting comment:", err.response?.data || err);
+      setError(err.response?.data?.message || "Failed to add comment");
     }
   };
 
@@ -229,11 +275,11 @@ const PostsAlumni = ({ user: propUser }) => {
                   <button className="comments-close-btn" onClick={closeComments}>X</button>
                 </div>
                 <div className="comments-list">
-                  {selectedPost.comments.map(c => (
-                    <div key={c.id} className="comment-item">
-                      <img src={c.user?.photo || PROFILE} alt="avatar" className="comment-avatar" />
+                  {selectedPost.comments.map((c, idx) => (
+                    <div key={c.comment_id || c.id || idx} className="comment-item">
+                      <img src={c.avatar || c.author?.image || PROFILE} alt="avatar" className="comment-avatar" />
                       <div className="comment-text">
-                        <strong>{c.user?.name || t('unknown')}</strong>
+                        <strong>{c.userName || c.author?.['full-name'] || t('unknown')}</strong>
                         <p>{c.content}</p>
                       </div>
                     </div>
@@ -313,7 +359,10 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
       </div>
 
       <div className="uni-post-actions">
-        <button onClick={() => onLike(post.id)}>
+        <button 
+          className={post.liked ? 'uni-liked' : ''} 
+          onClick={() => onLike(post.id)}
+        >
           <Heart
             size={16}
             color={post.liked ? 'red' : 'black'}
@@ -321,15 +370,20 @@ const PostCard = ({ post, onEdit, onDelete, onOpenComments, onLike }) => {
           />
           {post.likes}
         </button>
-        <button onClick={onOpenComments}><MessageCircle size={16} /> {post.comments.length}</button>
-        <button><Share2 size={16} /> {post.shares}</button>
+        <button onClick={onOpenComments}>
+          <MessageCircle size={16} /> 
+          {post.comments.length}
+        </button>
+        <button>
+          <Share2 size={16} /> 
+          {post.shares}
+        </button>
       </div>
     </div>
   );
 };
 
 export default PostsAlumni;
-
 
 // import React, { useState, useEffect } from 'react';
 // import { Heart, MessageCircle, Share2, Image, FileText, Link as LinkIcon, Trash2, MoreVertical, Edit } from 'lucide-react';

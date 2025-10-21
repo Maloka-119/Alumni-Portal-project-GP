@@ -29,34 +29,36 @@ const AlumniAdminPosts = () => {
     try {
       const res = await API.get("/posts/admin");
       const filtered = (res.data?.data || []).filter(p => !p['group-id']);
-
-      const formattedPosts = filtered.map(p => ({
-        id: p.post_id,
-        content: p.content,
-        likes: p.likes?.length || 0,
-        liked: p.likes?.some(l => l['user-id'] === currentUserId) || false,
-        comments: p.comments?.map(c => ({
-          userName: c.author?.['full-name'] || "Anonymous",
-          content: c.content,
-          avatar: c.author?.image || PROFILE
-        })) || [],
-
-        date: new Date(p['created-at']).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        }),
-        authorName: "Alumni Portal – Helwan University",
-        shares: 0,
-        type: p.category,
-        images: p.images || []
-      }));
-
-      console.log("Fetched and formatted posts:", formattedPosts);
-
+  
+      const formattedPosts = filtered.map(p => {
+        // تجاهل تماماً التحقق من الإعجاب من البيانات القادمة من السيرفر
+        // لأن فيها مشكلة في user-id
+        return {
+          id: p.post_id,
+          content: p.content,
+          likes: p.likes_count || (p.likes ? p.likes.length : 0),
+          liked: false, // دائماً false في البداية
+          comments: p.comments?.map(c => ({
+            userName: c.author?.['full-name'] || "Anonymous",
+            content: c.content,
+            avatar: c.author?.image || PROFILE
+          })) || [],
+          date: new Date(p['created-at']).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          authorName: "Alumni Portal – Helwan University",
+          shares: 0,
+          type: p.category,
+          images: p.images || [],
+          showComments: false
+        };
+      });
+  
       setPosts(formattedPosts);
     } catch (err) {
       console.error("Error fetching posts:", err.response?.data || err.message);
@@ -77,26 +79,46 @@ const AlumniAdminPosts = () => {
 
   const handleLike = async (postId) => {
     const postIndex = posts.findIndex(p => p.id === postId);
-    const post = posts[postIndex];
+    if (postIndex === -1) return;
   
     try {
-      if (post.liked) {
-        // لو عمل like قبل كده، اشيله
+      const post = posts[postIndex];
+      
+      // حاول عمل unlike أولاً (الأكثر احتمالاً)
+      try {
         await API.delete(`/posts/${postId}/like`);
+        // إذا نجح الـ unlike، هذا معناه أن البوست كان معجب بيه
         const updatedPosts = [...posts];
-        updatedPosts[postIndex].likes -= 1;
-        updatedPosts[postIndex].liked = false;
+        updatedPosts[postIndex] = {
+          ...post,
+          likes: Math.max(0, post.likes - 1),
+          liked: false
+        };
         setPosts(updatedPosts);
-      } else {
-        // لو ما عملش like، اعمله
-        await API.post(`/posts/${postId}/like`);
-        const updatedPosts = [...posts];
-        updatedPosts[postIndex].likes += 1;
-        updatedPosts[postIndex].liked = true;
-        setPosts(updatedPosts);
+        console.log("Successfully unliked post:", postId);
+        
+      } catch (unlikeError) {
+        // إذا فشل الـ unlike، جرب like
+        if (unlikeError.response?.data?.message?.includes('not found')) {
+          await API.post(`/posts/${postId}/like`);
+          const updatedPosts = [...posts];
+          updatedPosts[postIndex] = {
+            ...post,
+            likes: post.likes + 1,
+            liked: true
+          };
+          setPosts(updatedPosts);
+          console.log("Successfully liked post:", postId);
+        } else {
+          throw unlikeError;
+        }
       }
+      
     } catch (err) {
-      console.error("Error toggling like:", err.response?.data || err);
+      console.error("Error in handleLike:", err.response?.data || err);
+      
+      // في حالة أي خطأ، أعد جلب البيانات من السيرفر
+      await fetchPosts();
     }
   };
   
