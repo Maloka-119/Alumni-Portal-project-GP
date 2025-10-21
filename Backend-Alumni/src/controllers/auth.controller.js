@@ -45,199 +45,116 @@ function extractDOBFromEgyptianNID(nationalId) {
   return `${year.toString().padStart(4, '0')}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
 }
 
-// registerUser بعد التعديل
+// registerUser 
 const registerUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, password, nationalId, phoneNumber /*, birthDate */ } = req.body;
+  const { firstName, lastName, email, password, nationalId, phoneNumber } = req.body;
 
-  // نحاول نطلع تاريخ الميلاد من الرقم القومي
+  // استخراج تاريخ الميلاد
   let birthDateFromNid;
   try {
     birthDateFromNid = extractDOBFromEgyptianNID(nationalId);
-  } catch (err) {
+  } catch {
     res.status(400);
-    throw new Error("Invalid national ID: " + err.message);
+    throw new Error("Invalid national ID");
   }
 
   let externalData;
   let userType;
+  let statusToLogin = "active";
 
-  // تحقق من Graduate API باستخدام الرقم القومي فقط
+  // تحقق من Graduate API
   try {
     const gradResponse = await axios.get(
       `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
     );
-    console.log("Graduate API response:", gradResponse.data);
     externalData = gradResponse.data;
+
     if (externalData && externalData.faculty) {
       userType = "graduate";
+      statusToLogin = "active";
+    } else if (externalData) {
+      userType = "graduate";
+      statusToLogin = "inactive";
     }
   } catch (err) {
     console.log("Graduate API error:", err.message);
+    userType = "graduate";
+    statusToLogin = "inactive";
   }
 
-  // إذا لم يكن خريج، تحقق من Staff API
+  // تحقق من Staff API لو لسه undefined
   if (!userType) {
     try {
       const staffResponse = await axios.get(
         `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
       );
-      console.log("Staff API response:", staffResponse.data);
       externalData = staffResponse.data;
       if (externalData && externalData.department) {
         userType = "staff";
+        statusToLogin = "inactive";
       }
     } catch (err) {
       console.log("Staff API error:", err.message);
     }
   }
 
-  // إذا لم نجد userType، ارفض التسجيل
   if (!userType) {
     res.status(400);
-    throw new Error(
-      "Registration failed: National ID not recognized in Helwan University records."
-    );
+    throw new Error("National ID not recognized in records");
   }
 
-  // تحقق إذا البريد موجود مسبقًا
+  // تحقق من البريد والرقم القومي
   const userExists = await User.findOne({ where: { email } });
   if (userExists) {
     res.status(400);
     throw new Error("User already exists");
   }
 
+  const nationalIdExists = await User.findOne({ where: { "national-id": nationalId } });
+  if (nationalIdExists) {
+    res.status(400);
+    throw new Error("This national ID is already registered");
+  }
+
   // تشفير الباسورد
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // حفظ البيانات في جدول User --- نستخدم birthDateFromNid بدل الحقل المرسل
+  // إنشاء المستخدم
   const user = await User.create({
     "first-name": firstName,
     "last-name": lastName,
     email,
-    phoneNumber: phoneNumber,
+    phoneNumber,
     "hashed-password": hashedPassword,
-    "birth-date": birthDateFromNid, // <-- هنا
+    "birth-date": birthDateFromNid,
     "user-type": userType,
     "national-id": nationalId,
   });
 
-  // حفظ بيانات إضافية في Graduate أو Staff
+  // حفظ بيانات إضافية
   if (userType === "graduate") {
     await Graduate.create({
       graduate_id: user.id,
-      faculty: externalData.faculty,
-      "graduation-year": externalData["graduation-year"],
+      faculty: externalData?.faculty || null,
+      "graduation-year": externalData?.["graduation-year"] || null,
+      "status-to-login": statusToLogin,
     });
   } else if (userType === "staff") {
     await Staff.create({
       staff_id: user.id,
-      "status-to-login": "inactive",
+      "status-to-login": statusToLogin,
     });
   }
 
-  // رجع الرد للـ frontend
+  // الرد النهائي
   res.status(201).json({
     id: user.id,
     email: user.email,
-    userType: userType,
+    userType,
     token: generateToken(user.id),
   });
 });
-
-// const registerUser = asyncHandler(async (req, res) => {
-//   const { firstName, lastName, email, password, nationalId, phoneNumber, birthDate } = req.body;
-
-//   let externalData;
-//   let userType;
-
-//   // تحقق من Graduate API باستخدام الرقم القومي فقط
-//   try {
-//     const gradResponse = await axios.get(
-//       `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
-//     );
-//      console.log("Graduate API response:", gradResponse.data);
-//     externalData = gradResponse.data;
-//  console.log("Graduate API response:", externalData);
-//     if (externalData && externalData.faculty) { 
-//       userType = "graduate";
-//     }
-//     console.log(gradResponse);
-//   } catch (err) {
-//     console.log("Graduate API error:", err.message);
-//   }
-
-//   // إذا لم يكن خريج، تحقق من Staff API
-//   if (!userType) {
-//     try {
-//       const staffResponse = await axios.get(
-//         `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
-//       );
-//       console.log("Staff API response:", staffResponse.data);
-//       externalData = staffResponse.data;
-// console.log("Staff API response:", externalData);
-
-//       if (externalData && externalData.department) {
-//         userType = "staff";
-//       }
-//     } catch (err) {
-//         console.log("Staff API error:", err.message);
-//     }
-//   }
-
-//   // إذا لم نجد userType، ارفض التسجيل
-//   if (!userType) {
-//     res.status(400);
-//     throw new Error(
-//       "Registration failed: National ID not recognized in Helwan University records."
-//     );
-//   }
-
-//   // تحقق إذا البريد موجود مسبقًا
-//   const userExists = await User.findOne({ where: { email } });
-//   if (userExists) {
-//     res.status(400);
-//     throw new Error("User already exists");
-//   }
-
-//   // تشفير الباسورد
-//   const salt = await bcrypt.genSalt(10);
-//   const hashedPassword = await bcrypt.hash(password, salt);
-
-//   // حفظ البيانات في جدول User
-//   const user = await User.create({
-//     "first-name": firstName,
-//     "last-name": lastName,
-//     email,
-//     phoneNumber: phoneNumber,
-//     "hashed-password": hashedPassword,
-//     "birth-date": birthDate,
-//     "user-type": userType,
-//     "national-id": nationalId,
-//   });
-
-//   // حفظ بيانات إضافية في Graduate أو Staff
-//   if (userType === "graduate") {
-//     await Graduate.create({
-//       graduate_id: user.id,
-//       faculty: externalData.faculty, // بدل college
-//       "graduation-year": externalData["graduation-year"], // بدل graduationYear
-//     });
-//   } else if (userType === "staff") {
-//     await Staff.create({
-//       staff_id: user.id,
-//       "status-to-login": "inactive", // inactive حتى يتم الموافقة
-//     });
-//   }
-
-//   // رجع الرد للـ frontend
-//   res.status(201).json({
-//     id: user.id,
-//     email: user.email,
-//     userType: userType,
-//     token: generateToken(user.id),
-//   });
-// });
 
 
 // @desc    Login user
@@ -246,11 +163,12 @@ const registerUser = asyncHandler(async (req, res) => {
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
-  // نجيب اليوزر
+  // البحث عن المستخدم في جدول User
   const user = await User.findOne({ where: { email } });
 
   if (user && (await bcrypt.compare(password, user["hashed-password"]))) {
-    // لو ستاف نتأكد من الحالة بتاعته
+
+    // تحقق من حالة staff
     if (user["user-type"] === "staff") {
       const staff = await Staff.findOne({ where: { staff_id: user.id } });
 
@@ -259,24 +177,41 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new Error("Staff record not found. Please contact admin.");
       }
 
-      if (staff["status-to-login"] === "inactive") {
+      if (staff["status-to-login"] !== "inactive") {
         res.status(403);
-        throw new Error("Your staff account is not active. Please contact admin.");
+        throw new Error("Your staff account is not active, Please contact the Alumni Portal team for assistance.");
       }
     }
 
-    // لو كل حاجة تمام
+    // تحقق من حالة graduate
+    if (user["user-type"] === "graduate") {
+      const graduate = await Graduate.findOne({ where: { graduate_id: user.id } });
+
+      if (!graduate) {
+        res.status(403);
+        throw new Error("Graduate record not found. Please contact admin.");
+      }
+
+      if (graduate["status-to-login"] !== "active") {
+        res.status(403);
+        throw new Error("Your account is pending approval, Please wait for confirmation from the Alumni Portal team");
+      }
+    }
+
+    //  لو كل حاجة تمام، نرجع الرد
     res.json({
       id: user.id,
       email: user.email,
       userType: user["user-type"],
       token: generateToken(user.id),
     });
+
   } else {
     res.status(401);
     throw new Error("Invalid email or password");
   }
 });
+
 // @desc    Forgot password (placeholder)
 // @route   POST /alumni-portal/forgot-password
 // @access  Public
