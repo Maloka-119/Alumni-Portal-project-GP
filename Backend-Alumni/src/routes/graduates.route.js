@@ -17,6 +17,8 @@ router.put(
 // admin يوافق على خريج
 router.put("/approve/:id", protect, graduateController.approveGraduate);
 
+// admin يرفص الخريج 
+router.put("/reject/:id", protect, graduateController.rejectGraduate);
 //get active graduates(GradutesInPortal)
 router.route("/approved").get(protect,graduateController.getGraduatesInPortal);
 //get inactive(that requet join to portal "Pending")
