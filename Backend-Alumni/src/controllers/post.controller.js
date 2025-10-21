@@ -50,27 +50,28 @@ const createPost = async (req, res) => {
       });
     }
 
-  // 🧩 تحقق من نوع المستخدم
-if (user["user-type"] === "graduate") {
-  const graduate = await Graduate.findOne({
-    where: { "graduate_id": user.id },
-  });
+    // 🧩 تحقق من نوع المستخدم
+    if (user["user-type"] === "graduate") {
+      const graduate = await Graduate.findOne({
+        where: { graduate_id: user.id },
+      });
 
-  if (!graduate) {
-    return res.status(404).json({
-      status: "fail",
-      message: "Graduate record not found",
-    });
-  }
+      if (!graduate) {
+        return res.status(404).json({
+          status: "fail",
+          message: "Graduate record not found",
+        });
+      }
 
-  // تحقق من الحالة
-  if (graduate.status !== "active") {
-    return res.status(403).json({
-      status: "fail",
-      message: "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
-    });
-  }
-}
+      // تحقق من الحالة
+      if (graduate.status !== "active") {
+        return res.status(403).json({
+          status: "fail",
+          message:
+            "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
+        });
+      }
+    }
 
     //  إنشاء البوست
     console.log("🪄 Creating post...");
@@ -158,6 +159,52 @@ const getGroupPosts = async (req, res) => {
             },
           ],
         },
+        {
+          model: PostImage,
+          attributes: ["image-url"],
+        },
+        // ⬇️⬇️⬇️ ضيف الـ Likes هنا ⬇️⬇️⬇️
+        {
+          model: Like,
+          attributes: ["like_id", "author-id"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name"],
+            },
+          ],
+        },
+        // ⬇️⬇️⬇️ ضيف الـ Comments هنا ⬇️⬇️⬇️
+        {
+          model: Comment,
+          attributes: [
+            "comment_id",
+            "content",
+            "created-at",
+            "edited",
+            "author-id",
+          ],
+          include: [
+            {
+              model: User,
+              attributes: [
+                "id",
+                "first-name",
+                "last-name",
+                "email",
+                "user-type",
+              ],
+              include: [
+                {
+                  model: Graduate,
+                  as: "Graduate", // مهم جدًا
+                  attributes: ["profile-picture-url"],
+                },
+              ],
+            },
+          ],
+          order: [["created-at", "DESC"]],
+        },
       ],
       order: [["created-at", "DESC"]],
     });
@@ -187,6 +234,46 @@ const getGroupPosts = async (req, res) => {
         "group-id": post["group-id"],
         "in-landing": post["in-landing"],
         "is-hidden": post["is-hidden"],
+        // ⬇️⬇️⬇️ ضيف الـ images ⬇️⬇️⬇️
+        images: post.PostImages
+          ? post.PostImages.map((img) => img["image-url"])
+          : [],
+        // ⬇️⬇️⬇️ ضيف الـ likes ⬇️⬇️⬇️
+        likes_count: post.Likes ? post.Likes.length : 0,
+        likes: post.Likes
+          ? post.Likes.map((like) => ({
+              like_id: like.like_id,
+              user: {
+                id: like.User?.id || "unknown",
+                "full-name":
+                  `${like.User?.["first-name"] || ""} ${
+                    like.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+              },
+            }))
+          : [],
+        // ⬇️⬇️⬇️ ضيف الـ comments ⬇️⬇️⬇️
+        comments_count: post.Comments ? post.Comments.length : 0,
+        comments: post.Comments
+          ? post.Comments.map((comment) => ({
+              comment_id: comment.comment_id,
+              content: comment.content,
+              "created-at": comment["created-at"],
+              time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+              edited: comment.edited,
+              author: {
+                id: comment.User?.id || "unknown",
+                "full-name":
+                  `${comment.User?.["first-name"] || ""} ${
+                    comment.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+                email: comment.User?.email || "unknown",
+                image: comment.User?.Graduate
+                  ? comment.User.Graduate["profile-picture-url"]
+                  : null,
+              },
+            }))
+          : [],
       };
     });
 
@@ -224,7 +311,51 @@ const getAllPostsOfUsers = async (req, res) => {
             { model: Staff, attributes: ["status-to-login"] },
           ],
         },
-        { model: PostImage, attributes: ["image-url"] },
+        {
+          model: PostImage,
+          attributes: ["image-url"],
+        },
+        // ⬇️⬇️⬇️ أضف الـ Likes والـ Comments هنا ⬇️⬇️⬇️
+        {
+          model: Like,
+          attributes: ["like_id", "author-id"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name"],
+            },
+          ],
+        },
+        {
+          model: Comment,
+          attributes: [
+            "comment_id",
+            "content",
+            "created-at",
+            "edited",
+            "author-id",
+          ],
+          include: [
+            {
+              model: User,
+              attributes: [
+                "id",
+                "first-name",
+                "last-name",
+                "email",
+                "user-type",
+              ],
+              include: [
+                {
+                  model: Graduate,
+                  as: "Graduate",
+                  attributes: ["profile-picture-url"],
+                },
+              ],
+            },
+          ],
+          order: [["created-at", "DESC"]],
+        },
       ],
       order: [["created-at", "DESC"]],
     });
@@ -250,6 +381,41 @@ const getAllPostsOfUsers = async (req, res) => {
         ? post.PostImages.map((img) => img["image-url"])
         : [],
       "is-hidden": post["is-hidden"],
+      // ⬇️⬇️⬇️ أضف الـ likes والـ comments هنا ⬇️⬇️⬇️
+      likes_count: post.Likes ? post.Likes.length : 0,
+      likes: post.Likes
+        ? post.Likes.map((like) => ({
+            like_id: like.like_id,
+            user: {
+              id: like.User?.id || "unknown",
+              "full-name":
+                `${like.User?.["first-name"] || ""} ${
+                  like.User?.["last-name"] || ""
+                }`.trim() || "Unknown User",
+            },
+          }))
+        : [],
+      comments_count: post.Comments ? post.Comments.length : 0,
+      comments: post.Comments
+        ? post.Comments.map((comment) => ({
+            comment_id: comment.comment_id,
+            content: comment.content,
+            "created-at": comment["created-at"],
+            time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+            edited: comment.edited,
+            author: {
+              id: comment.User?.id || "unknown",
+              "full-name":
+                `${comment.User?.["first-name"] || ""} ${
+                  comment.User?.["last-name"] || ""
+                }`.trim() || "Unknown User",
+              email: comment.User?.email || "unknown",
+              image: comment.User?.Graduate
+                ? comment.User.Graduate["profile-picture-url"]
+                : null,
+            },
+          }))
+        : [],
     }));
 
     res.status(200).json({
@@ -266,7 +432,7 @@ const getAllPostsOfUsers = async (req, res) => {
     });
   }
 };
-
+//بتجيب كل بوستات الخريجين بس
 const getAllPosts = async (req, res) => {
   try {
     const user = req.user; // ⬅️ المستخدم الحالي (من التوكن)
@@ -291,6 +457,46 @@ const getAllPosts = async (req, res) => {
         {
           model: PostImage,
           attributes: ["image-url"],
+        },
+        {
+          model: Like,
+          attributes: ["like_id", "author-id"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name"],
+            },
+          ],
+        },
+        {
+          model: Comment,
+          attributes: [
+            "comment_id",
+            "content",
+            "created-at",
+            "edited",
+            "author-id",
+          ],
+          include: [
+            {
+              model: User,
+              attributes: [
+                "id",
+                "first-name",
+                "last-name",
+                "email",
+                "user-type",
+              ],
+              include: [
+                {
+                  model: Graduate,
+                  as: "Graduate", // مهم جدًا
+                  attributes: ["profile-picture-url"],
+                },
+              ],
+            },
+          ],
+          order: [["created-at", "DESC"]],
         },
       ],
       order: [["created-at", "DESC"]],
@@ -322,6 +528,40 @@ const getAllPosts = async (req, res) => {
         ? post.PostImages.map((img) => img["image-url"])
         : [],
       "is-hidden": post["is-hidden"],
+      likes_count: post.Likes ? post.Likes.length : 0,
+      likes: post.Likes
+        ? post.Likes.map((like) => ({
+            like_id: like.like_id,
+            user: {
+              id: like.User?.id || "unknown",
+              "full-name":
+                `${like.User?.["first-name"] || ""} ${
+                  like.User?.["last-name"] || ""
+                }`.trim() || "Unknown User",
+            },
+          }))
+        : [],
+      comments_count: post.Comments ? post.Comments.length : 0,
+      comments: post.Comments
+        ? post.Comments.map((comment) => ({
+            comment_id: comment.comment_id,
+            content: comment.content,
+            "created-at": comment["created-at"],
+            time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+            edited: comment.edited,
+            author: {
+              id: comment.User?.id || "unknown",
+              "full-name":
+                `${comment.User?.["first-name"] || ""} ${
+                  comment.User?.["last-name"] || ""
+                }`.trim() || "Unknown User",
+              email: comment.User?.email || "unknown",
+              image: comment.User?.Graduate
+                ? comment.User.Graduate["profile-picture-url"]
+                : null,
+            },
+          }))
+        : [],
     }));
 
     res.status(200).json({
@@ -338,7 +578,7 @@ const getAllPosts = async (req, res) => {
     });
   }
 };
-
+//بتجيب بوستات الادمن بس
 const getAdminPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
@@ -364,11 +604,23 @@ const getAdminPosts = async (req, res) => {
         },
         {
           model: Comment,
-          attributes: ["comment_id", "content", "created-at", "edited", "author-id"],
+          attributes: [
+            "comment_id",
+            "content",
+            "created-at",
+            "edited",
+            "author-id",
+          ],
           include: [
             {
               model: User,
-              attributes: ["id", "first-name", "last-name", "email", "user-type"],
+              attributes: [
+                "id",
+                "first-name",
+                "last-name",
+                "email",
+                "user-type",
+              ],
               include: [
                 {
                   model: Graduate,
@@ -393,12 +645,13 @@ const getAdminPosts = async (req, res) => {
       author: {
         id: post.User?.id || "unknown",
         "full-name":
-          `${post.User?.["first-name"] || ""} ${post.User?.["last-name"] || ""}`.trim() ||
-          "Unknown User",
+          `${post.User?.["first-name"] || ""} ${
+            post.User?.["last-name"] || ""
+          }`.trim() || "Unknown User",
         email: post.User?.email || "unknown",
       },
       "group-id": post["group-id"],
-     
+
       images: post.PostImages
         ? post.PostImages.map((img) => img["image-url"])
         : [],
@@ -409,8 +662,9 @@ const getAdminPosts = async (req, res) => {
             user: {
               id: like.User?.id || "unknown",
               "full-name":
-                `${like.User?.["first-name"] || ""} ${like.User?.["last-name"] || ""}`.trim() ||
-                "Unknown User",
+                `${like.User?.["first-name"] || ""} ${
+                  like.User?.["last-name"] || ""
+                }`.trim() || "Unknown User",
             },
           }))
         : [],
@@ -425,8 +679,9 @@ const getAdminPosts = async (req, res) => {
             author: {
               id: comment.User?.id || "unknown",
               "full-name":
-                `${comment.User?.["first-name"] || ""} ${comment.User?.["last-name"] || ""}`.trim() ||
-                "Unknown User",
+                `${comment.User?.["first-name"] || ""} ${
+                  comment.User?.["last-name"] || ""
+                }`.trim() || "Unknown User",
               email: comment.User?.email || "unknown",
               image: comment.User?.Graduate
                 ? comment.User.Graduate["profile-picture-url"]
@@ -450,9 +705,7 @@ const getAdminPosts = async (req, res) => {
     });
   }
 };
-
-
-
+//
 const getGraduatePosts = async (req, res) => {
   try {
     if (!req.user || req.user["user-type"] !== "graduate") {
@@ -469,9 +722,57 @@ const getGraduatePosts = async (req, res) => {
         {
           model: User,
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
-          include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"],
+            },
+          ],
         },
-        { model: PostImage, attributes: ["image-url"] },
+        {
+          model: PostImage,
+          attributes: ["image-url"],
+        },
+        {
+          model: Like,
+          attributes: ["like_id", "author-id"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name"],
+            },
+          ],
+        },
+        {
+          model: Comment,
+          attributes: [
+            "comment_id",
+            "content",
+            "created-at",
+            "edited",
+            "author-id",
+          ],
+          include: [
+            {
+              model: User,
+              attributes: [
+                "id",
+                "first-name",
+                "last-name",
+                "email",
+                "user-type",
+              ],
+              include: [
+                {
+                  model: Graduate,
+                  as: "Graduate", // مهم جدًا
+                  attributes: ["profile-picture-url"],
+                },
+              ],
+            },
+          ],
+          order: [["created-at", "DESC"]],
+        },
       ],
       order: [["created-at", "DESC"]],
     });
@@ -493,11 +794,42 @@ const getGraduatePosts = async (req, res) => {
       "group-id": post["group-id"],
       "in-landing": post["in-landing"],
       "is-hidden": post["is-hidden"],
-      likes: post.likes || 0,
-      shares: post.shares || 0,
-      comments: post.comments || [],
       images: post.PostImages
         ? post.PostImages.map((img) => img["image-url"])
+        : [],
+      likes_count: post.Likes ? post.Likes.length : 0,
+      likes: post.Likes
+        ? post.Likes.map((like) => ({
+            like_id: like.like_id,
+            user: {
+              id: like.User?.id || "unknown",
+              "full-name":
+                `${like.User?.["first-name"] || ""} ${
+                  like.User?.["last-name"] || ""
+                }`.trim() || "Unknown User",
+            },
+          }))
+        : [],
+      comments_count: post.Comments ? post.Comments.length : 0,
+      comments: post.Comments
+        ? post.Comments.map((comment) => ({
+            comment_id: comment.comment_id,
+            content: comment.content,
+            "created-at": comment["created-at"],
+            time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+            edited: comment.edited,
+            author: {
+              id: comment.User?.id || "unknown",
+              "full-name":
+                `${comment.User?.["first-name"] || ""} ${
+                  comment.User?.["last-name"] || ""
+                }`.trim() || "Unknown User",
+              email: comment.User?.email || "unknown",
+              image: comment.User?.Graduate
+                ? comment.User.Graduate["profile-picture-url"]
+                : null,
+            },
+          }))
         : [],
     }));
 

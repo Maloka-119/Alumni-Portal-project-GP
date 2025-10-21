@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
+import { Heart, MessageCircle, Share2 } from "lucide-react";
 import API from "../../services/api";
 import "./GroupDetails.css";
+import PROFILE from "./PROFILE.jpeg";
 
 function GroupDetails({ group, goBack, currentUserId }) {
   const [posts, setPosts] = useState([]);
   const [newPost, setNewPost] = useState("");
   const [category, setCategory] = useState("General");
   const [image, setImage] = useState(null);
-  const [commentText, setCommentText] = useState({});
-  const [likedPosts, setLikedPosts] = useState([]);
+  const [commentInputs, setCommentInputs] = useState({});
   const [availableGraduates, setAvailableGraduates] = useState([]);
   const [invitations, setInvitations] = useState([]);
   const [showInviteSection, setShowInviteSection] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // ====================== Fetch Data ======================
   useEffect(() => {
@@ -25,12 +27,45 @@ function GroupDetails({ group, goBack, currentUserId }) {
     }
   }, [group.id]);
 
+  // في دالة formatPosts، غير بس جزء الـ comments
+  const formatPosts = (data) => {
+    return data.map((post) => {
+      // ⬇️⬇️⬇️ التصحيح هنا فقط ⬇️⬇️⬇️
+      const formattedComments = (post.comments || []).map((comment) => ({
+        id: comment.comment_id,
+        userName: comment.author?.["full-name"] || "Unknown User",
+        content: comment.content,
+        avatar: comment.author?.image || PROFILE,
+        date: comment["created-at"],
+      }));
+
+      return {
+        ...post,
+        id: post.post_id,
+        likes: post.likes_count || 0,
+        liked: false,
+        comments: formattedComments, // ⬅️ استخدم المتغير الجديد
+        images: post.images || [],
+        author: {
+          id: post.author?.id,
+          name: post.author?.["full-name"] || "Unknown",
+          photo: post.author?.image || PROFILE,
+        },
+      };
+    });
+  };
+
   const fetchPosts = async () => {
     try {
+      setLoading(true);
       const res = await API.get(`/posts/${group.id}`);
-      if (res.data.status === "success") setPosts(res.data.data);
+      if (res.data.status === "success") {
+        setPosts(formatPosts(res.data.data));
+      }
     } catch (err) {
       console.error("Error fetching posts:", err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,7 +89,9 @@ function GroupDetails({ group, goBack, currentUserId }) {
       ]);
 
       const allInvites = [...(sentRes.data || []), ...(receivedRes.data || [])];
-      const groupInvites = allInvites.filter((inv) => inv.group_id === group.id);
+      const groupInvites = allInvites.filter(
+        (inv) => inv.group_id === group.id
+      );
       setInvitations(groupInvites);
     } catch (err) {
       console.error("Error fetching invitations:", err);
@@ -86,7 +123,11 @@ function GroupDetails({ group, goBack, currentUserId }) {
         setAvailableGraduates((prev) =>
           prev.map((f) =>
             f.id === friend.id
-              ? { ...f, invitationStatus: "pending", invitationId: newInvitationId }
+              ? {
+                  ...f,
+                  invitationStatus: "pending",
+                  invitationId: newInvitationId,
+                }
               : f
           )
         );
@@ -121,46 +162,86 @@ function GroupDetails({ group, goBack, currentUserId }) {
     }
   };
 
-  // ====================== Likes ======================
-  useEffect(() => {
-    const savedLikes = JSON.parse(localStorage.getItem("likedPosts") || "[]");
-    setLikedPosts(savedLikes);
-  }, []);
+  // ====================== Likes - نفس منطق الصفحات التانية ⬇️⬇️⬇️ ======================
+  const handleLike = async (postId) => {
+    const postIndex = posts.findIndex((p) => p.id === postId);
+    if (postIndex === -1) return;
 
-  useEffect(() => {
-    localStorage.setItem("likedPosts", JSON.stringify(likedPosts));
-  }, [likedPosts]);
+    try {
+      const post = posts[postIndex];
 
-  const handleLike = (postId) => {
-    if (likedPosts.includes(postId)) return;
-    setPosts((p) =>
-      p.map((post) =>
-        post.post_id === postId
-          ? { ...post, likesCount: (post.likesCount || 0) + 1 }
-          : post
-      )
-    );
-    setLikedPosts([...likedPosts, postId]);
+      // حاول unlike أولاً
+      try {
+        await API.delete(`/posts/${postId}/like`);
+        // إذا نجح الـ unlike، هذا معناه أن البوست كان معجب بيه
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex] = {
+          ...post,
+          likes: Math.max(0, post.likes - 1),
+          liked: false,
+        };
+        setPosts(updatedPosts);
+        console.log("✅ Successfully unliked post:", postId);
+      } catch (unlikeError) {
+        // إذا فشل الـ unlike، جرب like
+        if (unlikeError.response?.status === 404) {
+          await API.post(`/posts/${postId}/like`);
+          const updatedPosts = [...posts];
+          updatedPosts[postIndex] = {
+            ...post,
+            likes: post.likes + 1,
+            liked: true,
+          };
+          setPosts(updatedPosts);
+          console.log("✅ Successfully liked post:", postId);
+        } else {
+          throw unlikeError;
+        }
+      }
+    } catch (err) {
+      console.error("🔴 Error in handleLike:", err.response?.data || err);
+      // في حالة أي خطأ، أعد جلب البيانات من السيرفر
+      await fetchPosts();
+    }
   };
 
-  // ====================== Comments ======================
-  const handleComment = (postId) => {
-    const comment = commentText[postId];
+  // ====================== Comments - نفس منطق الصفحات التانية ⬇️⬇️⬇️ ======================
+  const handleCommentChange = (postId, value) => {
+    setCommentInputs({ ...commentInputs, [postId]: value });
+  };
+
+  const handleCommentSubmit = async (postId) => {
+    const comment = commentInputs[postId];
     if (!comment?.trim()) return;
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.post_id === postId
-          ? {
-              ...p,
-              comments: [
-                ...(p.comments || []),
-                { id: Date.now(), user: { fullName: "You" }, content: comment },
-              ],
-            }
-          : p
-      )
-    );
-    setCommentText((prev) => ({ ...prev, [postId]: "" }));
+
+    try {
+      const res = await API.post(`/posts/${postId}/comments`, {
+        content: comment,
+      });
+
+      if (res.data.comment) {
+        const newComment = {
+          userName: res.data.comment.author?.["full-name"] || "You",
+          content: res.data.comment.content,
+          avatar: PROFILE,
+          date: new Date().toLocaleString(),
+        };
+
+        // تحديث فوري للكومنتات
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? { ...post, comments: [...post.comments, newComment] }
+              : post
+          )
+        );
+      }
+
+      setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
+    } catch (err) {
+      console.error("🔴 Error submitting comment:", err.response?.data || err);
+      alert("Failed to add comment");
+    }
   };
 
   // ====================== Render ======================
@@ -193,10 +274,7 @@ function GroupDetails({ group, goBack, currentUserId }) {
                 {availableGraduates.map((f) => (
                   <li key={f.id}>
                     <div className="friend-info">
-                      <img
-                        src={f.profilePicture || "/default-profile.png"}
-                        alt="Profile"
-                      />
+                      <img src={f.profilePicture || PROFILE} alt="Profile" />
                       <span>{f.fullName}</span>
                     </div>
                     <button
@@ -231,6 +309,7 @@ function GroupDetails({ group, goBack, currentUserId }) {
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
             placeholder="Write a new post..."
+            rows={4}
           />
           <input type="file" onChange={(e) => setImage(e.target.files[0])} />
           <button onClick={handleCreatePost} className="btn btn--primary">
@@ -240,41 +319,115 @@ function GroupDetails({ group, goBack, currentUserId }) {
 
         {/* Posts List */}
         <h3>Community Posts</h3>
-        {posts.length === 0 ? (
+        {loading && <div>Loading posts...</div>}
+        {!loading && posts.length === 0 ? (
           <p className="empty-state">No posts yet in this group.</p>
         ) : (
           <div className="posts-list">
-            {posts.map((p) => (
-              <div key={p.post_id} className="post-card">
-                <div className="post-author">{p.author.fullName}</div>
-                <div className="post-content">{p.content}</div>
-                {p.image && (
-                  <img src={p.image} alt="Post" className="post-image" />
-                )}
-                <div className="post-meta">
-                  {new Date(p["created-at"]).toLocaleString()}
-                </div>
-                <button
-                  onClick={() => handleLike(p.post_id)}
-                  className="like-button"
+            {posts.map((post) => (
+              <div key={post.id} className="post-card uni-post-card">
+                <div
+                  className="post-header"
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
                 >
-                  👍 Like ({p.likesCount || 0})
-                </button>
-                <div className="comment-section">
-                  <input
-                    type="text"
-                    placeholder="Add a comment"
-                    value={commentText[p.post_id] || ""}
-                    onChange={(e) =>
-                      setCommentText((prev) => ({
-                        ...prev,
-                        [p.post_id]: e.target.value,
-                      }))
-                    }
+                  <img
+                    src={post.author?.photo || PROFILE}
+                    className="profile-pic"
+                    alt="profile"
+                    style={{
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                    }}
                   />
-                  <button onClick={() => handleComment(p.post_id)}>
-                    Comment
+                  <div
+                    className="post-user-info"
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      lineHeight: "1.2",
+                    }}
+                  >
+                    <strong>{post.author?.name || "Unknown"}</strong>
+                    <div
+                      style={{
+                        marginTop: "2px",
+                        marginLeft: "4px",
+                        color: "#555",
+                        fontSize: "0.9em",
+                      }}
+                    >
+                      {new Date(post["created-at"]).toLocaleString()} -{" "}
+                      {post.category}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="post-content uni-post-body">
+                  <p>{post.content}</p>
+                  {post.images && post.images.length > 0 && (
+                    <div className="uni-post-images">
+                      {post.images.map((imgUrl, index) => (
+                        <img
+                          key={index}
+                          src={imgUrl}
+                          alt={`post-${index}`}
+                          className="uni-post-preview"
+                        />
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="uni-post-actions">
+                  <button
+                    className={post.liked ? "uni-liked" : ""}
+                    onClick={() => handleLike(post.id)}
+                  >
+                    <Heart
+                      size={16}
+                      fill={post.liked ? "currentColor" : "none"}
+                    />
+                    {post.likes}
                   </button>
+                  <button>
+                    <MessageCircle size={16} />
+                    {post.comments.length}
+                  </button>
+                  <button>
+                    <Share2 size={16} />
+                    {post.shares || 0}
+                  </button>
+                </div>
+
+                {/* Comments Section */}
+                <div className="comment-section uni-comments-section">
+                  {post.comments.map((comment, idx) => (
+                    <div key={idx} className="comment-item uni-comment-item">
+                      <img
+                        src={comment.avatar || PROFILE}
+                        alt={comment.userName}
+                        className="uni-comment-avatar"
+                      />
+                      <div className="comment-text uni-comment-text">
+                        <strong>{comment.userName}</strong>: {comment.content}
+                      </div>
+                    </div>
+                  ))}
+                  <div className="comment-input uni-comment-input">
+                    <input
+                      type="text"
+                      placeholder="Write a comment..."
+                      value={commentInputs[post.id] || ""}
+                      onChange={(e) =>
+                        handleCommentChange(post.id, e.target.value)
+                      }
+                    />
+                    <button onClick={() => handleCommentSubmit(post.id)}>
+                      Send
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
@@ -286,8 +439,6 @@ function GroupDetails({ group, goBack, currentUserId }) {
 }
 
 export default GroupDetails;
-
-
 
 /*import { useState, useEffect } from "react";
 import API from "../../services/api";
@@ -486,8 +637,6 @@ function GroupDetails({ group, goBack }) {
 }
 
 export default GroupDetails;*/
-
-
 
 // import { useState, useEffect } from "react";
 // import API from "../../services/api";
