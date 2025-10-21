@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "node src/server.js",
+    "start": "nodemon src/server.js",
     "dev": "nodemon src/server.js",
     "migration:generate": "sequelize-typescript-migrations --models-dir src/models --migrations-dir migrations --sequelize-config src/config/db.js"
   },

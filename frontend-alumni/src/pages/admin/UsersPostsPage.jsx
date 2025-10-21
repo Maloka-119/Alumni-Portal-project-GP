@@ -130,13 +130,14 @@ const UsersPostsPage = () => {
       <h2 className="page-title">{t("userPosts")}</h2>
 
       <div className="filter-bar">
-        <label>{t("Filter by:")}</label>
-        <select value={filter} onChange={e => setFilter(e.target.value)}>
-          <option>All</option>
-          <option>Normal</option>
-          <option>Hidden</option>
-        </select>
-      </div>
+  <label>{t("filterBy")}</label>
+  <select value={filter} onChange={e => setFilter(e.target.value)}>
+    <option>{t("all")}</option>
+    <option>{t("normal")}</option>
+    <option>{t("hidden")}</option>
+  </select>
+</div>
+
 
       <div className="posts-feed">
         {filteredPosts.map((post) => (

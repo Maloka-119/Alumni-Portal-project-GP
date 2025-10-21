@@ -14,7 +14,6 @@ const Graduate = sequelize.define(
       },
     },
     bio: { type: DataTypes.STRING },
-    "linkedln-link": { type: DataTypes.STRING },
     "current-job": { type: DataTypes.STRING, allowNull: true },
     "cv-url": { type: DataTypes.STRING },
     faculty: { type: DataTypes.STRING },
@@ -29,10 +28,7 @@ const Graduate = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
-    show_linkedin: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
+ "status-to-login": { type: DataTypes.ENUM("active", "inactive","rejected") },
   },
   {
     tableName: "Graduate",

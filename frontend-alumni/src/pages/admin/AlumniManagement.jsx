@@ -4,25 +4,28 @@ import './GradProfile.css';
 import GraduatedProfileView from './GraduatedProfileView';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api';
-
+import GraduateRequests from './GraduateRequests'; 
 
 const AlumniManagement = () => {
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("inPortal"); 
   const { t } = useTranslation();
 
   useEffect(() => {
+    if (activeTab !== "inPortal") return;
     setLoading(true);
-    API.get("/graduates")
+
+    API.get("/graduates/approved")
       .then(res => {
         const mappedUsers = res.data.data.map(g => ({
           id: g.User.id,
-          name: `${g.User["first-name"]} ${g.User["last-name"]}`,
-          nationalId: g.User["national-id"],
-          graduationYear: g["graduation-year"],
-          status: g.status,
+          name: `${g.User.firstName} ${g.User.lastName}`,
+          nationalId: g.User.nationalId,
+          graduationYear: g["graduation-year"] || "-",
+          status: g.status || "inactive",
           alumniId: g.graduate_id
         }));
         setUsers(mappedUsers);
@@ -33,38 +36,37 @@ const AlumniManagement = () => {
         setError(t("loadingError"));
         setLoading(false);
       });
-  }, []);
-  
-  
+  }, [activeTab, t]);
 
-const toggleUserStatus = async (alumniId) => {
-  const user = users.find(u => u.alumniId === alumniId);
-  if (!user) return;
+  const toggleUserStatus = async (alumniId) => {
+    const user = users.find(u => u.alumniId === alumniId);
+    if (!user) return;
 
-  const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    const newStatus = user.status === 'active' ? 'inactive' : 'active';
+    const token = localStorage.getItem("token");
 
-  try {
-    const token = localStorage.getItem("token"); // أو أي مكان مخزن فيه الـ JWT
-    const res = await API.put(
-      `/graduates/${alumniId}/status`,
-      { status: newStatus },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`  // هنا بنرسل التوكن
+    try {
+      const res = await API.put(
+        `/graduates/${alumniId}/status`,
+        { status: newStatus },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
+      );
+
+      if (res.data.status === "success") {
+        setUsers(users.map(u =>
+          u.alumniId === alumniId ? { ...u, status: newStatus } : u
+        ));
+      } else {
+        console.error("Error response:", res.data);
       }
-    );
-
-    // تحديث الـ state مباشرة بعد النجاح
-    setUsers(users.map(u =>
-      u.alumniId === alumniId ? { ...u, status: newStatus } : u
-    ));
-  } catch (err) {
-    console.error('Error updating status:', err);
-  }
-};
-
-  
+    } catch (err) {
+      console.error("Error updating status:", err);
+    }
+  };
 
   const handleShowProfile = async (user) => {
     try {
@@ -83,55 +85,73 @@ const toggleUserStatus = async (alumniId) => {
     <div>
       <UserManagement activeTabName={t("alumni")} />
 
-      <div className="table-container">
-        {loading && <p>{t("loadingAlumniData")}</p>}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-
-        {!loading && !error && (
-          <table className="users-table">
-            <thead>
-              <tr>
-                <th>{t("name")}</th>
-                <th>{t("nationalId")}</th>
-                <th>{t("graduationYear")}</th>
-                <th>{t("status")}</th>
-                <th>{t("alumniId")}</th>
-                <th>{t("actions")}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user.id} className="table-row">
-                  <td>{user.name}</td>
-                  <td>{user.nationalId}</td>
-                  <td>{user.graduationYear}</td>
-                  <td>
-                    <span className={`status-badge ${user.status.toLowerCase()}`}>
-                      {t(user.status)}
-                    </span>
-                  </td>
-                  <td>{user.alumniId}</td>
-                  <td className="actions-cell">
-                    <button
-                      className="show-button"
-                      onClick={() => handleShowProfile(user)}
-                    >
-                      {t("showProfile")}
-                    </button>
-                    <button
-  onClick={() => toggleUserStatus(user.alumniId)}
-  className={`toggle-switch ${user.status === 'active' ? 'active' : ''}`}
->
-  <span className="toggle-slider"></span>
-</button>
-
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
+      <div className="tabs-container">
+        <button
+          className={`tab-button ${activeTab === "inPortal" ? "active" : ""}`}
+          onClick={() => setActiveTab("inPortal")}
+        >
+          {t("InPortal")}
+        </button>
+        <button
+          className={`tab-button ${activeTab === "requests" ? "active" : ""}`}
+          onClick={() => setActiveTab("requests")}
+        >
+          {t("Requests")}
+        </button>
       </div>
+
+      {activeTab === "inPortal" && (
+        <div className="table-container">
+          {loading && <p>{t("loadingAlumniData")}</p>}
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+
+          {!loading && !error && (
+            <table className="users-table">
+              <thead>
+                <tr>
+                  <th>{t("alumniId")}</th>
+                  <th>{t("name")}</th>
+                  <th>{t("nationalId")}</th>
+                  <th>{t("graduationYear")}</th>
+                  <th>{t("status")}</th>
+                  <th>{t("actions")}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user.id} className="table-row">
+                    <td>{user.alumniId}</td>
+                    <td>{user.name}</td>
+                    <td>{user.nationalId}</td>
+                    <td>{user.graduationYear}</td>
+                    <td>
+                      <span className={`status-badge ${user.status.toLowerCase()}`}>
+                        {t(user.status)}
+                      </span>
+                    </td>
+                    <td className="actions-cell">
+                      <button
+                        className="show-button"
+                        onClick={() => handleShowProfile(user)}
+                      >
+                        {t("showProfile")}
+                      </button>
+                      <button
+                        onClick={() => toggleUserStatus(user.alumniId)}
+                        className={`toggle-switch ${user.status === 'active' ? 'active' : ''}`}
+                      >
+                        <span className="toggle-slider"></span>
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
+
+      {activeTab === "requests" && <GraduateRequests />}
 
       {selectedUser && (
         <div className="modal-overlay">
@@ -148,7 +168,3 @@ const toggleUserStatus = async (alumniId) => {
 };
 
 export default AlumniManagement;
-
-
-
-

@@ -22,10 +22,14 @@
     background-color: #e0e7ff;
     border: none;
     border-radius: 0.5rem;
-    pointer-events: none;
+    cursor: pointer;
     font-weight: 500;
     transition: all 0.2s;
     color: #1e3a8a;
+  }
+  
+  .tab-button:hover {
+    background-color: #c7d2fe;
   }
   
   .tab-button.active {

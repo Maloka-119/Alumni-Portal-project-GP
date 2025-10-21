@@ -149,13 +149,25 @@ import {
   UserCheck, User, Shield, Edit, Megaphone, HelpCircle, Wrench 
 } from 'lucide-react';
 import { useTranslation } from "react-i18next";
+import API from '../../services/api'; // تأكدي إن المسار صحيح
 
-const AdminPanel = () => {
+
+const AdminPanel = ({ setUser }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
-
+  const handleLogout = async () => {
+    try {
+      await API.get("/logout");
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+      setUser(null); // مهم جدًا لتحديث ProtectedRoute
+      navigate("/helwan-alumni-portal/login", { replace: true });
+    } catch (err) {
+      console.error("Logout failed:", err);
+    }
+  };
   const toggleLanguage = () => {
     i18n.changeLanguage(i18n.language === "en" ? "ar" : "en");
   };
@@ -221,9 +233,10 @@ const AdminPanel = () => {
             <Globe size={16} style={{ marginRight: '4px' }} />
             {i18n.language === "en" ? "EN" : "AR"}
           </button>
-          <button className="logout-btn" onClick={() => navigate("/helwan-alumni-portal/login")}>
-            <LogOut size={16} />
-          </button>
+          <button className="logout-btn" onClick={handleLogout}>
+  <LogOut size={16} />
+</button>
+
         </div>
       </header>
 

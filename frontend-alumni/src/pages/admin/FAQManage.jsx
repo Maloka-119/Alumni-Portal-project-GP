@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { Edit2, Trash2, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import API from "../../services/api";
 import "./FAQManage.css";
+import { useTranslation } from "react-i18next";
+
 
 function FAQManage() {
   const [faqs, setFaqs] = useState([]);
@@ -9,6 +11,8 @@ function FAQManage() {
   const [editId, setEditId] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const { t } = useTranslation();
+
 
   useEffect(() => {
     fetchFaqs();
@@ -72,10 +76,10 @@ function FAQManage() {
   return (
     <div className="faq-manage">
       <div className="faq-header-top">
-        <h1 className="page-title">FAQ Management</h1>
+        <h1 className="page-title">{t("faqManagement")}</h1>
         <button className="add-btn" onClick={() => setShowForm(!showForm)}>
           <Plus size={18} />
-          {showForm ? "Close" : "Add Question"}
+          {showForm ? t("close") : t("addQuestion")}
         </button>
       </div>
 
@@ -83,21 +87,21 @@ function FAQManage() {
         <div className="faq-form">
           <input
             type="text"
-            placeholder="Question"
+            placeholder={t("question")}
             value={newFAQ.question}
             onChange={(e) =>
               setNewFAQ({ ...newFAQ, question: e.target.value })
             }
           />
           <textarea
-            placeholder="Answer"
+            placeholder={t("answer")}
             value={newFAQ.answer}
             onChange={(e) =>
               setNewFAQ({ ...newFAQ, answer: e.target.value })
             }
           ></textarea>
           <button onClick={handleAdd}>
-            {editId ? "Update FAQ" : "Save FAQ"}
+          {editId ? t("updateFAQ") : t("saveFAQ")}
           </button>
         </div>
       )}
@@ -134,7 +138,7 @@ function FAQManage() {
             </div>
           ))
         ) : (
-          <p>No FAQs found</p>
+          <p>{t("noFaqsFound")}</p>
         )}
       </div>
     </div>

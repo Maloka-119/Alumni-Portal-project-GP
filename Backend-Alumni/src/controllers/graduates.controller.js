@@ -36,6 +36,136 @@ const getAllGraduates = async (req, res) => {
   }
 };
 
+// Get active graduates (GraduatesInPortal) - Admin only
+const getGraduatesInPortal = async (req, res) => {
+  try {
+    // التحقق إن المستخدم Admin
+    if (req.user["user-type"] !== "admin") {
+      return res.status(403).json({
+        status: HttpStatusHelper.ERROR,
+        message: "Access denied. Admins only.",
+        data: [],
+      });
+    }
+
+    const graduates = await Graduate.findAll({
+      where: { "status-to-login": "active" },
+      include: {
+        model: User,
+        attributes: [
+          "id",
+          ["first-name", "firstName"],
+          ["last-name", "lastName"],
+          ["national-id", "nationalId"],
+          "email",
+          ["phone-number", "phoneNumber"],
+          ["birth-date", "birthDate"],
+          ["user-type", "userType"],
+        ],
+      },
+    });
+
+    return res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "All graduates fetched successfully",
+      data: graduates,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: "Error fetching graduates",
+      data: [],
+    });
+  }
+};
+
+// Get inactive graduates (requested to join) - Admin only
+const getRequestedGraduates = async (req, res) => {
+  try {
+    // التحقق إن المستخدم Admin
+    if (req.user["user-type"] !== "admin") {
+      return res.status(403).json({
+        status: HttpStatusHelper.ERROR,
+        message: "Access denied. Admins only.",
+        data: [],
+      });
+    }
+
+    const graduates = await Graduate.findAll({
+      where: { "status-to-login": "inactive" },
+      include: {
+        model: User,
+        attributes: [
+          "id",
+          ["first-name", "firstName"],
+          ["last-name", "lastName"],
+          ["national-id", "nationalId"],
+          "email",
+          ["phone-number", "phoneNumber"],
+          ["birth-date", "birthDate"],
+          ["user-type", "userType"],
+        ],
+      },
+    });
+
+    return res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "All graduates fetched successfully",
+      data: graduates,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: "Error fetching graduates",
+      data: [],
+    });
+  }
+};
+
+//reject graduate by admin
+const rejectGraduate = async (req, res) => {
+  try {
+    // تأكيد إن المستخدم Admin
+    if (req.user['user-type'] !== "admin") {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied. Admin only",
+      });
+    }
+
+    const graduateId = req.params.id;
+
+    // جلب الخريج من قاعدة البيانات
+    const graduate = await Graduate.findByPk(graduateId);
+
+    if (!graduate) {
+      return res.status(404).json({
+        status: "error",
+        message: "Graduate not found",
+      });
+    }
+
+    // تحديث الحالة إلى "rejected"
+    graduate["status-to-login"] = "rejected"; 
+    await graduate.save();
+
+    return res.status(200).json({
+      status: "success",
+      message: "Graduate request rejected successfully",
+      data: graduate,
+    });
+  } catch (error) {
+    console.error(" Error rejecting graduate:", error);
+    return res.status(500).json({
+      status: "error",
+      message: "Failed to reject graduate request",
+      error: error.message,
+    });
+  }
+};
+
 //get digital id
 const getDigitalID = async (req, res) => {
   try {
@@ -99,6 +229,46 @@ const getDigitalID = async (req, res) => {
     });
   }
 };
+
+//Approve Graduate by admin
+const approveGraduate = async (req, res) => {
+  try {
+    const { id } = req.params; // graduate_id
+
+    // تأكيد إن اللي بينفذ هو admin
+    if (!req.user || req.user["user-type"] !== "admin") {
+      return res.status(403).json({
+        message: "Access denied: Only admin can approve graduates.",
+      });
+    }
+
+    // نبحث عن الخريج
+    const graduate = await Graduate.findOne({ where: { graduate_id: id } });
+
+    if (!graduate) {
+      return res.status(404).json({ message: "Graduate not found." });
+    }
+
+    // تحديث الحالة
+    graduate["status-to-login"] = "active";
+    await graduate.save();
+
+    return res.status(200).json({
+      message: "Graduate approved successfully.",
+      graduateId: id,
+      newStatus: graduate["status-to-login"],
+    });
+  } catch (error) {
+    console.error("Error approving graduate:", error.message);
+    return res.status(500).json({
+      message: "Server error while approving graduate.",
+      error: error.message,
+    });
+  }
+};
+
+
+
 // GET Graduate Profile
 const getGraduateProfile = async (req, res) => {
   try {
@@ -345,10 +515,14 @@ const searchGraduates = async (req, res) => {
 };
 
 module.exports = {
+  getAllGraduates,
+  getGraduatesInPortal,
+  getRequestedGraduates,
   getDigitalID,
   getGraduateProfile,
   updateProfile,
   updateGraduateStatus,
-  getAllGraduates,
   searchGraduates,
+  approveGraduate,
+  rejectGraduate
 };

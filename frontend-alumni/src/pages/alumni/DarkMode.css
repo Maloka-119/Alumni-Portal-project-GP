@@ -583,8 +583,11 @@
 }
 
 .dark .explorer-btn-secondary {
-  background: #475569;
+  background: #10b981;
   color: #f3f4f6;
+}
+.dark .explorer-btn-secondary:hover {
+  background: #0f9c6d;
 }
 
 .dark .explorer-btn-disabled {
