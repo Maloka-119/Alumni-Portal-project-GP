@@ -1,6 +1,5 @@
 .mycommunity-panel {
   padding: 30px;
-  background-color: #f9fafb;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -205,4 +204,77 @@
     width: 100%;
     max-width: 100%;
   }
+}
+/* ===== Dark Mode for MyCommunity ===== */
+.dark .mycommunity-panel {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+.dark .mycommunity-header {
+  color: #60a5fa;
+}
+
+.dark .mycommunity-empty {
+  color: #9ca3af;
+}
+
+.dark .mycommunity-grid {
+  background: transparent;
+}
+
+.dark .mycommunity-card {
+  background: #1f2937;
+  color: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border: 1px solid #374151;
+  transition: background 0.3s, box-shadow 0.3s;
+}
+
+.dark .mycommunity-card:hover {
+  background: #1f2937c0;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.6);
+}
+
+.dark .mycommunity-members {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .myinvite-badge {
+  background-color: #2563eb;
+  color: #f3f4f6;
+}
+
+.dark .myinvite-badge:hover {
+  background-color: #1d4ed8;
+}
+
+.dark .myinvite-badge .tooltip-text {
+  background-color: #374151;
+  color: #f3f4f6;
+  border: 1px solid #2563eb;
+}
+
+.dark .mycommunity-overlay h2 {
+  color: #facc15;
+  text-shadow: none;
+}
+
+.dark .mycommunity-card button:first-of-type {
+  background-color: #2563eb;
+  color: #f3f4f6;
+}
+
+.dark .mycommunity-card button:first-of-type:hover {
+  background-color: #1d4ed8;
+}
+
+.dark .mycommunity-card button:last-of-type {
+  background-color: #b91c1c;
+  color: #f3f4f6;
+}
+
+.dark .mycommunity-card button:last-of-type:hover {
+  background-color: #ef4444;
 }

@@ -80,7 +80,14 @@ const admin = {
 "hidePostFailed": "Failed to hide post",
 "savePostFailed": "Failed to save post",
 "deletePostFailed": "Failed to delete post",
-"fetchTypesFailed": "Failed to fetch post types"
+"fetchTypesFailed": "Failed to fetch post types",
+"staffManagement": "Staff Management",
+"alumniManagement": "Alumni Management",
+"Accept": "Accept",
+"Remove": "Remove",
+"InPortal": "In Portal",
+  "Requests": "Requests",
+
 
       }
     },
@@ -165,9 +172,13 @@ const admin = {
 "fetchPostsFailed": "فشل في جلب المنشورات",
 "savePostFailed": "فشل في حفظ المنشور",
 "deletePostFailed": "فشل في حذف المنشور",
-"fetchTypesFailed": "فشل في جلب أنواع المنشورات"
-
-
+"fetchTypesFailed": "فشل في جلب أنواع المنشورات",
+"staffManagement": "إدارة الموظفين",
+"alumniManagement": "إدارة الخريجين",
+"Accept": "قبول",
+"Remove": "رفض",
+"InPortal": "داخل البوابة",
+  "Requests": "الطلبات",
 
       }
     }

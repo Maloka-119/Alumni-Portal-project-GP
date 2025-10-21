@@ -196,3 +196,48 @@
     font-size: 16px;
   }
 }
+
+/* ===== Dark Mode for Notifications ===== */
+.dark .notifications-container {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+.dark .Title {
+  color: #f3f4f6;
+}
+
+.dark .tabs button {
+  background: #2563eb;
+  color: #f3f4f6;
+}
+
+.dark .tabs button.active {
+  background: #1e40af;
+}
+
+.dark .notification-item {
+  background: #1f2937;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  color: #f3f4f6;
+}
+
+.dark .notif-content p {
+  color: #f3f4f6;
+}
+
+.dark .time {
+  color: #9ca3af;
+}
+
+.dark .status.accepted {
+  color: #60a5fa;
+}
+
+.dark .status.rejected {
+  color: #f87171;
+}
+
+.dark .empty {
+  color: #9ca3af;
+}
