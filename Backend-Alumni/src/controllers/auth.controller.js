@@ -49,77 +49,73 @@ function extractDOBFromEgyptianNID(nationalId) {
 const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName, email, password, nationalId, phoneNumber } = req.body;
 
-  // استخراج تاريخ الميلاد من الرقم القومي
+  // استخراج تاريخ الميلاد
   let birthDateFromNid;
   try {
     birthDateFromNid = extractDOBFromEgyptianNID(nationalId);
-  } catch (err) {
+  } catch {
     res.status(400);
-    throw new Error("Invalid national ID " );
+    throw new Error("Invalid national ID");
   }
 
   let externalData;
   let userType;
-  let statusToLogin = "active"; // القيمة الافتراضية
+  let statusToLogin = "active";
 
   // تحقق من Graduate API
   try {
     const gradResponse = await axios.get(
       `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
     );
-    console.log("Graduate API response:", gradResponse.data);
     externalData = gradResponse.data;
 
     if (externalData && externalData.faculty) {
       userType = "graduate";
-    } else {
-      // الرقم القومي غير موجود في الـ Graduate API
+      statusToLogin = "active";
+    } else if (externalData) {
       userType = "graduate";
       statusToLogin = "inactive";
     }
   } catch (err) {
     console.log("Graduate API error:", err.message);
-    // لو حصل خطأ في الاتصال أو مفيش بيانات من الـ API، نسجل كخريج بس inactive
     userType = "graduate";
     statusToLogin = "inactive";
   }
 
-  // لو ما طلعش خريج، نحاول Staff API
-  if (!userType || userType !== "graduate") {
+  // تحقق من Staff API لو لسه undefined
+  if (!userType) {
     try {
       const staffResponse = await axios.get(
         `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
       );
-      console.log("Staff API response:", staffResponse.data);
       externalData = staffResponse.data;
       if (externalData && externalData.department) {
         userType = "staff";
+        statusToLogin = "inactive";
       }
     } catch (err) {
       console.log("Staff API error:", err.message);
     }
   }
 
-  // لو ما طلعش لا خريج ولا عضو هيئة تدريس
   if (!userType) {
     res.status(400);
-    throw new Error(
-      "Registration failed: National ID not recognized in Helwan University records."
-    );
+    throw new Error("National ID not recognized in records");
   }
 
-  // تحقق من وجود البريد مسبقًا
+  // تحقق من البريد والرقم القومي
   const userExists = await User.findOne({ where: { email } });
   if (userExists) {
     res.status(400);
     throw new Error("User already exists");
   }
-// تحقق من وجود الرقم القومي مسبقًا
-const nationalIdExists = await User.findOne({ where: { "national-id": nationalId } });
-if (nationalIdExists) {
-  res.status(400);
-  throw new Error("This national ID is already registered");
-}
+
+  const nationalIdExists = await User.findOne({ where: { "national-id": nationalId } });
+  if (nationalIdExists) {
+    res.status(400);
+    throw new Error("This national ID is already registered");
+  }
+
   // تشفير الباسورد
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -142,12 +138,12 @@ if (nationalIdExists) {
       graduate_id: user.id,
       faculty: externalData?.faculty || null,
       "graduation-year": externalData?.["graduation-year"] || null,
-      "status-to-login": statusToLogin, // هنا التعديل المهم
+      "status-to-login": statusToLogin,
     });
   } else if (userType === "staff") {
     await Staff.create({
       staff_id: user.id,
-      "status-to-login": "inactive",
+      "status-to-login": statusToLogin,
     });
   }
 
