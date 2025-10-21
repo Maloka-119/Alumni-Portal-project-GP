@@ -164,8 +164,9 @@ const admin = {
   "add_graduates": "Add Graduates",
   "all_colleges": "All Colleges",
   "all_years": "All Years",
-  "add_to_group": "Add to Group"
-
+  "add_to_group": "Add to Group",
+  "phonenumber": "Phone Number",
+  "Reject":"Reject",
 
 
       }
@@ -335,7 +336,10 @@ const admin = {
 "Add Graduates": "إضافة خريجين",
 "All Colleges": "كل الكليات",
 "All Years": "كل السنوات",
-"Add to Group": "إضافة إلى المجموعة"
+"Add to Group": "إضافة إلى المجموعة",
+"phonenumber": "رقم الهاتف",
+"Reject":"رفض",
+
 
       }
     }
