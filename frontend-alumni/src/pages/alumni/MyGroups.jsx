@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import API from "../../services/api";
 import GroupDetails from "./GroupDetails";
 import "./MyGroups.css";
+import { UserMinus , Eye} from "lucide-react";
+
 
 function MyGroups() {
   const [groups, setGroups] = useState([]);
@@ -71,10 +73,7 @@ return (
                 <div style={{ height: "160px", background: "#ddd" }}></div>
               )}
 
-              {/* الاسم على الصورة بخلفية شفافة */}
-              <div className="mycommunity-overlay">
-                <h2>{g.groupName}</h2>
-              </div>
+              
 
               {/* عدد الأعضاء */}
               <span className="mycommunity-members">
@@ -94,13 +93,26 @@ return (
             </div>
 
             {/* أزرار View و Leave */}
-            <button onClick={() => openGroupDetails(g)}>View Details</button>
-            <button
-              style={{ backgroundColor: "#ef4444", marginTop: "5px" }}
-              onClick={() => handleLeave(g.id)}
-            >
-              Leave
-            </button>
+            <div className="mycommunity-footer">
+  <div className="mycommunity-name">
+    {g.groupName}
+  </div>
+  <div className="mycoomunity-butn">
+  <button className="viewgr-btn" onClick={() => openGroupDetails(g)}>
+  <Eye size={16} style={{ marginRight: "5px" }} />
+  View Details
+</button>
+  <div
+  className="leave-icon"
+  onClick={() => handleLeave(g.id)}
+  title="Leave"
+>
+  <UserMinus size={18} />
+</div>
+</div>
+  
+</div>
+
           </div>
         ))}
       </div>
