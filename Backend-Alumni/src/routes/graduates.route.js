@@ -3,6 +3,8 @@ const router = express.Router();
 const graduateController = require("../controllers/graduates.controller");
 const { protect } = require("../middleware/authMiddleware");
 const { uploadFiles } = require("../middleware/uploadProfile");
+// Get all graduates (public)
+router.route("/").get(graduateController.getAllGraduates);
 
 // Update graduate profile (protected)
 router.put(
@@ -14,9 +16,11 @@ router.put(
 
 // admin يوافق على خريج
 router.put("/approve/:id", protect, graduateController.approveGraduate);
-// Get all graduates (public)
-router.route("/").get(graduateController.getAllGraduates);
 
+//get active graduates(GradutesInPortal)
+router.route("/approved").get(protect,graduateController.getGraduatesInPortal);
+//get inactive(that requet join to portal "Pending")
+router.route("/requested").get(protect,graduateController.getRequestedGraduates);
 // Get graduate profile by ID (public)
 router.route("/:id/profile").get(graduateController.getGraduateProfile);
 
