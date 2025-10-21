@@ -116,10 +116,10 @@ const getGraduateProfile = async (req, res) => {
 
     const user = graduate.User;
 
-    // 🔹 نتحقق هل اللي طالب البروفايل هو نفسه صاحبه
+    // 🔹 هل اللي طالب البروفايل هو نفسه صاحبه؟
     const isOwner = req.user && req.user.id === graduate.graduate_id;
 
-    // 🔹 نبدأ نبني بيانات البروفايل
+    // 🔹 بناء بيانات البروفايل
     const graduateProfile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${user["first-name"]} ${user["last-name"]}`,
@@ -128,17 +128,24 @@ const getGraduateProfile = async (req, res) => {
       bio: graduate.bio,
       skills: graduate.skills,
       currentJob: graduate["current-job"],
+
+      // 🔹 إعدادات الخصوصية لازم ترجع دايمًا
+      showCV: graduate.show_cv,
+      showLinkedIn: graduate.show_linkedin,
+      showPhone: user.show_phone,
     };
 
-    // 🔹 صاحب البروفايل يشوف كل حاجة دايمًا
+    // 🔹 نضيف الـ CV لو المالك أو الخصوصية مفعلة
     if (isOwner || graduate.show_cv === true) {
       graduateProfile.CV = graduate["cv-url"];
     }
 
+    // 🔹 نضيف اللينكدإن لو المالك أو الخصوصية مفعلة
     if (isOwner || graduate.show_linkedin === true) {
       graduateProfile.linkedlnLink = graduate["linkedln-link"];
     }
 
+    // 🔹 نضيف رقم التليفون لو المالك أو الخصوصية مفعلة
     if (isOwner || user.show_phone === true) {
       graduateProfile.phoneNumber = user.phoneNumber;
     }
@@ -221,34 +228,34 @@ const updateProfile = async (req, res) => {
     await user.save();
     await graduate.save();
 
-    // 🔹 صاحب البروفايل يشوف كل حاجة دايمًا، والباقي حسب الخصوصية
-    const isOwner = true; // بما إن ده updateProfile فهو دايمًا صاحب الحساب
+    // ✅ صاحب البروفايل يشوف كل حاجة دايمًا
+    const isOwner = true;
+
+    // 🔹 نفس شكل الداتا اللي بترجع من getGraduateProfile
+    const graduateProfile = {
+      profilePicture: graduate["profile-picture-url"],
+      fullName: `${user["first-name"]} ${user["last-name"]}`,
+      faculty: graduate.faculty,
+      graduationYear: graduate["graduation-year"],
+      bio: graduate.bio,
+      skills: graduate.skills,
+      currentJob: graduate["current-job"],
+
+      // 🔹 إعدادات الخصوصية
+      showCV: graduate.show_cv,
+      showLinkedIn: graduate.show_linkedin,
+      showPhone: user.show_phone,
+
+      // 🔹 البيانات اللي ممكن تبان حسب الخصوصية (بس هنا المالك يشوف الكل)
+      CV: graduate["cv-url"],
+      linkedlnLink: graduate["linkedln-link"],
+      phoneNumber: user.phoneNumber,
+    };
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate profile updated successfully",
-      data: {
-        graduate: {
-          profilePicture: graduate["profile-picture-url"],
-          fullName: `${user["first-name"]} ${user["last-name"]}`,
-          faculty: graduate.faculty,
-          graduationYear: graduate["graduation-year"],
-          bio: graduate.bio,
-          CV: isOwner || graduate.show_cv ? graduate["cv-url"] : null,
-          skills: graduate.skills,
-          currentJob: graduate["current-job"],
-          linkedlnLink:
-            isOwner || graduate.show_linkedin
-              ? graduate["linkedln-link"]
-              : null,
-          phoneNumber: isOwner || user.show_phone ? user.phoneNumber : null,
-
-          // 🔹 إعدادات الخصوصية المحدثة
-          showCV: graduate.show_cv,
-          showLinkedIn: graduate.show_linkedin,
-          showPhone: user.show_phone,
-        },
-      },
+      data: graduateProfile,
     });
   } catch (err) {
     console.error("Error in updateProfile:", err);
