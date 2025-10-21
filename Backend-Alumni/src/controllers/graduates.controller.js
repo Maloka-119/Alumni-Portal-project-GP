@@ -128,7 +128,7 @@ const getRequestedGraduates = async (req, res) => {
 const rejectGraduate = async (req, res) => {
   try {
     // تأكيد إن المستخدم Admin
-    if (req.user['user-type'] !== "admin") {
+    if (req.user["user-type"] !== "admin") {
       return res.status(403).json({
         status: "error",
         message: "Access denied. Admin only",
@@ -148,7 +148,7 @@ const rejectGraduate = async (req, res) => {
     }
 
     // تحديث الحالة إلى "rejected"
-    graduate["status-to-login"] = "rejected"; 
+    graduate["status-to-login"] = "rejected";
     await graduate.save();
 
     return res.status(200).json({
@@ -267,8 +267,6 @@ const approveGraduate = async (req, res) => {
   }
 };
 
-
-
 // GET Graduate Profile
 const getGraduateProfile = async (req, res) => {
   try {
@@ -286,10 +284,11 @@ const getGraduateProfile = async (req, res) => {
 
     const user = graduate.User;
 
-    // 🔹 هل اللي طالب البروفايل هو نفسه صاحبه؟
-    const isOwner = req.user && req.user.id === graduate.graduate_id;
+    // ✅ نتحقق هل اللي طالب البروفايل هو صاحبه
+    const isOwner =
+      req.user && parseInt(req.user.id) === parseInt(graduate.graduate_id);
 
-    // 🔹 بناء بيانات البروفايل
+    // ✅ نبني نفس شكل البيانات اللي بترجع من updateProfile
     const graduateProfile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${user["first-name"]} ${user["last-name"]}`,
@@ -299,26 +298,16 @@ const getGraduateProfile = async (req, res) => {
       skills: graduate.skills,
       currentJob: graduate["current-job"],
 
-      // 🔹 إعدادات الخصوصية لازم ترجع دايمًا
+      // إعدادات الخصوصية
       showCV: graduate.show_cv,
       showLinkedIn: graduate.show_linkedin,
       showPhone: user.show_phone,
+
+      // ✅ نرجّع القيم دايمًا (زي updateProfile)
+      CV: graduate["cv-url"],
+      linkedlnLink: graduate["linkedln-link"],
+      phoneNumber: user.phoneNumber,
     };
-
-    // 🔹 نضيف الـ CV لو المالك أو الخصوصية مفعلة
-    if (isOwner || graduate.show_cv === true) {
-      graduateProfile.CV = graduate["cv-url"];
-    }
-
-    // 🔹 نضيف اللينكدإن لو المالك أو الخصوصية مفعلة
-    if (isOwner || graduate.show_linkedin === true) {
-      graduateProfile.linkedlnLink = graduate["linkedln-link"];
-    }
-
-    // 🔹 نضيف رقم التليفون لو المالك أو الخصوصية مفعلة
-    if (isOwner || user.show_phone === true) {
-      graduateProfile.phoneNumber = user.phoneNumber;
-    }
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -524,5 +513,5 @@ module.exports = {
   updateGraduateStatus,
   searchGraduates,
   approveGraduate,
-  rejectGraduate
+  rejectGraduate,
 };
