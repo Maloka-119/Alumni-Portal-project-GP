@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Trash2, Plus, Eye, X, ChevronRight } from "lucide-react";
 import API from "../../services/api";
 import "./RolesManagement.css";
+import { useTranslation } from "react-i18next";
 
 const RolesManagement = () => {
   const [selectedRole, setSelectedRole] = useState("");
@@ -13,6 +14,7 @@ const RolesManagement = () => {
   const [staffList, setStaffList] = useState({});
   const [allStaff, setAllStaff] = useState([]);
   const [availablePermissions, setAvailablePermissions] = useState([]);
+  const { t } = useTranslation();
 
   useEffect(() => {
     fetchAllData();
@@ -333,7 +335,7 @@ const RolesManagement = () => {
   return (
     <div className="roles-container">
       <div className="roles-sidebar">
-        <h3 className="roletitle">Roles Management</h3>
+        <h3 className="roletitle">{t("rolesManagement")}</h3>
         <ul>
           {rolesData.map((role) => (
             <li
@@ -357,7 +359,7 @@ const RolesManagement = () => {
           ))}
         </ul>
         <button className="add-role-btn" onClick={() => setShowAddRoleModal(true)}>
-          <Plus size={16} /> Create New Role
+          <Plus size={16} />{t("CreateNewRole")}
         </button>
       </div>
 
@@ -365,17 +367,18 @@ const RolesManagement = () => {
         <div className="permissions-header">
           <h3 className="page-title">{selectedRole} Permissions</h3>
           <button className="view-staff-btn" onClick={() => setShowStaffModal(true)}>
-            <Eye size={16} /> View Staff
+            <Eye size={16} /> {t("viewStaff")}
           </button>
         </div>
 
         <table className="permissions-table">
           <thead>
             <tr>
-              <th>Module</th>
-              <th>Delete</th>
-              <th>Edit</th>
-              <th>View</th>
+             <th>{t("module")}</th>
+<th>{t("delete")}</th>
+<th>{t("edit")}</th>
+<th>{t("view")}</th>
+
             </tr>
           </thead>
           <tbody>
@@ -410,7 +413,7 @@ const RolesManagement = () => {
 
         <div className="update-btn-container">
           <button onClick={handleUpdateRole} className="update-role-btn">
-            Update Permissions
+          {t("updatePermissions")}
           </button>
         </div>
       </div>
@@ -427,10 +430,11 @@ const RolesManagement = () => {
             <table className="staff-table">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Name</th>
-                  <th>Role</th>
-                  <th>Action</th>
+                <th>{t("id")}</th>
+<th>{t("name")}</th>
+<th>{t("role")}</th>
+<th>{t("action")}</th>
+
                 </tr>
               </thead>
               <tbody>
@@ -452,7 +456,7 @@ const RolesManagement = () => {
               </tbody>
             </table>
             <button className="add-staff-btn" onClick={() => setShowAddStaffModal(true)}>
-              <Plus size={16} /> Add New Staff
+              <Plus size={16} /> {t("addNewStaff")}
             </button>
           </div>
         </div>
@@ -462,18 +466,18 @@ const RolesManagement = () => {
         <div className="modal-overlay">
           <div className="modal-box small">
             <div className="modal-header">
-              <h3>Add New Staff</h3>
+              <h3>{t("addNewStaff")}</h3>
               <button className="close-btn" onClick={() => setShowAddStaffModal(false)}>
                 <X size={18} />
               </button>
             </div>
             <form onSubmit={handleAddStaff} className="modal-form">
-              <label>Enter Staff ID</label>
+              <label> {t("enterStaffId")}</label>
               <input type="text" name="staffId" placeholder="e.g. S104" />
-              <h4>or</h4>
-              <label>Select Existing Staff</label>
+              <h4>{t("or")}</h4>
+              <label>{t("selectExistingStaff")}</label>
               <select name="staffSelect" defaultValue="">
-                <option value="">Choose staff...</option>
+                <option value="">{t("chooseStaff")}...</option>
                 {allStaff.map((staff) => (
                   <option key={staff.staff_id} value={staff.staff_id}>
                     {staff.staff_id} - {staff.first_name} {staff.last_name}
@@ -481,7 +485,7 @@ const RolesManagement = () => {
                 ))}
               </select>
               <button type="submit" className="save-btn">
-                Add to Role
+               {t("addToRole")}
               </button>
             </form>
           </div>
@@ -492,15 +496,15 @@ const RolesManagement = () => {
         <div className="modal-overlay">
           <div className="modal-box small">
             <div className="modal-header">
-              <h3 style={{ color: "darkgray" }}>Create New Role</h3>
+              <h3 style={{ color: "darkgray" }}>{t("CreateNewRole")}</h3>
               <button className="close-btn" onClick={() => setShowAddRoleModal(false)}>
                 <X size={18} />
               </button>
             </div>
             <form onSubmit={handleAddRole} className="modal-form">
-              <input type="text" name="role" placeholder="Enter role name" required />
+              <input type="text" name="role" placeholder={t("enterRoleName")}required />
               <button type="submit" className="save-btn">
-                Create
+              {t("create")}
               </button>
             </form>
           </div>
