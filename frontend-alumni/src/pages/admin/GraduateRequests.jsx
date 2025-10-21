@@ -7,6 +7,10 @@ const GraduateRequests = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedAlumni, setSelectedAlumni] = useState(null);
+  const [graduationYear, setGraduationYear] = useState("");
+  const [college, setCollege] = useState("");
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -14,13 +18,15 @@ const GraduateRequests = () => {
       setLoading(true);
       try {
         const res = await API.get("/graduates/requested");
-        const mapped = res.data.data.map((g) => ({
-          id: g.User.id,
-          name: `${g.User.firstName} ${g.User.lastName}`,
-          nationalId: g.User.nationalId,
-          graduationYear: g["graduation-year"] || "N/A",
-          alumniId: g.graduate_id,
-        }));
+       const mapped = res.data.data.map((g) => ({
+  id: g.User.id,
+  name: `${g.User.firstName} ${g.User.lastName}`,
+  nationalId: g.User.nationalId,
+  phoneNumber: g.User.phoneNumber || "N/A",
+  graduationYear: g["graduation-year"] || "N/A",
+  alumniId: g.graduate_id,
+}));
+
         setRequests(mapped);
       } catch (err) {
         console.error("Error fetching graduate requests:", err);
@@ -29,19 +35,35 @@ const GraduateRequests = () => {
         setLoading(false);
       }
     };
-
     fetchRequests();
   }, [t]);
 
-  const handleAccept = async (alumniId) => {
+  const openModal = (alumniId) => {
+    setSelectedAlumni(alumniId);
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setGraduationYear("");
+    setCollege("");
+    setSelectedAlumni(null);
+  };
+
+  const handleAccept = async () => {
+    if (!graduationYear || !college) return;
+
     try {
       const token = localStorage.getItem("token");
       await API.put(
-        `/graduates/approve/${alumniId}`,
-        {},
+        `/graduates/approve/${selectedAlumni}`,
+        { graduationYear, faculty: college },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      setRequests((prev) => prev.filter((r) => r.alumniId !== alumniId));
+      setRequests((prev) =>
+        prev.filter((r) => r.alumniId !== selectedAlumni)
+      );
+      closeModal();
     } catch (err) {
       console.error("Error approving request:", err);
     }
@@ -73,7 +95,7 @@ const GraduateRequests = () => {
               <th>{t("alumniId")}</th>
               <th>{t("name")}</th>
               <th>{t("nationalId")}</th>
-              <th>{t("graduationYear")}</th>
+              <th>{t("phonenumber")}</th>
               <th>{t("actions")}</th>
             </tr>
           </thead>
@@ -84,16 +106,16 @@ const GraduateRequests = () => {
                   <td>{user.alumniId}</td>
                   <td>{user.name}</td>
                   <td>{user.nationalId}</td>
-                  <td>{user.graduationYear}</td>
+                  <td>{user.phoneNumber}</td>
                   <td className="actions-cell">
                     <button
-                      className="show-button"
-                      onClick={() => handleAccept(user.alumniId)}
+                      className="showre-button"
+                      onClick={() => openModal(user.alumniId)}
                     >
                       {t("Accept")}
                     </button>
                     <button
-                      className="delete-button"
+                      className="deletere-button"
                       onClick={() => handleReject(user.alumniId)}
                     >
                       {t("Reject")}
@@ -110,6 +132,34 @@ const GraduateRequests = () => {
             )}
           </tbody>
         </table>
+      )}
+
+      {modalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>{t("Approve Graduate")}</h3>
+            <label>
+              {t("Graduation Year")}:
+              <input
+                type="text"
+                value={graduationYear}
+                onChange={(e) => setGraduationYear(e.target.value)}
+              />
+            </label>
+            <label>
+              {t("College")}:
+              <input
+                type="text"
+                value={college}
+                onChange={(e) => setCollege(e.target.value)}
+              />
+            </label>
+            <div className="modal-actions">
+              <button onClick={handleAccept}>{t("Submit")}</button>
+              <button onClick={closeModal}>{t("Cancel")}</button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

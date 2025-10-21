@@ -174,7 +174,7 @@ const [cvFileName, setCvFileName] = useState("");
         },
       });
 
-      const updatedData = preprocessData(res.data.data.graduate);
+      const updatedData = preprocessData(res.data.data);
       setUser(updatedData);
       setFormData(updatedData);
       setEditing(false);
