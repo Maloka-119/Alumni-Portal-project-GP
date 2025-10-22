@@ -21,6 +21,36 @@
   -webkit-text-fill-color: transparent;
   letter-spacing: 1px;
 }
+.comment-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+}
+
+.comment-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.comment-avatar {
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.comment-text p {
+  margin: 0;
+}
+
+.comment-date {
+  font-size: 12px;
+  color: #666;
+  white-space: nowrap;
+}
+
 
 .uni-header::after {
   content: '';
@@ -94,13 +124,16 @@
 .uni-post-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 12px;
+  
 }
 
 .uni-post-header-info {
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
 }
 
 .uni-post-header-info strong {
@@ -110,6 +143,7 @@
 .uni-post-date {
   font-size: 12px;
   color: #555;
+  
 }
 
 .uni-post-type {
@@ -610,7 +644,7 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: #edeef0;
+  
   padding: 10px 12px;
   border-radius: 12px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.05);
@@ -784,22 +818,68 @@
 /* ====== Post Images Styling ====== */
 .uni-post-images {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* شبكة مرنة حسب عدد الصور */
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
   gap: 10px;
   margin-top: 10px;
+  margin-bottom: 10px;
+  
+}
+.image-viewer-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.719);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.image-viewer-box {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image-viewer-full {
+  max-width: 100%;
+  max-height: 85vh;
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.6);
+}
+
+.image-viewer-close {
+  position: absolute;
+  top: -40px;
+  right: -10px;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 35px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.image-viewer-close:hover {
+  color: #bbb;
 }
 
 .uni-post-preview {
-  width: 100%;
-  max-height: 400px; /* ارتفاع مناسب عشان الصورة متبقاش ضخمة */
-  object-fit: cover; /* يخلي الصورة متتمدش بشكل غريب */
-  border-radius: 12px;
-  display: block;
-  transition: transform 0.25s ease;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+  max-height: 350px;
+  object-fit: cover;
 }
 
 .uni-post-preview:hover {
-  transform: scale(1.02);
+  transform: scale(1.03);
 }
 
 /* ====== Post Header Styling ====== */
@@ -822,9 +902,17 @@
   height: 45px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 0; /* نشيل أي margin كان بيبعدها */
-  flex-shrink: 0; /* علشان الصورة ما تصغرش */
+  margin-right: 0; 
+  flex-shrink: 0; 
+  
 }
+.post-author-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+}
+
 
 
 .post-header-info {
