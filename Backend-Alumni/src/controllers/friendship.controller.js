@@ -25,6 +25,7 @@ const viewSuggestions = async (req, res) => {
         graduate_id: {
           [Op.notIn]: [...relatedIds, userId],
         },
+        "status-to-login":"accepted"
       },
       include: [
         {
