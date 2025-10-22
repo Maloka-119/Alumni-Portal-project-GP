@@ -914,7 +914,7 @@ const getMyPosts = async (req, res) => {
     });
   }
 };
-
+//edit post
 const editPost = async (req, res) => {
   try {
     const { postId } = req.params;
