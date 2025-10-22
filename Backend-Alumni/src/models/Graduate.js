@@ -28,7 +28,7 @@ const Graduate = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
- "status-to-login": { type: DataTypes.ENUM("active", "inactive","rejected") },
+ "status-to-login": { type: DataTypes.ENUM("accepted", "pending","rejected") },
   },
   {
     tableName: "Graduate",
