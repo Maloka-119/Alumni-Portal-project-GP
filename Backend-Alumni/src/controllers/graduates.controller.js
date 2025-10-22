@@ -49,7 +49,7 @@ const getGraduatesInPortal = async (req, res) => {
     }
 
     const graduates = await Graduate.findAll({
-      where: { "status-to-login": "active" },
+      where: { "status-to-login": "accepted" },
       include: {
         model: User,
         attributes: [
@@ -93,7 +93,7 @@ const getRequestedGraduates = async (req, res) => {
     }
 
     const graduates = await Graduate.findAll({
-      where: { "status-to-login": "inactive" },
+      where: { "status-to-login": "pending" },
       include: {
         model: User,
         attributes: [
@@ -258,7 +258,7 @@ const approveGraduate = async (req, res) => {
     }
 
     // ✅ تحديث الحالة والبيانات
-    graduate["status-to-login"] = "active";
+    graduate["status-to-login"] = "accepted";
     graduate["graduation-year"] = graduationYear;
     graduate.faculty = faculty;
 

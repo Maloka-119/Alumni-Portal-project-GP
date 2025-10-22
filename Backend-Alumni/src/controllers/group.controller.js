@@ -13,9 +13,9 @@ const Invitation = require("../models/Invitation");
 const getGraduatesForGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
-    const currentUserId = req.user.id; // المستخدم الحالي من التوكن
+    const currentUserId = req.user.id;
 
-    // تحقق إن المستخدم عضو في الجروب
+    // تحقق إن المستخدم عضو في الجروب أو Admin
     const isMember = await GroupMember.findOne({
       where: {
         "group-id": groupId,
@@ -23,37 +23,36 @@ const getGraduatesForGroup = async (req, res) => {
       },
     });
 
-    if (!isMember) {
+    if (!isMember && req.user["user-type"] !== "admin") {
       return res.status(403).json({
         error: "You must be a member of this group to invite others.",
       });
     }
 
-    //  IDs الأعضاء الموجودين في الجروب
+    // IDs الأعضاء الموجودين في الجروب
     const groupMembers = await GroupMember.findAll({
       where: { "group-id": groupId },
       attributes: ["user-id"],
     });
     const memberIds = groupMembers.map((m) => m["user-id"]);
 
-    //  الدعوات اللي المستخدم الحالي بعتها وحالتها pending
+    // الدعوات اللي المستخدم الحالي بعتها وحالتها pending
     const userPendingInvitations = await Invitation.findAll({
       where: {
         group_id: groupId,
         sender_id: currentUserId,
         status: "pending",
       },
-      attributes: ["id", "receiver_id"], // نجيب id الدعوة كمان
+      attributes: ["id", "receiver_id"],
     });
 
-    // خريطة (receiver_id → invitation_id)
     const pendingMap = {};
     userPendingInvitations.forEach((i) => {
       pendingMap[i.receiver_id] = i.id;
     });
     const pendingIds = Object.keys(pendingMap).map((id) => parseInt(id));
 
-    // نجيب الخريجين اللي مش أعضاء
+    // نجيب الخريجين اللي مش أعضاء وحالتهم accepted
     const graduates = await User.findAll({
       where: {
         "user-type": "graduate",
@@ -64,7 +63,9 @@ const getGraduatesForGroup = async (req, res) => {
       include: [
         {
           model: Graduate,
-          attributes: ["profile-picture-url"],
+          where: { "status-to-login": "accepted" }, 
+          attributes: ["profile-picture-url", "faculty", "graduation-year"],
+          required: true, // مهم: يحذف اللي مش عنده سجل أو حالة غير accepted
         },
       ],
       attributes: ["id", "first-name", "last-name"],
@@ -75,6 +76,8 @@ const getGraduatesForGroup = async (req, res) => {
       id: g.id,
       fullName: `${g["first-name"]} ${g["last-name"]}`,
       profilePicture: g.Graduate?.["profile-picture-url"] || null,
+      faculty: g.Graduate?.faculty || null,
+      graduationYear: g.Graduate?.["graduation-year"] || null,
       invitationStatus: pendingIds.includes(g.id)
         ? "pending"
         : "not_invited",
@@ -87,7 +90,6 @@ const getGraduatesForGroup = async (req, res) => {
     res.status(500).json({ error: "Something went wrong" });
   }
 };
-
 
 
 
@@ -658,6 +660,12 @@ const getGroupUsers = async (req, res) => {
           model: User,
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
           through: { attributes: [] }, // اخفي بيانات الجدول الوسيط
+          include: [
+            {
+              model: Graduate,
+              attributes: ["faculty", "graduation-year", "profile-picture-url"],
+            },
+          ],
         },
       ],
     });
@@ -669,10 +677,20 @@ const getGroupUsers = async (req, res) => {
       });
     }
 
+    // هنعمل تعديل صغير عشان لو مش موجود Graduate يرجع قيم افتراضية
+    const usersWithGraduateInfo = group.Users.map(user => {
+      return {
+        ...user.toJSON(),
+        faculty: user.Graduate ? user.Graduate.faculty : null,
+        graduationYear: user.Graduate ? user.Graduate["graduation-year"] : null,
+        profilePicture: user.Graduate ? user.Graduate["profile-picture-url"] : null,
+      };
+    });
+
     res.json({
       status: "success",
-      count: group.Users.length, // عدد اليوزر
-      data: group.Users, // بيانات اليوزر
+      count: group.Users.length,
+      data: usersWithGraduateInfo,
     });
   } catch (error) {
     console.error("Error fetching group users:", error);
@@ -683,6 +701,7 @@ const getGroupUsers = async (req, res) => {
     });
   }
 };
+
 
 module.exports = {
   createGroup,
