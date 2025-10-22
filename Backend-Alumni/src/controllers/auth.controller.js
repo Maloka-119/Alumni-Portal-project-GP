@@ -60,7 +60,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
   let externalData;
   let userType;
-  let statusToLogin = "active";
+  let statusToLogin = "accepted";
 
   // تحقق من Graduate API
   try {
@@ -71,15 +71,15 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (externalData && externalData.faculty) {
       userType = "graduate";
-      statusToLogin = "active";
+      statusToLogin = "accepted";
     } else if (externalData) {
       userType = "graduate";
-      statusToLogin = "inactive";
+      statusToLogin = "pending";
     }
   } catch (err) {
     console.log("Graduate API error:", err.message);
     userType = "graduate";
-    statusToLogin = "inactive";
+    statusToLogin = "pending";
   }
 
   // تحقق من Staff API لو لسه undefined
@@ -192,7 +192,7 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new Error("Graduate record not found. Please contact admin.");
       }
 
-      if (graduate["status-to-login"] !== "active") {
+      if (graduate["status-to-login"] !== "accepted") {
         res.status(403);
         throw new Error("Your account is pending approval, Please wait for confirmation from the Alumni Portal team");
       }

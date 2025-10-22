@@ -469,3 +469,63 @@
     border: 2px solid rgba(209, 213, 219, 0.3);
     font-weight: 500;
 }
+.graduate-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* يبعد العنصرين عن بعض */
+  margin-bottom: 6px;
+}
+
+.graduate-item img {
+  order: 0; /* الصورة تظل على الشمال */
+}
+.member-info, 
+.graduate-item span {
+  margin-left: 0 !important; /* إزالة أي مسافة بين الصورة والنص */
+}
+
+.graduate-item img,
+.member-avatar {
+  margin-right: 0 !important; /* تأكد إن مفيش مسافة على يمين الصورة */
+}
+
+.graduate-item span,
+.member-info {
+  display: inline-block; /* نص بجوار الصورة بدون gap */
+}
+
+.graduate-item input[type="checkbox"] {
+  order: 2; /* checkbox على اليمين */
+}
+
+
+
+.member-avatar, .graduate-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 0px;
+  margin-bottom: 10px;
+}
+
+.member-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.member-info {
+  display: inline-flex; /* بدل flex */
+  align-items: center;
+  gap: 0;               /* إزالة أي مسافة داخلية */
+  font-size: 14px;
+  margin-left: 4px;     /* مسافة بسيطة جدا بين الصورة والنص */
+}
+
+
