@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Heart, MessageCircle, Share2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2,Send  } from 'lucide-react';
 import AdminPostsImg from './AdminPosts.jpeg';
 import PROFILE from './PROFILE.jpeg';
 import './AlumniAdminPosts.css';
@@ -245,6 +245,15 @@ const AlumniAdminPosts = () => {
                       <div className="uni-comment-text">
                         <strong>{c.userName}</strong>: {c.content}
                       </div>
+                      <div className="comment-date">
+                  {new Date(c["created-at"]).toLocaleString([], {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
                     </div>
                   ))}
                 </div>
@@ -255,7 +264,7 @@ const AlumniAdminPosts = () => {
                     value={commentInputs[post.id] || ''}
                     onChange={(e) => handleCommentChange(post.id, e.target.value)}
                   />
-                  <button onClick={() => handleCommentSubmit(post.id)}>{t("send")}</button>
+                  <button onClick={() => handleCommentSubmit(post.id)}> <Send size={16} /></button>
                 </div>
               </div>
             )}
