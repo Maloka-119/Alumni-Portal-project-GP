@@ -236,7 +236,6 @@ const PostsAlumni = () => {
 
 export default PostsAlumni;
 
-// import React, { useState, useEffect } from 'react';
 // import { Heart, MessageCircle, Share2, Image, FileText, Link as LinkIcon, Trash2, MoreVertical, Edit } from 'lucide-react';
 // import { useTranslation } from 'react-i18next';
 // import './AlumniAdminPosts.css';
