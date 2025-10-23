@@ -137,10 +137,10 @@ const AlumniAdminPosts = () => {
   
     try {
       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
-
-      console.log("Comment response from backend:", res.data);
   
-      // ✅ ضيف الكومينت الجديد مباشرة في الـ state
+      console.log("🟡 Comment response from backend:", res.data);
+  
+      // ✅ ضيف الكومينت الجديد بنفس structure الـ posts الأصلية
       setPosts(prevPosts =>
         prevPosts.map(p =>
           p.id === postId
@@ -149,16 +149,11 @@ const AlumniAdminPosts = () => {
                 comments: [
                   ...(p.comments || []),
                   {
-                    comment_id: res.data.comment.comment_id,
+                    id: res.data.comment.comment_id,
+                    userName: res.data.comment.author["full-name"],
                     content: res.data.comment.content,
-                    createdAt: res.data.comment["created-at"],
-                    edited: res.data.comment.edited,
-                    author: {
-                      id: res.data.comment.author.id,
-                      fullName: res.data.comment.author["full-name"],
-                      email: res.data.comment.author.email,
-                      image: PROFILE
-                    }
+                    avatar: res.data.comment.author.image, // ⬅️ الصورة موجودة هنا
+                    date: new Date(res.data.comment["created-at"]).toLocaleString()
                   }
                 ]
               }

@@ -182,12 +182,12 @@ const AdminPostsPage = () => {
   const handleCommentSubmit = async (postId) => {
     const comment = commentInputs[postId];
     if (!comment) return;
-
+  
     try {
       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
-
+  
       console.log("Comment response from backend:", res.data);
-
+  
       // ✅ ضيف الكومينت الجديد مباشرة في الـ state
       setPosts(prevPosts =>
         prevPosts.map(p =>
@@ -200,7 +200,7 @@ const AdminPostsPage = () => {
                     id: res.data.comment.comment_id,
                     userName: res.data.comment.author?.["full-name"] || "Admin",
                     content: res.data.comment.content,
-                    avatar: AdminPostsImg,
+                    avatar: res.data.comment.author?.image || AdminPostsImg, // ⬅️ التصحيح هنا
                     date: new Date().toLocaleString(),
                     "created-at": res.data.comment["created-at"]
                   }
@@ -209,10 +209,10 @@ const AdminPostsPage = () => {
             : p
         )
       );
-
+  
       // ✅ امسح حقل الكتابة بعد الإرسال
       setCommentInputs({ ...commentInputs, [postId]: '' });
-
+  
     } catch (err) {
       console.error("Error submitting comment:", err);
     }

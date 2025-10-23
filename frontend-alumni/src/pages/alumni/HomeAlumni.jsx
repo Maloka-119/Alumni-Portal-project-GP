@@ -28,13 +28,27 @@ const HomeAlumni = () => {
       const filteredData = res.data.data.filter(post => post['group-id'] == null);
 
       const formatted = filteredData.map(post => {
-        // ⬇️⬇️⬇️ تجاهل تماماً التحقق من الـ like من البيانات القادمة ⬇️⬇️⬇️
+        // تحديد الصورة بناءً على نوع اليوزر
         let avatar;
-        if (post.author["full-name"] === "Alumni Portal - Helwan University") {
-          avatar = AdminPostsImg;
-        } else if (post.author.image) {
-          avatar = post.author.image; 
+        let isPortal = false;
+
+        // تحقق من نوع اليوزر
+        if (post.author && post.author["full-name"]) {
+          const authorName = post.author["full-name"];
+          
+          if (authorName.includes("Alumni Portal") || authorName.includes("Helwan University")) {
+            // بوستات الادمن - استخدم صورة الادمن
+            avatar = AdminPostsImg;
+            isPortal = true;
+          } else if (post.author.image) {
+            // خريجين أو استاف عندهم صورة - استخدم صورتهم
+            avatar = post.author.image;
+          } else {
+            // خريجين أو استاف ماعندهمش صورة - استخدم الصورة الافتراضية
+            avatar = PROFILE;
+          }
         } else {
+          // حالة الطوارئ - لو مفيش بيانات author
           avatar = PROFILE;
         }
 
@@ -58,11 +72,11 @@ const HomeAlumni = () => {
             hour12: true
           }),
           type: post.category,
-          isPortal: post.author["full-name"] === "Alumni Portal - Helwan University",
+          isPortal: isPortal,
           content: post.content,
           images: post.images || [],
           likes: post.likes_count || 0,
-          liked: false, // ⬅️ دائماً false في البداية - زي الصفحة الناجحة
+          liked: false,
           shares: 0,
           comments: formattedComments,
           showComments: false
@@ -151,25 +165,34 @@ const HomeAlumni = () => {
   const handleCommentSubmit = async (postId) => {
     const comment = commentInputs[postId];
     if (!comment) return;
-
+  
     try {
-      const response = await API.post(`/posts/${postId}/comments`, { content: comment });
-
+      const response = await API.post(`/posts/${postId}/comments`, { 
+        content: comment 
+      });
+  
       if (response.data.comment) {
         const newComment = {
-          userName: response.data.comment.author["full-name"] || "You",
+          id: response.data.comment.comment_id,
+          userName: response.data.comment.author?.["full-name"] || "You",
           content: response.data.comment.content,
-          avatar: PROFILE,
-          date: new Date().toLocaleString()
+          avatar: response.data.comment.author?.image || PROFILE,
+          date: new Date().toLocaleString(),
+          "created-at": response.data.comment["created-at"]
         };
-
+  
+        console.log("🟡 Adding comment with data:", newComment);
+  
         setPosts(prev => prev.map(post => 
           post.id === postId 
-            ? { ...post, comments: [...post.comments, newComment] }
+            ? { 
+                ...post, 
+                comments: [...post.comments, newComment] 
+              }
             : post
         ));
       }
-
+  
       setCommentInputs(prev => ({ ...prev, [postId]: '' }));
     } catch (err) {
       console.error("🔴 Error submitting comment:", err);

@@ -42,28 +42,27 @@ const PostCard = ({ post, onEdit, onDelete }) => {
 
   const handleAddComment = async () => {
     if (!token || !newComment.trim()) return;
-
+  
     try {
       const res = await API.post(
         `/posts/${post.id}/comments`,
         { content: newComment },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+  
       const newCommentObj = {
         userName: res.data.comment?.author?.["full-name"] || "You",
         content: res.data.comment.content,
-        avatar: PROFILE,
+        avatar: res.data.comment?.author?.image || PROFILE, // ⬅️ التصحيح هنا
         date: new Date().toLocaleString(),
       };
-
+  
       setComments((prev) => [...prev, newCommentObj]);
       setNewComment("");
     } catch (err) {
       console.error("Error adding comment:", err.response?.data || err);
     }
   };
-
   return (
     <div className={`uni-post-card ${post["is-hidden"] ? "is-hidden" : ""}`}>
       <div className="uni-post-header">

@@ -1111,8 +1111,6 @@ const addComment = async (req, res) => {
     const { content } = req.body;
     const userId = req.user.id;
 
-    // Any authenticated user can comment on posts
-
     // Check if post exists
     const post = await Post.findByPk(postId);
     if (!post) {
@@ -1137,12 +1135,18 @@ const addComment = async (req, res) => {
       "author-id": userId,
     });
 
-    // Fetch comment with author details
+    // ⬇️⬇️⬇️ التصحيح هنا - زود الـ Graduate include ⬇️⬇️⬇️
     const commentWithAuthor = await Comment.findByPk(newComment.comment_id, {
       include: [
         {
           model: User,
           attributes: ["id", "first-name", "last-name", "email"],
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"], // ⬅️ زود دي
+            },
+          ],
         },
       ],
     });
@@ -1159,6 +1163,9 @@ const addComment = async (req, res) => {
           id: commentWithAuthor.User.id,
           "full-name": `${commentWithAuthor.User["first-name"]} ${commentWithAuthor.User["last-name"]}`,
           email: commentWithAuthor.User.email,
+          image: commentWithAuthor.User.Graduate
+            ? commentWithAuthor.User.Graduate["profile-picture-url"]
+            : null, // ⬅️ وزود دي
         },
       },
     });
