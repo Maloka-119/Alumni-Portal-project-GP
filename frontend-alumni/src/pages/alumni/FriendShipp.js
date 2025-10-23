@@ -93,7 +93,7 @@ function FriendshipPage() {
     }
   };
 
-  const removeFriend = async (friendId, userName) => {
+  const UnfriendFriend = async (friendId, userName) => {
     try {
       await API.delete(`/friendships/friends/${friendId}`);
       setFriends(prev => prev.filter(f => f.friendId !== friendId));
@@ -163,9 +163,9 @@ function FriendshipPage() {
 
             <button
               className="Removebutton"
-              onClick={() => removeFriend(f.friendId, f.userName)}
+              onClick={() => UnfriendFriend(f.friendId, f.userName)}
             >
-              {t("remove")}
+              {t("Unfriend")}
             </button>
                   </div>
                 </div>

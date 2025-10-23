@@ -68,8 +68,16 @@ const registerUser = asyncHandler(async (req, res) => {
       `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
     );
     externalData = gradResponse.data;
+    console.log("Graduate API Response:", externalData);
 
-    if (externalData && externalData.faculty) {
+    // التعامل مع اختلاف أسماء المفاتيح في الرد
+    const facultyField =
+      externalData?.faculty ||
+      externalData?.Faculty ||
+      externalData?.FACULTY ||
+      externalData?.facultyName;
+
+    if (externalData && facultyField) {
       userType = "graduate";
       statusToLogin = "accepted";
     } else if (externalData) {
@@ -89,7 +97,14 @@ const registerUser = asyncHandler(async (req, res) => {
         `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
       );
       externalData = staffResponse.data;
-      if (externalData && externalData.department) {
+      console.log("Staff API Response:", externalData);
+
+      const departmentField =
+        externalData?.department ||
+        externalData?.Department ||
+        externalData?.DEPARTMENT;
+
+      if (externalData && departmentField) {
         userType = "staff";
         statusToLogin = "inactive";
       }
@@ -136,8 +151,17 @@ const registerUser = asyncHandler(async (req, res) => {
   if (userType === "graduate") {
     await Graduate.create({
       graduate_id: user.id,
-      faculty: externalData?.faculty || null,
-      "graduation-year": externalData?.["graduation-year"] || null,
+      faculty:
+        externalData?.faculty ||
+        externalData?.Faculty ||
+        externalData?.FACULTY ||
+        externalData?.facultyName ||
+        null,
+      "graduation-year":
+        externalData?.["graduation-year"] ||
+        externalData?.graduationYear ||
+        externalData?.GraduationYear ||
+        null,
       "status-to-login": statusToLogin,
     });
   } else if (userType === "staff") {

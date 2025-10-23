@@ -210,17 +210,7 @@
     color: #888;
   }
   
-  /* 🔘 الأزرار */
-  .button,
-  .Removebutton {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 8px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-  }
-  
+
   .button {
     background-color: #2563eb;
     color: white;
@@ -230,14 +220,22 @@
     background-color: #1e40af;
   }
   
-  .Removebutton {
+.Removebutton {
     background-color: #ef4444;
     color: white;
-  }
+    padding: 0 4px; /* حواف رأسية صغيرة جداً */
+    border-radius: 2px;
+    cursor: pointer;
+    line-height: 1;   /* يقلل ارتفاع السطر */
+    height: auto;     /* يسمح للزر بالتكيف مع النص */
+    display: inline-block; /* يضبط العرض على النص فقط */
+}
   
-  .Removebutton:hover {
+.Removebutton:hover {
     background-color: #b91c1c;
-  }
+}
+
+
   
   /* 🧭 العناوين */
   .Title {
