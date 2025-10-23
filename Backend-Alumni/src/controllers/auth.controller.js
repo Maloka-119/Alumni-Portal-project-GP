@@ -68,9 +68,7 @@ const registerUser = asyncHandler(async (req, res) => {
       `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
     );
     externalData = gradResponse.data;
-    console.log("Graduate API Response:", externalData);
-
-    // التعامل مع اختلاف أسماء المفاتيح في الرد
+   // التعامل مع اختلاف أسماء المفاتيح في الرد
     const facultyField =
       externalData?.faculty ||
       externalData?.Faculty ||
