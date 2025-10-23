@@ -6,6 +6,7 @@ import { Heart, MessageCircle, Info, ArrowLeft, Edit } from "lucide-react";
 import API from "../../services/api";
 import CreateBar from "../../components/CreatePostBar";
 import { useTranslation } from "react-i18next";
+import Swal from "sweetalert2";
 
 function GroupDetail({ group, goBack, updateGroup }) {
   const { t } = useTranslation();
@@ -155,40 +156,52 @@ function GroupDetail({ group, goBack, updateGroup }) {
     );
   };
 
-  const addGraduates = async () => {
-    try {
-      if (!group?.id || selectedGraduates.length === 0) return;
+const addGraduates = async () => {
+  try {
+    if (!group?.id || selectedGraduates.length === 0) return;
 
-      await API.post("/add-to-group", {
-        groupId: group.id,
-        userIds: selectedGraduates,
-      });
+    await API.post("/add-to-group", {
+      groupId: group.id,
+      userIds: selectedGraduates,
+    });
 
-      const newMembers = [
-        ...(group.members || []),
-        ...availableGraduates
-          .filter((g) => selectedGraduates.includes(g.id))
-          .map((g) => ({
-            id: g.id,
-            "full-name": g.fullName,
-            image: g.profilePicture || PROFILE,
-            faculty: g.faculty,
-            graduationYear: g.graduationYear,
-          })),
-      ];
+    const newMembers = [
+      ...(group.members || []),
+      ...availableGraduates
+        .filter((g) => selectedGraduates.includes(g.id))
+        .map((g) => ({
+          id: g.id,
+          "full-name": g.fullName,
+          image: g.profilePicture || PROFILE,
+          faculty: g.faculty,
+          graduationYear: g.graduationYear,
+        })),
+    ];
 
-      updateGroup({
-        ...group,
-        members: newMembers,
-        membersCount: newMembers.length,
-      });
+    updateGroup({
+      ...group,
+      members: newMembers,
+      membersCount: newMembers.length,
+    });
 
-      setSelectedGraduates([]);
-      setShowAddModal(false);
-    } catch (err) {
-      console.error("Error adding graduates:", err);
-    }
-  };
+    setSelectedGraduates([]);
+    setShowAddModal(false);
+
+    Swal.fire({
+      icon: "success",
+      title: "Graduates added successfully!",
+      showConfirmButton: false,
+      timer: 1500,
+    });
+  } catch (err) {
+    console.error("Error adding graduates:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Failed to add graduates",
+      text: err.response?.data?.message || "",
+    });
+  }
+};
 
   // ====================== Likes - نفس منطق صفحة الخريجين ======================
   const handleLike = async (postId) => {
@@ -238,40 +251,50 @@ function GroupDetail({ group, goBack, updateGroup }) {
     setCommentInputs({ ...commentInputs, [postId]: value });
   };
 
-  const handleCommentSubmit = async (postId) => {
-    const comment = commentInputs[postId];
-    if (!comment?.trim()) return;
-  
-    try {
-      const res = await API.post(`/posts/${postId}/comments`, {
-        content: comment,
-      });
-  
-      if (res.data.comment) {
-        const newComment = {
-          id: res.data.comment.comment_id,
-          userName: res.data.comment.author?.["full-name"] || "You",
-          content: res.data.comment.content,
-          avatar: res.data.comment.author?.image || PROFILE, // ⬅️ التصحيح هنا
-          date: new Date().toLocaleString(),
-        };
-  
-        // تحديث فوري للكومنتات
-        setPosts((prev) =>
-          prev.map((post) =>
-            post.id === postId
-              ? { ...post, comments: [...post.comments, newComment] }
-              : post
-          )
-        );
-      }
-  
-      setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
-    } catch (err) {
-      console.error("🔴 Error submitting comment:", err.response?.data || err);
-      alert("Failed to add comment");
+const handleCommentSubmit = async (postId) => {
+  const comment = commentInputs[postId];
+  if (!comment?.trim()) return;
+
+  try {
+    const res = await API.post(`/posts/${postId}/comments`, {
+      content: comment,
+    });
+
+    if (res.data.comment) {
+      const newComment = {
+        id: res.data.comment.comment_id,
+        userName: res.data.comment.author?.["full-name"] || "You",
+        content: res.data.comment.content,
+        avatar: res.data.comment.author?.image || PROFILE,
+        date: new Date().toLocaleString(),
+      };
+
+      setPosts((prev) =>
+        prev.map((post) =>
+          post.id === postId
+            ? { ...post, comments: [...post.comments, newComment] }
+            : post
+        )
+      );
     }
-  };
+
+    setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
+    Swal.fire({
+      icon: "success",
+      title: "Comment added!",
+      showConfirmButton: false,
+      timer: 1200,
+    });
+  } catch (err) {
+    console.error("🔴 Error submitting comment:", err.response?.data || err);
+    Swal.fire({
+      icon: "error",
+      title: "Failed to add comment",
+      text: err.response?.data?.message || "",
+    });
+  }
+};
+
 
   const handlePostSubmit = async (formData, postId = null) => {
     try {

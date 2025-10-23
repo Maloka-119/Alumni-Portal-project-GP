@@ -4,7 +4,7 @@ import { Heart, MessageCircle, Share2, EyeOff, Eye, Send } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api';
 import PROFILE from './PROFILE.jpeg';
-
+import Swal from "sweetalert2";
 const UsersPostsPage = () => {
   const { t } = useTranslation();
 
@@ -67,33 +67,76 @@ const UsersPostsPage = () => {
     }
   };
 
-  const handleHide = async (id) => {
-    if (!id) return;
-    try {
-      const response = await API.put(`/posts/${id}/hide`);
-      console.log('Hide post response:', response.data); 
-      if (response.data.status === "success") {
-        await fetchPosts();
-      }
-    } catch (err) {
-      console.error("Error hiding post", err);
-      setError(t("hidePostFailed"));
-    }
-  };
 
-  const handleUnhide = async (id) => {
-    if (!id) return;
-    try {
-      const response = await API.put(`/posts/${id}/unhide`);
-      console.log('Unhide post response:', response.data);
-      if (response.data.status === "success") {
-        await fetchPosts();
-      }
-    } catch (err) {
-      console.error("Error unhiding post", err);
-      setError(t("unhidePostFailed"));
+const handleHide = async (id) => {
+  if (!id) return;
+  try {
+    const response = await API.put(`/posts/${id}/hide`);
+    if (response.data.status === "success") {
+      await fetchPosts();
+
+      Swal.fire({
+        icon: "success",
+        title: "Post hidden",
+        text: "The post has been hidden successfully.",
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false,
+        background: "#fefefe",
+        color: "#333",
+      });
     }
-  };
+  } catch (err) {
+    console.error("Error hiding post", err);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Failed to hide the post.",
+      toast: true,
+      position: "top-end",
+      timer: 1800,
+      showConfirmButton: false,
+      background: "#fefefe",
+      color: "#333",
+    });
+  }
+};
+
+const handleUnhide = async (id) => {
+  if (!id) return;
+  try {
+    const response = await API.put(`/posts/${id}/unhide`);
+    if (response.data.status === "success") {
+      await fetchPosts();
+
+      Swal.fire({
+        icon: "success",
+        title: "Post unhidden",
+        text: "The post is now visible.",
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false,
+        background: "#fefefe",
+        color: "#333",
+      });
+    }
+  } catch (err) {
+    console.error("Error unhiding post", err);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Failed to unhide the post.",
+      toast: true,
+      position: "top-end",
+      timer: 1800,
+      showConfirmButton: false,
+      background: "#fefefe",
+      color: "#333",
+    });
+  }
+};
 
   // ====================== Likes - نفس منطق الصفحات التانية ======================
   const handleLike = async (postId) => {

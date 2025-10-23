@@ -3,7 +3,7 @@ import { Trash2, Plus, Eye, X, ChevronRight } from "lucide-react";
 import API from "../../services/api";
 import "./RolesManagement.css";
 import { useTranslation } from "react-i18next";
-
+import Swal from "sweetalert2";
 const RolesManagement = () => {
   const [selectedRole, setSelectedRole] = useState("");
   const [showStaffModal, setShowStaffModal] = useState(false);
@@ -101,39 +101,71 @@ const RolesManagement = () => {
     fetchStaffForSelectedRole();
   }, [selectedRole, rolesData]);
 
-  const handleDeleteStaff = async (staffId) => {
-    if (!selectedRole) return;
-    const roleObj = rolesData.find((r) => r.role_name === selectedRole);
-    if (!roleObj) return;
-  
-    if (!window.confirm("Are you sure you want to remove this staff from the role?")) return;
-  
-    try {
-      const res = await API.delete(`/roles/remove/${staffId}/${roleObj.role_id}`);
-  
-      if (res.data.status === "success") {
-        
-        const staffRes = await API.get(`/roles/staff-by-role/${roleObj.role_id}`);
-        const staffArray = staffRes.data.role.staff || [];
-  
-        setStaffList((prev) => ({
-          ...prev,
-          [selectedRole]: staffArray.map((s) => ({
-            id: s.staff_id,
-            name: s.full_name,
-            role: selectedRole,
-          })),
-        }));
-  
-        alert(res.data.message);
-      } else {
-        alert("Failed to remove staff from role");
-      }
-    } catch (err) {
-      console.error("Failed to remove staff from role:", err);
-      alert("Error removing staff. Check console for details.");
+const handleDeleteStaff = async (staffId) => {
+  if (!selectedRole) return;
+  const roleObj = rolesData.find((r) => r.role_name === selectedRole);
+  if (!roleObj) return;
+
+  if (!window.confirm("Are you sure you want to remove this staff from the role?")) return;
+
+  try {
+    const res = await API.delete(`/roles/remove/${staffId}/${roleObj.role_id}`);
+
+    if (res.data.status === "success") {
+      const staffRes = await API.get(`/roles/staff-by-role/${roleObj.role_id}`);
+      const staffArray = staffRes.data.role.staff || [];
+
+      setStaffList((prev) => ({
+        ...prev,
+        [selectedRole]: staffArray.map((s) => ({
+          id: s.staff_id,
+          name: s.full_name,
+          role: selectedRole,
+        })),
+      }));
+
+      // رسالة Toast صغيرة
+      Swal.fire({
+        icon: "success",
+        title: "Staff removed",
+        text: `The staff member has been removed from the "${selectedRole}" role.`,
+        showConfirmButton: false,
+        timer: 1800,
+        toast: true,
+        position: "top-end",
+        background: "#fefefe",
+        color: "#333",
+      });
+
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: "Failed to remove staff from role",
+        showConfirmButton: false,
+        timer: 1800,
+        toast: true,
+        position: "top-end",
+        background: "#fefefe",
+        color: "#333",
+      });
     }
-  };
+  } catch (err) {
+    console.error("Failed to remove staff from role:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Error removing staff. Check console for details.",
+      showConfirmButton: false,
+      timer: 1800,
+      toast: true,
+      position: "top-end",
+      background: "#fefefe",
+      color: "#333",
+    });
+  }
+};
+
   
   
   
@@ -167,74 +199,167 @@ const RolesManagement = () => {
   };
   
 
+const handleDeleteRole = async (roleName) => {
+  const roleObj = rolesData.find((r) => r.role_name === roleName);
+  if (!roleObj) return Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: "Role not found",
+    toast: true,
+    position: "top-end",
+    timer: 1800,
+    showConfirmButton: false,
+    background: "#fefefe",
+    color: "#333",
+  });
 
-  const handleDeleteRole = async (roleName) => {
-    if (!window.confirm(`Delete role "${roleName}"?`)) return;
-    const roleObj = rolesData.find((r) => r.role_name === roleName);
-    if (!roleObj) return alert("Role not found");
+  const confirm = await Swal.fire({
+    icon: "warning",
+    title: `Delete role "${roleName}"?`,
+    showCancelButton: true,
+    confirmButtonText: "Yes",
+    cancelButtonText: "No",
+    toast: false,
+  });
 
-    try {
-      const res = await API.delete(`/roles/delete/${roleObj.role_id}`);
-      if (res.data.status === "success") {
-        setRolesData((prev) =>
-          prev.filter((r) => r.role_id !== roleObj.role_id)
-        );
-        if (selectedRole === roleName) setSelectedRole("");
-        alert(res.data.message);
-      } else {
-        alert("Error deleting role");
-      }
-    } catch (err) {
-      console.error("Error deleting role:", err);
-      alert("Error deleting role");
+  if (!confirm.isConfirmed) return;
+
+  try {
+    const res = await API.delete(`/roles/delete/${roleObj.role_id}`);
+    if (res.data.status === "success") {
+      setRolesData((prev) => prev.filter((r) => r.role_id !== roleObj.role_id));
+      if (selectedRole === roleName) setSelectedRole("");
+      Swal.fire({
+        icon: "success",
+        title: "Deleted",
+        text: res.data.message,
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false,
+        background: "#fefefe",
+        color: "#333",
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to delete role",
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false,
+        background: "#fefefe",
+        color: "#333",
+      });
     }
-  };
+  } catch (err) {
+    console.error("Error deleting role:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Error deleting role. Check console.",
+      toast: true,
+      position: "top-end",
+      timer: 1800,
+      showConfirmButton: false,
+      background: "#fefefe",
+      color: "#333",
+    });
+  }
+};
 
-  const handleAddRole = async (e) => {
-    e.preventDefault();
-    const roleName = e.target.role.value.trim();
-    if (!roleName) return;
 
-    const permissionsPayload = availablePermissions.map((perm) => ({
-      permission_id: perm.id,
-      "can-view": false,
-      "can-edit": false,
-      "can-delete": false,
-    }));
+const handleAddRole = async (e) => {
+  e.preventDefault();
+  const roleName = e.target.role.value.trim();
+  if (!roleName) return Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: "Role name cannot be empty",
+    toast: true,
+    position: "top-end",
+    timer: 1800,
+    showConfirmButton: false,
+    background: "#fefefe",
+    color: "#333",
+  });
 
-    try {
-      const res = await API.post("/roles/create", {
-        roleName,
-        permissions: permissionsPayload,
+  const permissionsPayload = availablePermissions.map((perm) => ({
+    permission_id: perm.id,
+    "can-view": false,
+    "can-edit": false,
+    "can-delete": false,
+  }));
+
+  try {
+    const res = await API.post("/roles/create", {
+      roleName,
+      permissions: permissionsPayload,
+    });
+
+    if (res.data.status === "success") {
+      const newRole = {
+        role_id: res.data.role.id,
+        role_name: roleName,
+        employees: [],
+        permissions: res.data.role.permissions || [],
+      };
+      setRolesData((prev) => [...prev, newRole]);
+      setPermissions((prev) => ({
+        ...prev,
+        [roleName]: availablePermissions.map((p) => ({
+          module: p.name,
+          permission_id: p.id,
+          view: false,
+          edit: false,
+          delete: false,
+        })),
+      }));
+      setSelectedRole(roleName);
+      setShowAddRoleModal(false);
+
+      Swal.fire({
+        icon: "success",
+        title: "Role created",
+        text: `Role "${roleName}" created successfully.`,
+        showConfirmButton: false,
+        timer: 1800,
+        toast: true,
+        position: "top-end",
+        background: "#fefefe",
+        color: "#333",
       });
 
-      if (res.data.status === "success") {
-        alert(`Role "${roleName}" created successfully`);
-        const newRole = {
-          role_id: res.data.role.id,
-          role_name: roleName,
-          employees: [],
-          permissions: res.data.role.permissions || [],
-        };
-        setRolesData((prev) => [...prev, newRole]);
-        setPermissions((prev) => ({
-          ...prev,
-          [roleName]: availablePermissions.map((p) => ({
-            module: p.name,
-            permission_id: p.id,
-            view: false,
-            edit: false,
-            delete: false,
-          })),
-        }));
-        setSelectedRole(roleName);
-        setShowAddRoleModal(false);
-      }
-    } catch (err) {
-      console.error("Error creating role:", err);
-      alert("Error creating role");
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: "Failed to create role",
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false,
+        background: "#fefefe",
+        color: "#333",
+      });
     }
-  };
+  } catch (err) {
+    console.error("Error creating role:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Error creating role. Check console for details.",
+      toast: true,
+      position: "top-end",
+      timer: 1800,
+      showConfirmButton: false,
+      background: "#fefefe",
+      color: "#333",
+    });
+  }
+};
+
 
   const togglePermission = (roleName, index, type) => {
     setPermissions((prev) => {
@@ -263,6 +388,21 @@ const RolesManagement = () => {
       });
   
       if (res.data.status === "success") {
+  Swal.fire({
+    icon: "success",
+    title: "Staff assigned",
+    text: `The staff member has been assigned to the "${selectedRole}" role.`,
+    showConfirmButton: false,
+    timer: 1800,
+    toast: true,
+    position: "top-end",
+    background: "#fefefe",
+    color: "#333",
+  });
+  setShowAddStaffModal(false);
+}
+
+      if (res.data.status === "success") {
         
         const staffRes = await API.get(`/roles/staff-by-role/${roleObj.role_id}`);
         const staffArray = staffRes.data.role.staff || [];
@@ -277,6 +417,7 @@ const RolesManagement = () => {
         }));
   
         setShowAddStaffModal(false);
+
       }
     } catch (err) {
       console.error("Failed to assign role:", err);
@@ -285,41 +426,82 @@ const RolesManagement = () => {
   };
   
 
-  const handleUpdateRole = async () => {
-    const roleObj = rolesData.find((r) => r.role_name === selectedRole);
-    if (!roleObj) return alert("Role not found");
+const handleUpdateRole = async () => {
+  const roleObj = rolesData.find((r) => r.role_name === selectedRole);
+  if (!roleObj) return Swal.fire({
+    icon: "error",
+    title: "Error",
+    text: "Role not found",
+    toast: true,
+    position: "top-end",
+    timer: 1800,
+    showConfirmButton: false,
+    background: "#fefefe",
+    color: "#333",
+  });
 
-    const rolePerms = permissions[selectedRole] || [];
-    const updatedPermissions = rolePerms.map((p) => ({
-      permission_id: p.permission_id,
-      "can-view": p.view,
-      "can-edit": p.edit,
-      "can-delete": p.delete,
-    }));
+  const rolePerms = permissions[selectedRole] || [];
+  const updatedPermissions = rolePerms.map((p) => ({
+    permission_id: p.permission_id,
+    "can-view": p.view,
+    "can-edit": p.edit,
+    "can-delete": p.delete,
+  }));
 
-    try {
-      const res = await API.put(`/roles/update/${roleObj.role_id}`, {
-        roleName: selectedRole,
-        permissions: updatedPermissions,
+  try {
+    const res = await API.put(`/roles/update/${roleObj.role_id}`, {
+      roleName: selectedRole,
+      permissions: updatedPermissions,
+    });
+
+    if (res.data.status === "success") {
+      setPermissions((prev) => ({ ...prev, [selectedRole]: rolePerms }));
+      const updatedRoles = rolesData.map((r) =>
+        r.role_id === roleObj.role_id
+          ? { ...r, permissions: updatedPermissions }
+          : r
+      );
+      setRolesData(updatedRoles);
+
+      Swal.fire({
+        icon: "success",
+        title: "Updated",
+        text: "Role permissions updated successfully.",
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false,
+        background: "#fefefe",
+        color: "#333",
       });
-
-      if (res.data.status === "success") {
-        alert("Role updated successfully");
-        setPermissions((prev) => ({ ...prev, [selectedRole]: rolePerms }));
-        const updatedRoles = rolesData.map((r) =>
-          r.role_id === roleObj.role_id
-            ? { ...r, permissions: updatedPermissions }
-            : r
-        );
-        setRolesData(updatedRoles);
-      } else {
-        alert("Failed to update role");
-      }
-    } catch (err) {
-      console.error("Error updating role:", err);
-      alert("Error updating role");
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: "Failed to update role",
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false,
+        background: "#fefefe",
+        color: "#333",
+      });
     }
-  };
+  } catch (err) {
+    console.error("Error updating role:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Error updating role. Check console for details.",
+      toast: true,
+      position: "top-end",
+      timer: 1800,
+      showConfirmButton: false,
+      background: "#fefefe",
+      color: "#333",
+    });
+  }
+};
 
   const currentPermissionsForSelected = () => {
     if (selectedRole && permissions[selectedRole]) return permissions[selectedRole];

@@ -5,6 +5,7 @@ import GraduatedProfileView from './GraduatedProfileView';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api';
 import GraduateRequests from './GraduateRequests'; 
+import Swal from "sweetalert2";
 
 const AlumniManagement = () => {
   const [users, setUsers] = useState([]);
@@ -38,35 +39,57 @@ const AlumniManagement = () => {
       });
   }, [activeTab, t]);
 
-  const toggleUserStatus = async (alumniId) => {
-    const user = users.find(u => u.alumniId === alumniId);
-    if (!user) return;
+const toggleUserStatus = async (alumniId) => {
+  const user = users.find(u => u.alumniId === alumniId);
+  if (!user) return;
 
-    const newStatus = user.status === 'active' ? 'inactive' : 'active';
-    const token = localStorage.getItem("token");
+  const newStatus = user.status === 'active' ? 'inactive' : 'active';
+  const token = localStorage.getItem("token");
 
-    try {
-      const res = await API.put(
-        `/graduates/${alumniId}/status`,
-        { status: newStatus },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+  try {
+    const res = await API.put(
+      `/graduates/${alumniId}/status`,
+      { status: newStatus },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
-      if (res.data.status === "success") {
-        setUsers(users.map(u =>
-          u.alumniId === alumniId ? { ...u, status: newStatus } : u
-        ));
-      } else {
-        console.error("Error response:", res.data);
-      }
-    } catch (err) {
-      console.error("Error updating status:", err);
+    if (res.data.status === "success") {
+      setUsers(users.map(u =>
+        u.alumniId === alumniId ? { ...u, status: newStatus } : u
+      ));
+Swal.fire({
+  icon: newStatus === "active" ? "success" : "error",
+  title: newStatus === "active" 
+    ? "Account activated"
+    : "Account deactivated",
+  text: newStatus === "active"
+    ? "The graduate can now create posts in the Alumni Portal."
+    : "The graduate is now prevented from creating posts and cannot log in.",
+  showConfirmButton: false,
+  timer: 1800,
+  toast: true,
+  position: "top-end",
+  background: "#fefefe",
+  color: "#333",
+});
+
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Error updating status",
+        showConfirmButton: true,
+      });
     }
-  };
+  } catch (err) {
+    console.error("Error updating status:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Connection failed",
+      text: "Please try again later",
+      showConfirmButton: true,
+    });
+  }
+};
 
   const handleShowProfile = async (user) => {
     try {

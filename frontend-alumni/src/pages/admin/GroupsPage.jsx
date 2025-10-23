@@ -5,7 +5,7 @@ import { Edit, Trash2 } from "lucide-react";
 import API from "../../services/api";
 import imageCompression from "browser-image-compression";
 import { useTranslation } from "react-i18next";
-
+import Swal from "sweetalert2";
 function GroupsPage() {
   const { t } = useTranslation();
   const [groups, setGroups] = useState([]);
@@ -77,64 +77,91 @@ function GroupsPage() {
     setPreview(null);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
+  try {
+    let res;
+    if (formData.cover) {
+      const data = new FormData();
+      data.append("groupName", formData.name);
+      data.append("description", formData.description);
+      data.append("groupImage", formData.cover);
+
+      res = editingGroup
+        ? await API.put(`/groups/${editingGroup.id}`, data, { headers: authHeaders })
+        : await API.post("/groups", data, { headers: authHeaders });
+    } else {
+      const payload = { groupName: formData.name, description: formData.description };
+
+      res = editingGroup
+        ? await API.put(`/groups/${editingGroup.id}`, payload, {
+            headers: { ...authHeaders, "Content-Type": "application/json" },
+          })
+        : await API.post("/groups", payload, {
+            headers: { ...authHeaders, "Content-Type": "application/json" },
+          });
+    }
+
+    if (res.data.status === "success") {
+      await fetchGroups();
+      Swal.fire({
+        icon: "success",
+        title: editingGroup ? t("groupUpdated") : t("groupCreated"),
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    }
+
+    cleanupPreview();
+    setShowForm(false);
+    setEditingGroup(null);
+    setFormData({ name: "", description: "", cover: null });
+  } catch (err) {
+    console.error("Error saving group", err.response || err);
+    Swal.fire({
+      icon: "error",
+      title: t("failedToSave"),
+      text: err.response?.data?.message || "",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleDeleteGroup = async (id) => {
+  const result = await Swal.fire({
+    title: t("deleteConfirm"),
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#dc2626",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: t("yesDelete"),
+    cancelButtonText: t("cancel"),
+  });
+
+  if (result.isConfirmed) {
     try {
-      let res;
-      if (formData.cover) {
-        const data = new FormData();
-        data.append("groupName", formData.name);
-        data.append("description", formData.description);
-        data.append("groupImage", formData.cover);
-
-        res = editingGroup
-          ? await API.put(`/groups/${editingGroup.id}`, data, { headers: authHeaders })
-          : await API.post("/groups", data, { headers: authHeaders });
-      } else {
-        const payload = { groupName: formData.name, description: formData.description };
-
-        res = editingGroup
-          ? await API.put(`/groups/${editingGroup.id}`, payload, {
-              headers: { ...authHeaders, "Content-Type": "application/json" },
-            })
-          : await API.post("/groups", payload, {
-              headers: { ...authHeaders, "Content-Type": "application/json" },
-            });
-      }
-
+      const res = await API.delete(`/groups/${id}`, { headers: authHeaders });
       if (res.data.status === "success") {
         await fetchGroups();
-        alert(editingGroup ? t("groupUpdated") : t("groupCreated"));
+        Swal.fire({
+          icon: "success",
+          title: t("groupDeleted"),
+          showConfirmButton: false,
+          timer: 1500,
+        });
       }
-
-      cleanupPreview();
-      setShowForm(false);
-      setEditingGroup(null);
-      setFormData({ name: "", description: "", cover: null });
     } catch (err) {
-      console.error("Error saving group", err.response || err);
-      alert(t("failedToSave"));
-    } finally {
-      setLoading(false);
+      console.error("Error deleting group", err);
+      Swal.fire({
+        icon: "error",
+        title: t("failedToDelete"),
+      });
     }
-  };
-
-  const handleDeleteGroup = async (id) => {
-    if (window.confirm(t("deleteConfirm"))) {
-      try {
-        const res = await API.delete(`/groups/${id}`, { headers: authHeaders });
-        if (res.data.status === "success") {
-          await fetchGroups();
-          alert(t("groupDeleted"));
-        }
-      } catch (err) {
-        console.error("Error deleting group", err);
-        alert(t("failedToDelete"));
-      }
-    }
-  };
+  }
+};
 
   const filteredGroups = groups.filter((g) =>
     g.name.toLowerCase().includes(search.toLowerCase())
@@ -189,46 +216,54 @@ function GroupsPage() {
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
 
-          <input
-            type="file"
-            accept="image/png, image/jpeg, image/jpg"
-            onChange={async (e) => {
-              cleanupPreview();
-              const file = e.target.files[0];
-              if (!file) return;
+        <input
+  type="file"
+  accept="image/png, image/jpeg, image/jpg"
+  onChange={async (e) => {
+    cleanupPreview();
+    const file = e.target.files[0];
+    if (!file) return;
 
-              const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
-              if (!allowedTypes.includes(file.type)) {
-                alert(t("invalidImageType"));
-                return;
-              }
+    const allowedTypes = ["image/png", "image/jpeg", "image/jpg"];
+    const maxSizeMB = 2; // لازم يكون هنا قبل أي استخدام
 
-              const maxSizeMB = 2;
-              if (file.size / 1024 / 1024 > maxSizeMB) {
-                alert(t("fileTooLarge"));
-                return;
-              }
+    if (!allowedTypes.includes(file.type)) {
+      Swal.fire({
+        icon: "error",
+        title: t("invalidImageType"),
+      });
+      return;
+    }
 
-              try {
-                const compressedFile = await imageCompression(file, {
-                  maxSizeMB: 1,
-                  maxWidthOrHeight: 1024,
-                  useWebWorker: true,
-                });
+    if (file.size / 1024 / 1024 > maxSizeMB) {
+      Swal.fire({
+        icon: "error",
+        title: t("fileTooLarge"),
+      });
+      return;
+    }
 
-                setFormData({ ...formData, cover: compressedFile });
-                const url = URL.createObjectURL(compressedFile);
-                setPreview(url);
-                previewUrlRef.current = url;
-              } catch (err) {
-                console.error("Error compressing image", err);
-                setFormData({ ...formData, cover: file });
-                const url = URL.createObjectURL(file);
-                setPreview(url);
-                previewUrlRef.current = url;
-              }
-            }}
-          />
+    try {
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1024,
+        useWebWorker: true,
+      });
+
+      setFormData({ ...formData, cover: compressedFile });
+      const url = URL.createObjectURL(compressedFile);
+      setPreview(url);
+      previewUrlRef.current = url;
+    } catch (err) {
+      console.error("Error compressing image", err);
+      setFormData({ ...formData, cover: file });
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+      previewUrlRef.current = url;
+    }
+  }}
+/>
+
 
           {preview && (
             <img
