@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Heart, MessageCircle, Share2, Send } from "lucide-react";
 import API from "../../services/api";
 import "./GroupDetails.css";
 import PROFILE from "./PROFILE.jpeg";
@@ -30,7 +30,6 @@ function GroupDetails({ group, goBack, currentUserId }) {
   // في دالة formatPosts، غير بس جزء الـ comments
   const formatPosts = (data) => {
     return data.map((post) => {
-      // ⬇️⬇️⬇️ التصحيح هنا فقط ⬇️⬇️⬇️
       const formattedComments = (post.comments || []).map((comment) => ({
         id: comment.comment_id,
         userName: comment.author?.["full-name"] || "Unknown User",
@@ -44,8 +43,9 @@ function GroupDetails({ group, goBack, currentUserId }) {
         id: post.post_id,
         likes: post.likes_count || 0,
         liked: false,
-        comments: formattedComments, // ⬅️ استخدم المتغير الجديد
+        comments: formattedComments,
         images: post.images || [],
+        showComments: false, // ⬅️ إضافة showComments هنا
         author: {
           id: post.author?.id,
           name: post.author?.["full-name"] || "Unknown",
@@ -206,6 +206,14 @@ function GroupDetails({ group, goBack, currentUserId }) {
   };
 
   // ====================== Comments - نفس منطق الصفحات التانية ⬇️⬇️⬇️ ======================
+  const toggleComments = (postId) => {
+    setPosts((prevPosts) =>
+      prevPosts.map((p) =>
+        p.id === postId ? { ...p, showComments: !p.showComments } : p
+      )
+    );
+  };
+
   const handleCommentChange = (postId, value) => {
     setCommentInputs({ ...commentInputs, [postId]: value });
   };
@@ -221,6 +229,7 @@ function GroupDetails({ group, goBack, currentUserId }) {
 
       if (res.data.comment) {
         const newComment = {
+          id: res.data.comment.comment_id,
           userName: res.data.comment.author?.["full-name"] || "You",
           content: res.data.comment.content,
           avatar: PROFILE,
@@ -391,7 +400,7 @@ function GroupDetails({ group, goBack, currentUserId }) {
                     />
                     {post.likes}
                   </button>
-                  <button>
+                  <button onClick={() => toggleComments(post.id)}>
                     <MessageCircle size={16} />
                     {post.comments.length}
                   </button>
@@ -401,34 +410,51 @@ function GroupDetails({ group, goBack, currentUserId }) {
                   </button>
                 </div>
 
-                {/* Comments Section */}
-                <div className="comment-section uni-comments-section">
-                  {post.comments.map((comment, idx) => (
-                    <div key={idx} className="comment-item uni-comment-item">
-                      <img
-                        src={comment.avatar || PROFILE}
-                        alt={comment.userName}
-                        className="uni-comment-avatar"
-                      />
-                      <div className="comment-text uni-comment-text">
-                        <strong>{comment.userName}</strong>: {comment.content}
-                      </div>
+                {/* Comments Section - تظهر فقط عندما showComments = true */}
+                {post.showComments && (
+                  <div className="comment-section uni-comments-section">
+                    <div className="existing-comments">
+                      {post.comments.map((comment) => (
+                        <div
+                          key={comment.id}
+                          className="comment-item uni-comment-item"
+                        >
+                          <img
+                            src={comment.avatar || PROFILE}
+                            alt={comment.userName}
+                            className="uni-comment-avatar"
+                          />
+                          <div className="comment-text uni-comment-text">
+                            <strong>{comment.userName}</strong>:{" "}
+                            {comment.content}
+                            <div className="comment-date">
+                              {new Date(comment.date).toLocaleString([], {
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                  <div className="comment-input uni-comment-input">
-                    <input
-                      type="text"
-                      placeholder="Write a comment..."
-                      value={commentInputs[post.id] || ""}
-                      onChange={(e) =>
-                        handleCommentChange(post.id, e.target.value)
-                      }
-                    />
-                    <button onClick={() => handleCommentSubmit(post.id)}>
-                      Send
-                    </button>
+                    <div className="comment-input uni-comment-input">
+                      <input
+                        type="text"
+                        placeholder="Write a comment..."
+                        value={commentInputs[post.id] || ""}
+                        onChange={(e) =>
+                          handleCommentChange(post.id, e.target.value)
+                        }
+                      />
+                      <button onClick={() => handleCommentSubmit(post.id)}>
+                        <Send size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))}
           </div>
