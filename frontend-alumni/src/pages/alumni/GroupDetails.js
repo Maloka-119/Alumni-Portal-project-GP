@@ -232,7 +232,7 @@ function GroupDetails({ group, goBack, currentUserId }) {
           id: res.data.comment.comment_id,
           userName: res.data.comment.author?.["full-name"] || "You",
           content: res.data.comment.content,
-          avatar: PROFILE,
+          avatar: res.data.comment?.author?.image || PROFILE, // ⬅️ التصحيح هنا
           date: new Date().toLocaleString(),
         };
 

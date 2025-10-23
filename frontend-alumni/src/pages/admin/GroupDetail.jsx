@@ -241,21 +241,21 @@ function GroupDetail({ group, goBack, updateGroup }) {
   const handleCommentSubmit = async (postId) => {
     const comment = commentInputs[postId];
     if (!comment?.trim()) return;
-
+  
     try {
       const res = await API.post(`/posts/${postId}/comments`, {
         content: comment,
       });
-
+  
       if (res.data.comment) {
         const newComment = {
           id: res.data.comment.comment_id,
           userName: res.data.comment.author?.["full-name"] || "You",
           content: res.data.comment.content,
-          avatar: PROFILE,
+          avatar: res.data.comment.author?.image || PROFILE, // ⬅️ التصحيح هنا
           date: new Date().toLocaleString(),
         };
-
+  
         // تحديث فوري للكومنتات
         setPosts((prev) =>
           prev.map((post) =>
@@ -265,7 +265,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
           )
         );
       }
-
+  
       setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
     } catch (err) {
       console.error("🔴 Error submitting comment:", err.response?.data || err);
@@ -358,9 +358,14 @@ function GroupDetail({ group, goBack, updateGroup }) {
             <li key={post.id} className="post-card">
               <div className="post-header">
                 <img
-                  src={post.author?.photo || AdminPostsImg}
+                  src={
+                    post.author?.name === "Alumni Portal – Helwan University"
+                      ? AdminPostsImg 
+                      : post.author?.photo || PROFILE
+                  }
                   alt="author"
                   className="profile-pic"
+                  onError={(e) => { e.target.src = PROFILE }}
                 />
                 <div className="post-header-info">
                   <strong>{post.author?.name || "Unknown"}</strong>
@@ -420,6 +425,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
                       src={comment.avatar || PROFILE}
                       alt={comment.userName}
                       className="comment-avatar"
+                      onError={(e) => { e.target.src = PROFILE }}
                     />
                     <div className="comment-text">
                       <strong>{comment.userName}</strong>: {comment.content}
@@ -465,6 +471,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
                     src={m.image}
                     alt={m["full-name"]}
                     className="member-avatar"
+                    onError={(e) => { e.target.src = PROFILE }}
                   />
                   <span className="member-info">
                     {m["full-name"]} ({m.faculty}, {m.graduationYear})
@@ -525,6 +532,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
                     src={g.profilePicture || PROFILE}
                     alt={g.fullName}
                     className="graduate-avatar"
+                    onError={(e) => { e.target.src = PROFILE }}
                   />
                   <span>
                     {g.fullName} ({g.faculty}, {g.graduationYear})
