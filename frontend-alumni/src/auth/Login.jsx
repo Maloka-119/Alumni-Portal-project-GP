@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import './Login.css';
 import API from "../services/api"; 
 import { useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 
 function Login({ setUser }) {
   const { t } = useTranslation();
@@ -22,43 +23,53 @@ function Login({ setUser }) {
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    try {
-      const res = await API.post("/login", { email, password });
-      const { id, email: userEmail, userType, token } = res.data;
+  try {
+    const res = await API.post("/login", { email, password });
+    const { id, email: userEmail, userType, token } = res.data;
 
-      const user = { id, email: userEmail, userType };
+    const user = { id, email: userEmail, userType };
+    localStorage.clear();
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    setUser(user);
 
-      // 🧹 امسح أي بيانات قديمة قبل ما تحفظ الجديد
-      localStorage.clear();
+    Swal.fire({
+      icon: 'success',
+      title: t("loginSuccess"),
+      showConfirmButton: false,
+      timer: 1500
+    });
 
-      // 💾 خزّن البيانات الجديدة
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      // حدثي الـ state في App.js
-      setUser(user);
-
-      // 🎯 توجيه حسب نوع المستخدم
-      if (user.userType === "admin") {
-        navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
-      } else if (user.userType === "graduate") {
-        navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
-      } else if (user.userType === "staff") {
-        navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
-      } else {
-        navigate("/helwan-alumni-portal/login", { replace: true });
-      }
-    } catch (err) {
-      console.error("Login failed:", err);
-      alert(t("loginFailed") + ": " + (err.response?.data?.message || err.message));
+    if (user.userType === "admin") {
+      navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
+    } else if (user.userType === "graduate") {
+      navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
+    } else if (user.userType === "staff") {
+      navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
+    } else {
+      navigate("/helwan-alumni-portal/login", { replace: true });
     }
-  };
+  } catch (err) {
+    Swal.fire({
+      icon: 'error',
+      title: t("loginFailed"),
+      text: err.response?.data?.message || err.message,
+    });
+  }
+};
+
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
     try {
       const res = await API.post("/forgot-password", { email });
-      alert(t("resetCodeSent"));
+     Swal.fire({
+  icon: 'info',
+  title: t("resetCodeSent"),
+  showConfirmButton: false,
+  timer: 2000
+});
+
       setShowReset(false);
       setShowCode(true);
     } catch (err) {
@@ -86,11 +97,22 @@ function Login({ setUser }) {
         code,
         newPassword: newPass,
       });
-      alert(t("passwordResetSuccess"));
+      Swal.fire({
+  icon: 'success',
+  title: t("passwordResetSuccess"),
+  showConfirmButton: false,
+  timer: 2000
+});
+
       setShowNewPass(false);
     } catch (err) {
       console.error("Reset password failed:", err);
-      alert(err.response?.data?.message || err.message);
+      Swal.fire({
+  icon: 'error',
+  title: t("loginFailed"),
+  text: err.response?.data?.message || err.message,
+});
+
     }
   };
 

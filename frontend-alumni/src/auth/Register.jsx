@@ -7,6 +7,7 @@ import Footer from '../components/Footer';
 import LinkedInSignUp from './LinkedInSignUp';
 import { useTranslation } from "react-i18next";
 import API from "../services/api"; 
+import Swal from "sweetalert2";
 
 const Register = () => {
   const { t } = useTranslation();
@@ -44,45 +45,57 @@ const Register = () => {
     }
   }, [message]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setMessage('');
-    setIsError(false);
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
 
-    if (formData.password !== formData.confirmPassword) {
-      setMessage(t("passwordsNotMatch", { defaultValue: "Passwords do not match" }));
-      setIsError(true);
-      setLoading(false);
-      return;
+  if (formData.password !== formData.confirmPassword) {
+    Swal.fire({
+      icon: "warning",
+      title: t("passwordsNotMatch") || "Passwords do not match",
+      timer: 2500,
+      showConfirmButton: false,
+    });
+    setLoading(false);
+    return;
+  }
+
+  try {
+    const response = await API.post("/register", formData);
+
+    if (response.status === 201 || response.status === 200) {
+      Swal.fire({
+        icon: "success",
+        title: t("registrationSuccess") || "Registration successful",
+        text: t("youCanNowLogin") || "You can now log in to your account.",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      setTimeout(() => {
+        navigate("/helwan-alumni-portal/login");
+      }, 2000);
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: t("registrationFailed") || "Registration failed",
+        text: response.data.message || "Something went wrong",
+      });
     }
-
-    try {
-      const response = await API.post("/register", formData); 
-
-      if (response.status === 201 || response.status === 200) {
-        const data = response.data;
-        setMessage(data.message || t("registrationSuccess", { defaultValue: "Registration successful" }));
-        console.log("Backend response:", data);
-        setTimeout(() => {
-          navigate("/helwan-alumni-portal/login");
-        }, 1500);
-      } else {
-        setIsError(true);
-        setMessage(response.data.message || t("registrationFailed", { defaultValue: "Registration failed" }));
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      setIsError(true);
-      if (error.response?.data?.message) {
-        setMessage(error.response.data.message);
-      } else {
-        setMessage(t("somethingWrong", { defaultValue: "Something went wrong" }));
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  } catch (error) {
+    console.error("Error:", error);
+    Swal.fire({
+      icon: "error",
+      title: t("error") || "Error",
+      text:
+        error.response?.data?.message ||
+        t("somethingWrong") ||
+        "Something went wrong",
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="recontainer" style={{ backgroundImage: `url(${Unibackground})` }}>
