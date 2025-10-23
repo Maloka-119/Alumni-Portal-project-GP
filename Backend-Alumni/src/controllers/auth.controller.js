@@ -62,52 +62,52 @@ const registerUser = asyncHandler(async (req, res) => {
   let userType;
   let statusToLogin = "accepted";
 
-  // تحقق من Graduate API
+  // تحقق من Staff API أولاً
   try {
-    const gradResponse = await axios.get(
-      `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
+    const staffResponse = await axios.get(
+      `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
     );
-    externalData = gradResponse.data;
-   // التعامل مع اختلاف أسماء المفاتيح في الرد
-    const facultyField =
-      externalData?.faculty ||
-      externalData?.Faculty ||
-      externalData?.FACULTY ||
-      externalData?.facultyName;
+    externalData = staffResponse.data;
+    console.log("Staff API Response:", externalData);
 
-    if (externalData && facultyField) {
-      userType = "graduate";
-      statusToLogin = "accepted";
-    } else if (externalData) {
-      userType = "graduate";
-      statusToLogin = "pending";
+    const departmentField =
+      externalData?.department ||
+      externalData?.Department ||
+      externalData?.DEPARTMENT;
+
+    if (externalData && departmentField) {
+      userType = "staff";
+      statusToLogin = "inactive";
     }
   } catch (err) {
-    console.log("Graduate API error:", err.message);
-    userType = "graduate";
-    statusToLogin = "pending";
+    console.log("Staff API error:", err.message);
   }
 
-  // تحقق من Staff API لو لسه undefined
+  // تحقق من Graduate API لو لسه undefined
   if (!userType) {
     try {
-      const staffResponse = await axios.get(
-        `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
+      const gradResponse = await axios.get(
+        `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
       );
-      externalData = staffResponse.data;
-      console.log("Staff API Response:", externalData);
+      externalData = gradResponse.data;
 
-      const departmentField =
-        externalData?.department ||
-        externalData?.Department ||
-        externalData?.DEPARTMENT;
+      const facultyField =
+        externalData?.faculty ||
+        externalData?.Faculty ||
+        externalData?.FACULTY ||
+        externalData?.facultyName;
 
-      if (externalData && departmentField) {
-        userType = "staff";
-        statusToLogin = "inactive";
+      if (externalData && facultyField) {
+        userType = "graduate";
+        statusToLogin = "accepted";
+      } else if (externalData) {
+        userType = "graduate";
+        statusToLogin = "pending";
       }
     } catch (err) {
-      console.log("Staff API error:", err.message);
+      console.log("Graduate API error:", err.message);
+      userType = "graduate";
+      statusToLogin = "pending";
     }
   }
 
@@ -177,6 +177,138 @@ const registerUser = asyncHandler(async (req, res) => {
     token: generateToken(user.id),
   });
 });
+
+// const registerUser = asyncHandler(async (req, res) => {
+//   const { firstName, lastName, email, password, nationalId, phoneNumber } = req.body;
+
+//   // استخراج تاريخ الميلاد
+//   let birthDateFromNid;
+//   try {
+//     birthDateFromNid = extractDOBFromEgyptianNID(nationalId);
+//   } catch {
+//     res.status(400);
+//     throw new Error("Invalid national ID");
+//   }
+
+//   let externalData;
+//   let userType;
+//   let statusToLogin = "accepted";
+
+//   // تحقق من Graduate API
+//   try {
+//     const gradResponse = await axios.get(
+//       `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`
+//     );
+//     externalData = gradResponse.data;
+//    // التعامل مع اختلاف أسماء المفاتيح في الرد
+//     const facultyField =
+//       externalData?.faculty ||
+//       externalData?.Faculty ||
+//       externalData?.FACULTY ||
+//       externalData?.facultyName;
+
+//     if (externalData && facultyField) {
+//       userType = "graduate";
+//       statusToLogin = "accepted";
+//     } else if (externalData) {
+//       userType = "graduate";
+//       statusToLogin = "pending";
+//     }
+//   } catch (err) {
+//     console.log("Graduate API error:", err.message);
+//     userType = "graduate";
+//     statusToLogin = "pending";
+//   }
+
+//   // تحقق من Staff API لو لسه undefined
+//   if (!userType) {
+//     try {
+//       const staffResponse = await axios.get(
+//         `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
+//       );
+//       externalData = staffResponse.data;
+//       console.log("Staff API Response:", externalData);
+
+//       const departmentField =
+//         externalData?.department ||
+//         externalData?.Department ||
+//         externalData?.DEPARTMENT;
+
+//       if (externalData && departmentField) {
+//         userType = "staff";
+//         statusToLogin = "inactive";
+//       }
+//     } catch (err) {
+//       console.log("Staff API error:", err.message);
+//     }
+//   }
+
+//   if (!userType) {
+//     res.status(400);
+//     throw new Error("National ID not recognized in records");
+//   }
+
+//   // تحقق من البريد والرقم القومي
+//   const userExists = await User.findOne({ where: { email } });
+//   if (userExists) {
+//     res.status(400);
+//     throw new Error("User already exists");
+//   }
+
+//   const nationalIdExists = await User.findOne({ where: { "national-id": nationalId } });
+//   if (nationalIdExists) {
+//     res.status(400);
+//     throw new Error("This national ID is already registered");
+//   }
+
+//   // تشفير الباسورد
+//   const salt = await bcrypt.genSalt(10);
+//   const hashedPassword = await bcrypt.hash(password, salt);
+
+//   // إنشاء المستخدم
+//   const user = await User.create({
+//     "first-name": firstName,
+//     "last-name": lastName,
+//     email,
+//     phoneNumber,
+//     "hashed-password": hashedPassword,
+//     "birth-date": birthDateFromNid,
+//     "user-type": userType,
+//     "national-id": nationalId,
+//   });
+
+//   // حفظ بيانات إضافية
+//   if (userType === "graduate") {
+//     await Graduate.create({
+//       graduate_id: user.id,
+//       faculty:
+//         externalData?.faculty ||
+//         externalData?.Faculty ||
+//         externalData?.FACULTY ||
+//         externalData?.facultyName ||
+//         null,
+//       "graduation-year":
+//         externalData?.["graduation-year"] ||
+//         externalData?.graduationYear ||
+//         externalData?.GraduationYear ||
+//         null,
+//       "status-to-login": statusToLogin,
+//     });
+//   } else if (userType === "staff") {
+//     await Staff.create({
+//       staff_id: user.id,
+//       "status-to-login": statusToLogin,
+//     });
+//   }
+
+//   // الرد النهائي
+//   res.status(201).json({
+//     id: user.id,
+//     email: user.email,
+//     userType,
+//     token: generateToken(user.id),
+//   });
+// });
 
 
 // @desc    Login user

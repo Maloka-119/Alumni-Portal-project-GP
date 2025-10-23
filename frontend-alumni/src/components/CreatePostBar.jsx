@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Image } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import './CreatePostBar.css';
+import Swal from "sweetalert2";
 
 const CreatePostBar = ({ types = [], onSubmit, editingPost }) => {
   const { t } = useTranslation();
@@ -19,18 +20,51 @@ const CreatePostBar = ({ types = [], onSubmit, editingPost }) => {
     }
   }, [editingPost]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const formData = new FormData();
-    formData.append('content', content);
-    formData.append('type', type);
-    if (image) formData.append('images', image);
+const handleSubmit = (e) => {
+  e.preventDefault();
+
+  if (!content.trim() || !type) {
+    Swal.fire({
+      icon: "warning",
+      title: t("Please fill all required fields") || "من فضلك املأ كل البيانات المطلوبة",
+      timer: 2000,
+      showConfirmButton: false,
+    });
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("content", content);
+  formData.append("type", type);
+  if (image) formData.append("images", image);
+
+  try {
     onSubmit(formData, editingPost?.post_id || null);
+
+    Swal.fire({
+      icon: "success",
+      title: editingPost
+        ? t("Post updated successfully") || "تم تعديل المنشور بنجاح"
+        : t("Post created successfully") || "تم نشر المنشور بنجاح",
+      timer: 2000,
+      showConfirmButton: false,
+    });
+
     setShowForm(false);
-    setContent('');
-    setType('');
+    setContent("");
+    setType("");
     setImage(null);
-  };
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      icon: "error",
+      title: t("Error") || "خطأ",
+      text:
+        t("Something went wrong, please try again") ||
+        "حدث خطأ ما، حاول مرة أخرى",
+    });
+  }
+};
 
   return (
     <div className="create-post-wrapper">

@@ -4,7 +4,7 @@ import './AlumniManagement.css';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-
+import Swal from "sweetalert2";
 const StaffManagement = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -38,21 +38,38 @@ const StaffManagement = () => {
     fetchStaff();
   }, []);
 
-  const toggleUserStatus = async (staffId) => {
-    const user = users.find(u => u['staff_id'] === staffId);
-    if (!user) return;
+const toggleUserStatus = async (staffId) => {
+  const user = users.find(u => u['staff_id'] === staffId);
+  if (!user) return;
 
-    const newStatus = user['status-to-login'] === 'active' ? 'inactive' : 'active';
+  const newStatus = user['status-to-login'] === 'active' ? 'inactive' : 'active';
 
-    try {
-      await API.put(`/staff/${staffId}/status`, { status: newStatus });
-      setUsers(users.map(u =>
-        u['staff_id'] === staffId ? { ...u, 'status-to-login': newStatus } : u
-      ));
-    } catch (err) {
-      console.error('Failed to update status:', err);
-    }
-  };
+  try {
+    await API.put(`/staff/${staffId}/status`, { status: newStatus });
+    setUsers(users.map(u =>
+      u['staff_id'] === staffId ? { ...u, 'status-to-login': newStatus } : u
+    ));
+
+    // رسالة التنبيه
+    Swal.fire({
+      icon: newStatus === "active" ? "success" : "error",
+      title: newStatus === "active" ? "Account activated" : "Account deactivated",
+      text: newStatus === "active"
+        ? "The staff member can now log in and manage posts."
+        : "The staff member is now prevented from logging in and creating posts.",
+      showConfirmButton: false,
+      timer: 1800,
+      toast: true,
+      position: "top-end",
+      background: "#fefefe",
+      color: "#333",
+    });
+
+  } catch (err) {
+    console.error('Failed to update status:', err);
+  }
+};
+
 
   const openRoleModal = async (staffId) => {
     setCurrentUserId(staffId);
@@ -212,173 +229,3 @@ export default StaffManagement;
 
 
 
-// import React, { useState, useEffect } from 'react';
-// import UserManagement from './UserManagement';
-// import './AlumniManagement.css';
-
-// const StaffManagement = () => {
-//   const [users, setUsers] = useState([]);
-//   const [roles, setRoles] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState(null);
-
-//   const [showModal, setShowModal] = useState(false);
-//   const [selectedRole, setSelectedRole] = useState('');
-//   const [newRole, setNewRole] = useState('');
-//   const [currentUserId, setCurrentUserId] = useState(null);
-
-//   const [statusFilter, setStatusFilter] = useState('All');
-
-//   useEffect(() => {
-//     // داتا ثابتة مؤقتة بدل API
-//     const dummyUsers = [
-//       { id: 1, name: 'Ahmed Ali', nationalId: '123456789', Role: 'Viewer', status: 'Active' },
-//       { id: 2, name: 'Sara Mohamed', nationalId: '987654321', Role: 'Editor', status: 'Inactive' },
-//       { id: 3, name: 'Omar Hassan', nationalId: '456789123', Role: 'Admin', status: 'Pending' }
-//     ];
-
-//     const dummyRoles = [
-//       { id: 1, name: 'Admin' },
-//       { id: 2, name: 'Editor' },
-//       { id: 3, name: 'Viewer' }
-//     ];
-
-//     setUsers(dummyUsers);
-//     setRoles(dummyRoles);
-//     setLoading(false);
-//   }, []);
-
-//   const toggleUserStatus = (id) => {
-//     setUsers(users.map(user =>
-//       user.id === id
-//         ? { ...user, status: user.status === 'Active' ? 'Inactive' : 'Active' }
-//         : user
-//     ));
-//   };
-
-//   const openRoleModal = (userId) => {
-//     setCurrentUserId(userId);
-//     setShowModal(true);
-//   };
-
-//   const handleSaveRole = () => {
-//     if (selectedRole) {
-//       const roleName = roles.find(r => r.id === parseInt(selectedRole))?.name;
-//       setUsers(users.map(u =>
-//         u.id === currentUserId ? { ...u, Role: roleName } : u
-//       ));
-//     } else if (newRole) {
-//       const newId = roles.length + 1;
-//       const newRoleObj = { id: newId, name: newRole };
-//       setRoles([...roles, newRoleObj]);
-//       setUsers(users.map(u =>
-//         u.id === currentUserId ? { ...u, Role: newRole } : u
-//       ));
-//     }
-//     setShowModal(false);
-//     setSelectedRole('');
-//     setNewRole('');
-//     setCurrentUserId(null);
-//   };
-
-//   const filteredUsers = users.filter(user =>
-//     statusFilter === 'All' ? true : user.status === statusFilter
-//   );
-
-//   return (
-//     <div>
-//       <UserManagement activeTabName="Staff" />
-
-//       <div className="filter-container">
-//         <label>Status: </label>
-//         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-//           <option value="All">All</option>
-//           <option value="Pending">Pending</option>
-//           <option value="Active">Active</option>
-//           <option value="Inactive">Inactive</option>
-//         </select>
-//       </div>
-
-//       <div className="table-container">
-//         {loading && <p>Loading Staff data...</p>}
-//         {error && <p style={{ color: 'red' }}>{error}</p>}
-
-//         {!loading && !error && (
-//           <table className="users-table">
-//             <thead>
-//               <tr>
-//                 <th>Name</th>
-//                 <th>National ID</th>
-//                 <th>Role</th>
-//                 <th>Status</th>
-//                 <th>Actions</th>
-//               </tr>
-//             </thead>
-//             <tbody>
-//               {filteredUsers.map(user => (
-//                 <tr key={user.id} className="table-row">
-//                   <td>{user.name}</td>
-//                   <td>{user.nationalId}</td>
-//                   <td>{user.Role}</td>
-//                   <td>
-//                     <span className={`status-badge ${user.status.toLowerCase()}`}>
-//                       {user.status}
-//                     </span>
-//                   </td>
-//                   <td className="actions-cell">
-//                     <button
-//                       className="add-button"
-//                       onClick={() => openRoleModal(user.id)}
-//                     >
-//                       +
-//                     </button>
-//                     <button
-//                       onClick={() => toggleUserStatus(user.id)}
-//                       className={`toggle-switch ${user.status === 'Active' ? 'active' : ''}`}
-//                     >
-//                       <span className="toggle-slider"></span>
-//                     </button>
-//                   </td>
-//                 </tr>
-//               ))}
-//             </tbody>
-//           </table>
-//         )}
-//       </div>
-
-//       {showModal && (
-//         <div className="modal">
-//           <div className="modal-content">
-//             <h3>Select existing role</h3>
-//             <select
-//               value={selectedRole}
-//               onChange={(e) => setSelectedRole(e.target.value)}
-//             >
-//               <option value="">-- choose role --</option>
-//               {roles.map((role) => (
-//                 <option key={role.id} value={role.id}>
-//                   {role.name}
-//                 </option>
-//               ))}
-//             </select>
-
-//             <h3>Or create new role</h3>
-//             <input
-//               type="text"
-//               placeholder="Enter new role name"
-//               value={newRole}
-//               onChange={(e) => setNewRole(e.target.value)}
-//             />
-
-//             <div className="modal-actions">
-//               <button onClick={handleSaveRole}>Save</button>
-//               <button onClick={() => setShowModal(false)}>Cancel</button>
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default StaffManagement;
