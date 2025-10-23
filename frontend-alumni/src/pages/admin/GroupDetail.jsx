@@ -19,6 +19,8 @@ function GroupDetail({ group, goBack, updateGroup }) {
   const [showMembersModal, setShowMembersModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [posts, setPosts] = useState([]);
+  const [commentInputs, setCommentInputs] = useState({});
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchFilters();
@@ -30,6 +32,33 @@ function GroupDetail({ group, goBack, updateGroup }) {
     fetchMembers();
     fetchPosts();
   }, [group?.id]);
+
+  // ====================== Format Posts بنفس منطق صفحة الخريجين ======================
+  const formatPosts = (data) => {
+    return data.map((post) => {
+      const formattedComments = (post.comments || []).map((comment) => ({
+        id: comment.comment_id,
+        userName: comment.author?.["full-name"] || "Unknown User",
+        content: comment.content,
+        avatar: comment.author?.image || PROFILE,
+        date: comment["created-at"],
+      }));
+
+      return {
+        ...post,
+        id: post.post_id,
+        likes: post.likes_count || 0,
+        liked: post.liked || false,
+        comments: formattedComments,
+        images: post.images || [],
+        author: {
+          id: post.author?.id,
+          name: post.author?.["full-name"] || "Unknown",
+          photo: post.author?.image || PROFILE,
+        },
+      };
+    });
+  };
 
   const fetchMembers = async () => {
     try {
@@ -50,32 +79,39 @@ function GroupDetail({ group, goBack, updateGroup }) {
 
   const fetchPosts = async () => {
     try {
+      setLoading(true);
       const res = await API.get(`/posts/${group.id}`);
-      setPosts(res.data.data || []);
-    } catch {
+      if (res.data.status === "success") {
+        setPosts(formatPosts(res.data.data));
+      } else {
+        setPosts([]);
+      }
+    } catch (err) {
+      console.error("Error fetching posts:", err);
       setPosts([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchFilters = () => {
     setColleges([
-  "Engineering",
-  "Medicine",
-  "Pharmacy",
-  "Dentistry",
-  "Nursing",
-  "Science",
-  "Arts",
-  "Commerce",
-  "Education",
-  "Law",
-  "Physical Education",
-  "Computer Science",
-  "Media and Arts",
-  "Tourism and Hotels",
-  "Applied Arts",
-]);
-
+      "Engineering",
+      "Medicine",
+      "Pharmacy",
+      "Dentistry",
+      "Nursing",
+      "Science",
+      "Arts",
+      "Commerce",
+      "Education",
+      "Law",
+      "Physical Education",
+      "Computer Science",
+      "Media and Arts",
+      "Tourism and Hotels",
+      "Applied Arts",
+    ]);
 
     const currentYear = new Date().getFullYear();
     const yearsArr = [];
@@ -154,11 +190,87 @@ function GroupDetail({ group, goBack, updateGroup }) {
     }
   };
 
-  const handleLikePost = async (post) => {
+  // ====================== Likes - نفس منطق صفحة الخريجين ======================
+  const handleLike = async (postId) => {
+    const postIndex = posts.findIndex((p) => p.id === postId);
+    if (postIndex === -1) return;
+
     try {
-      await API.post(`/posts/${post.post_id}/like`);
+      const post = posts[postIndex];
+
+      // حاول unlike أولاً
+      try {
+        await API.delete(`/posts/${postId}/like`);
+        // إذا نجح الـ unlike، هذا معناه أن البوست كان معجب بيه
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex] = {
+          ...post,
+          likes: Math.max(0, post.likes - 1),
+          liked: false,
+        };
+        setPosts(updatedPosts);
+        console.log("✅ Successfully unliked post:", postId);
+      } catch (unlikeError) {
+        // إذا فشل الـ unlike، جرب like
+        if (unlikeError.response?.status === 404) {
+          await API.post(`/posts/${postId}/like`);
+          const updatedPosts = [...posts];
+          updatedPosts[postIndex] = {
+            ...post,
+            likes: post.likes + 1,
+            liked: true,
+          };
+          setPosts(updatedPosts);
+          console.log("✅ Successfully liked post:", postId);
+        } else {
+          throw unlikeError;
+        }
+      }
+    } catch (err) {
+      console.error("🔴 Error in handleLike:", err.response?.data || err);
+      // في حالة أي خطأ، أعد جلب البيانات من السيرفر
       await fetchPosts();
-    } catch {}
+    }
+  };
+
+  // ====================== Comments - نفس منطق صفحة الخريجين ======================
+  const handleCommentChange = (postId, value) => {
+    setCommentInputs({ ...commentInputs, [postId]: value });
+  };
+
+  const handleCommentSubmit = async (postId) => {
+    const comment = commentInputs[postId];
+    if (!comment?.trim()) return;
+
+    try {
+      const res = await API.post(`/posts/${postId}/comments`, {
+        content: comment,
+      });
+
+      if (res.data.comment) {
+        const newComment = {
+          id: res.data.comment.comment_id,
+          userName: res.data.comment.author?.["full-name"] || "You",
+          content: res.data.comment.content,
+          avatar: PROFILE,
+          date: new Date().toLocaleString(),
+        };
+
+        // تحديث فوري للكومنتات
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? { ...post, comments: [...post.comments, newComment] }
+              : post
+          )
+        );
+      }
+
+      setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
+    } catch (err) {
+      console.error("🔴 Error submitting comment:", err.response?.data || err);
+      alert("Failed to add comment");
+    }
   };
 
   const handlePostSubmit = async (formData, postId = null) => {
@@ -239,68 +351,100 @@ function GroupDetail({ group, goBack, updateGroup }) {
           onSubmit={handlePostSubmit}
         />
 
+        {loading && <div className="loading">Loading posts...</div>}
+        
         <ul className="posts-list">
-          {posts.map((p, index) => {
-            if (!p) return null;
-            const author = p.author || {};
-            return (
-              <li key={p.post_id || index} className="post-card">
-                <div className="post-header">
-                  <img
-                    src={author.image || AdminPostsImg}
-                    alt="author"
-                    className="profile-pic"
-                  />
-                  <div className="post-header-info">
-                    <strong>{author["full-name"]}</strong>
-                    <div className="post-date">
-                      {p["created-at"]
-                        ? new Date(p["created-at"]).toLocaleString()
-                        : ""}
-                      {p.category && <span> - {p.category}</span>}
+          {posts.map((post) => (
+            <li key={post.id} className="post-card">
+              <div className="post-header">
+                <img
+                  src={post.author?.photo || AdminPostsImg}
+                  alt="author"
+                  className="profile-pic"
+                />
+                <div className="post-header-info">
+                  <strong>{post.author?.name || "Unknown"}</strong>
+                  <div className="post-date">
+                    {new Date(post["created-at"]).toLocaleString()} - {post.category}
+                  </div>
+                </div>
+                <Edit
+                  size={16}
+                  style={{ cursor: "pointer", marginLeft: "auto" }}
+                  onClick={() => startEditPost(post)}
+                />
+              </div>
+
+              <div className="post-content">
+                <p>{post.content || t("No content available")}</p>
+                {post.images && post.images.length > 0 && (
+                  <div className="post-images">
+                    {post.images.map((imgUrl, index) => (
+                      <img
+                        key={index}
+                        src={imgUrl}
+                        alt={`post-${index}`}
+                        className="post-image"
+                        onError={(e) => {
+                          e.target.style.display = "none";
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Post Actions مع اللايكات */}
+              <div className="post-actions">
+                <button 
+                  className={post.liked ? "liked" : ""}
+                  onClick={() => handleLike(post.id)}
+                >
+                  <Heart 
+                    size={16} 
+                    fill={post.liked ? "currentColor" : "none"} 
+                  />{" "}
+                  {post.likes} {t("Likes")}
+                </button>
+                <button>
+                  <MessageCircle size={16} /> {post.comments?.length || 0}{" "}
+                  {t("Comments")}
+                </button>
+              </div>
+
+              {/* Comments Section - زي صفحة الخريجين تماماً */}
+              <div className="comment-section">
+                {post.comments.map((comment) => (
+                  <div key={comment.id} className="comment-item">
+                    <img
+                      src={comment.avatar || PROFILE}
+                      alt={comment.userName}
+                      className="comment-avatar"
+                    />
+                    <div className="comment-text">
+                      <strong>{comment.userName}</strong>: {comment.content}
                     </div>
                   </div>
-                  <Edit
-                    size={16}
-                    style={{ cursor: "pointer", marginLeft: "auto" }}
-                    onClick={() => startEditPost(p)}
+                ))}
+                <div className="comment-input">
+                  <input
+                    type="text"
+                    placeholder="Write a comment..."
+                    value={commentInputs[post.id] || ""}
+                    onChange={(e) => handleCommentChange(post.id, e.target.value)}
                   />
-                </div>
-
-                <div className="post-content">
-                  <p>{p.content || t("No content available")}</p>
-                  {p.images && p.images.length > 0 && (
-                    <div className="post-images">
-                      {p.images.map((imgUrl, index) => (
-                        <img
-                          key={index}
-                          src={imgUrl}
-                          alt={`post-${index}`}
-                          className="post-image"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <div className="post-actions">
-                  <button onClick={() => handleLikePost(p)}>
-                    <Heart size={16} />{" "}
-                    {Array.isArray(p.likes) ? p.likes.length : p.likes || 0}{" "}
-                    {t("Likes")}
-                  </button>
-                  <button>
-                    <MessageCircle size={16} /> {p.comments?.length || 0}{" "}
-                    {t("Comments")}
+                  <button onClick={() => handleCommentSubmit(post.id)}>
+                    Send
                   </button>
                 </div>
-              </li>
-            );
-          })}
+              </div>
+            </li>
+          ))}
         </ul>
+
+        {!loading && posts.length === 0 && (
+          <p className="empty-state">No posts yet in this group.</p>
+        )}
       </div>
 
       {/* Members Modal */}

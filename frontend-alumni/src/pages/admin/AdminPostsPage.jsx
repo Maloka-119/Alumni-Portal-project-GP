@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './AdminPostsPage.css';
 import AdminPostsImg from './AdminPosts.jpeg';
-import { Heart, MessageCircle, Share2, Edit, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Edit, Trash2, Send } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import API from "../../services/api";
 import CreatePostBar from '../../components/CreatePostBar'; 
@@ -15,23 +15,62 @@ const AdminPostsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [commentInputs, setCommentInputs] = useState({});
 
   useEffect(() => {
     fetchPosts();
     fetchCategories();
   }, []);
 
+  // ====================== Format Posts بنفس منطق الصفحة الثانية ======================
+  const formatPosts = (data) => {
+    const filtered = (data || []).filter(p => !p['group-id']);
+    
+    return filtered.map(post => {
+      const formattedComments = (post.comments || []).map((comment) => ({
+        id: comment.comment_id,
+        userName: comment.author?.["full-name"] || "Anonymous",
+        content: comment.content,
+        avatar: comment.author?.image || AdminPostsImg,
+        date: comment["created-at"],
+      }));
+
+      return {
+        id: post.post_id,
+        content: post.content,
+        likes: post.likes_count || 0,
+        liked: false, // دائماً false في البداية - بنفس منطق الصفحة الثانية
+        comments: formattedComments,
+        date: new Date(post['created-at']).toLocaleString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }),
+        authorName: "Alumni Portal – Helwan University",
+        shares: 0,
+        type: post.category,
+        images: post.images || [],
+        showComments: false, // إضافة showComments بنفس منطق الصفحة الثانية
+        author: {
+          photo: AdminPostsImg
+        }
+      };
+    });
+  };
+
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await API.get('/posts/admin');
-      const postsWithImages = response.data.data.map(post => ({
-        ...post,
-        id: post.post_id,
-        images: post.images || [],
-      }));
-      setPosts(postsWithImages);
+      if (response.data.status === "success") {
+        setPosts(formatPosts(response.data.data));
+      } else {
+        setPosts([]);
+      }
     } catch (error) {
       console.error('❌ Error fetching posts:', error);
       setError(t("fetchPostsFailed"));
@@ -83,18 +122,99 @@ const AdminPostsPage = () => {
     }
   };
 
-  const handleLikePost = async (post) => {
+  // ====================== Likes - نفس منطق الصفحة الثانية ======================
+  const handleLike = async (postId) => {
+    const postIndex = posts.findIndex(p => p.id === postId);
+    if (postIndex === -1) return;
+
     try {
-      await API.post(`/posts/${post.id}/like`);
-      setPosts(prev =>
-        prev.map(p =>
-          p.post_id === post.post_id
-            ? { ...p, likes: Array.isArray(p.likes) ? [...p.likes, {}] : (p.likes || 0) + 1 }
+      const post = posts[postIndex];
+      
+      // حاول عمل unlike أولاً (الأكثر احتمالاً)
+      try {
+        await API.delete(`/posts/${postId}/like`);
+        // إذا نجح الـ unlike، هذا معناه أن البوست كان معجب بيه
+        const updatedPosts = [...posts];
+        updatedPosts[postIndex] = {
+          ...post,
+          likes: Math.max(0, post.likes - 1),
+          liked: false
+        };
+        setPosts(updatedPosts);
+        console.log("Successfully unliked post:", postId);
+        
+      } catch (unlikeError) {
+        // إذا فشل الـ unlike، جرب like
+        if (unlikeError.response?.data?.message?.includes('not found')) {
+          await API.post(`/posts/${postId}/like`);
+          const updatedPosts = [...posts];
+          updatedPosts[postIndex] = {
+            ...post,
+            likes: post.likes + 1,
+            liked: true
+          };
+          setPosts(updatedPosts);
+          console.log("Successfully liked post:", postId);
+        } else {
+          throw unlikeError;
+        }
+      }
+      
+    } catch (err) {
+      console.error("Error in handleLike:", err.response?.data || err);
+      
+      // في حالة أي خطأ، أعد جلب البيانات من السيرفر
+      await fetchPosts();
+    }
+  };
+
+  // ====================== Comments - نفس منطق الصفحة الثانية ======================
+  const toggleComments = (postId) => {
+    setPosts(prevPosts => prevPosts.map(p => 
+      p.id === postId ? { ...p, showComments: !p.showComments } : p
+    ));
+  };
+
+  const handleCommentChange = (postId, value) => {
+    setCommentInputs({ ...commentInputs, [postId]: value });
+  };
+
+  const handleCommentSubmit = async (postId) => {
+    const comment = commentInputs[postId];
+    if (!comment) return;
+
+    try {
+      const res = await API.post(`/posts/${postId}/comments`, { content: comment });
+
+      console.log("Comment response from backend:", res.data);
+
+      // ✅ ضيف الكومينت الجديد مباشرة في الـ state
+      setPosts(prevPosts =>
+        prevPosts.map(p =>
+          p.id === postId
+            ? {
+                ...p,
+                comments: [
+                  ...(p.comments || []),
+                  {
+                    id: res.data.comment.comment_id,
+                    userName: res.data.comment.author?.["full-name"] || "Admin",
+                    content: res.data.comment.content,
+                    avatar: AdminPostsImg,
+                    date: new Date().toLocaleString(),
+                    "created-at": res.data.comment["created-at"]
+                  }
+                ]
+              }
             : p
         )
       );
+
+      // ✅ امسح حقل الكتابة بعد الإرسال
+      setCommentInputs({ ...commentInputs, [postId]: '' });
+
     } catch (err) {
-      console.error("Failed to like post", err);
+      console.error("Error submitting comment:", err);
     }
   };
 
@@ -111,7 +231,7 @@ const AdminPostsPage = () => {
 
   const filteredPosts = filterType === 'All'
     ? posts
-    : posts.filter(p => p.category === filterType);
+    : posts.filter(p => p.type === filterType);
 
   return (
     <div className="feed-container">
@@ -123,7 +243,7 @@ const AdminPostsPage = () => {
 
       <CreatePostBar
         types={types}
-        editingPost={posts.find(p => p.post_id === editingPostId) || null}
+        editingPost={posts.find(p => p.id === editingPostId) || null}
         onSubmit={(formData, postId) => handleCreateOrEdit(formData, postId)}
       />
 
@@ -149,15 +269,15 @@ const AdminPostsPage = () => {
               filteredPosts.map((post) => (
                 <div key={post.id} className="post-card">
                   <div className="post-header">
-                    <img src={AdminPostsImg} alt="profile" className="profile-pic" />
+                    <img src={post.author?.photo || AdminPostsImg} alt="profile" className="profile-pic" />
                     <div className="post-header-info">
-                      <strong>Alumni Portal – Helwan University</strong>
+                      <strong>{post.authorName}</strong>
                       <div className="post-date">
-                        {new Date(post['created-at']).toLocaleString()}
+                        {post.date}
                         {post['group-id'] ? ' - In Group' : ''}
                       </div>
                     </div>
-                    <span className="post-type-badge">{post.category}</span>
+                    <span className="post-type-badge">{post.type}</span>
                   </div>
 
                   <div className="post-content">
@@ -177,23 +297,70 @@ const AdminPostsPage = () => {
                     )}
                   </div>
 
+                  {/* Post Actions - بنفس تصميم الصفحة الثانية */}
                   <div className="post-actions">
-                    <button onClick={() => handleLikePost(post)}>
-                      <Heart size={16} /> {Array.isArray(post.likes) ? post.likes.length : (post.likes || 0)}
+                    <button 
+                      className={post.liked ? "liked" : ""}
+                      onClick={() => handleLike(post.id)}
+                    >
+                      <Heart 
+                        size={16} 
+                      /> 
+                      {post.likes}
                     </button>
-                    <button>
+                    <button onClick={() => toggleComments(post.id)}>
                       <MessageCircle size={16} /> {post.comments?.length || 0}
                     </button>
                     <button>
                       <Share2 size={16} /> {post.shares || 0}
                     </button>
-                    <button onClick={() => setEditingPostId(post.post_id)} className="edit-btn">
+                    <button onClick={() => setEditingPostId(post.id)} className="edit-btn">
                       <Edit size={16} />
                     </button>
                     <button onClick={() => handleDelete(post.id)} className="delete-btn">
                       <Trash2 size={16} />
                     </button>
                   </div>
+
+                  {/* Comments Section - تظهر فقط عندما showComments = true */}
+                  {post.showComments && (
+                    <div className="comments-section">
+                      <div className="existing-comments">
+                        {post.comments.map((comment) => (
+                          <div key={comment.id} className="comment-item">
+                            <img
+                              src={comment.avatar || AdminPostsImg}
+                              alt={comment.userName}
+                              className="comment-avatar"
+                            />
+                            <div className="comment-text">
+                              <strong>{comment.userName}</strong>: {comment.content}
+                            </div>
+                            <div className="comment-date">
+                              {new Date(comment["created-at"]).toLocaleString([], {
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="comment-input">
+                        <input
+                          type="text"
+                          placeholder="Write a comment..."
+                          value={commentInputs[post.id] || ""}
+                          onChange={(e) => handleCommentChange(post.id, e.target.value)}
+                        />
+                        <button onClick={() => handleCommentSubmit(post.id)}>
+                          <Send size={16} />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))
             )}
@@ -205,8 +372,6 @@ const AdminPostsPage = () => {
 };
 
 export default AdminPostsPage;
-
-
 // import React, { useState, useEffect } from 'react';
 // import './AdminPostsPage.css';
 // import AdminPostsImg from './AdminPosts.jpeg';
