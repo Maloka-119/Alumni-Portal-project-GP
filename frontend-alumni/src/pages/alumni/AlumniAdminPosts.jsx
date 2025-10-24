@@ -279,7 +279,6 @@
 
 // export default AlumniAdminPosts;
 
-
 import React, { useState, useEffect, useContext } from 'react';
 import { Heart, MessageCircle, Share2, Send, Edit, Trash2 } from 'lucide-react';
 import AdminPostsImg from './AdminPosts.jpeg';
@@ -313,7 +312,7 @@ const AlumniAdminPosts = () => {
     setError(null);
     try {
       const res = await API.get("/posts/admin");
-      const filtered = res.data?.data || [];
+      const filtered = (res.data?.data || []).filter(p => !p['group-id']); // تجاهل البوستات اللي ليها group-id
       const formattedPosts = filtered.map(p => ({
         id: p.post_id,
         content: p.content,
@@ -515,19 +514,21 @@ const PostCard = ({ post, currentUser, handleLikeToggle, toggleComments, handleA
       {showComments && (
         <div className="uni-comments-section">
           {post.comments.map(c => (
-            <div key={c.comment_id} className="uni-comment-item">
-              <img src={c.avatar} className="uni-comment-avatar" />
-              <div className="uni-comment-text">
-                <strong>{c.userName}</strong>: {c.content}
-              </div>
-              <div className="comment-date">
-                {new Date(c.date).toLocaleString([], {
-                  year: "numeric",
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+            <div key={c.comment_id} className="comment-item">
+              <div className="comment-left">
+                <img src={c.avatar} className="uni-comment-avatar" />
+                <div className="comment-text" style={{color:"whitesmoke"}}>
+                  <strong>{c.userName}</strong> {c.content}
+                </div>
+                <div className="comment-date">
+                  {new Date(c.date).toLocaleString([], {
+                    year: "numeric",
+                    month: "2-digit",
+                    day: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </div>
               </div>
 
               {currentUser && c.user_id && Number(c.user_id) === Number(currentUser.id) && (
@@ -536,8 +537,6 @@ const PostCard = ({ post, currentUser, handleLikeToggle, toggleComments, handleA
                   <button onClick={() => handleDeleteComment(post.id, c.comment_id)}><Trash2 size={14} /></button>
                 </div>
               )}
-
-              
             </div>
           ))}
 
