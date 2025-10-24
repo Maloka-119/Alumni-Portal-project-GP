@@ -81,54 +81,52 @@ app.use(errorHandler);
 // ==================================================
 //  Clear old permissions and seed new ones
 // ==================================================
+// ==================================================
+//  Reset and seed NEW permissions
+// ==================================================
+// ==================================================
+//  Reset and seed NEW permissions (IDs start from 1)
+// ==================================================
 const ensurePermissionsSeeded = async () => {
-  const permissions = [
-    "Graduates Management",
+  const newPermissions = [
+    "Roles and Permissions Management",
     "Staff Management",
+    "Graduates Management",
+    "Graduates Join Requests Management",
     "Communities Management",
     "Posts Management",
-    "Reports",
-    "Verification Graduates Management",
-    "Document's Requests Management",
-    "Consultation Management",
+    "Consultations Management",
+    "Document Requests Management",
+    "Reports Management",
     "FAQs Management",
   ];
 
   try {
-    console.log("Checking existing permissions...");
+    const count = await Permission.count();
 
-    for (const permName of permissions) {
-      // نشوف هل البيرميشن موجود قبل كده ولا لأ
-      const existing = await Permission.findOne({ where: { name: permName } });
-
-      if (!existing) {
-        let canView = false;
-        let canEdit = false;
-        let canDelete = false;
-
-        // 🚨 قاعدة خاصة بـ Reports
-        if (permName === "Reports") {
-          canView = false; // البداية false لكن يمكن تغييره بعدين
-          canEdit = false; // ممنوع تغييره أبداً
-          canDelete = false; // ممنوع تغييره أبداً
-        }
-
-        await Permission.create({
-          name: permName,
-          "can-view": canView,
-          "can-edit": canEdit,
-          "can-delete": canDelete,
-        });
-
-        console.log(`Added missing permission: ${permName}`);
-      } else {
-        console.log(`Permission already exists: ${permName}`);
-      }
+    if (count > 0) {
+      console.log("✅ Permissions already exist. Skipping seeding...");
+      return; // متعملش أي تعديل لو البيانات موجودة
     }
 
-    console.log("Permission seeding completed successfully.");
+    console.log("🆕 Permissions table empty — Seeding now...");
+
+    // Reset the auto-increment IDs only once (أول مرة فقط)
+    await sequelize.query('ALTER SEQUENCE "Permission_id_seq" RESTART WITH 1;');
+
+    for (const permName of newPermissions) {
+      await Permission.create({
+        name: permName,
+        "can-view": false,
+        "can-edit": false,
+        "can-delete": false,
+      });
+      console.log(`✅ Added permission: ${permName}`);
+    }
+
+    console.log("🎯 Permissions seeded successfully.");
   } catch (error) {
-    console.error("Error seeding permissions:", error);
+    console.error("❌ Error during permission seeding:", error);
   }
 };
 
