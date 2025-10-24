@@ -6,6 +6,7 @@ import './AlumniAdminPosts.css';
 import { DarkModeContext } from './DarkModeContext';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api'; 
+import ReactDOM from "react-dom";
 
 const AlumniAdminPosts = () => {
   const { darkMode } = useContext(DarkModeContext);
@@ -16,6 +17,7 @@ const AlumniAdminPosts = () => {
   const [error, setError] = useState(null);
   const { t } = useTranslation();
   const [types, setTypes] = useState([]);
+  const [zoomedImage, setZoomedImage] = useState(null); 
   const currentUserId = 2;
 
   useEffect(() => {
@@ -204,17 +206,11 @@ const AlumniAdminPosts = () => {
 
             <div className="uni-post-body">
               <p>{post.content}</p>
-              {post.images?.length > 0 && (
-                <div className="uni-post-images">
-                  {post.images.map((imgUrl, index) => (
-                    <img
-                      key={index}
-                      src={imgUrl}
-                      alt={`post-${index}`}
-                      className="uni-post-image"
-                      onError={(e) => { e.target.style.display = 'none'; }}
-                    />
-                  ))}
+              {post.images && post.images.length > 0 && (
+          <div className="uni-post-images">
+            {post.images.map((imgUrl, index) => (
+              <img key={index} src={imgUrl} alt={`post-${index}`} className="uni-post-preview"  onClick={() => setZoomedImage(imgUrl)}/>
+            ))}
                 </div>
               )}
             </div>
@@ -266,6 +262,17 @@ const AlumniAdminPosts = () => {
           </div>
         ))}
       </div>
+      {zoomedImage &&
+  ReactDOM.createPortal(
+    <div className="image-viewer-overlay">
+      <div className="image-viewer-box">
+        <button className="image-viewer-close" onClick={() => setZoomedImage(null)}>✕</button>
+        <img src={zoomedImage} alt="Zoomed" className="image-viewer-full" />
+      </div>
+    </div>,
+    document.body
+  )
+}
     </div>
   );
 };

@@ -186,7 +186,7 @@ const Dashboard = ({ setUser }) => {
         </main>
       </div>
 
-      <Footer ref={footerRef}/>
+      {/* <Footer ref={footerRef}/> */}
     </div>
   );
 };

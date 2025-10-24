@@ -997,3 +997,72 @@
 }
 
 
+.comment-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.comment-actions button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: transform 0.2s, color 0.2s;
+}
+
+.comment-actions button:hover {
+  transform: scale(1.2);
+}
+
+.comment-actions button svg {
+  color: #37568d;
+}
+
+/* Edit button hover (first child) */
+.comment-actions button:first-child:hover svg {
+  color: #007bff;
+}
+
+/* Delete button hover (second child) */
+.comment-actions button:nth-child(2):hover svg {
+  color: #ff4d4d;
+}
+
+/* Dark mode */
+.dark .comment-actions button svg {
+  color: #a8c7ff;
+}
+
+.dark .comment-actions button:first-child:hover svg {
+  color: #66aaff;
+}
+
+.dark .comment-actions button:nth-child(2):hover svg {
+  color: #ff8080;
+}
+
+.load-more-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #37568d;
+  transition: transform 0.2s ease;
+}
+
+.load-more-btn:hover {
+  transform: scale(1.2);
+  color: #1a3a6e;
+}
+/* Dark mode */
+.dark .load-more-btn {
+  color: #c9d1d9;
+}
+
+.dark .load-more-btn:hover {
+  color: #58a6ff;
+  background-color: #272d3a;
+  transform: scale(1.2);
+}
