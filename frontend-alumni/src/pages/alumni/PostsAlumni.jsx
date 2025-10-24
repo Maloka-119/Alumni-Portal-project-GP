@@ -29,7 +29,7 @@ const PostsAlumni = () => {
       const timer = setTimeout(() => {
         setSuccessMsg(null);
         setError(null);
-      }, 1500); 
+      }, 1000); 
   
       return () => clearTimeout(timer);
     }

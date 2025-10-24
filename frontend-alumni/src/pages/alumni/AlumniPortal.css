@@ -333,3 +333,21 @@ body::-webkit-scrollbar-thumb {
   background: #374151;
   color: #f9fafb;
 }
+body {
+  overflow: hidden;
+}
+
+.alumni-sidebar {
+  position: fixed;
+  top: 63px;
+  left: 0;
+  width: 240px;
+  height: calc(100vh - 63px);
+  overflow-y: auto;
+}
+
+.alumni-main-content {
+  margin-left: 240px;
+  height: calc(100vh - 63px);
+  overflow-y: auto;
+}

@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import API from '../../services/api';
 import PROFILE from './PROFILE.jpeg';
 import AdminPostsImg from './AdminPosts.jpeg';
+import { ChevronDown } from "lucide-react";
 
 const HomeAlumni = () => {
   const { darkMode } = useContext(DarkModeContext);
@@ -293,12 +294,12 @@ const HomeAlumni = () => {
       </div>
 
       {hasMore && (
-        <div style={{ textAlign:'center', margin:'20px' }}>
-          <button className="load-more-btn" onClick={() => setPage(page + 1)}>
-            {t('loadMore')}
-          </button>
-        </div>
-      )}
+  <div style={{ textAlign: "center", margin: "20px" }}>
+    <button className="load-more-btn" onClick={() => setPage(page + 1)}>
+      <ChevronDown size={22} />
+    </button>
+  </div>
+)}
     </div>
   );
 };
