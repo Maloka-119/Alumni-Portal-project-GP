@@ -498,7 +498,10 @@ function FriendshipPage() {
                     <button className="button" onClick={() => confirmFriend(f.senderId)}>
                       {t("confirm")}
                     </button>
-                    <button className="Removebutton" onClick={() => removeRequest(f.senderId)}>
+                    <button className="button" onClick={() => removeRequest(f.senderId)} style={{
+                            backgroundColor: 'red',
+                            color: 'white',
+                          }} >
                       {t("remove")}
                     </button>
                   </div>
@@ -543,7 +546,11 @@ function FriendshipPage() {
                         <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
                           {t("add")}
                         </button>
-                        <button className="Removebutton" onClick={() => removeSuggestion(f.id)}>
+                        <button className="button" onClick={() => removeSuggestion(f.id)}                          
+                          style={{
+                            backgroundColor: 'red',
+                            color: 'white',
+                          }} >
                           {t("remove")}
                         </button>
                       </>
