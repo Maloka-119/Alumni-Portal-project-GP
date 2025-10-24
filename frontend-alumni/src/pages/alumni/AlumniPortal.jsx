@@ -23,6 +23,7 @@ import Notifications from './Notifications.js';
 import ChatSidebar from './ChatSidebar.jsx';
 import FriendshipPage from './FriendShipp.js';
 import EmptyPage from '../admin/EmptyPage';
+import Accountgrad from "./Accountgrad.jsx";
 
 const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
 
@@ -183,6 +184,7 @@ const Dashboard = ({ setUser }) => {
             <Route path="faq" element={<ViewFAQ darkMode={darkMode}/>} />
             <Route path="notifications" element={<Notifications darkMode={darkMode}/>} />
             <Route path="friends" element={<FriendshipPage />} />
+            <Route path="/friends/:userId" element={<Accountgrad />} />
             <Route path="documents" element={<EmptyPage title="Document Requests" />} />
             <Route path="Consultations" element={<EmptyPage title="Consultation Requests" />} />
           </Routes>
