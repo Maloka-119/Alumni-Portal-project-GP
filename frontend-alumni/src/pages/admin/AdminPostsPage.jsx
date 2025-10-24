@@ -89,41 +89,29 @@ const AdminPostsPage = () => {
       setTypes([]);
     }
   };
-
 const handleCreateOrEdit = async (formData, postId = null) => {
+  setError(null);
+  setSuccess(null);
   try {
     if (postId) {
-      // تعديل البوست الحالي
       await API.put(`/posts/${postId}/edit`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      Swal.fire({
-        icon: "success",
-        title: "Updated!",
-        text: "Post updated successfully",
-      });
+      setSuccess(t("postUpdated"));
     } else {
-      // إنشاء بوست جديد فقط إذا لم يكن هناك postId
-      await API.post("/posts/create-post", formData);
-      Swal.fire({
-        icon: "success",
-        title: "Created!",
-        text: "Post created successfully",
+      await API.post("/posts/create-post", formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
+      setSuccess(t("postCreated"));
     }
-
-    // إعادة جلب البيانات بعد العملية فقط
-    await fetchPosts();
+    fetchPosts();
     setEditingPostId(null);
   } catch (err) {
-    console.error("Error saving post", err);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: err.response?.data?.message || "An error occurred while saving the post",
-    });
+    console.error("❌ Error saving post", err);
+    setError(err.response?.data?.message || t("savePostFailed"));
   }
 };
+
 
 
 const handleDelete = async (id) => {
