@@ -41,7 +41,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
         id: comment.comment_id,
         userName: comment.author?.["full-name"] || "Unknown User",
         content: comment.content,
-        avatar: comment.author?.image || PROFILE,
+        avatar: comment.author?.image || AdminPostsImg,
         date: comment["created-at"],
       }));
 
@@ -55,7 +55,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
         author: {
           id: post.author?.id,
           name: post.author?.["full-name"] || "Unknown",
-          photo: post.author?.image || PROFILE,
+          photo: post.author?.image ||AdminPostsImg,
         },
       };
     });
