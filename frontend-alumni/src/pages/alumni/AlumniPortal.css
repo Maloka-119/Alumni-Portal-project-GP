@@ -333,21 +333,40 @@ body::-webkit-scrollbar-thumb {
   background: #374151;
   color: #f9fafb;
 }
-body {
-  overflow: hidden;
-}
-
 .alumni-sidebar {
   position: fixed;
-  top: 63px;
+  top: 63px; /* ارتفاع الهيدر */
   left: 0;
-  width: 240px;
   height: calc(100vh - 63px);
   overflow-y: auto;
+  z-index: 1000;
 }
 
+/* علشان المحتوى يتحرك مع فتح السايدبار */
 .alumni-main-content {
-  margin-left: 240px;
-  height: calc(100vh - 63px);
+  flex: 1;
+  padding: 24px;
   overflow-y: auto;
+  margin-left: 240px;
+  transition: margin-left 0.3s ease;
+}
+
+/* لما السايدبار يتقفل يرجع المحتوى يمين */
+.alumni-sidebar.closed + .alumni-main-content {
+  margin-left: 0;
+}
+
+/* للموبايل */
+@media (max-width: 768px) {
+  .alumni-sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    height: calc(100% - 64px);
+    z-index: 1000;
+  }
+
+  .alumni-main-content {
+    margin-left: 0;
+  }
 }
