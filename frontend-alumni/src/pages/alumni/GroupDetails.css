@@ -1,19 +1,17 @@
 /* ====== Container ====== */
 .group-details {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f0f2f5;
+  width: 80%;
   min-height: 100vh;
   padding: 25px 20px;
 }
 
 .group-details__container {
-  max-width: 900px;
-  margin: 0 auto;
-  background-color: #ffffff;
-  padding: 30px 35px;
-  border-radius: 15px;
-  box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+  max-width: 800px;
+  padding: 20px;
+  box-sizing: border-box;
 }
+
 
 /* ====== Back Button ====== */
 .back-button {
