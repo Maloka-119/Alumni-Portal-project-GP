@@ -16,15 +16,20 @@ const HomeAlumni = () => {
   const [posts, setPosts] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const fetchPosts = async () => {
+  const fetchPosts = async (pageNum = 1) => {
+    // إذا كان هذا تحميل جديد، امسح الـ posts القديمة
+    if (pageNum === 1) {
+      setPosts([]);
+    }
+    
     setLoading(true);
     setError(null);
 
     try {
-      const res = await API.get(`/posts/user-posts?page=${page}&limit=5`);
+      const res = await API.get(`/posts/user-posts?page=${pageNum}&limit=5`);
       const filteredData = res.data.data.filter(post => post['group-id'] == null);
 
       const formatted = filteredData.map(post => {
@@ -77,14 +82,18 @@ const HomeAlumni = () => {
       });
 
       setPosts(prev => {
-        const existingIds = new Set(prev.map(p => p.id));
-        const newOnes = formatted.filter(p => !existingIds.has(p.id));
-        return [...prev, ...newOnes];
+        if (pageNum === 1) {
+          return formatted;
+        } else {
+          const existingIds = new Set(prev.map(p => p.id));
+          const newOnes = formatted.filter(p => !existingIds.has(p.id));
+          return [...prev, ...newOnes];
+        }
       });
 
-      if (filteredData.length < 5) {
-        setHasMore(false);
-      }
+      // ⬇️⬇️⬇️ استخدم الـ hasMore من الـ API بدلاً من الاعتماد على length فقط
+      setHasMore(res.data.pagination?.hasMore || false);
+      
     } catch (err) {
       console.error("Error in fetchPosts:", err);
       setError(t('errorFetchingPosts'));
@@ -93,12 +102,20 @@ const HomeAlumni = () => {
     }
   };
 
-  useEffect(() => {
-    fetchPosts();
-  }, [page]);
+  const loadMore = () => {
+    if (hasMore && !loading) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchPosts(nextPage);
+    }
+  };
 
-  if (loading && page === 1) return <p>{t('loadingPosts')}</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  useEffect(() => {
+    fetchPosts(1);
+  }, []);
+
+  if (loading && posts.length === 0) return <p>{t('loadingPosts')}</p>;
+  if (error && posts.length === 0) return <p style={{ color: 'red' }}>{error}</p>;
 
   return (
     <div className={`uni-feed ${darkMode ? 'dark-mode' : ''}`}>
@@ -113,11 +130,23 @@ const HomeAlumni = () => {
         ))}
       </div>
 
-      {hasMore && (
+      {loading && posts.length > 0 && (
         <div style={{ textAlign: "center", margin: "20px" }}>
-          <button className="load-more-btn" onClick={() => setPage(page + 1)}>
+          <p>{t('loading')}...</p>
+        </div>
+      )}
+
+      {hasMore && !loading && (
+        <div style={{ textAlign: "center", margin: "20px" }}>
+          <button className="load-more-btn" onClick={loadMore}>
             <ChevronDown size={22} />
           </button>
+        </div>
+      )}
+
+      {!hasMore && posts.length > 0 && (
+        <div style={{ textAlign: "center", margin: "20px", color: darkMode ? '#ccc' : '#666' }}>
+          <p>{t('noMorePosts')}</p>
         </div>
       )}
     </div>

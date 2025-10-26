@@ -298,6 +298,11 @@ const getAllPostsOfUsers = async (req, res) => {
     const user = req.user;
     const isAdmin = user && user["user-type"] === "admin";
 
+    // ⬇️⬇️⬇️ أول سطرين تضيفهم - جلب page و limit من query parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
     const whereCondition = isAdmin ? {} : { "is-hidden": false };
 
     const posts = await Post.findAll({
@@ -315,7 +320,6 @@ const getAllPostsOfUsers = async (req, res) => {
           model: PostImage,
           attributes: ["image-url"],
         },
-        // ⬇️⬇️⬇️ أضف الـ Likes والـ Comments هنا ⬇️⬇️⬇️
         {
           model: Like,
           attributes: ["like_id", "author-id"],
@@ -358,7 +362,15 @@ const getAllPostsOfUsers = async (req, res) => {
         },
       ],
       order: [["created-at", "DESC"]],
+      // ⬇️⬇️⬇️ ثاني سطرين تضيفهم - الـ limit والـ offset
+      limit: limit,
+      offset: offset,
     });
+
+    // ⬇️⬇️⬇️ علشان تعرف إذا في المزيد من البيانات أو لا
+    const totalPosts = await Post.count({ where: whereCondition });
+    const totalPages = Math.ceil(totalPosts / limit);
+    const hasMore = page < totalPages;
 
     const responseData = posts.map((post) => ({
       post_id: post.post_id,
@@ -381,7 +393,6 @@ const getAllPostsOfUsers = async (req, res) => {
         ? post.PostImages.map((img) => img["image-url"])
         : [],
       "is-hidden": post["is-hidden"],
-      // ⬇️⬇️⬇️ أضف الـ likes والـ comments هنا ⬇️⬇️⬇️
       likes_count: post.Likes ? post.Likes.length : 0,
       likes: post.Likes
         ? post.Likes.map((like) => ({
@@ -401,7 +412,7 @@ const getAllPostsOfUsers = async (req, res) => {
             comment_id: comment.comment_id,
             content: comment.content,
             "created-at": comment["created-at"],
-            time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+            time_since: moment(comment["created-at"]).fromNow(),
             edited: comment.edited,
             author: {
               id: comment.User?.id || "unknown",
@@ -422,6 +433,14 @@ const getAllPostsOfUsers = async (req, res) => {
       status: "success",
       message: "All posts fetched successfully",
       data: responseData,
+      // ⬇️⬇️⬇️ أضف معلومات الـ pagination في الـ response
+      pagination: {
+        currentPage: page,
+        totalPages: totalPages,
+        totalPosts: totalPosts,
+        hasMore: hasMore,
+        limit: limit,
+      },
     });
   } catch (error) {
     console.error("Error details:", error);

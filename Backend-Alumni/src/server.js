@@ -133,8 +133,8 @@ const ensurePermissionsSeeded = async () => {
 // ==================================================
 // ✅ Sync Database and Seed Default Admin + Permissions
 // ==================================================
-sequelize.sync().then(async () => {
-  console.log("Database synced successfully.");
+sequelize.sync({ alter: true }).then(async () => {
+  console.log("Database synced successfully with alter true.");
 
   const existingAdmin = await User.findByPk(1);
   if (!existingAdmin) {
