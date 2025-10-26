@@ -1,5 +1,7 @@
 const Graduate = require("../models/Graduate");
 const User = require("../models/User");
+const Friendship = require("../models/Friendship");
+const { Op } = require("sequelize");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
 //get all graduates
@@ -237,7 +239,7 @@ const approveGraduate = async (req, res) => {
     const { faculty, graduationYear } = req.body; // من body
 
     // ✅ التحقق من أن اللي بينفذ هو admin
-    if (!req.user || req.user['user-type'] !== "admin") {
+    if (!req.user || req.user["user-type"] !== "admin") {
       return res.status(403).json({
         message: "Access denied: Only admin can approve graduates.",
       });
@@ -270,7 +272,6 @@ const approveGraduate = async (req, res) => {
       graduateId: id,
       newStatus: graduate["status-to-login"],
     });
-
   } catch (error) {
     console.error("Error approving graduate:", error.message);
     return res.status(500).json({
@@ -280,8 +281,7 @@ const approveGraduate = async (req, res) => {
   }
 };
 
-
-// GET Graduate Profile
+// GET Graduate Profile for admin
 const getGraduateProfile = async (req, res) => {
   try {
     const graduate = await Graduate.findByPk(req.params.id, {
@@ -516,6 +516,181 @@ const searchGraduates = async (req, res) => {
     });
   }
 };
+// get graduate profile for user
+const getGraduateProfileForUser = async (req, res) => {
+  try {
+    const { identifier } = req.params;
+    const currentUserId = req.user.id;
+
+    // 🔍 البحث عن الخريج
+    let graduate;
+
+    // لو ID
+    if (!isNaN(identifier)) {
+      graduate = await Graduate.findByPk(identifier, {
+        include: [{ model: User }],
+      });
+    } else {
+      // لو إيميل
+      const userByEmail = await User.findOne({
+        where: { email: identifier },
+        include: [{ model: Graduate }],
+      });
+
+      if (userByEmail) {
+        graduate = userByEmail.Graduate;
+      } else {
+        // لو اسم
+        const usersByName = await User.findAll({
+          where: {
+            [Op.or]: [
+              { "first-name": { [Op.like]: `%${identifier}%` } },
+              { "last-name": { [Op.like]: `%${identifier}%` } },
+            ],
+          },
+          include: [{ model: Graduate }],
+        });
+
+        // ناخد أول خريج ليه graduate data
+        for (let user of usersByName) {
+          if (user.Graduate) {
+            graduate = user.Graduate;
+            break;
+          }
+        }
+      }
+    }
+
+    if (!graduate || !graduate.User) {
+      return res.status(404).json({
+        status: HttpStatusHelper.FAIL,
+        message: "Graduate not found",
+        data: null,
+      });
+    }
+
+    // 🔍 تحديد حالة العلاقة
+    let relationshipStatus = "no_relation";
+
+    // التحقق من طلبات الصداقة في جدول Friendship
+    const existingFriendshipRequest = await Friendship.findOne({
+      where: {
+        [Op.or]: [
+          { sender_id: currentUserId, receiver_id: graduate.graduate_id },
+          { sender_id: graduate.graduate_id, receiver_id: currentUserId },
+        ],
+        status: "pending",
+      },
+    });
+
+    if (existingFriendshipRequest) {
+      if (existingFriendshipRequest.sender_id === currentUserId) {
+        relationshipStatus = "i_sent_request";
+      } else {
+        relationshipStatus = "he_sent_request";
+      }
+    }
+
+    // التحقق إذا كنا أصدقاء
+    const friendship = await Friendship.findOne({
+      where: {
+        [Op.or]: [
+          { sender_id: currentUserId, receiver_id: graduate.graduate_id },
+          { sender_id: graduate.graduate_id, receiver_id: currentUserId },
+        ],
+        status: "accepted",
+      },
+    });
+
+    if (friendship) {
+      relationshipStatus = "friends";
+    }
+
+    // ✅ تحديد البيانات اللي هتظهر حسب العلاقة والخصوصية
+    const userData = graduate.User;
+    const isOwner = parseInt(currentUserId) === parseInt(graduate.graduate_id);
+
+    // صاحب البروفايل بيشوف كل حاجة
+    if (isOwner) {
+      const graduateProfile = {
+        profilePicture: graduate["profile-picture-url"],
+        fullName: `${userData["first-name"]} ${userData["last-name"]}`,
+        faculty: graduate.faculty,
+        graduationYear: graduate["graduation-year"],
+        bio: graduate.bio,
+        skills: graduate.skills,
+        currentJob: graduate["current-job"],
+
+        // إعدادات الخصوصية
+        showCV: graduate.show_cv,
+        showLinkedIn: graduate.show_linkedin,
+        showPhone: userData.show_phone,
+
+        // البيانات (الصاحب بيشوف الكل)
+        CV: graduate["cv-url"],
+        linkedlnLink: graduate["linkedln-link"],
+        phoneNumber: userData.phoneNumber,
+
+        // حالة العلاقة
+        relationshipStatus: "owner",
+      };
+
+      return res.json({
+        status: HttpStatusHelper.SUCCESS,
+        message: "Graduate Profile fetched successfully",
+        data: graduateProfile,
+      });
+    }
+
+    // 🎯 بناء البروفايل حسب العلاقة للآخرين
+    const graduateProfile = {
+      profilePicture: graduate["profile-picture-url"],
+      fullName: `${userData["first-name"]} ${userData["last-name"]}`,
+      faculty: graduate.faculty,
+      graduationYear: graduate["graduation-year"],
+      bio: graduate.bio,
+      skills: graduate.skills,
+      currentJob: graduate["current-job"],
+
+      // إعدادات الخصوصية
+      showCV: graduate.show_cv,
+      showLinkedIn: graduate.show_linkedin,
+      showPhone: userData.show_phone,
+
+      // حالة العلاقة
+      relationshipStatus: relationshipStatus,
+    };
+
+    // 📊 إضافة البيانات الخاصة إذا مسموح بيها - للكل مش بس الأصدقاء
+    // الـ CV - يظهر إذا show_cv = true لأي شخص
+    if (graduate.show_cv && graduate["cv-url"]) {
+      graduateProfile.CV = graduate["cv-url"];
+    }
+
+    // الـ LinkedIn - يظهر إذا show_linkedin = true لأي شخص
+    if (graduate.show_linkedin && graduate["linkedln-link"]) {
+      graduateProfile.linkedlnLink = graduate["linkedln-link"];
+    }
+
+    // رقم التليفون - يظهر إذا show_phone = true لأي شخص
+    if (userData.show_phone && userData.phoneNumber) {
+      graduateProfile.phoneNumber = userData.phoneNumber;
+    }
+
+    return res.json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "Graduate Profile fetched successfully",
+      data: graduateProfile,
+    });
+  } catch (err) {
+    console.error("Error in getGraduateProfileForUser:", err);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR || "error",
+      message: err.message,
+      data: null,
+    });
+  }
+};
 
 module.exports = {
   getAllGraduates,
@@ -528,4 +703,5 @@ module.exports = {
   searchGraduates,
   approveGraduate,
   rejectGraduate,
+  getGraduateProfileForUser,
 };
