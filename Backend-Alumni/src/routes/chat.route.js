@@ -27,10 +27,31 @@ router.get('/:chatId/messages', authMiddleware.protect, chatController.getChatMe
 // @access  Private
 router.post('/:chatId/messages', authMiddleware.protect, chatController.sendMessage);
 
+// @desc    Send an image message
+// @route   POST /alumni-portal/chat/:chatId/messages/image
+// @access  Private
+router.post('/:chatId/messages/image', authMiddleware.protect, chatController.uploadRateLimit, chatController.chatUpload.single('image'), chatController.sendImageMessage);
+
+// @desc    Send a file message
+// @route   POST /alumni-portal/chat/:chatId/messages/file
+// @access  Private
+router.post('/:chatId/messages/file', authMiddleware.protect, chatController.uploadRateLimit, chatController.chatUpload.single('file'), chatController.sendFileMessage);
+
 // @desc    Mark messages as read
 // @route   PUT /alumni-portal/chat/:chatId/read
 // @access  Private
 router.put('/:chatId/read', authMiddleware.protect, chatController.markAsRead);
+
+// @desc    Get chat attachments
+// @route   GET /alumni-portal/chat/:chatId/attachments
+// @access  Private
+router.get('/:chatId/attachments', authMiddleware.protect, chatController.getChatAttachments);
+
+// @desc    Download message attachment
+// @route   GET /alumni-portal/chat/messages/:messageId/download
+// @access  Private
+router.get('/messages/:messageId/download', authMiddleware.protect, chatController.downloadAttachment);
+
 
 // @desc    Upload file attachment for chat
 // @route   POST /alumni-portal/chat/:chatId/upload
