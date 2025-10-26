@@ -1593,6 +1593,252 @@ const getCategories = async (req, res) => {
     });
   }
 };
+
+// Reply to a comment
+const addReply = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const { content } = req.body;
+    const userId = req.user.id;
+
+    // Check if parent comment exists
+    const parentComment = await Comment.findByPk(commentId);
+    if (!parentComment) {
+      return res.status(404).json({
+        status: "error",
+        message: "Parent comment not found",
+      });
+    }
+
+    // Validate content
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "Reply content is required",
+      });
+    }
+
+    // Create new reply
+    const newReply = await Comment.create({
+      content: content.trim(),
+      "post-id": parentComment["post-id"],
+      "author-id": userId,
+      "parent-comment-id": commentId,
+    });
+
+    // Increment comments count for the post
+    await Post.increment("comments-count", {
+      where: { post_id: parentComment["post-id"] },
+    });
+
+    // Fetch reply with author details
+    const replyWithAuthor = await Comment.findByPk(newReply.comment_id, {
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email"],
+        },
+      ],
+    });
+
+    return res.status(201).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "Reply added successfully",
+      reply: {
+        comment_id: replyWithAuthor.comment_id,
+        content: replyWithAuthor.content,
+        "created-at": replyWithAuthor["created-at"],
+        edited: replyWithAuthor.edited,
+        "parent-comment-id": replyWithAuthor["parent-comment-id"],
+        author: {
+          id: replyWithAuthor.User.id,
+          "full-name": `${replyWithAuthor.User["first-name"]} ${replyWithAuthor.User["last-name"]}`,
+          email: replyWithAuthor.User.email,
+        },
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: error.message,
+    });
+  }
+};
+
+// Edit a reply
+const editReply = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const { content } = req.body;
+    const userId = req.user.id;
+
+    // Find the reply
+    const reply = await Comment.findByPk(commentId);
+    if (!reply) {
+      return res.status(404).json({
+        status: "error",
+        message: "Reply not found",
+      });
+    }
+
+    // Check if user owns the reply
+    if (reply["author-id"] !== userId) {
+      return res.status(403).json({
+        status: "error",
+        message: "You can only edit your own replies",
+      });
+    }
+
+    // Validate content
+    if (!content || content.trim().length === 0) {
+      return res.status(400).json({
+        status: "error",
+        message: "Reply content is required",
+      });
+    }
+
+    // Update reply
+    reply.content = content.trim();
+    reply.edited = true;
+    await reply.save();
+
+    // Fetch updated reply with author details
+    const updatedReply = await Comment.findByPk(commentId, {
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email"],
+        },
+      ],
+    });
+
+    return res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "Reply updated successfully",
+      reply: {
+        comment_id: updatedReply.comment_id,
+        content: updatedReply.content,
+        "created-at": updatedReply["created-at"],
+        edited: updatedReply.edited,
+        "parent-comment-id": updatedReply["parent-comment-id"],
+        author: {
+          id: updatedReply.User.id,
+          "full-name": `${updatedReply.User["first-name"]} ${updatedReply.User["last-name"]}`,
+          email: updatedReply.User.email,
+        },
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: error.message,
+    });
+  }
+};
+
+// Delete a reply
+const deleteReply = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const userId = req.user.id;
+
+    // Find the reply
+    const reply = await Comment.findByPk(commentId);
+    if (!reply) {
+      return res.status(404).json({
+        status: "error",
+        message: "Reply not found",
+      });
+    }
+
+    // Check if user owns the reply
+    if (reply["author-id"] !== userId) {
+      return res.status(403).json({
+        status: "error",
+        message: "You can only delete your own replies",
+      });
+    }
+
+    // Get the post ID before deleting the reply
+    const postId = reply["post-id"];
+
+    // Delete the reply
+    await reply.destroy();
+
+    // Decrement comments count for the post
+    await Post.decrement("comments-count", {
+      where: { post_id: postId },
+    });
+
+    return res.status(200).json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "Reply deleted successfully",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: error.message,
+    });
+  }
+};
+
+// Get replies for a specific comment
+const getCommentReplies = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+
+    // Check if parent comment exists
+    const parentComment = await Comment.findByPk(commentId);
+    if (!parentComment) {
+      return res.status(404).json({
+        status: "error",
+        message: "Parent comment not found",
+      });
+    }
+
+    // Get all replies for this comment
+    const replies = await Comment.findAll({
+      where: { "parent-comment-id": commentId },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email"],
+        },
+      ],
+      order: [["created-at", "ASC"]],
+    });
+
+    const responseData = replies.map((reply) => ({
+      comment_id: reply.comment_id,
+      content: reply.content,
+      "created-at": reply["created-at"],
+      edited: reply.edited,
+      "parent-comment-id": reply["parent-comment-id"],
+      author: {
+        id: reply.User.id,
+        "full-name": `${reply.User["first-name"]} ${reply.User["last-name"]}`,
+        email: reply.User.email,
+      },
+    }));
+
+    res.status(200).json({
+      status: "success",
+      message: "Comment replies fetched successfully",
+      data: responseData,
+    });
+  } catch (error) {
+    console.error("Error fetching comment replies:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch comment replies: " + error.message,
+      data: [],
+    });
+  }
+};
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -1612,4 +1858,8 @@ module.exports = {
   hideNegativePost,
   unhidePost,
   getMyPosts,
+  addReply,
+  editReply,
+  deleteReply,
+  getCommentReplies
 };
