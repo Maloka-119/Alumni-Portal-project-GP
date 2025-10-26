@@ -7,22 +7,19 @@ const { uploadFiles } = require("../middleware/uploadProfile");
 router.route("/").get(graduateController.getAllGraduates);
 
 // Update graduate profile (protected)
-router.put(
-  "/profile",
-  protect,
-  uploadFiles, 
-  graduateController.updateProfile
-);
+router.put("/profile", protect, uploadFiles, graduateController.updateProfile);
 
 // admin يوافق على خريج
 router.put("/approve/:id", protect, graduateController.approveGraduate);
 
-// admin يرفص الخريج 
+// admin يرفص الخريج
 router.put("/reject/:id", protect, graduateController.rejectGraduate);
 //get active graduates(GradutesInPortal)
-router.route("/approved").get(protect,graduateController.getGraduatesInPortal);
+router.route("/approved").get(protect, graduateController.getGraduatesInPortal);
 //get inactive(that requet join to portal "Pending")
-router.route("/requested").get(protect,graduateController.getRequestedGraduates);
+router
+  .route("/requested")
+  .get(protect, graduateController.getRequestedGraduates);
 // Get graduate profile by ID (public)
 router.route("/:id/profile").get(graduateController.getGraduateProfile);
 
@@ -34,5 +31,11 @@ router
   .route("/:id/status")
   .put(protect, graduateController.updateGraduateStatus);
 router.get("/search", graduateController.searchGraduates);
+
+router.get(
+  "/profile/:identifier",
+  protect,
+  graduateController.getGraduateProfileForUser
+);
 
 module.exports = router;
