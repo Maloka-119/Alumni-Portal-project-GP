@@ -6,6 +6,11 @@ const MessageStatusService = require('../services/messageStatusService');
 const PresenceService = require('../services/presenceService');
 const RateLimitService = require('../services/rateLimitService');
 const ModerationService = require('../services/moderationService');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary');
 
 // Rate limiting for message sending
 const messageRateLimit = rateLimit({
@@ -26,6 +31,50 @@ const uploadRateLimit = rateLimit({
     message: 'Too many file uploads. Please wait before uploading more files.'
   }
 });
+
+// Configure Cloudinary storage for chat files
+const chatStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'chat-attachments',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt', 'mp4', 'mp3', 'wav'],
+    resource_type: 'auto',
+    transformation: [
+      { width: 1000, height: 1000, crop: 'limit' } // Resize large images
+    ]
+  }
+});
+
+const chatUpload = multer({ 
+  storage: chatStorage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1 // One file per upload
+  },
+  fileFilter: (req, file, cb) => {
+    // Define allowed file types
+    const allowedTypes = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/gif': 'gif',
+      'application/pdf': 'pdf',
+      'application/msword': 'doc',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+      'text/plain': 'txt',
+      'video/mp4': 'mp4',
+      'audio/mpeg': 'mp3',
+      'audio/wav': 'wav'
+    };
+
+    if (allowedTypes[file.mimetype]) {
+      cb(null, true);
+    } else {
+      cb(new Error('File type not supported'), false);
+    }
+  }
+});
+
 
 // @desc    Get or create chat between two users
 // @route   POST /alumni-portal/chat/conversation
@@ -996,6 +1045,338 @@ const updateReportStatus = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Send an image message
+// @route   POST /alumni-portal/chat/:chatId/messages/image
+// @access  Private
+const sendImageMessage = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+  const { reply_to_message_id } = req.body;
+  const senderId = req.user.id;
+
+  if (!req.file) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'No image file provided'
+    });
+  }
+
+  // Verify user has access to this chat
+  const chat = await Chat.findOne({
+    where: {
+      chat_id: chatId,
+      [Op.or]: [
+        { user1_id: senderId },
+        { user2_id: senderId }
+      ]
+    }
+  });
+
+  if (!chat) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Chat not found or access denied'
+    });
+  }
+
+  // Determine receiver
+  const receiverId = chat.user1_id === senderId ? chat.user2_id : chat.user1_id;
+
+  // Check if user is blocked
+  const isBlocked = await UserBlock.findOne({
+    where: {
+      blocker_id: receiverId,
+      blocked_id: senderId
+    }
+  });
+
+  if (isBlocked) {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Cannot send message to this user'
+    });
+  }
+
+  // Create image message
+  const message = await Message.create({
+    chat_id: chatId,
+    sender_id: senderId,
+    receiver_id: receiverId,
+    content: req.body.caption || '', // Optional caption
+    message_type: 'image',
+    attachment_url: req.file.path,
+    attachment_name: req.file.originalname,
+    attachment_size: req.file.size,
+    attachment_mime_type: req.file.mimetype,
+    reply_to_message_id: reply_to_message_id || null
+  });
+
+  // Update chat with last message info
+  await chat.update({
+    last_message_id: message.message_id,
+    last_message_at: new Date(),
+    [`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`]: chat[`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`] + 1
+  });
+
+  // Fetch message with associations
+  const messageWithDetails = await Message.findByPk(message.message_id, {
+    include: [
+      {
+        model: User,
+        as: 'sender',
+        attributes: ['id', 'first-name', 'last-name', 'email']
+      },
+      {
+        model: User,
+        as: 'receiver',
+        attributes: ['id', 'first-name', 'last-name', 'email']
+      },
+      {
+        model: Message,
+        as: 'replyTo',
+        include: [
+          {
+            model: User,
+            as: 'sender',
+            attributes: ['id', 'first-name', 'last-name']
+          }
+        ]
+      }
+    ]
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: messageWithDetails
+  });
+});
+
+// @desc    Send a file message
+// @route   POST /alumni-portal/chat/:chatId/messages/file
+// @access  Private
+const sendFileMessage = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+  const { reply_to_message_id } = req.body;
+  const senderId = req.user.id;
+
+  if (!req.file) {
+    return res.status(400).json({
+      status: 'error',
+      message: 'No file provided'
+    });
+  }
+
+  // Verify user has access to this chat
+  const chat = await Chat.findOne({
+    where: {
+      chat_id: chatId,
+      [Op.or]: [
+        { user1_id: senderId },
+        { user2_id: senderId }
+      ]
+    }
+  });
+
+  if (!chat) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Chat not found or access denied'
+    });
+  }
+
+  // Determine receiver
+  const receiverId = chat.user1_id === senderId ? chat.user2_id : chat.user1_id;
+
+  // Check if user is blocked
+  const isBlocked = await UserBlock.findOne({
+    where: {
+      blocker_id: receiverId,
+      blocked_id: senderId
+    }
+  });
+
+  if (isBlocked) {
+    return res.status(403).json({
+      status: 'error',
+      message: 'Cannot send message to this user'
+    });
+  }
+
+  // Create file message
+  const message = await Message.create({
+    chat_id: chatId,
+    sender_id: senderId,
+    receiver_id: receiverId,
+    content: req.body.description || '', // Optional description
+    message_type: 'file',
+    attachment_url: req.file.path,
+    attachment_name: req.file.originalname,
+    attachment_size: req.file.size,
+    attachment_mime_type: req.file.mimetype,
+    reply_to_message_id: reply_to_message_id || null
+  });
+
+  // Update chat with last message info
+  await chat.update({
+    last_message_id: message.message_id,
+    last_message_at: new Date(),
+    [`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`]: chat[`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`] + 1
+  });
+
+  // Fetch message with associations
+  const messageWithDetails = await Message.findByPk(message.message_id, {
+    include: [
+      {
+        model: User,
+        as: 'sender',
+        attributes: ['id', 'first-name', 'last-name', 'email']
+      },
+      {
+        model: User,
+        as: 'receiver',
+        attributes: ['id', 'first-name', 'last-name', 'email']
+      },
+      {
+        model: Message,
+        as: 'replyTo',
+        include: [
+          {
+            model: User,
+            as: 'sender',
+            attributes: ['id', 'first-name', 'last-name']
+          }
+        ]
+      }
+    ]
+  });
+
+  res.status(201).json({
+    status: 'success',
+    data: messageWithDetails
+  });
+});
+
+// @desc    Get message attachments
+// @route   GET /alumni-portal/chat/:chatId/attachments
+// @access  Private
+const getChatAttachments = asyncHandler(async (req, res) => {
+  const { chatId } = req.params;
+  const userId = req.user.id;
+  const { type, page = 1, limit = 20 } = req.query;
+
+  // Verify user has access to this chat
+  const chat = await Chat.findOne({
+    where: {
+      chat_id: chatId,
+      [Op.or]: [
+        { user1_id: userId },
+        { user2_id: userId }
+      ]
+    }
+  });
+
+  if (!chat) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Chat not found or access denied'
+    });
+  }
+
+  // Build where clause
+  let whereClause = {
+    chat_id: chatId,
+    is_deleted: false,
+    message_type: { [Op.in]: ['image', 'file'] }
+  };
+
+  if (type) {
+    whereClause.message_type = type;
+  }
+
+  const offset = (page - 1) * limit;
+
+  const attachments = await Message.findAndCountAll({
+    where: whereClause,
+    include: [
+      {
+        model: User,
+        as: 'sender',
+        attributes: ['id', 'first-name', 'last-name', 'email']
+      }
+    ],
+    order: [['created-at', 'DESC']],
+    limit: parseInt(limit),
+    offset: offset
+  });
+
+  res.status(200).json({
+    status: 'success',
+    data: {
+      attachments: attachments.rows,
+      pagination: {
+        current_page: parseInt(page),
+        total_pages: Math.ceil(attachments.count / limit),
+        total_attachments: attachments.count,
+        has_next: offset + attachments.rows.length < attachments.count,
+        has_prev: page > 1
+      }
+    }
+  });
+});
+
+// @desc    Download message attachment
+// @route   GET /alumni-portal/chat/messages/:messageId/download
+// @access  Private
+const downloadAttachment = asyncHandler(async (req, res) => {
+  const { messageId } = req.params;
+  const userId = req.user.id;
+
+  const message = await Message.findByPk(messageId, {
+    include: [
+      {
+        model: Chat,
+        where: {
+          [Op.or]: [
+            { user1_id: userId },
+            { user2_id: userId }
+          ]
+        }
+      }
+    ]
+  });
+
+  if (!message) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'Message not found or access denied'
+    });
+  }
+
+  if (!message.attachment_url) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'No attachment found for this message'
+    });
+  }
+
+  // For Cloudinary URLs, redirect to the URL
+  if (message.attachment_url.includes('cloudinary.com')) {
+    return res.redirect(message.attachment_url);
+  }
+
+  // For local files, serve the file
+  const filePath = path.join(__dirname, '..', '..', message.attachment_url);
+  
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({
+      status: 'error',
+      message: 'File not found'
+    });
+  }
+
+  res.download(filePath, message.attachment_name);
+});
+
+
 module.exports = {
   getOrCreateChat,
   getChatList,
@@ -1015,6 +1396,11 @@ module.exports = {
   getMessageStats,
   getModerationDashboard,
   updateReportStatus,
+  sendImageMessage,
+  sendFileMessage,
+  getChatAttachments,
+  downloadAttachment,
   messageRateLimit,
-  uploadRateLimit
+uploadRateLimit,
+ chatUpload
 };
