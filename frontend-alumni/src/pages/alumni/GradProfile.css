@@ -28,6 +28,9 @@
   background: linear-gradient(135deg, #37568d1a, #e2e8f0, #f3f4f6, #ffffff);
   box-shadow: 0 8px 25px rgba(0,0,0,0.25);
 }
+.dark .profile-card{
+  border: none;
+}
 
 
 .profile-img {
