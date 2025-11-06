@@ -62,6 +62,36 @@
   padding: 20px;
   background-color: #ecf0f1;
   border-radius: 12px;
+  
+  max-height: 300px; 
+  overflow-y: auto;  
+  scrollbar-width: thin; 
+  scrollbar-color: #3498db #ecf0f1; 
+}
+
+.invite-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.invite-section::-webkit-scrollbar-thumb {
+  background-color: #3498db;
+  border-radius: 4px;
+}
+
+.invite-section::-webkit-scrollbar-track {
+  background-color: #ecf0f1;
+}
+.dark .invite-section::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark .invite-section::-webkit-scrollbar-thumb {
+  background-color: #60a5fa;
+  border-radius: 4px;
+}
+
+.dark .invite-section::-webkit-scrollbar-track {
+  background-color: #111827;
 }
 
 .invite-section h3 {
@@ -81,6 +111,37 @@
   align-items: center;
   padding: 10px 0;
   border-bottom: 1px solid #dcdde1;
+}
+
+.invite-search {
+  width: 80%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+  background-color: #f1f5f9;
+  color: #111;
+  font-size: 15px;
+  margin-bottom: 15px;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 0 0 1px #d1d5db;
+}
+
+.invite-search:focus {
+  box-shadow: 0 0 0 2px #3b82f6;
+  background-color: #fff;
+}
+
+/* dark mode */
+.dark .invite-search {
+  background-color: #1e293b;
+  color: #e2e8f0;
+  box-shadow: 0 0 0 1px #334155;
+}
+
+.dark .invite-search:focus {
+  box-shadow: 0 0 0 2px #60a5fa;
+  background-color: #0f172a;
 }
 
 .friend-info {
@@ -329,4 +390,156 @@
   .post-image {
     max-height: 250px;
   }
+}
+
+/* ===== Dark Mode for Group Details ===== */
+
+
+/* Back Button */
+.dark .group-details .back-btn {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 6px 10px;
+  transition: background 0.3s, transform 0.2s;
+}
+
+.dark .group-details .back-btn:hover {
+  background: #374151;
+  transform: scale(1.05);
+}
+
+/* Header */
+.dark .group-header {
+  background: #1f2937;
+  border-radius: 16px;
+  padding: 16px;
+  text-align: center;
+  border: 1px solid #374151;
+}
+
+.dark .group-header h1 {
+  color: #f3f4f6;
+}
+
+.dark .group-description {
+  color: #747679;
+}
+
+/* Cover Image */
+.dark .cover-img {
+  border-radius: 12px;
+  border: 1px solid #374151;
+}
+
+.dark .cover-placeholder {
+  background: #374151;
+  color: #9ca3af;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+/* Created Icon + Tooltip */
+
+
+.dark .created-icon-wrapper .tooltip {
+  background: #1f2937;
+  color: #f3f4f6;
+  border: 1px solid #374151;
+  border-radius: 6px;
+  padding: 6px 10px;
+  position: absolute;
+  top: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.dark .created-icon-wrapper:hover .tooltip {
+  opacity: 1;
+}
+
+/* Invite Button */
+.dark .invite-btn {
+  background: #2563eb;
+  color: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  transition: background 0.3s;
+}
+
+.dark .invite-btn:hover {
+  background: #1d4ed8;
+}
+
+/* Invite Section */
+.dark .invite-section {
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 16px;
+  padding: 16px;
+  margin-top: 20px;
+  color: #f3f4f6;
+  scrollbar-color: #60a5fa #1f2937;
+}
+
+.dark .invite-section h3 {
+  color: #60a5fa;
+}
+
+/* Invite List */
+.dark .invite-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #111827;
+  border: 1px solid #374151;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+  transition: background 0.3s;
+}
+
+.dark .invite-list li:hover {
+  background: #1f2937c0;
+}
+
+/* Friend Info */
+.dark .friend-info img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #374151;
+}
+
+.dark .friend-info span {
+  color: #f3f4f6;
+  margin-left: 10px;
+}
+
+/* Invite Action Buttons */
+.dark .invite-action.invite {
+  background: #2563eb;
+  color: #f3f4f6;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  transition: background 0.3s;
+}
+
+.dark .invite-action.invite:hover {
+  background: #1d4ed8;
+}
+
+.dark .invite-action.cancel {
+  background: #b91c1c;
+  color: #f3f4f6;
+}
+
+.dark .invite-action.cancel:hover {
+  background: #ef4444;
 }
