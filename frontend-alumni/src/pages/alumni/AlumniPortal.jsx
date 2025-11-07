@@ -7,7 +7,7 @@ import {
   Menu, X, LogOut, Globe, Moon, Sun, ChevronDown, ChevronUp
 } from 'lucide-react';
 import './AlumniPortal.css';
-import UniLogo from './Uni Logo.jpeg';
+import UniLogo from '../../components/logo-white-deskt-min.png';
 import Footer from '../../components/Footer'; 
 import AlumniAdminPosts from './AlumniAdminPosts';
 import PostsAlumni from './PostsAlumni';
@@ -114,7 +114,7 @@ const Dashboard = ({ setUser }) => {
           <button className="alumni-menu-btn" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X size={24}/> : <Menu size={24}/>}
           </button>
-          <img src={UniLogo} alt="University Logo" className="logo-placeholder" />
+          <img src={UniLogo} alt="University Logo" className="logoo-placeholder" />
           <h1 className="portal-name">Helwan Alumni Portal</h1>
         </div>
         <div className="alumni-header-right">

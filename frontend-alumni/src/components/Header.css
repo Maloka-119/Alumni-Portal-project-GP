@@ -15,10 +15,11 @@
   gap: 0.75rem;
 }
 
-.logo-placeholder {
+.logoo-placeholder {
   width: 40px;
   height: 40px;
   border-radius: 0.25rem;
+  background: transparent;
 }
 
 .portal-name {
