@@ -287,7 +287,6 @@
 
 // export default FriendshipPage;
 
-
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -319,7 +318,7 @@ function FriendshipPage() {
       setLoadingFriends(true);
       const res = await API.get("/friendships/friends");
       const mapped = res.data.map(f => ({
-        id: f.friendId,
+        id: f.graduate_id,           // صححت الـ id عشان profile API
         friendId: f.friendId,
         userName: f.fullName || "No Name",
         image: f.profilePicture || PROFILE,
@@ -337,7 +336,7 @@ function FriendshipPage() {
       setLoadingRequests(true);
       const res = await API.get("/friendships/requests");
       const mapped = res.data.map(f => ({
-        id: f.id,
+        id: f.senderId,              // صححت الـ id عشان profile API
         senderId: f.senderId,
         userName: f.fullName || "No Name",
         image: f.profilePicture || PROFILE
@@ -355,7 +354,7 @@ function FriendshipPage() {
       setLoadingSuggestions(true);
       const res = await API.get("/friendships/suggestions");
       const mapped = res.data.map(f => ({
-        id: f.graduate_id,
+        id: f.graduate_id,           // صححت الـ id عشان profile API
         userName: f.fullName || "No Name",
         image: f["profile-picture-url"] || PROFILE,
         added: false
