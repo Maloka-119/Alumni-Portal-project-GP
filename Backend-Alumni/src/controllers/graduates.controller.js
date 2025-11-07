@@ -1,6 +1,11 @@
 const Graduate = require("../models/Graduate");
 const User = require("../models/User");
 const Friendship = require("../models/Friendship");
+const Post = require("../models/Post");
+const PostImage = require("../models/PostImage");
+const Comment = require("../models/Comment");
+const Like = require("../models/Like");
+const GroupMember = require("../models/GroupMember");
 const { Op } = require("sequelize");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 
@@ -570,7 +575,7 @@ const getGraduateProfileForUser = async (req, res) => {
     }
 
     // 🔍 تحديد حالة العلاقة
-    let relationshipStatus = "no_relation";
+    let friendshipStatus = "no_relation";
 
     // التحقق من طلبات الصداقة في جدول Friendship
     const existingFriendshipRequest = await Friendship.findOne({
@@ -585,9 +590,9 @@ const getGraduateProfileForUser = async (req, res) => {
 
     if (existingFriendshipRequest) {
       if (existingFriendshipRequest.sender_id === currentUserId) {
-        relationshipStatus = "i_sent_request";
+        friendshipStatus = "i_sent_request";
       } else {
-        relationshipStatus = "he_sent_request";
+        friendshipStatus = "he_sent_request";
       }
     }
 
@@ -603,8 +608,111 @@ const getGraduateProfileForUser = async (req, res) => {
     });
 
     if (friendship) {
-      relationshipStatus = "friends";
+      friendshipStatus = "friends";
     }
+
+    // 📝 جلب بوستات الخريج (مش مخفية وليست في جروب)
+    const posts = await Post.findAll({
+      where: {
+        "author-id": graduate.graduate_id,
+        "is-hidden": false,
+        "group-id": null,
+      },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name"],
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"],
+            },
+          ],
+        },
+        {
+          model: PostImage,
+          attributes: ["image-url"],
+        },
+        {
+          model: Like,
+          attributes: ["like_id", "user-id"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name"],
+            },
+          ],
+        },
+        {
+          model: Comment,
+          attributes: ["comment_id", "content", "created-at", "edited"],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name"],
+              include: [
+                {
+                  model: Graduate,
+                  attributes: ["profile-picture-url"],
+                },
+              ],
+            },
+          ],
+          order: [["created-at", "ASC"]],
+        },
+      ],
+      order: [["created-at", "DESC"]],
+    });
+
+    // 🎯 تحضير بيانات البوستات
+    const postsData = posts.map((post) => ({
+      post_id: post.post_id,
+      category: post.category,
+      content: post.content,
+      "created-at": post["created-at"],
+      author: {
+        id: post.User.id,
+        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+        image: post.User.Graduate
+          ? post.User.Graduate["profile-picture-url"]
+          : null,
+      },
+      images: post.PostImages
+        ? post.PostImages.map((img) => img["image-url"])
+        : [],
+
+      // اللايكات
+      likes: post.Likes
+        ? post.Likes.map((like) => ({
+            like_id: like.like_id,
+            user: {
+              id: like.User.id,
+              "full-name": `${like.User["first-name"]} ${like.User["last-name"]}`,
+            },
+          }))
+        : [],
+
+      likes_count: post.Likes ? post.Likes.length : 0,
+
+      // الكومنتات
+      comments: post.Comments
+        ? post.Comments.map((comment) => ({
+            comment_id: comment.comment_id,
+            content: comment.content,
+            "created-at": comment["created-at"],
+            edited: comment.edited,
+            author: {
+              id: comment.User.id,
+              "full-name": `${comment.User["first-name"]} ${comment.User["last-name"]}`,
+              image: comment.User.Graduate
+                ? comment.User.Graduate["profile-picture-url"]
+                : null,
+            },
+          }))
+        : [],
+
+      comments_count: post.Comments ? post.Comments.length : 0,
+    }));
 
     // ✅ تحديد البيانات اللي هتظهر حسب العلاقة والخصوصية
     const userData = graduate.User;
@@ -632,7 +740,10 @@ const getGraduateProfileForUser = async (req, res) => {
         phoneNumber: userData.phoneNumber,
 
         // حالة العلاقة
-        relationshipStatus: "owner",
+        friendshipStatus: "owner",
+
+        // البوستات
+        posts: postsData,
       };
 
       return res.json({
@@ -658,7 +769,10 @@ const getGraduateProfileForUser = async (req, res) => {
       showPhone: userData.show_phone,
 
       // حالة العلاقة
-      relationshipStatus: relationshipStatus,
+      friendshipStatus: friendshipStatus,
+
+      // البوستات
+      posts: postsData,
     };
 
     // 📊 إضافة البيانات الخاصة إذا مسموح بيها - للكل مش بس الأصدقاء
