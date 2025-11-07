@@ -3,10 +3,12 @@ import API from "../../services/api";
 import GroupDetails from "./GroupDetails";
 import "./MyGroups.css";
 import { UserMinus , Eye} from "lucide-react";
-
-
+import Swal from "sweetalert2";
+import { useTranslation } from "react-i18next";
 function MyGroups() {
   const [groups, setGroups] = useState([]);
+  const { t } = useTranslation();
+
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showInviteOnly, setShowInviteOnly] = useState(false);
 
@@ -27,12 +29,25 @@ function MyGroups() {
       const res = await API.delete(`/groups/leave/${groupId}`);
       if (res.data.status === "success") {
         setGroups(groups.filter((g) => g.id !== groupId));
-        alert("You left the community successfully!");
+         Swal.fire({
+        icon: "success",
+        title: t("You left the community successfully!"),
+        showConfirmButton: false,
+        timer: 1800,
+      });
       } else {
-        alert(res.data.message || "Failed to leave the community.");
+       Swal.fire({
+        icon: "error",
+        title: t(res.data.message || "Failed to leave the community."),
+        text: t("Please try again later."),
+      });
       }
     } catch {
-      alert("Failed to leave the community, please try again.");
+        Swal.fire({
+        icon: "error",
+        title: t("Failed to leave the community, please try again."),
+        text: t("Please try again later."),
+      });
     }
   };
 
