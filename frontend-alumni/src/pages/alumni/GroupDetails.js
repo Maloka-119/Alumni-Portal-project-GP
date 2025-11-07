@@ -19,6 +19,11 @@ function GroupDetails({ group, goBack }) {
 const storedUser = localStorage.getItem("user");
 const currentUserId = storedUser ? JSON.parse(storedUser).id : null;
 
+const [searchTerm, setSearchTerm] = useState("");
+
+const filteredGraduates = availableGraduates.filter((f) =>
+  f.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+);
 
 
   useEffect(() => {
@@ -171,21 +176,35 @@ const currentUserId = storedUser ? JSON.parse(storedUser).id : null;
       {showInviteSection && (
   <div className="invite-section">
     <h3>{t("Invite Friends")}</h3>
-    {availableGraduates.length === 0 ? (
+
+    {/* search bar */}
+    <input
+      type="text"
+      placeholder={t("Search by name")}
+      value={searchTerm}
+      onChange={(e) => setSearchTerm(e.target.value)}
+      className="invite-search"
+    />
+
+    {filteredGraduates.length === 0 ? (
       <p>{t("No graduates available to invite.")}</p>
     ) : (
       <ul className="invite-list">
-        {availableGraduates.map(f => (
+        {filteredGraduates.map((f) => (
           <li key={f.id}>
             <div className="friend-info">
               <img src={f.profilePicture || PROFILE} alt="Profile" />
               <span>{f.fullName}</span>
             </div>
             <button
-              className={`invite-action ${f.invitationStatus === "pending" ? "cancel" : "invite"}`}
+              className={`invite-action ${
+                f.invitationStatus === "pending" ? "cancel" : "invite"
+              }`}
               onClick={() => handleToggleInvitation(f)}
             >
-              {f.invitationStatus === "pending" ? t("Cancel Invitation") : t("Invite to Group")}
+              {f.invitationStatus === "pending"
+                ? t("Cancel Invitation")
+                : t("Invite to Group")}
             </button>
           </li>
         ))}
