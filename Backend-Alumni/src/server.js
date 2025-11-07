@@ -72,6 +72,10 @@ app.use("/alumni-portal/admin/faqs", adminFaqRoutes);
 const chatRoutes = require("./routes/chat.route");
 app.use("/alumni-portal/chat", chatRoutes);
 
+const reportsRoutes = require("./routes/reports.route");
+app.use("/alumni-portal", reportsRoutes );
+
+
 //  Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

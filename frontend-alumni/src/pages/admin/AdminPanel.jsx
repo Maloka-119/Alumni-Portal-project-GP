@@ -139,6 +139,7 @@ import './AdminPanel.css';
 import AlumniManagement from './AlumniManagement';
 import AdminPostsPage from './AdminPostsPage';
 import EmptyPage from './EmptyPage';
+import AdminDashboard from './AdminDashboard';
 import StaffManagement from './StaffManagement';
 import UsersPostsPage from './UsersPostsPage';
 import GroupsPage from './GroupsPage';
@@ -269,7 +270,10 @@ const AdminPanel = ({ setUser }) => {
       <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         <Routes>
           <Route index element={<EmptyPage title="welcome to admin panel" />} />
-          <Route path="reportsAnalysis" element={<EmptyPage title="Reports & Analysis" />} />
+         <Route
+          path="reportsAnalysis"
+            element={<AdminDashboard title="Reports & Analytics" />}
+              />
           <Route path="communityManagement" element={<GroupsPage />} />
           <Route path="documentManagement" element={<EmptyPage title="Document Management" />} />
           <Route path="consultationRequests" element={<EmptyPage title="Consultation Requests" />} />
