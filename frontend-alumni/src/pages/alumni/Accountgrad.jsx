@@ -1,3 +1,4 @@
+//new code
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import API from "../../services/api";
@@ -10,7 +11,6 @@ function Accountgrad() {
   const { t } = useTranslation();
   const { userId } = useParams();
   const [formData, setFormData] = useState(null);
-  const [userPosts, setUserPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -26,7 +26,7 @@ function Accountgrad() {
             ...data,
             skills: Array.isArray(data.skills)
               ? data.skills
-              : JSON.parse(data.skills || "[]")
+              : JSON.parse(data.skills || "[]"),
           });
         } else {
           console.log("Profile not found for userId:", userId);
@@ -44,18 +44,7 @@ function Accountgrad() {
       }
     };
 
-    const fetchPosts = async () => {
-      try {
-        const res = await API.get(`/graduates/${userId}/posts`);
-        setUserPosts(res.data.data || []);
-      } catch (err) {
-        console.error("Posts API Error for userId", userId, err);
-        setUserPosts([]);
-      }
-    };
-
     fetchProfile();
-    fetchPosts();
   }, [userId]);
 
   if (loading) return <p>{t("loading")}...</p>;
@@ -74,7 +63,8 @@ function Accountgrad() {
           <strong>{t("faculty")}:</strong> {formData.faculty || t("noFaculty")}
         </p>
         <p>
-          <strong>{t("graduationYear")}:</strong> {formData.graduationYear || t("noYear")}
+          <strong>{t("graduationYear")}:</strong>{" "}
+          {formData.graduationYear || t("noYear")}
         </p>
         <p>
           <strong>{t("bio")}:</strong> {formData.bio || t("noBio")}
@@ -84,7 +74,9 @@ function Accountgrad() {
           <p>
             <strong>{t("cv")}:</strong>{" "}
             {formData.CV ? (
-              <a href={formData.CV} download>{t("downloadCv")}</a>
+              <a href={formData.CV} download>
+                {t("downloadCv")}
+              </a>
             ) : (
               t("noCv")
             )}
@@ -93,33 +85,42 @@ function Accountgrad() {
 
         <p>
           <strong>{t("skills")}:</strong>{" "}
-          {formData.skills.length > 0 ? formData.skills.join(", ") : t("noSkills")}
+          {formData.skills.length > 0
+            ? formData.skills.join(", ")
+            : t("noSkills")}
         </p>
 
         <p>
-          <strong>{t("currentJob")}:</strong> {formData.currentJob || t("noJob")}
+          <strong>{t("currentJob")}:</strong>{" "}
+          {formData.currentJob || t("noJob")}
         </p>
 
         {formData.showPhone && (
           <p>
-            <strong>{t("phoneNumber")}:</strong> {formData.phoneNumber || t("noPhone")}
+            <strong>{t("phoneNumber")}:</strong>{" "}
+            {formData.phoneNumber || t("noPhone")}
           </p>
         )}
       </div>
 
       <div className="profile-posts">
         <h3>{t("posts")}</h3>
-        {userPosts.length === 0 ? (
-          <p>{t("noPostsFound")}</p>
-        ) : (
-          userPosts.map(post => (
+        {formData.posts && formData.posts.length > 0 ? (
+          formData.posts.map((post) => (
             <PostCard
-              key={post.id}
-              postId={post.id}
+              key={post.post_id}
+              postId={post.post_id}
               content={post.content}
-              image={post.image}
+              category={post.category}
+              createdAt={post["created-at"]}
+              author={post.author}
+              likesCount={post.likes_count}
+              commentsCount={post.comments_count}
+              images={post.images}
             />
           ))
+        ) : (
+          <p>{t("noPostsFound")}</p>
         )}
       </div>
     </div>
@@ -128,7 +129,7 @@ function Accountgrad() {
 
 export default Accountgrad;
 
-
+////konoz's code
 // import { useState, useEffect } from "react";
 // import { useParams } from "react-router-dom";
 // import API from "../../services/api";
@@ -146,21 +147,47 @@ export default Accountgrad;
 
 //   useEffect(() => {
 //     const fetchProfile = async () => {
+//       setLoading(true);
 //       try {
-//         setLoading(true);
-//         const res = await API.get(`/users/${userId}`);
-//         setFormData(res.data);
+//         const res = await API.get(`/graduates/profile/${userId}`);
+//         console.log("Profile API response:", res.data);
 
-//         const postsRes = await API.get(`/posts/user/${userId}`);
-//         setUserPosts(postsRes.data);
+//         if (res.data.status === "success" && res.data.data) {
+//           const data = res.data.data;
+//           setFormData({
+//             ...data,
+//             skills: Array.isArray(data.skills)
+//               ? data.skills
+//               : JSON.parse(data.skills || "[]")
+//           });
+//         } else {
+//           console.log("Profile not found for userId:", userId);
+//           setFormData(null);
+//         }
 //       } catch (err) {
-//         console.error("Profile API Error:", err);
+//         console.error(
+//           "Profile API Error for userId",
+//           userId,
+//           err.response?.status || err
+//         );
+//         setFormData(null);
 //       } finally {
 //         setLoading(false);
 //       }
 //     };
 
+//     const fetchPosts = async () => {
+//       try {
+//         const res = await API.get(`/graduates/${userId}/posts`);
+//         setUserPosts(res.data.data || []);
+//       } catch (err) {
+//         console.error("Posts API Error for userId", userId, err);
+//         setUserPosts([]);
+//       }
+//     };
+
 //     fetchProfile();
+//     fetchPosts();
 //   }, [userId]);
 
 //   if (loading) return <p>{t("loading")}...</p>;
@@ -171,18 +198,18 @@ export default Accountgrad;
 //       <div className="profile-card">
 //         <img
 //           src={formData.profilePicture || PROFILE}
-//           alt={formData.fullName}
+//           alt={formData.fullName || "User"}
 //           className="profile-img"
 //         />
-//         <h2>{formData.fullName}</h2>
+//         <h2>{formData.fullName || t("noName")}</h2>
 //         <p>
-//           <strong>{t("faculty")}:</strong> {formData.faculty}
+//           <strong>{t("faculty")}:</strong> {formData.faculty || t("noFaculty")}
 //         </p>
 //         <p>
-//           <strong>{t("graduationYear")}:</strong> {formData.graduationYear}
+//           <strong>{t("graduationYear")}:</strong> {formData.graduationYear || t("noYear")}
 //         </p>
 //         <p>
-//           <strong>{t("bio")}:</strong> {formData.bio}
+//           <strong>{t("bio")}:</strong> {formData.bio || t("noBio")}
 //         </p>
 
 //         {formData.showCV && (
@@ -198,13 +225,11 @@ export default Accountgrad;
 
 //         <p>
 //           <strong>{t("skills")}:</strong>{" "}
-//           {formData.skills && formData.skills.length > 0
-//             ? formData.skills.join(", ")
-//             : t("noSkills")}
+//           {formData.skills.length > 0 ? formData.skills.join(", ") : t("noSkills")}
 //         </p>
 
 //         <p>
-//           <strong>{t("currentJob")}:</strong> {formData.currentJob}
+//           <strong>{t("currentJob")}:</strong> {formData.currentJob || t("noJob")}
 //         </p>
 
 //         {formData.showPhone && (
@@ -234,4 +259,5 @@ export default Accountgrad;
 // }
 
 // export default Accountgrad;
+
 
