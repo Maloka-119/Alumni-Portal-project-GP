@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import UniLogo from './Uni Logo.jpeg';
+import UniLogo from './logo-white-deskt-min.png';
 import './Header.css';
 import { Globe, LogIn } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
@@ -23,7 +23,7 @@ const Header = () => {
   return (
     <header className="page-header">
       <div className="header-left">
-        <img src={UniLogo} alt="University Logo" className="logo-placeholder" />
+        <img src={UniLogo} alt="University Logo" className="logoo-placeholder" />
         <h1 className="portal-name">Helwan ALUMNI Portal</h1>
       </div>
       <div className="header-right">

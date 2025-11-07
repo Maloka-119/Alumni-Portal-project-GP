@@ -8,6 +8,7 @@ import Login from './auth/Login';
 import AlumniPortal from './pages/alumni/AlumniPortal';
 import ProtectedRoute from './routes/ProtectedRoute';
 import StaffDashboard from './pages/staff/StaffDashboard';
+import LandingPage from './pages/Landing/LandingPage'
 
 function App() {
   const [user, setUser] = useState(null);
@@ -33,6 +34,7 @@ function App() {
         <DarkModeProvider>
           <Routes>
             {/* صفحات عامة */}
+            <Route path="/helwan-alumni-portal" element={<LandingPage />} />
             <Route path="/helwan-alumni-portal/register" element={<Register />} />
             <Route path="/helwan-alumni-portal/login" element={<Login setUser={setUser} />} />
 

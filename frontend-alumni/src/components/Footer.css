@@ -1,57 +1,72 @@
+:root {
+  --footer-bg: rgba(240, 240, 240, 0.849); 
+  --footer-color: #0b1220;               
+  --footer-shadow: rgba(0,0,0,0.1);
+  --footer-radius: 0.5rem;
+  --footer-padding: 1.5rem 1.8rem;
+  --social-size: 34px;
+  --social-gap: 0.5rem;
+}
+
+/* Footer Base */
 .footer {
   margin-top: 3rem;
-  background-color: #1e3a8a;
-  color: white;
-  border-radius: 0.5rem;
-  padding: 1.5rem 1.8rem; /* صغّرنا شويه */
+  background-color: var(--footer-bg);
+  color: var(--footer-color);
+  border-radius: var(--footer-radius);
+  padding: var(--footer-padding);
   max-width: 1200px;
   margin-left: auto;
   margin-right: auto;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.15);
+  box-shadow: 0 -2px 8px var(--footer-shadow);
   transition: background 0.3s, color 0.3s;
 }
 
 /* Dark Mode */
 .dark .footer {
-  background-color: #1f2937;
-  color: #f3f4f6;
+  --footer-bg: #1f2937;
+  --footer-color: #f3f4f6;
+  --footer-shadow: rgba(0,0,0,0.15);
 }
 
+
+/* Grid Layout */
 .footer-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* صغّرنا الأعمدة شويه */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 1rem;
   text-align: center;
 }
 
 .footer-grid h4 {
-  font-size: 1rem; /* أصغر */
+  font-size: 1rem;
   margin-bottom: 0.4rem;
   font-weight: bold;
 }
 
 .footer-grid p {
   margin: 0.2rem 0;
-  font-size: 0.9rem; /* أصغر */
+  font-size: 0.9rem;
 }
 
+/* Social Icons */
 .social-icons {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
-  gap: 0.5rem; /* أصغر */
-  margin-top: 0.5rem; /* أقل مسافة */
+  gap: var(--social-gap);
+  margin-top: 0.5rem;
 }
 
 .social-icons a {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 34px; /* أصغر */
-  height: 34px; /* أصغر */
+  width: var(--social-size);
+  height: var(--social-size);
   border-radius: 6px;
-  color: white;
-  font-size: 14px; /* أصغر */
+  color: rgb(51, 49, 49);
+  font-size: 14px;
   transition: background-color 0.3s ease, opacity 0.3s ease;
 }
 
@@ -70,21 +85,12 @@
 }
 
 /* Responsive */
-.footer-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 1rem;
-  text-align: center;
-}
-
-/* Tablets: عمودين في الصف */
 @media (max-width: 1024px) and (min-width: 769px) {
   .footer-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* Mobile: عنصر واحد في السطر */
 @media (max-width: 768px) {
   .footer-grid {
     grid-template-columns: 1fr;
@@ -98,4 +104,3 @@
     justify-content: center;
   }
 }
-
