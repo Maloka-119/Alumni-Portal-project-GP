@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import API from "../../services/api";
 import GroupDetails from "../alumni/GroupDetails";
 import "./ExploreGroups.css";
-
+import Swal from "sweetalert2";
 function ExploreGroups() {
   const { t } = useTranslation();
   const [groups, setGroups] = useState([]);
@@ -60,9 +60,18 @@ function ExploreGroups() {
         )
       );
 
-      alert("You joined the community successfully!");
+       Swal.fire({
+        icon: "success",
+        title: t("You joined the community successfully!"),
+        showConfirmButton: false,
+        timer: 1800,
+      });
     } catch {
-      alert("Failed to join community, please try again.");
+     Swal.fire({
+        icon: "error",
+        title: t("Failed to join community"),
+        text: t("Please try again later."),
+      });
     }
   };
 
