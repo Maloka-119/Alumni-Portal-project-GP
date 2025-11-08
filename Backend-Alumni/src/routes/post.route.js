@@ -105,6 +105,33 @@ router.put(
   authMiddleware.protect,
   postController.unhidePost
 );
+// Reply to comment routes
+router.post(
+  "/comments/:commentId/reply",
+  authMiddleware.protect,
+  postController.addReply
+);
+
+// Edit reply
+router.put(
+  "/comments/:commentId/reply",
+  authMiddleware.protect,
+  postController.editReply
+);
+
+// Delete reply
+router.delete(
+  "/comments/:commentId/reply",
+  authMiddleware.protect,
+  postController.deleteReply
+);
+
+// Get replies for a comment
+router.get(
+  "/comments/:commentId/replies",
+  postController.getCommentReplies
+);
+
 
 router.patch("/:postId/landing", authMiddleware.protect,postController.toggleLandingStatus);
 

@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const session = require("express-session");
 require("dotenv").config();
 const path = require("path");
 const bcrypt = require("bcryptjs");
@@ -20,6 +21,17 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));
+
+// Session configuration for LinkedIn OAuth
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'your-session-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 // WebSocket setup
 const http = require("http");
@@ -73,8 +85,10 @@ const chatRoutes = require("./routes/chat.route");
 app.use("/alumni-portal/chat", chatRoutes);
 
 const reportsRoutes = require("./routes/reports.route");
-app.use("/alumni-portal", reportsRoutes );
+app.use("/alumni-portal", reportsRoutes);
 
+const linkedinAuthRoutes = require("./routes/linkedinAuth.route");
+app.use("/alumni-portal/auth/linkedin", linkedinAuthRoutes);
 
 //  Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
