@@ -1393,7 +1393,10 @@ const getPostWithDetails = async (req, res) => {
 
     // Get comments for this post
     const comments = await Comment.findAll({
-      where: { "post-id": postId },
+        where: { 
+        "post-id": postId,
+        "parent-comment-id": null // Only top-level comments
+      },
       include: [
         {
           model: User,
@@ -1408,6 +1411,39 @@ const getPostWithDetails = async (req, res) => {
       ],
       order: [["created-at", "ASC"]],
     });
+    
+
+    // Get all replies for these comments
+    const commentIds = comments.map(comment => comment.comment_id);
+    const replies = await Comment.findAll({
+      where: { 
+        "post-id": postId,
+        "parent-comment-id": { [Op.in]: commentIds }
+      },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email", "user-type"],
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"],
+            },
+          ],
+        },
+      ],
+      order: [["created-at", "ASC"]],
+    });
+    // Group replies by parent comment
+    const repliesByParent = {};
+    replies.forEach(reply => {
+      const parentId = reply["parent-comment-id"];
+      if (!repliesByParent[parentId]) {
+        repliesByParent[parentId] = [];
+      }
+      repliesByParent[parentId].push(reply);
+    });
+
 
     // Get likes for this post
     const likes = await Like.findAll({
@@ -1439,6 +1475,7 @@ const getPostWithDetails = async (req, res) => {
         "created-at": comment["created-at"],
         time_since: moment(comment["created-at"]).fromNow(), // الوقت منذ إنشاء الكومنت
         edited: comment.edited,
+        "parent-comment-id": comment["parent-comment-id"],
         author: {
           id: comment.User.id,
           "full-name": `${comment.User["first-name"]} ${comment.User["last-name"]}`,
@@ -1448,6 +1485,18 @@ const getPostWithDetails = async (req, res) => {
               ? comment.User.Graduate["profile-picture-url"]
               : null,
         },
+          replies: repliesByParent[comment.comment_id] ? repliesByParent[comment.comment_id].map((reply) => ({
+          comment_id: reply.comment_id,
+          content: reply.content,
+          "created-at": reply["created-at"],
+          edited: reply.edited,
+          "parent-comment-id": reply["parent-comment-id"],
+          author: {
+            id: reply.User.id,
+            "full-name": `${reply.User["first-name"]} ${reply.User["last-name"]}`,
+            email: reply.User.email,
+          },
+        })) : [],
       })),
       likes: likes.map((like) => ({
         like_id: like.like_id,
