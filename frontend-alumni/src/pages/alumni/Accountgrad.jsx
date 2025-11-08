@@ -51,21 +51,21 @@ function Accountgrad() {
   if (!formData) return <p>{t("noProfile")}</p>;
 
   return (
-    <div className="profile-page">
-  <div className="profille-card">
+    <div className="profiile-page">
+  <div className="profiile-card">
     <div className="profile-header">
       <img
         src={formData.profilePicture || PROFILE}
         alt={formData.fullName || "User"}
-        className="profille-img"
+        className="profiile-img"
       />
-      <div className="profille-name">
+      <div className="profiile-name">
         <h2>{formData.fullName || t("noName")}</h2>
-        <p className="profille-title">{formData.currentJob || t("noJob")}</p>
+        <p className="profiile-title">{formData.currentJob || t("noJob")}</p>
       </div>
     </div>
 
-    <div className="profille-details">
+    <div className="profiile-details">
   <p><strong>{t("faculty")}:</strong> {formData.faculty || t("noFaculty")}</p>
   <p><strong>{t("graduationYear")}:</strong> {formData.graduationYear || t("noYear")}</p>
   <p><strong>{t("currentJob")}:</strong> {formData.currentJob || t("noJob")}</p>
