@@ -26,6 +26,7 @@ const StaffManagement = () => {
         setLoading(true);
         setError(null);
         const res = await API.get("/staff"); 
+        console.log("Staff API response:", res.data.data);
         setUsers(res.data.data);
       } catch (err) {
         console.error("Failed to fetch staff data:", err);
