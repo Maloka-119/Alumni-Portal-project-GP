@@ -33,7 +33,7 @@ router.get("/user-posts", postController.getAllPostsOfUsers);
 
 // جلب تصنيفات البوستات
 router.get("/categories", postController.getCategories);
-
+router.get("/landing", postController.getLandingPosts);
 router.get("/admin", postController.getAdminPosts);
 
 // Get user's own posts (any authenticated user)
@@ -105,5 +105,8 @@ router.put(
   authMiddleware.protect,
   postController.unhidePost
 );
+
+router.patch("/:postId/landing", authMiddleware.protect,postController.toggleLandingStatus);
+
 
 module.exports = router;
