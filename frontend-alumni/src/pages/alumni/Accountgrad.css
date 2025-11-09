@@ -11,21 +11,21 @@
 }
 
 .profiile-card {
-  width: 85%;
-  background: #ffffff;
+  width: 80%;
+  background: transparent;
   border-radius: 16px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   padding: 25px;
   display: flex;
   flex-direction: column;
   gap: 20px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  /* transition: transform 0.2s, box-shadow 0.2s; */
 }
 
-.profiile-card:hover {
+/* .profiile-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
-}
+} */
 
 .profile-header {
   display: flex;
@@ -109,9 +109,9 @@
   transition: background 0.3s, color 0.3s, box-shadow 0.3s;
 }
 
-.dark .profiile-card:hover {
+/* .dark .profiile-card:hover {
   box-shadow: 0 12px 25px rgba(0,0,0,0.6);
-}
+} */
 
 .dark .profile-header {
   border-bottom: 1px solid #374151;
