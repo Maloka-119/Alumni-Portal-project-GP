@@ -346,6 +346,23 @@
     border-bottom: 2px solid #fff;
     transform: rotate(45deg);
   }
+  /* Add checkbox - purple */
+  .permissions-table td:nth-child(5) input[type="checkbox"]:checked {
+    background: linear-gradient(135deg, #d8b4fe, #c084fc);
+    border-color: #c084fc;
+  }
+.permissions-table td:nth-child(5) input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 5px;
+  width: 4px;
+  height: 8px;
+  border-right: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(45deg);
+}
+
   
   /* Table polish */
   .permissions-table th {
