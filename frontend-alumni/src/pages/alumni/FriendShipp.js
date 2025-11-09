@@ -294,6 +294,7 @@ import API from "../../services/api";
 import PROFILE from "./PROFILE.jpeg";
 import "./FriendShip.css";
 import { MessageCircle } from "lucide-react";
+import ChatBox from "./ChatBox";
 
 function FriendshipPage() {
   const { t, i18n } = useTranslation();
@@ -309,10 +310,15 @@ function FriendshipPage() {
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [loadingSuggestions, setLoadingSuggestions] = useState(true);
 
+  const [activeChatFriend, setActiveChatFriend] = useState(null);
+  const [chatId, setChatId] = useState(null);
+
+  // ضبط اتجاه النص حسب اللغة
   useEffect(() => {
     document.body.dir = i18n.language === "ar" ? "rtl" : "ltr";
   }, [i18n.language]);
 
+  // -------------------- Fetch Functions --------------------
   const fetchFriends = async () => {
     try {
       setLoadingFriends(true);
@@ -339,7 +345,7 @@ function FriendshipPage() {
         id: f.senderId,              // صححت الـ id عشان profile API
         senderId: f.senderId,
         userName: f.fullName || "No Name",
-        image: f.profilePicture || PROFILE
+        image: f.profilePicture || PROFILE,
       }));
       setFriendRequests(mapped);
     } catch (err) {
@@ -357,7 +363,7 @@ function FriendshipPage() {
         id: f.graduate_id,           // صححت الـ id عشان profile API
         userName: f.fullName || "No Name",
         image: f["profile-picture-url"] || PROFILE,
-        added: false
+        added: false,
       }));
       setSuggestions(mapped);
     } catch (err) {
@@ -373,6 +379,7 @@ function FriendshipPage() {
     fetchSuggestions();
   }, []);
 
+  // -------------------- Friend Actions --------------------
   const confirmFriend = async (senderId) => {
     try {
       await API.put(`/friendships/confirm/${senderId}`);
@@ -383,7 +390,7 @@ function FriendshipPage() {
     }
   };
 
-  const UnfriendFriend = async (friendId) => {
+  const unfriendFriend = async (friendId) => {
     try {
       await API.delete(`/friendships/friends/${friendId}`);
       setFriends(prev => prev.filter(f => f.friendId !== friendId));
@@ -422,10 +429,53 @@ function FriendshipPage() {
     setSuggestions(prev => prev.filter(f => f.id !== id));
   };
 
+  // -------------------- Chat Functions --------------------
+  const openChat = async (friend) => {
+    console.log("Friend Object Received:", friend);
+  
+    // تأكدي من وجود ID صالح
+    const receiverId = friend.friendId || friend.id;
+    console.log("Receiver ID to send:", receiverId);
+  
+    if (!receiverId) {
+      console.error("❌ Friend ID is missing. Cannot open chat.", friend);
+      return;
+    }
+  
+    try {
+      // قبل الإرسال، تأكدي من الـ token
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("❌ No auth token found in localStorage");
+        return;
+      }
+  
+      // عمل POST للـ conversation
+      const res = await API.post("/chat/conversation", { otherUserId: receiverId });
+  
+      console.log("✅ Open Chat Response:", res.data);
+  
+      if (res.data && res.data.data && res.data.data.chat_id) {
+        setChatId(res.data.data.chat_id);
+        setActiveChatFriend(friend);
+      } else {
+        console.warn("⚠️ Response received but chat_id missing", res.data);
+      }
+    } catch (err) {
+      console.error("❌ Open Chat Error:", err.response?.data || err.message || err);
+    }
+  };
+  
+  const closeChat = () => {
+    setActiveChatFriend(null);
+    setChatId(null);
+  };
+
   const filteredSuggestions = suggestions.filter(f =>
     f.userName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // -------------------- Render Tabs --------------------
   const renderContent = () => {
     switch (currentTab) {
       case "friends":
@@ -434,14 +484,13 @@ function FriendshipPage() {
             <h2 className="Title">
               {t("friendsList")} <span className="req-count">({friends.length})</span>
             </h2>
-
             {loadingFriends ? (
               <p>{t("loadingFriends")}</p>
             ) : friends.length === 0 ? (
               <p>{t("noFriends")}</p>
             ) : (
-              friends.map(f => (
-                <div className="user" key={f.id}>
+              friends.map((f, index) => (
+                <div className="user" key={`${f.id}-${index}`}>
                   <div className="friend-info">
                     <img className="imgreq" src={f.image} alt={f.userName} />
                     <span
@@ -453,12 +502,12 @@ function FriendshipPage() {
                     </span>
                   </div>
                   <div className="friend-actions">
-                    <button className="chat-icon-btn">
+                    <button className="chat-icon-btn" onClick={() => openChat(f)}>
                       <MessageCircle size={18} />
                     </button>
                     <button
                       className="Removebutton"
-                      onClick={() => UnfriendFriend(f.friendId)}
+                      onClick={() => unfriendFriend(f.friendId)}
                     >
                       {t("Unfriend")}
                     </button>
@@ -475,14 +524,13 @@ function FriendshipPage() {
             <h2 className="Title">
               {t("friendRequests")} <span className="req-count">({friendRequests.length})</span>
             </h2>
-
             {loadingRequests ? (
               <p>{t("loadingRequests")}</p>
             ) : friendRequests.length === 0 ? (
               <p>{t("noRequests")}</p>
             ) : (
-              friendRequests.map(f => (
-                <div className="user" key={f.id}>
+              friendRequests.map((f, index) => (
+                <div className="user" key={`${f.id}-${index}`}>
                   <div className="friend-info">
                     <img className="imgreq" src={f.image} alt={f.userName} />
                     <span
@@ -497,10 +545,11 @@ function FriendshipPage() {
                     <button className="button" onClick={() => confirmFriend(f.senderId)}>
                       {t("confirm")}
                     </button>
-                    <button className="button" onClick={() => removeRequest(f.senderId)} style={{
-                            backgroundColor: 'red',
-                            color: 'white',
-                          }} >
+                    <button
+                      className="button"
+                      onClick={() => removeRequest(f.senderId)}
+                      style={{ backgroundColor: "red", color: "white" }}
+                    >
                       {t("remove")}
                     </button>
                   </div>
@@ -527,8 +576,8 @@ function FriendshipPage() {
             ) : filteredSuggestions.length === 0 ? (
               <p>{t("noSuggestionsFound")}</p>
             ) : (
-              filteredSuggestions.map(f => (
-                <div className="user" key={f.id}>
+              filteredSuggestions.map((f, index) => (
+                <div className="user" key={`${f.id}-${index}`}>
                   <div className="friend-info">
                     <img className="imgreq" src={f.image} alt={f.userName} />
                     <span
@@ -545,11 +594,11 @@ function FriendshipPage() {
                         <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
                           {t("add")}
                         </button>
-                        <button className="button" onClick={() => removeSuggestion(f.id)}                          
-                          style={{
-                            backgroundColor: 'red',
-                            color: 'white',
-                          }} >
+                        <button
+                          className="button"
+                          onClick={() => removeSuggestion(f.id)}
+                          style={{ backgroundColor: "red", color: "white" }}
+                        >
                           {t("remove")}
                         </button>
                       </>
@@ -594,6 +643,10 @@ function FriendshipPage() {
       </div>
 
       <div className="content-area">{renderContent()}</div>
+
+      {activeChatFriend && (
+        <ChatBox chatId={chatId} activeChatFriend={activeChatFriend} onClose={closeChat} />
+      )}
     </div>
   );
 }

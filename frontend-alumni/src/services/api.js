@@ -1,9 +1,9 @@
-// services/api.js
 import axios from "axios";
 
 const API = axios.create({
   baseURL: "http://localhost:5005/alumni-portal",
 });
+
 // Interceptor to attach token automatically
 API.interceptors.request.use(
   (config) => {
@@ -13,9 +13,7 @@ API.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default API;
