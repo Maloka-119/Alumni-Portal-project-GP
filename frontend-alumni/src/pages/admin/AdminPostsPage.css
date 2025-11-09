@@ -579,7 +579,7 @@ html {
   .landing-tooltip-container .landing-tooltip {
     visibility: hidden;
     width: max-content;
-    background-color: #8b5cf6;
+    background-color: #333;
     color: #fff;
     text-align: center;
     padding: 4px 8px;
