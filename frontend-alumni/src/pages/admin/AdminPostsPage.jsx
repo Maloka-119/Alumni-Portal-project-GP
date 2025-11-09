@@ -237,29 +237,17 @@ const handleDelete = async (id) => {
     }
   }, [success, error]);
 
-  const handleLandingToggle = async (postId, currentValue) => {
-    try {
-      const res = await API.put(`/posts/${postId}/landing`, { inLanding: !currentValue });
-      if (res.data.status === "success") {
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, inLanding: !currentValue } : p));
-        Swal.fire({
-          icon: "success",
-          title: "Updated",
-          text: `Post ${!currentValue ? "added to" : "removed from"} landing`,
-          toast: true,
-          position: "top-end",
-          timer: 1800,
-          showConfirmButton: false,
-          background: "#fefefe",
-          color: "#333",
-        });
-      }
-    } catch (err) {
-      console.error("Error updating landing status", err);
+const handleLandingToggle = async (postId, currentValue) => {
+  try {
+    const res = await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
+    if (res.data.status === "success") {
+      setPosts(prev => prev.map(p => 
+        p.id === postId ? { ...p, "in-landing": !currentValue } : p
+      ));
       Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "Failed to update landing status",
+        icon: "success",
+        title: "Updated",
+        text: `Post ${!currentValue ? "added to" : "removed from"} landing`,
         toast: true,
         position: "top-end",
         timer: 1800,
@@ -268,7 +256,21 @@ const handleDelete = async (id) => {
         color: "#333",
       });
     }
-  };
+  } catch (err) {
+    console.error("Error updating landing status", err);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: "Failed to update landing status",
+      toast: true,
+      position: "top-end",
+      timer: 1800,
+      showConfirmButton: false,
+      background: "#fefefe",
+      color: "#333",
+    });
+  }
+};
 
 
   const filteredPosts = filterType === 'All'
