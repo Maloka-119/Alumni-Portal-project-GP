@@ -253,25 +253,25 @@ const UsersPostsPage = () => {
               </button>
               
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-  <div className="landing-tooltip-container">
-    <button
-      onClick={() => handleLandingToggle(post.id, post.inLanding)}
-      className="landing-btn"
-    >
-      {post.inLanding ? (
-        <CheckCircle size={20} color="#4CAF50" />
-      ) : (
-        <Circle size={20} color="#ccc" />
-      )}
-    </button>
-    <span className="landing-tooltip">
-      {post.inLanding ? "Remove from Landing Page" : "Add to Landing Page"}
-    </span>
+            {post.category === "Success story" && (
+  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+    <div className="landing-tooltip-container">
+      <button
+        onClick={() => handleLandingToggle(post.id, post.inLanding)}
+        className="landing-btn"
+      >
+        {post.inLanding ? (
+          <CheckCircle size={20} color="#4CAF50" />
+        ) : (
+          <Circle size={20} color="#ccc" />
+        )}
+      </button>
+      <span className="landing-tooltip">
+        {post.inLanding ? "Remove from Landing Page" : "Add to Landing Page"}
+      </span>
+    </div>
   </div>
-</div>
-
-
+)}
             {post.showComments && (
               <div className="comments-section">
                 <div className="existing-comments">
