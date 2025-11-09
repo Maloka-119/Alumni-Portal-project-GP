@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import API from "../../services/api";
 import CreatePostBar from '../../components/CreatePostBar'; 
 import Swal from "sweetalert2";
+import { CheckCircle, Circle } from 'lucide-react';
 
 const AdminPostsPage = () => {
   const { t } = useTranslation();
@@ -23,7 +24,6 @@ const AdminPostsPage = () => {
     fetchCategories();
   }, []);
 
-  // ====================== Format Posts بنفس منطق الصفحة الثانية ======================
   const formatPosts = (data) => {
     const filtered = (data || []).filter(p => !p['group-id']);
     
@@ -40,7 +40,7 @@ const AdminPostsPage = () => {
         id: post.post_id,
         content: post.content,
         likes: post.likes_count || 0,
-        liked: false, // دائماً false في البداية - بنفس منطق الصفحة الثانية
+        liked: false, 
         comments: formattedComments,
         date: new Date(post['created-at']).toLocaleString('en-US', {
           year: 'numeric',
@@ -54,7 +54,7 @@ const AdminPostsPage = () => {
         shares: 0,
         type: post.category,
         images: post.images || [],
-        showComments: false, // إضافة showComments بنفس منطق الصفحة الثانية
+        showComments: false, 
         author: {
           photo: AdminPostsImg
         }
@@ -143,8 +143,6 @@ const handleDelete = async (id) => {
     }
   }
 };
-
-  // ====================== Likes - نفس منطق الصفحة الثانية ======================
   const handleLike = async (postId) => {
     const postIndex = posts.findIndex(p => p.id === postId);
     if (postIndex === -1) return;
@@ -152,10 +150,8 @@ const handleDelete = async (id) => {
     try {
       const post = posts[postIndex];
       
-      // حاول عمل unlike أولاً (الأكثر احتمالاً)
       try {
         await API.delete(`/posts/${postId}/like`);
-        // إذا نجح الـ unlike، هذا معناه أن البوست كان معجب بيه
         const updatedPosts = [...posts];
         updatedPosts[postIndex] = {
           ...post,
@@ -166,7 +162,6 @@ const handleDelete = async (id) => {
         console.log("Successfully unliked post:", postId);
         
       } catch (unlikeError) {
-        // إذا فشل الـ unlike، جرب like
         if (unlikeError.response?.data?.message?.includes('not found')) {
           await API.post(`/posts/${postId}/like`);
           const updatedPosts = [...posts];
@@ -185,12 +180,9 @@ const handleDelete = async (id) => {
     } catch (err) {
       console.error("Error in handleLike:", err.response?.data || err);
       
-      // في حالة أي خطأ، أعد جلب البيانات من السيرفر
       await fetchPosts();
     }
   };
-
-  // ====================== Comments - نفس منطق الصفحة الثانية ======================
   const toggleComments = (postId) => {
     setPosts(prevPosts => prevPosts.map(p => 
       p.id === postId ? { ...p, showComments: !p.showComments } : p
@@ -209,8 +201,6 @@ const handleDelete = async (id) => {
       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
   
       console.log("Comment response from backend:", res.data);
-  
-      // ✅ ضيف الكومينت الجديد مباشرة في الـ state
       setPosts(prevPosts =>
         prevPosts.map(p =>
           p.id === postId
@@ -222,7 +212,7 @@ const handleDelete = async (id) => {
                     id: res.data.comment.comment_id,
                     userName: res.data.comment.author?.["full-name"] || "Admin",
                     content: res.data.comment.content,
-                    avatar: res.data.comment.author?.image || AdminPostsImg, // ⬅️ التصحيح هنا
+                    avatar: res.data.comment.author?.image || AdminPostsImg, 
                     date: new Date().toLocaleString(),
                     "created-at": res.data.comment["created-at"]
                   }
@@ -231,16 +221,12 @@ const handleDelete = async (id) => {
             : p
         )
       );
-  
-      // ✅ امسح حقل الكتابة بعد الإرسال
       setCommentInputs({ ...commentInputs, [postId]: '' });
   
     } catch (err) {
       console.error("Error submitting comment:", err);
     }
   };
-
-  // ✅ الرسائل تختفي بعد ثانيتين
   useEffect(() => {
     if (success || error) {
       const timer = setTimeout(() => {
@@ -250,6 +236,40 @@ const handleDelete = async (id) => {
       return () => clearTimeout(timer);
     }
   }, [success, error]);
+
+  const handleLandingToggle = async (postId, currentValue) => {
+    try {
+      const res = await API.put(`/posts/${postId}/landing`, { inLanding: !currentValue });
+      if (res.data.status === "success") {
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, inLanding: !currentValue } : p));
+        Swal.fire({
+          icon: "success",
+          title: "Updated",
+          text: `Post ${!currentValue ? "added to" : "removed from"} landing`,
+          toast: true,
+          position: "top-end",
+          timer: 1800,
+          showConfirmButton: false,
+          background: "#fefefe",
+          color: "#333",
+        });
+      }
+    } catch (err) {
+      console.error("Error updating landing status", err);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to update landing status",
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false,
+        background: "#fefefe",
+        color: "#333",
+      });
+    }
+  };
+
 
   const filteredPosts = filterType === 'All'
     ? posts
@@ -319,7 +339,7 @@ const handleDelete = async (id) => {
                     )}
                   </div>
 
-                  {/* Post Actions - بنفس تصميم الصفحة الثانية */}
+                  {/* Post Actions */}
                   <div className="post-actions">
                     <button 
                       className={post.liked ? "liked" : ""}
@@ -342,6 +362,23 @@ const handleDelete = async (id) => {
                     <button onClick={() => handleDelete(post.id)} className="delete-btn">
                       <Trash2 size={16} />
                     </button>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+  <div className="landing-tooltip-container">
+    <button
+      onClick={() => handleLandingToggle(post.id, post.inLanding)}
+      className="landing-btn"
+    >
+      {post.inLanding ? (
+        <CheckCircle size={20} color="#4CAF50" />
+      ) : (
+        <Circle size={20} color="#ccc" />
+      )}
+    </button>
+    <span className="landing-tooltip">
+      {post.inLanding ? "Remove from Landing Page" : "Add to Landing Page"}
+    </span>
+  </div>
+</div>
                   </div>
 
                   {/* Comments Section - تظهر فقط عندما showComments = true */}
