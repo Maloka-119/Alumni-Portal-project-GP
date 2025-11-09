@@ -71,21 +71,24 @@ const UsersPostsPage = () => {
 
   const handleLandingToggle = async (postId, currentValue) => {
     try {
-      const res = await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
-      if (res.data.status === "success") {
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, inLanding: !currentValue } : p));
-        Swal.fire({
-          icon: "success",
-          title: "Updated",
-          text: `Post ${!currentValue ? "added to" : "removed from"} landing`,
-          toast: true,
-          position: "top-end",
-          timer: 1800,
-          showConfirmButton: false,
-          background: "#fefefe",
-          color: "#333",
-        });
-      }
+      await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
+  
+      // تحديث الـ state فورًا بناءً على القيمة الجديدة
+      setPosts(prev => prev.map(p => 
+        p.id === postId ? { ...p, inLanding: !currentValue } : p
+      ));
+  
+      Swal.fire({
+        icon: "success",
+        title: "Updated",
+        text: `Post ${!currentValue ? "added to" : "removed from"} landing`,
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false,
+        background: "#fefefe",
+        color: "#333",
+      });
     } catch (err) {
       console.error("Error updating landing status", err);
       Swal.fire({
@@ -101,6 +104,7 @@ const UsersPostsPage = () => {
       });
     }
   };
+  
 
   const handleHide = async (id) => {
     if (!id) return;
