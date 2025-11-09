@@ -1839,6 +1839,108 @@ const getCommentReplies = async (req, res) => {
   }
 };
 
+
+// set & delete in landong
+const toggleLandingStatus = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { inLanding } = req.body; // true or false
+    const adminId = req.user.id;
+
+    // جلب بيانات الأدمن للتأكد إنه عنده الصلاحية
+    const admin = await User.findByPk(adminId);
+    if (!admin || (admin["user-type"] !== "admin" && admin["user-type"] !== "staff")) {
+      return res.status(403).json({ message: "Access denied. Admins only." });
+    }
+
+    // جلب البوست
+    const post = await Post.findByPk(postId);
+    if (!post) return res.status(404).json({ message: "Post not found" });
+
+    // جلب صاحب البوست
+    const author = await User.findByPk(post["author-id"]);
+    if (!author) return res.status(404).json({ message: "Author not found" });
+
+    // شرط لو الكاتب خريج
+    if (author["user-type"] === "graduate" && post.category !== "Success story" && inLanding === true) {
+      return res.status(400).json({
+        message: "Only 'Success story' posts by graduates can appear on the landing page.",
+      });
+    }
+
+    // تحديث الحالة
+    post["in-landing"] = inLanding;
+    await post.save();
+
+    res.status(200).json({
+      message: `Post landing status updated successfully.`,
+      data: post,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+// landing posts
+const getLandingPosts = async (req, res) => {
+  try {
+    // جلب جميع البوستات في اللاندينج وغير مخفية
+    const posts = await Post.findAll({
+      where: {
+        "in-landing": true,
+        "is-hidden": false,
+      },
+      order: [["created-at", "DESC"]],
+    });
+
+    // جلب بيانات كل مؤلف (author) لكل بوست
+    const postsWithDetails = await Promise.all(
+      posts.map(async (post) => {
+        const author = await User.findByPk(post["author-id"], {
+          include: [
+            {
+              model: Graduate,
+              attributes: ["profile-picture-url"],
+            },
+          ],
+        });
+
+        return {
+          post_id: post.post_id,
+          category: post.category,
+          content: post.content,
+          "created-at": post["created-at"],
+          author: {
+            id: author.id,
+            "full-name": `${author["first-name"]} ${author["last-name"]}`,
+            email: author.email,
+            image: author.Graduate ? author.Graduate["profile-picture-url"] : null,
+          },
+          "group-id": post["group-id"],
+          "in-landing": post["in-landing"],
+          "is-hidden": post["is-hidden"],
+        };
+      })
+    );
+
+    res.status(200).json({
+      status: "success",
+      message: "Landing page posts fetched successfully",
+      data: postsWithDetails,
+    });
+  } catch (error) {
+    console.error("Error fetching landing posts:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Server error while fetching landing posts",
+      error,
+    });
+  }
+};
+
+
+
 module.exports = {
   createPost,
   getAllPosts,
@@ -1861,5 +1963,7 @@ module.exports = {
   addReply,
   editReply,
   deleteReply,
-  getCommentReplies
+  getCommentReplies,
+  toggleLandingStatus,
+  getLandingPosts
 };
