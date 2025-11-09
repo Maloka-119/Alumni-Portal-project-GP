@@ -565,4 +565,37 @@ html {
     transform: scale(1.1);
   }
   
+  .landing-tooltip-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .landing-tooltip-container .landing-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+  }
+  
+  .landing-tooltip-container .landing-tooltip {
+    visibility: hidden;
+    width: max-content;
+    background-color: #8b5cf6;
+    color: #fff;
+    text-align: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    position: absolute;
+    bottom: 120%; 
+    right: 0;
+    z-index: 1;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    white-space: nowrap;
+  }
+  
+  .landing-tooltip-container:hover .landing-tooltip {
+    visibility: visible;
+    opacity: 1;
+  }
   
