@@ -1,0 +1,237 @@
+/* ================= Chat Overlay ================= */
+.chat-overlay {
+  position: fixed;
+  right: 20px; /* الشات ثابت دايمًا على اليمين */
+  bottom: 20px;
+  width: 360px;
+  height: 500px;
+  display: flex;
+  flex-direction: column;
+  background: #fefefe;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  font-family: Arial, sans-serif;
+  z-index: 999;
+}
+
+/* ================= اتجاه الرسائل حسب اللغة ================= */
+.chat-overlay[dir="ltr"] .chat-message.me {
+  align-self: flex-start;
+  text-align: left;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 15px;
+}
+
+.chat-overlay[dir="ltr"] .chat-message.friend {
+  align-self: flex-end;
+  text-align: right;
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 15px;
+}
+
+/* Header */
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #007bff;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* Messages container */
+.chat-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #f0f0f0;
+}
+
+/* Scrollbar */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.2);
+  border-radius: 3px;
+}
+
+/* Each message bubble */
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+  padding: 8px 12px;
+  border-radius: 15px;
+  position: relative;
+  word-wrap: break-word;
+}
+
+/* Message from me */
+.chat-message.me {
+  align-self: flex-end;
+  background-color: #c6e3f8;
+  text-align: right;
+  border-bottom-right-radius: 0;
+}
+
+/* Message from friend */
+.chat-message.friend {
+  align-self: flex-start;
+  background-color: #fff;
+  text-align: left;
+  border-bottom-left-radius: 0;
+}
+
+/* Reply inside message */
+.reply-box {
+  background: rgba(0,0,0,0.05);
+  padding: 4px 8px;
+  margin-bottom: 4px;
+  border-left: 3px solid #007bff;
+  font-size: 0.85rem;
+  border-radius: 8px;
+}
+
+/* Message time and status */
+.message-time {
+  font-size: 0.7rem;
+  color: #666;
+  margin-top: 4px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+/* Edited label */
+.edited-label {
+  font-size: 0.65rem;
+  color: #999;
+}
+
+/* Actions (edit, delete, reply) */
+.message-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+}
+
+/* Deleted message */
+.deleted-message {
+  font-style: italic;
+  color: #999;
+}
+
+/* Reply preview at bottom */
+.reply-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: #f1f1f1;
+  border-left: 4px solid #007bff;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+}
+.cancel-reply {
+  cursor: pointer;
+}
+
+/* ================= Input Area ================= */
+.chat-input {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 8px;
+  border-top: 1px solid #ddd;
+  background-color: #f9f9f9;
+  position: relative;
+}
+
+.chat-input input[type="text"] {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 20px;
+  border: 1px solid #ccc;
+  outline: none;
+}
+
+/* Send / Paperclip button */
+.blue-icon {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.blue-icon:hover {
+  background-color: #0056b3;
+  transform: scale(1.1);
+}
+
+/* File selected state */
+.blue-icon.file-selected {
+  transform: scale(1.2);
+  background-color: #3399ff;
+}
+
+/* ================= File Preview ================= */
+.file-preview {
+  display: flex;
+  align-items: center;
+  background-color: #e9ecef;
+  padding: 4px 8px;
+  border-radius: 8px;
+  margin-bottom: 5px;
+  gap: 5px;
+}
+
+.file-preview img.preview-img {
+  width: 30px;
+  height: 30px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.file-preview button {
+  background: none;
+  border: none;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* ================= Edit Message ================= */
+.edit-message-box {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  outline: none;
+}

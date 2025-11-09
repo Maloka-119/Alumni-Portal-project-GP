@@ -1,158 +1,126 @@
-.chatlist-container {
-  background: linear-gradient(to right, #1e3a8a, #64748b);
-  height: 100vh;
-  padding: 20px;
-  color: #f8fafc;
+/* Chat Header */
+.chat-header {
   display: flex;
-  flex-direction: column;
+  justify-content: space-between; /* الاسم على اليسار وزر الإغلاق على اليمين */
+  align-items: center;
+  background-color: #007bff; /* لون أزرق */
+  color: #fff;
+  padding: 10px 15px;
+  font-weight: bold;
+  height: 50px;
+  flex-shrink: 0;
+  border-bottom: 1px solid #0056b3; /* خط تحت الهيدر */
+  border-radius: 8px 8px 0 0; /* حواف مدورة من فوق */
 }
 
-.title {
-  font-size: 22px;
-  font-weight: 600;
-  margin-bottom: 20px;
-  color: #f8fafc;
+.chat-header span {
+  font-size: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* إذا الاسم طويل يظهر ... */
+  text-align: left; /* الاسم على اليسار في LTR */
 }
 
-.chat-item {
+.chat-header button {
+  background: transparent;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  padding: 4px;
   display: flex;
   align-items: center;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 12px;
+  justify-content: center;
+  transition: transform 0.2s;
+}
+
+.chat-header button:hover {
+  transform: scale(1.2); /* تأثير تكبير صغير عند المرور */
+}
+
+.chat-header button:active {
+  transform: scale(1); /* العودة للحجم الطبيعي عند الضغط */
+}
+
+/* Chat List Items */
+.chat-item {
+  padding: 15px 12px;
   cursor: pointer;
-  transition: background 0.3s ease, transform 0.1s ease;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.2s;
+  position: relative;
 }
 
 .chat-item:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.02);
+  background-color: #e6f0ff;
+}
+
+.chat-item.selected {
+  background-color: #d0e0ff;
+}
+
+.chat-user-info {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  position: relative;
 }
 
 .chat-avatar {
-  width: 50px;
-  height: 50px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  object-fit: cover;
-  margin-right: 12px;
-  border: 2px solid #facc15;
+  margin-right: 10px;
+  display: none; /* شيلنا الصورة عموماً */
 }
 
-.chat-info {
+.chat-text {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start; /* الاسم فوق */
+  align-items: flex-start; /* الاسم على اليسار */
+  overflow: hidden;
 }
 
-.chat-top {
+.chat-text strong {
+  font-size: 20px;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: left; /* الاسم على اليسار */
+}
+
+.chat-text small {
+  font-size: 18px;
+  color: #666;
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-.chat-name {
-  font-weight: 600;
-  font-size: 16px;
-  color: #f8fafc;
-}
-
-.chat-time {
-  font-size: 12px;
-  color: #cbd5e1;
-}
-
-.chat-bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 5px;
-}
-
-.chat-preview {
-  font-size: 14px;
-  color: #e2e8f0;
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  max-width: 230px;
+  margin-top: 3px; /* مسافة بين الاسم و آخر رسالة */
 }
 
-.unread-badge {
-  background: #22c55e;
-  color: white;
-  border-radius: 50%;
-  padding: 5px 9px;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.chatlist-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 15px;
-  margin-bottom: 12px;
-}
-
-.chatlist-header svg {
+.chat-time {
+  margin-left: 10px;
+  color: #999;
+  font-size: 11px;
   flex-shrink: 0;
 }
 
-.chatlist-header h2 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-/* ========== Dark Mode ========== */
-.dark .chatlist-container {
-  background: linear-gradient(to right, #0f172a, #1e293b);
-  color: #f1f5f9;
-}
-
-.dark .title {
-  color: #f8fafc;
-}
-
-.dark .chat-item {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.dark .chat-item:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.dark .chat-avatar {
-  border: 2px solid #facc15;
-}
-
-.dark .chat-name {
-  color: #f9fafb;
-}
-
-.dark .chat-time {
-  color: #94a3b8;
-}
-
-.dark .chat-preview {
-  color: #cbd5e1;
-}
-
-.dark .unread-badge {
-  background: #4b6454;
+.unread-count {
+  background-color: #3b82f6;
   color: white;
-}
-
-.dark .chatlist-header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.dark .chatlist-header svg {
-  color: #facc15;
-}
-
-.dark .chatlist-header h2 {
-  color: #f8fafc;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 12px;
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
 }
