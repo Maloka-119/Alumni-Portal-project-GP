@@ -5,6 +5,8 @@ import './AlumniAdminPosts.css';
 import API from "../../services/api";
 import PROFILE from './PROFILE.jpeg';
 import PostCard from '../../components/PostCard'; 
+import Swal from 'sweetalert2';
+
 
 const PostsAlumni = () => {
   const { t } = useTranslation();
@@ -184,13 +186,34 @@ const PostsAlumni = () => {
               <div className="uni-category-select">
                 <label>{t('category')}:</label>
                 <select
-                  value={newPost.category}
-                  onChange={(e) => setNewPost({ ...newPost, category: e.target.value })}
-                >
-                  <option value="General">General</option>
-                  <option value="Internship">Internship</option>
-                  <option value="Success story">Success story</option>
-                </select>
+  value={newPost.category}
+  onChange={(e) => {
+    const selected = e.target.value;
+    setNewPost({ ...newPost, category: selected });
+
+    if (selected === "Success story") {
+      Swal.fire({
+        icon: "info",
+        title: "Public Post",
+        html: `
+          <div style="text-align: left;">
+            <p>Success story posts can be featured publicly on the main page.</p>
+<p>يمكن للبوستات التي تصنف كقصة نجاح أن تظهر بشكل عام على الصفحة الرئيسية.</p>
+
+          </div>
+        `,
+        confirmButtonText: "OK",
+        background: "#fefefe",
+        color: "#333",
+      });
+    }
+  }}
+>
+  <option value="General">General</option>
+  <option value="Internship">Internship</option>
+  <option value="Success story">Success story</option>
+</select>
+
               </div>
               <div className="uni-optional-icons">
                 <label title={t('addImage')}>
