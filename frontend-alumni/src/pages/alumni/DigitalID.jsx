@@ -9,7 +9,9 @@ function DigitalID() {
   const { t } = useTranslation();
   const cardRef = useRef(null);
   const [user, setUser] = useState(null);
+  const [imgSrc, setImgSrc] = useState(PROFILE); // الصورة النهائية للعرض والتحميل
 
+  // ------------------ جلب بيانات المستخدم ------------------
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -19,18 +21,40 @@ function DigitalID() {
             Authorization: `Bearer ${token}`,
           },
         });
-        // setUser(res.data);
         setUser(res.data.data);
+
+        // لو فيه صورة خارجية، نحولها لـ Base64
+        if (res.data.data.personalPicture) {
+          loadImageAsDataURL(res.data.data.personalPicture).then(setImgSrc);
+        }
       } catch (err) {
         console.error(err);
       }
     };
+
     fetchUser();
   }, []);
 
+  // ------------------ دالة تحويل الصورة لـ Base64 ------------------
+  const loadImageAsDataURL = async (url) => {
+    try {
+      const res = await fetch(url, { mode: "cors" });
+      const blob = await res.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.readAsDataURL(blob);
+      });
+    } catch (err) {
+      console.warn("Failed to load image, using default:", err);
+      return PROFILE; // fallback
+    }
+  };
+
+  // ------------------ تنزيل الكارت كصورة ------------------
   const handleDownload = () => {
     if (!cardRef.current) return;
-    html2canvas(cardRef.current).then((canvas) => {
+    html2canvas(cardRef.current, { useCORS: true }).then((canvas) => {
       const link = document.createElement("a");
       link.download = "GraduateID.png";
       link.href = canvas.toDataURL("image/png");
@@ -38,9 +62,10 @@ function DigitalID() {
     });
   };
 
+  // ------------------ مشاركة الكارت ------------------
   const handleShare = () => {
     if (!cardRef.current) return;
-    html2canvas(cardRef.current).then((canvas) => {
+    html2canvas(cardRef.current, { useCORS: true }).then((canvas) => {
       canvas.toBlob((blob) => {
         const file = new File([blob], "GraduateID.png", { type: "image/png" });
 
@@ -61,7 +86,6 @@ function DigitalID() {
 
   const fullName = user.fullName;
 
-
   return (
     <div>
       <h1 className="uni-header">{t("digitalId_title")}</h1>
@@ -77,7 +101,6 @@ function DigitalID() {
             <p className="p">
               <strong className="strong">{t("digitalId_fullName")}:</strong> {fullName} <br/>
               <strong className="strong">{t("digitalId_faculty")}:</strong> {user.faculty} <br/>
-              {/* <strong className="strong">{t("digitalId_program")}:</strong> {user.program} <br/> */}
               <strong className="strong">{t("digitalId_graduationYear")}:</strong> {user.graduationYear} <br/>
               <strong className="strong">{t("digitalId_graduateID")}:</strong> {user.digitalID} <br/>
               <strong className="strong">{t("digitalId_nationalNumber")}:</strong> {user.nationalNumber}
@@ -86,8 +109,9 @@ function DigitalID() {
 
           <img 
             className="profile-picc"
-            src={user.personalPicture || PROFILE}
+            src={imgSrc} // استخدمنا الـ Base64 أو fallback
             alt="Profile" 
+            crossOrigin="anonymous"
           />
         </div>
       </div>
@@ -105,8 +129,6 @@ function DigitalID() {
 }
 
 export default DigitalID;
-
-
 
 
 // import './DigitalId.css';
