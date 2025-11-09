@@ -1,4 +1,3 @@
-//new code
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import API from "../../services/api";
@@ -22,11 +21,32 @@ function Accountgrad() {
 
         if (res.data.status === "success" && res.data.data) {
           const data = res.data.data;
+
+          // تنسيق المهارات
+          const skills = Array.isArray(data.skills) ? data.skills : JSON.parse(data.skills || "[]");
+
+          // تنسيق البوستات لتتناسب مع PostCard
+          const formattedPosts = (data.posts || []).map((p) => ({
+            ...p,
+            id: p.post_id,
+            content: p.content,
+            category: p.category,
+            date: p["created-at"],
+            author: {
+              id: p.author?.id,
+              name: p.author?.["full-name"],
+              photo: p.author?.image || PROFILE,
+            },
+            likes: p.likes_count || 0,
+            comments: p.comments || [],
+            images: p.images || [],
+            shares: p.shares || 0,
+          }));
+
           setFormData({
             ...data,
-            skills: Array.isArray(data.skills)
-              ? data.skills
-              : JSON.parse(data.skills || "[]"),
+            skills,
+            posts: formattedPosts,
           });
         } else {
           console.log("Profile not found for userId:", userId);
@@ -52,62 +72,55 @@ function Accountgrad() {
 
   return (
     <div className="profiile-page">
-  <div className="profiile-card">
-    <div className="profile-header">
-      <img
-        src={formData.profilePicture || PROFILE}
-        alt={formData.fullName || "User"}
-        className="profiile-img"
-      />
-      <div className="profiile-name">
-        <h2>{formData.fullName || t("noName")}</h2>
-        <p className="profiile-title">{formData.currentJob || t("noJob")}</p>
+      <div className="profiile-card">
+        <div className="profile-header">
+          <img
+            src={formData.profilePicture || PROFILE}
+            alt={formData.fullName || "User"}
+            className="profiile-img"
+          />
+          <div className="profiile-name">
+            <h2>{formData.fullName || t("noName")}</h2>
+            <p className="profiile-title">{formData.currentJob || t("noJob")}</p>
+          </div>
+        </div>
+
+        <div className="profiile-details">
+          <p><strong>{t("faculty")}:</strong> {formData.faculty || t("noFaculty")}</p>
+          <p><strong>{t("graduationYear")}:</strong> {formData.graduationYear || t("noYear")}</p>
+          <p><strong>{t("currentJob")}:</strong> {formData.currentJob || t("noJob")}</p>
+          {formData.showPhone && (
+            <p><strong>{t("phoneNumber")}:</strong> {formData.phoneNumber || t("noPhone")}</p>
+          )}
+          <p><strong>{t("skills")}:</strong> {formData.skills.length > 0 ? formData.skills.join(", ") : t("noSkills")}</p>
+          {formData.showCV && (
+            <p>
+              <strong>{t("cv")}:</strong> {formData.CV ? <a href={formData.CV} download>{t("downloadCv")}</a> : t("noCv")}
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="profile-posts">
+        {/* <h3></h3> */}
+        {formData.posts && formData.posts.length > 0 ? (
+          formData.posts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}  // مررنا الـ object بعد الفورمات
+            />
+          ))
+        ) : (
+          <p>{t("noPostsFound")}</p>
+        )}
       </div>
     </div>
-
-    <div className="profiile-details">
-  <p><strong>{t("faculty")}:</strong> {formData.faculty || t("noFaculty")}</p>
-  <p><strong>{t("graduationYear")}:</strong> {formData.graduationYear || t("noYear")}</p>
-  <p><strong>{t("currentJob")}:</strong> {formData.currentJob || t("noJob")}</p>
-  {formData.showPhone && (
-    <p><strong>{t("phoneNumber")}:</strong> {formData.phoneNumber || t("noPhone")}</p>
-  )}
-  <p><strong>{t("skills")}:</strong> {formData.skills.length > 0 ? formData.skills.join(", ") : t("noSkills")}</p>
-  {formData.showCV && (
-    <p>
-      <strong>{t("cv")}:</strong> {formData.CV ? <a href={formData.CV} download>{t("downloadCv")}</a> : t("noCv")}
-    </p>
-  )}
-</div>
-
-  </div>
-
-  <div className="profile-posts">
-    <h3>{t("posts")}</h3>
-    {formData.posts && formData.posts.length > 0 ? (
-      formData.posts.map((post) => (
-        <PostCard
-          key={post.post_id}
-          postId={post.post_id}
-          content={post.content}
-          category={post.category}
-          createdAt={post["created-at"]}
-          author={post.author}
-          likesCount={post.likes_count}
-          commentsCount={post.comments_count}
-          images={post.images}
-        />
-      ))
-    ) : (
-      <p>{t("noPostsFound")}</p>
-    )}
-  </div>
-</div>
-
   );
 }
 
 export default Accountgrad;
+
+
 
 ////konoz's code
 // import { useState, useEffect } from "react";
