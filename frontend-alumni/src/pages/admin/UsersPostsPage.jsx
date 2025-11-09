@@ -71,7 +71,7 @@ const UsersPostsPage = () => {
 
   const handleLandingToggle = async (postId, currentValue) => {
     try {
-      const res = await API.put(`/posts/${postId}/landing`, { inLanding: !currentValue });
+      const res = await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
       if (res.data.status === "success") {
         setPosts(prev => prev.map(p => p.id === postId ? { ...p, inLanding: !currentValue } : p));
         Swal.fire({
