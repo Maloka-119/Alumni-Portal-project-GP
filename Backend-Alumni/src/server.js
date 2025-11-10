@@ -23,15 +23,17 @@ app.use(helmet());
 app.use(morgan("dev"));
 
 // Session configuration for LinkedIn OAuth
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-session-secret-key',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-session-secret-key",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    },
+  })
+);
 
 // WebSocket setup
 const http = require("http");
@@ -100,52 +102,60 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(errorHandler);
 
 // ==================================================
-//  Clear old permissions and seed new ones
 // ==================================================
-// ==================================================
-//  Reset and seed NEW permissions
-// ==================================================
-// ==================================================
-//  Reset and seed NEW permissions (IDs start from 1)
+//  Reset and seed NEW permissions (Updated List)
 // ==================================================
 const ensurePermissionsSeeded = async () => {
   const newPermissions = [
-    "Roles and Permissions Management",
-    "Staff Management",
-    "Graduates Management",
-    "Graduates Join Requests Management",
-    "Communities Management",
-    "Posts Management",
-    "Consultations Management",
-    "Document Requests Management",
-    "Reports Management",
-    "FAQs Management",
+    "Graduate management",
+    "Others Requests management",
+    "Staff management",
+    "Communities management",
+    "Community Post's management",
+    "Community Members management",
+    "Portal posts management",
+    "Graduates posts management",
+    "Portal Reports",
+    "Document Requests management",
+    "Consultation management",
+    "FAQ management",
   ];
 
   try {
-    const count = await Permission.count();
+    // 🧠 1. احسب عدد الموجود في الداتابيز
+    const existingPermissions = await Permission.findAll();
+    const existingNames = existingPermissions.map((p) => p.name);
 
-    if (count > 0) {
-      console.log("✅ Permissions already exist. Skipping seeding...");
-      return; // متعملش أي تعديل لو البيانات موجودة
+    // 🔍 2. شيّك إذا كان كل الأسماء الجديدة موجودة فعلاً
+    const missingPermissions = newPermissions.filter(
+      (name) => !existingNames.includes(name)
+    );
+
+    // ✅ 3. لو كلهم موجودين → متعملش أي حاجة
+    if (existingPermissions.length > 0 && missingPermissions.length === 0) {
+      console.log("✅ All permissions already exist. Skipping seeding...");
+      return;
     }
 
-    console.log("🆕 Permissions table empty — Seeding now...");
-
-    // Reset the auto-increment IDs only once (أول مرة فقط)
+    // ⚠️ 4. لو الجدول فاضي أو فيه نقص → امسح القديم واعمل Reset
+    console.log("🧹 Resetting and reseeding permissions...");
+    await Permission.destroy({ where: {} });
     await sequelize.query('ALTER SEQUENCE "Permission_id_seq" RESTART WITH 1;');
 
+    // 🆕 5. أضف القائمة الجديدة
     for (const permName of newPermissions) {
       await Permission.create({
         name: permName,
         "can-view": false,
         "can-edit": false,
         "can-delete": false,
+        "can-add": false, // ✅ العمود الجديد
       });
+
       console.log(`✅ Added permission: ${permName}`);
     }
 
-    console.log("🎯 Permissions seeded successfully.");
+    console.log("🎯 Permissions reset and seeded successfully!");
   } catch (error) {
     console.error("❌ Error during permission seeding:", error);
   }
@@ -154,64 +164,71 @@ const ensurePermissionsSeeded = async () => {
 // ==================================================
 // ✅ Sync Database and Seed Default Admin + Permissions
 // ==================================================
-sequelize.sync({ alter: true }).then(async () => {
-  console.log("Database synced successfully with alter true.");
+sequelize
+  .sync({ alter: true })
+  .then(async () => {
+    console.log("Database synced successfully with alter true.");
 
-  const existingAdmin = await User.findByPk(1);
-  if (!existingAdmin) {
-    const hashedPassword = await bcrypt.hash("admin123", 10);
+    const existingAdmin = await User.findByPk(1);
+    if (!existingAdmin) {
+      const hashedPassword = await bcrypt.hash("admin123", 10);
 
-    await User.create({
-      id: 1,
-      email: "alumniportalhelwan@gmail.com",
-      "hashed-password": hashedPassword,
-      "user-type": "admin",
-      "first-name": "Alumni Portal -",
-      "last-name": " Helwan University",
-    });
+      await User.create({
+        id: 1,
+        email: "alumniportalhelwan@gmail.com",
+        "hashed-password": hashedPassword,
+        "user-type": "admin",
+        "first-name": "Alumni Portal -",
+        "last-name": " Helwan University",
+      });
 
-    console.log(
-      "Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123"
-    );
+      console.log(
+        "Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123"
+      );
 
-    await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
-    console.log("User sequence reset to start from ID=2");
-  }
-
-  await ensurePermissionsSeeded();
-}).catch(async (err) => {
-  // Handle ENUM creation errors gracefully
-  if (err.name === 'SequelizeUniqueConstraintError' && 
-      (err.message && err.message.includes('enum_User_auth_provider') ||
-       err.fields && err.fields.typname === 'enum_User_auth_provider')) {
-    console.log("⚠️  ENUM type already exists, continuing with seeding...");
-    
-    // Continue with admin creation and permissions seeding
-    try {
-      const existingAdmin = await User.findByPk(1);
-      if (!existingAdmin) {
-        const hashedPassword = await bcrypt.hash("admin123", 10);
-        await User.create({
-          id: 1,
-          email: "alumniportalhelwan@gmail.com",
-          "hashed-password": hashedPassword,
-          "user-type": "admin",
-          "first-name": "Alumni Portal -",
-          "last-name": " Helwan University",
-        });
-        console.log("Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123");
-        await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
-        console.log("User sequence reset to start from ID=2");
-      }
-      await ensurePermissionsSeeded();
-    } catch (seedErr) {
-      console.error("❌ Error during seeding:", seedErr);
+      await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
+      console.log("User sequence reset to start from ID=2");
     }
-  } else {
-    console.error("❌ Error syncing database:", err);
-    process.exit(1);
-  }
-});
+
+    await ensurePermissionsSeeded();
+  })
+  .catch(async (err) => {
+    // Handle ENUM creation errors gracefully
+    if (
+      err.name === "SequelizeUniqueConstraintError" &&
+      ((err.message && err.message.includes("enum_User_auth_provider")) ||
+        (err.fields && err.fields.typname === "enum_User_auth_provider"))
+    ) {
+      console.log("⚠️  ENUM type already exists, continuing with seeding...");
+
+      // Continue with admin creation and permissions seeding
+      try {
+        const existingAdmin = await User.findByPk(1);
+        if (!existingAdmin) {
+          const hashedPassword = await bcrypt.hash("admin123", 10);
+          await User.create({
+            id: 1,
+            email: "alumniportalhelwan@gmail.com",
+            "hashed-password": hashedPassword,
+            "user-type": "admin",
+            "first-name": "Alumni Portal -",
+            "last-name": " Helwan University",
+          });
+          console.log(
+            "Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123"
+          );
+          await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
+          console.log("User sequence reset to start from ID=2");
+        }
+        await ensurePermissionsSeeded();
+      } catch (seedErr) {
+        console.error("❌ Error during seeding:", seedErr);
+      }
+    } else {
+      console.error("❌ Error syncing database:", err);
+      process.exit(1);
+    }
+  });
 
 // ==================================================
 // ✅ Start Server
