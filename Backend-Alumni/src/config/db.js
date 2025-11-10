@@ -17,10 +17,7 @@ sequelize
   .then(() => console.log("Database connected successfully"))
   .catch((err) => console.error("Error connecting to database:", err));
 
-// مزامنة الجداول
-sequelize
-  .sync({ alter: true })
-  .then(() => console.log("All models synchronized with database"))
-  .catch((err) => console.error("Error syncing database:", err));
+// Note: Database sync is handled in server.js to avoid duplicate sync calls
+// and to have better error handling for constraint and ENUM errors
 
 module.exports = sequelize;

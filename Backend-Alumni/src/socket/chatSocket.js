@@ -640,6 +640,50 @@ class ChatSocketServer {
   async getModerationStats() {
     return await this.moderationService.getReportStats();
   }
+
+  // Emit post like event to all connected users
+  emitPostLike(postId, userId, userInfo, likesCount) {
+    this.io.emit('post_liked', {
+      postId: postId,
+      userId: userId,
+      user: userInfo,
+      likesCount: likesCount,
+      timestamp: new Date()
+    });
+  }
+
+  // Emit post unlike event to all connected users
+  emitPostUnlike(postId, userId, likesCount) {
+    this.io.emit('post_unliked', {
+      postId: postId,
+      userId: userId,
+      likesCount: likesCount,
+      timestamp: new Date()
+    });
+  }
+
+  // Emit comment like event (if comments have likes in the future)
+  emitCommentLike(postId, commentId, userId, userInfo, likesCount) {
+    this.io.emit('comment_liked', {
+      postId: postId,
+      commentId: commentId,
+      userId: userId,
+      user: userInfo,
+      likesCount: likesCount,
+      timestamp: new Date()
+    });
+  }
+
+  // Emit comment unlike event
+  emitCommentUnlike(postId, commentId, userId, likesCount) {
+    this.io.emit('comment_unliked', {
+      postId: postId,
+      commentId: commentId,
+      userId: userId,
+      likesCount: likesCount,
+      timestamp: new Date()
+    });
+  }
 }
 
 module.exports = ChatSocketServer;
