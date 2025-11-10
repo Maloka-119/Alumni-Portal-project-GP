@@ -39,6 +39,9 @@ const server = http.createServer(app);
 const ChatSocketServer = require("./socket/chatSocket");
 const chatSocket = new ChatSocketServer(server);
 
+// Make chatSocket accessible globally for controllers
+global.chatSocket = chatSocket;
+
 //  Test Route
 app.get("/", (req, res) => {
   res.send("API is running...");
@@ -176,6 +179,38 @@ sequelize.sync({ alter: true }).then(async () => {
   }
 
   await ensurePermissionsSeeded();
+}).catch(async (err) => {
+  // Handle ENUM creation errors gracefully
+  if (err.name === 'SequelizeUniqueConstraintError' && 
+      (err.message && err.message.includes('enum_User_auth_provider') ||
+       err.fields && err.fields.typname === 'enum_User_auth_provider')) {
+    console.log("⚠️  ENUM type already exists, continuing with seeding...");
+    
+    // Continue with admin creation and permissions seeding
+    try {
+      const existingAdmin = await User.findByPk(1);
+      if (!existingAdmin) {
+        const hashedPassword = await bcrypt.hash("admin123", 10);
+        await User.create({
+          id: 1,
+          email: "alumniportalhelwan@gmail.com",
+          "hashed-password": hashedPassword,
+          "user-type": "admin",
+          "first-name": "Alumni Portal -",
+          "last-name": " Helwan University",
+        });
+        console.log("Default Admin created: email=alumniportalhelwan@gmail.com, password=admin123");
+        await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
+        console.log("User sequence reset to start from ID=2");
+      }
+      await ensurePermissionsSeeded();
+    } catch (seedErr) {
+      console.error("❌ Error during seeding:", seedErr);
+    }
+  } else {
+    console.error("❌ Error syncing database:", err);
+    process.exit(1);
+  }
 });
 
 // ==================================================

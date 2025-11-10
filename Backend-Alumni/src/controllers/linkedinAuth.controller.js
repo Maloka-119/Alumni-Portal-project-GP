@@ -28,8 +28,11 @@ const getLinkedInAuthUrl = asyncHandler(async (req, res) => {
     // Store state in session or database for security
     req.session.linkedinState = state;
     
-    const scope = 'r_liteprofile r_emailaddress';
-    const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(LINKEDIN_REDIRECT_URI)}&state=${state}&scope=${scope}`;
+    // LinkedIn OAuth 2.0 scopes - Using OpenID Connect
+    // Your LinkedIn app shows these scopes are available: openid, profile, email
+    // These are the new OpenID Connect scopes (legacy r_liteprofile and r_emailaddress are deprecated)
+    const scope = 'openid profile email';
+    const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(LINKEDIN_REDIRECT_URI)}&state=${state}&scope=${encodeURIComponent(scope)}`;
     
     res.status(200).json({
       status: 'success',
@@ -86,24 +89,42 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     
     const { access_token, expires_in } = tokenResponse.data;
     
-    // Fetch user profile from LinkedIn
-    const profileResponse = await axios.get('https://api.linkedin.com/v2/people/~:(id,firstName,lastName,profilePicture(displayImage~:playableStreams),headline,location)', {
+    // Fetch user profile using OpenID Connect userinfo endpoint
+    // This endpoint returns profile information when using openid, profile, email scopes
+    const userInfoResponse = await axios.get('https://api.linkedin.com/v2/userinfo', {
       headers: {
         'Authorization': `Bearer ${access_token}`
       }
     });
     
-    const profile = profileResponse.data;
+    const userInfo = userInfoResponse.data;
     
-    // Fetch email from LinkedIn
-    const emailResponse = await axios.get('https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))', {
-      headers: {
-        'Authorization': `Bearer ${access_token}`
-      }
-    });
+    // Extract data from OpenID Connect response
+    const email = userInfo.email || null;
+    const linkedinId = userInfo.sub || userInfo.id || null;
     
-    const emailData = emailResponse.data;
-    const email = emailData.elements && emailData.elements[0] ? emailData.elements[0]['handle~'].emailAddress : null;
+    // For additional profile info, try the v2 API (may need legacy scopes)
+    let profile = {
+      id: linkedinId,
+      firstName: { localized: { en_US: userInfo.given_name || userInfo.name?.split(' ')[0] || '' } },
+      lastName: { localized: { en_US: userInfo.family_name || userInfo.name?.split(' ').slice(1).join(' ') || '' } },
+      profilePicture: null,
+      headline: null,
+      location: null
+    };
+    
+    // Try to get additional profile details if available
+    try {
+      const profileResponse = await axios.get('https://api.linkedin.com/v2/me', {
+        headers: {
+          'Authorization': `Bearer ${access_token}`
+        }
+      });
+      profile = profileResponse.data;
+    } catch (profileError) {
+      // If v2/me fails, use the userinfo data we have
+      console.log('Using OpenID Connect userinfo data only');
+    }
     
     if (!email) {
       return res.status(400).json({
@@ -119,36 +140,44 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       }
     });
     
+    // Extract profile data (handle both OpenID Connect and v2 API formats)
+    const firstName = profile.firstName?.localized?.en_US || profile.firstName?.localized?.en || userInfo.given_name || userInfo.name?.split(' ')[0] || '';
+    const lastName = profile.lastName?.localized?.en_US || profile.lastName?.localized?.en || userInfo.family_name || userInfo.name?.split(' ').slice(1).join(' ') || '';
+    const profilePictureUrl = profile.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier || userInfo.picture || null;
+    const headline = profile.headline || null;
+    const location = profile.location?.name || null;
+    const linkedinProfileUrl = profile.id ? `https://www.linkedin.com/in/${profile.id}` : null;
+    
     if (user) {
       // Update existing user with LinkedIn data
       await user.update({
-        linkedin_id: profile.id,
+        linkedin_id: linkedinId,
         linkedin_access_token: access_token,
         linkedin_token_expires_at: new Date(Date.now() + expires_in * 1000),
-        profile_picture_url: profile.profilePicture ? profile.profilePicture['displayImage~'].elements[0].identifiers[0].identifier : null,
-        linkedin_profile_url: `https://www.linkedin.com/in/${profile.id}`,
-        linkedin_headline: profile.headline,
-        linkedin_location: profile.location ? profile.location.name : null,
+        profile_picture_url: profilePictureUrl,
+        linkedin_profile_url: linkedinProfileUrl,
+        linkedin_headline: headline,
+        linkedin_location: location,
         auth_provider: 'linkedin',
         is_linkedin_verified: true,
-        'first-name': profile.firstName.localized.en_US || profile.firstName.localized.en,
-        'last-name': profile.lastName.localized.en_US || profile.lastName.localized.en
+        'first-name': firstName,
+        'last-name': lastName
       });
     } else {
       // Create new user
       user = await User.create({
         email: email,
-        linkedin_id: profile.id,
+        linkedin_id: linkedinId,
         linkedin_access_token: access_token,
         linkedin_token_expires_at: new Date(Date.now() + expires_in * 1000),
-        profile_picture_url: profile.profilePicture ? profile.profilePicture['displayImage~'].elements[0].identifiers[0].identifier : null,
-        linkedin_profile_url: `https://www.linkedin.com/in/${profile.id}`,
-        linkedin_headline: profile.headline,
-        linkedin_location: profile.location ? profile.location.name : null,
+        profile_picture_url: profilePictureUrl,
+        linkedin_profile_url: linkedinProfileUrl,
+        linkedin_headline: headline,
+        linkedin_location: location,
         auth_provider: 'linkedin',
         is_linkedin_verified: true,
-        'first-name': profile.firstName.localized.en_US || profile.firstName.localized.en,
-        'last-name': profile.lastName.localized.en_US || profile.lastName.localized.en,
+        'first-name': firstName,
+        'last-name': lastName,
         'user-type': 'graduate', // Default to graduate for LinkedIn users
         'hashed-password': null // No password for LinkedIn users
       });
