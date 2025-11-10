@@ -11,7 +11,7 @@ const getAllPermissions = async (req, res) => {
     console.log(`🔹 Total permissions fetched: ${permissions.length}`);
     permissions.forEach((p) => {
       console.log(
-        `Permission: ${p.name}, can-view: ${p["can-view"]}, can-edit: ${p["can-edit"]}, can-delete: ${p["can-delete"]}`
+        `Permission: ${p.name}, can-view: ${p["can-view"]}, can-edit: ${p["can-edit"]}, can-delete: ${p["can-delete"]}, can-add: ${p["can-add"]}`
       );
     });
 

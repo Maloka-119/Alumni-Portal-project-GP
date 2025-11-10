@@ -11,6 +11,7 @@ const Permission = sequelize.define(
     "can-view": { type: DataTypes.BOOLEAN, defaultValue: false },
     "can-edit": { type: DataTypes.BOOLEAN, defaultValue: false },
     "can-delete": { type: DataTypes.BOOLEAN, defaultValue: false },
+    "can-add": { type: DataTypes.BOOLEAN, defaultValue: false },
   },
   {
     tableName: "Permission",
