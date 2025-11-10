@@ -49,4 +49,6 @@ router.get("/staff-by-role/:roleId", roleController.getStaffByRoleId);
 // PATCH role name
 router.patch("/update-name/:roleId", roleController.updateRoleName);
 
+router.get("/:roleId/available-staff", roleController.getAvailableStaffForRole);
+
 module.exports = router;

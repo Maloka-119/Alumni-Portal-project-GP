@@ -5,6 +5,7 @@ const RolePermission = require("../models/RolePermission");
 const Staff = require("../models/Staff");
 const StaffRole = require("../models/StaffRole");
 const User = require("../models/User");
+const { Op } = require("sequelize");
 
 // 🟢 إنشاء رول جديدة وربطها ببعض البرميشنز
 const createRole = async (req, res) => {
@@ -32,11 +33,13 @@ const createRole = async (req, res) => {
       let canView = matched ? matched["can-view"] : false;
       let canEdit = matched ? matched["can-edit"] : false;
       let canDelete = matched ? matched["can-delete"] : false;
+      let canAdd = matched ? matched["can-add"] : false; // ✅ الحقل الجديد
 
       // 🚫 لو البيرميشن اسمه Reports → نسمح بس بالـ view
       if (perm.name === "Reports") {
         canEdit = false;
         canDelete = false;
+        canAdd = false; // ✅ إضافة الحقل الجديد هنا كمان
       }
 
       return {
@@ -45,6 +48,7 @@ const createRole = async (req, res) => {
         "can-view": canView,
         "can-edit": canEdit,
         "can-delete": canDelete,
+        "can-add": canAdd, // ✅ الحقل الجديد
       };
     });
 
@@ -57,6 +61,7 @@ const createRole = async (req, res) => {
           "can-view": perm["can-view"],
           "can-edit": perm["can-edit"],
           "can-delete": perm["can-delete"],
+          "can-add": perm["can-add"], // ✅ الحقل الجديد
         });
       })
     );
@@ -88,7 +93,9 @@ const getAllRolesWithPermissions = async (req, res) => {
       include: [
         {
           model: Permission,
-          through: { attributes: [] },
+          through: {
+            attributes: ["can-view", "can-edit", "can-delete", "can-add"], // ✅ يرجع كل الحقول
+          },
         },
       ],
     });
@@ -122,14 +129,12 @@ const assignRoleToStaff = async (req, res) => {
     console.log("🟢 Incoming staffId:", staffId, "roles:", roles);
 
     if (!staffId || !roles || !Array.isArray(roles)) {
-      console.warn("❌ staffId or roles array missing!");
       return res.status(400).json({
         status: "error",
         message: "staffId and roles array are required",
       });
     }
 
-    // ✅ تحقق أن الـ Staff موجود
     const staff = await Staff.findByPk(staffId, {
       include: {
         model: User,
@@ -137,69 +142,58 @@ const assignRoleToStaff = async (req, res) => {
       },
     });
     if (!staff) {
-      console.warn("❌ Staff not found:", staffId);
-      return res.status(404).json({
-        status: "error",
-        message: "Staff not found",
-      });
+      return res
+        .status(404)
+        .json({ status: "error", message: "Staff not found" });
     }
-    console.log("🟢 Staff found:", staff.staff_id);
 
-    // ✅ تحقق من وجود الـ Roles
-    const validRoles = await Role.findAll({
-      where: { id: roles },
-      attributes: ["id", "role-name"],
-    });
-    console.log(
-      "🟢 Valid roles fetched:",
-      validRoles.map((r) => r.id)
-    );
+    // جلب الـ Roles الصحيحة
+    const validRoles = await Role.findAll({ where: { id: roles } });
     if (validRoles.length === 0) {
-      return res.status(404).json({
-        status: "error",
-        message: "No valid roles found",
-      });
+      return res
+        .status(404)
+        .json({ status: "error", message: "No valid roles found" });
     }
 
-    // 🟡 جلب الـ Roles الحالية للـ Staff
+    // جلب الـ Roles الحالية للـ Staff
     const existingStaffRoles = await StaffRole.findAll({
       where: { staff_id: staffId },
     });
-    console.log(
-      "🟡 Existing StaffRoles:",
-      existingStaffRoles.map((r) => r.role_id)
-    );
 
-    // 🔗 إنشاء روابط جديدة فقط للـ Roles الغير موجودة مسبقًا
+    // تحديد Roles جديدة فقط
     const rolesToAdd = validRoles.filter(
       (r) => !existingStaffRoles.some((er) => er.role_id === r.id)
-    );
-    console.log(
-      "🔹 Roles to add:",
-      rolesToAdd.map((r) => r.id)
     );
 
     await Promise.all(
       rolesToAdd.map((role) =>
-        StaffRole.create({
-          staff_id: staffId,
-          role_id: role.id,
-        })
+        StaffRole.create({ staff_id: staffId, role_id: role.id })
       )
     );
 
-    // ✅ جلب جميع الـ Roles النهائية للـ Staff بعد التحديث
+    // جلب جميع الـ Roles النهائية للـ Staff مع Permissions
     const updatedStaffRoles = await StaffRole.findAll({
       where: { staff_id: staffId },
-      include: {
-        model: Role,
-        attributes: ["id", "role-name"],
-      },
+      include: [
+        {
+          model: Role,
+          attributes: ["id", "role-name"],
+          include: [
+            {
+              model: Permission,
+              attributes: [
+                "id",
+                "name",
+                "can-view",
+                "can-edit",
+                "can-delete",
+                "can-add",
+              ],
+            },
+          ],
+        },
+      ],
     });
-    console.log(
-      "✅ Updated StaffRoles:",
-      updatedStaffRoles.map((r) => r.Role["role-name"])
-    );
 
     return res.status(200).json({
       status: "success",
@@ -209,7 +203,11 @@ const assignRoleToStaff = async (req, res) => {
         full_name: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
         email: staff.User.email,
         "status-to-login": staff["status-to-login"],
-        roles: updatedStaffRoles.map((r) => r.Role),
+        roles: updatedStaffRoles.map((r) => ({
+          role_id: r.Role.id,
+          role_name: r.Role["role-name"],
+          permissions: r.Role.Permissions || [], // لكل role الصلاحيات بما فيها can-add
+        })),
       },
     });
   } catch (error) {
@@ -329,11 +327,13 @@ const updateRole = async (req, res) => {
       let canView = matched ? matched["can-view"] : false;
       let canEdit = matched ? matched["can-edit"] : false;
       let canDelete = matched ? matched["can-delete"] : false;
+      let canAdd = matched ? matched["can-add"] : false; // ✅ الحقل الجديد
 
       // 🚫 Reports بس لها view فقط
       if (perm.name === "Reports") {
         canEdit = false;
         canDelete = false;
+        canAdd = false; // ✅ إضافة الحقل الجديد هنا كمان
       }
 
       return {
@@ -342,6 +342,7 @@ const updateRole = async (req, res) => {
         "can-view": canView,
         "can-edit": canEdit,
         "can-delete": canDelete,
+        "can-add": canAdd, // ✅ الحقل الجديد
       };
     });
 
@@ -354,6 +355,7 @@ const updateRole = async (req, res) => {
           "can-view": perm["can-view"],
           "can-edit": perm["can-edit"],
           "can-delete": perm["can-delete"],
+          "can-add": perm["can-add"], // ✅ الحقل الجديد
         });
       })
     );
@@ -498,7 +500,7 @@ const getAllRoles = async (req, res) => {
         {
           model: Permission,
           through: {
-            attributes: ["can-view", "can-edit", "can-delete"],
+            attributes: ["can-view", "can-edit", "can-delete", "can-add"], // ✅ أضفنا can-add هنا
           },
         },
       ],
@@ -522,6 +524,7 @@ const getAllRoles = async (req, res) => {
         "can-view": perm.RolePermission["can-view"],
         "can-edit": perm.RolePermission["can-edit"],
         "can-delete": perm.RolePermission["can-delete"],
+        "can-add": perm.RolePermission["can-add"], // ✅ الحقل الجديد
       })),
     }));
 
@@ -584,6 +587,7 @@ const getRoleDetails = async (req, res) => {
       "can-view": rp["can-view"],
       "can-edit": rp["can-edit"],
       "can-delete": rp["can-delete"],
+      "can-add": rp["can-add"], // ✅ الحقل الجديد
     }));
 
     // 🔹 تجهيز الستاف
@@ -716,6 +720,49 @@ const updateRoleName = async (req, res) => {
   }
 };
 
+const getAvailableStaffForRole = async (req, res) => {
+  const { roleId } = req.params;
+
+  try {
+    // 1️⃣ هات الـ staff اللي معاهم الرول ده
+    const assignedStaff = await StaffRole.findAll({
+      where: { role_id: roleId },
+      attributes: ["staff_id"],
+    });
+
+    const assignedStaffIds = assignedStaff.map((sr) => sr.staff_id);
+
+    // 2️⃣ هات الناس اللي مش معاهم الرول ده
+    const availableStaff = await Staff.findAll({
+      where: {
+        staff_id: {
+          [Op.notIn]: assignedStaffIds.length > 0 ? assignedStaffIds : [0],
+        },
+      },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name", "email"],
+        },
+      ],
+    });
+
+    // 3️⃣ رجعهم في الريسبونس
+    res.status(200).json({
+      status: "success",
+      message: "Available staff fetched successfully",
+      data: availableStaff,
+    });
+  } catch (error) {
+    console.error("❌ Error fetching available staff:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch available staff",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createRole,
   getAllRolesWithPermissions,
@@ -728,4 +775,5 @@ module.exports = {
   getRoleDetails,
   getStaffByRoleId,
   updateRoleName,
+  getAvailableStaffForRole,
 };
