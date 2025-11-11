@@ -29,7 +29,11 @@ router.post(
 router.get("/", authMiddleware.protect, postController.getAllPosts);
 
 // جلب كل البوستات الخاصة بالمستخدمين (موجودة في الكود الأول)
-router.get("/user-posts", postController.getAllPostsOfUsers);
+router.get(
+  "/user-posts",
+  authMiddleware.protect,
+  postController.getAllPostsOfUsers
+);
 
 // جلب تصنيفات البوستات
 router.get("/categories", postController.getCategories);
@@ -37,11 +41,7 @@ router.get("/landing", postController.getLandingPosts);
 router.get("/admin", postController.getAdminPosts);
 
 // Get user's own posts (any authenticated user)
-router.get(
-  "/my-posts",
-  authMiddleware.protect,
-  postController.getMyPosts
-);
+router.get("/my-posts", authMiddleware.protect, postController.getMyPosts);
 
 // جلب بوستات الخريجين (موجودة في الكود الأول)
 
@@ -63,7 +63,11 @@ router.put(
 router.get("/:postId", postController.getPostWithDetails);
 
 //get posts in specific group (MUST be after /:postId route to avoid conflict)
-router.get("/group/:groupId", authMiddleware.protect, postController.getGroupPosts);
+router.get(
+  "/group/:groupId",
+  authMiddleware.protect,
+  postController.getGroupPosts
+);
 
 // لايك / إلغاء لايك على بوست
 router.post("/:postId/like", authMiddleware.protect, postController.likePost);
@@ -127,13 +131,12 @@ router.delete(
 );
 
 // Get replies for a comment
-router.get(
-  "/comments/:commentId/replies",
-  postController.getCommentReplies
+router.get("/comments/:commentId/replies", postController.getCommentReplies);
+
+router.patch(
+  "/:postId/landing",
+  authMiddleware.protect,
+  postController.toggleLandingStatus
 );
-
-
-router.patch("/:postId/landing", authMiddleware.protect,postController.toggleLandingStatus);
-
 
 module.exports = router;
