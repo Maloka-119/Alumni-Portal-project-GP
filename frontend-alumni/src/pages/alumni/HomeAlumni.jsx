@@ -29,7 +29,7 @@ const HomeAlumni = () => {
     setError(null);
 
     try {
-      const res = await API.get(`/posts/user-posts?page=${pageNum}&limit=5`);
+      const res = await API.get(`/posts/user-posts?page=${pageNum}&limit=10`);
       const filteredData = res.data.data.filter(post => post['group-id'] == null);
 
       const formatted = filteredData.map(post => {
