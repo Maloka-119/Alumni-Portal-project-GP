@@ -6,6 +6,7 @@ const MessageStatusService = require('../services/messageStatusService');
 const PresenceService = require('../services/presenceService');
 const RateLimitService = require('../services/rateLimitService');
 const ModerationService = require('../services/moderationService');
+const { notifyMessageReceived } = require('../services/notificationService');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
@@ -430,6 +431,9 @@ const sendMessage = asyncHandler(async (req, res) => {
       }
     ]
   });
+
+  // Create notification for the receiver
+  await notifyMessageReceived(receiverId, senderId);
 
   res.status(201).json({
     status: 'success',
@@ -1144,6 +1148,9 @@ const sendImageMessage = asyncHandler(async (req, res) => {
     ]
   });
 
+  // Create notification for the receiver
+  await notifyMessageReceived(receiverId, senderId);
+
   res.status(201).json({
     status: 'success',
     data: messageWithDetails
@@ -1248,6 +1255,9 @@ const sendFileMessage = asyncHandler(async (req, res) => {
       }
     ]
   });
+
+  // Create notification for the receiver
+  await notifyMessageReceived(receiverId, senderId);
 
   res.status(201).json({
     status: 'success',

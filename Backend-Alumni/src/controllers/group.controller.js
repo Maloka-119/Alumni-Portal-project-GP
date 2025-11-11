@@ -7,6 +7,7 @@ const { Op } = require("sequelize");
 const Graduate = require("../models/Graduate");
 const GroupMember = require("../models/GroupMember");
 const Invitation = require("../models/Invitation");
+const { notifyAddedToGroup } = require("../services/notificationService");
 
 // getGraduatesForGroup اللي مسموحلهم تبعتلهم دعوه للجروب دا او معموله دعوه لسه متقبلتش
 //available to invite
@@ -290,6 +291,9 @@ const addUserToGroup = async (req, res) => {
       "user-id": userId,
     });
 
+    // Create notification for the user being added
+    await notifyAddedToGroup(userId, user.id, group["group-name"]);
+
     return res.status(201).json({
       status: "success",
       message: "User added to group successfully",
@@ -513,6 +517,9 @@ const joinGroup = async (req, res) => {
       "group-id": groupId,
       "user-id": userId,
     });
+
+    // Note: When a user joins a group themselves, we don't create a notification
+    // Notifications are only created when an admin adds a user to a group
 
     // احسب عدد الأعضاء بعد الإضافة
     const memberCount = await GroupMember.count({
