@@ -54,7 +54,7 @@ const filteredGraduates = availableGraduates.filter((f) =>
   
   const fetchPosts = async () => {
     try {
-      const res = await API.get(`/posts/${group.id}`);
+      const res = await API.get(`/posts/group/${group.id}`);
       if (res.data.status === "success") {
         setPosts(formatPosts(res.data.data));
       }
