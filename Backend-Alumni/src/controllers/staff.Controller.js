@@ -3,6 +3,8 @@ const Staff = require("../models/Staff");
 const User = require("../models/User");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 const Role = require("../models/Role");
+const Permission = require("../models/Permission");
+const RolePermission = require("../models/RolePermission");
 // get all staff
 const getAllStaff = async (req, res) => {
   try {
@@ -97,7 +99,7 @@ const getStaffProfile = async (req, res) => {
       });
     }
 
-    // Find staff record with user details and roles
+    // Find staff record with user details, roles, and permissions
     const staff = await Staff.findByPk(userId, {
       include: [
         {
@@ -119,6 +121,17 @@ const getStaffProfile = async (req, res) => {
             attributes: [], // Don't include StaffRole attributes
           },
           attributes: ["id", "role-name"],
+          include: [
+            {
+              model: RolePermission,
+              include: [
+                {
+                  model: Permission,
+                  attributes: ["id", "name"],
+                },
+              ],
+            },
+          ],
         },
       ],
     });
@@ -130,7 +143,7 @@ const getStaffProfile = async (req, res) => {
       });
     }
 
-    // Format the response data
+    // Format the response data with roles and permissions
     const profileData = {
       fullName: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
       nationalId: staff.User["national-id"],
@@ -141,8 +154,15 @@ const getStaffProfile = async (req, res) => {
       userType: staff.User["user-type"],
       status: staff["status-to-login"],
       roles: staff.Roles.map(role => ({
-        id: role.id,
-        name: role["role-name"]
+        role_id: role.id,
+        name: role["role-name"],
+        permissions: role.RolePermissions.map(rp => ({
+          name: rp.Permission.name,
+          "can-view": rp["can-view"] || false,
+          "can-edit": rp["can-edit"] || false,
+          "can-delete": rp["can-delete"] || false,
+          "can-add": rp["can-add"] || false,
+        })),
       })),
     };
 
