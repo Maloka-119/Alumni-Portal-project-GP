@@ -88,7 +88,7 @@ const StaffManagement = () => {
 
     try {
       const user = users.find(u => u.staff_id === currentUserId);
-      const currentRoles = user.roles ? user.roles.map(r => r.id) : [];
+      const currentRoles = user.Roles ? user.Roles.map(r => r.id) : [];
 
       const payload = {
         staffId: currentUserId,
@@ -130,25 +130,24 @@ const StaffManagement = () => {
         </select>
 
         <input
-  type="text"
-  placeholder={t("searchByNameOrNationalId")}
-  value={searchTerm}
-  onChange={(e) => setSearchTerm(e.target.value)}
-  style={{
-    marginLeft: '16px',
-    padding: '8px 16px',
-    borderRadius: '12px',
-    border: '1px solid #d1d5db',
-    outline: 'none',
-    fontSize: '14px',
-    width: '250px',
-    transition: 'all 0.2s ease-in-out',
-    backgroundColor: "#f9fafb",
-  }}
-  onFocus={(e) => e.target.style.borderColor = '#1e3a8a'}
-  onBlur={(e) => e.target.style.borderColor = '#ccc'}
-/>
-
+          type="text"
+          placeholder={t("searchByNameOrNationalId")}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            marginLeft: '16px',
+            padding: '8px 16px',
+            borderRadius: '12px',
+            border: '1px solid #d1d5db',
+            outline: 'none',
+            fontSize: '14px',
+            width: '250px',
+            transition: 'all 0.2s ease-in-out',
+            backgroundColor: "#f9fafb",
+          }}
+          onFocus={(e) => e.target.style.borderColor = '#1e3a8a'}
+          onBlur={(e) => e.target.style.borderColor = '#ccc'}
+        />
       </div>
 
       <div className="table-container">
@@ -173,7 +172,11 @@ const StaffManagement = () => {
                   <td>{user.User['first-name']} {user.User['last-name']}</td>
                   <td>{user.User['national-id']}</td>
                   <td>{user['staff_id']}</td>
-                  <td>{user.Role || '-'}</td>
+                  <td>
+                    {user.Roles && user.Roles.length > 0
+                      ? user.Roles.map(role => role['role-name']).join(', ')
+                      : '-'}
+                  </td>
                   <td>
                     <span className={`status-badge ${user['status-to-login'].toLowerCase()}`}>
                       {user['status-to-login']}
@@ -245,6 +248,7 @@ const StaffManagement = () => {
 };
 
 export default StaffManagement;
+
 
 // import React, { useState, useEffect } from 'react';
 // import UserManagement from './UserManagement';
