@@ -5,39 +5,48 @@ const HttpStatusHelper = require("../utils/HttpStatuHelper");
 const Role = require("../models/Role");
 const Permission = require("../models/Permission");
 const RolePermission = require("../models/RolePermission");
-// get all staff
+
+// get all staff with roles
 const getAllStaff = async (req, res) => {
   try {
     const staff = await Staff.findAll({
-      include: {
-        model: User,
-        attributes: [
-          "id",
-          "first-name",
-          "last-name",
-          "national-id",
-          "email",
-          "phone-number",
-          "birth-date",
-          "user-type",
-        ],
-      },
+      include: [
+        {
+          model: User,
+          attributes: [
+            "id",
+            "first-name",
+            "last-name",
+            "national-id",
+            "email",
+            "phone-number",
+            "birth-date",
+            "user-type",
+          ],
+        },
+        {
+          model: Role,
+          attributes: ["role-name"], // نجيب بس اسم الرول
+          through: { attributes: [] }, // نحذف بيانات الجدول الوسيط StaffRole
+        },
+      ],
     });
 
     return res.status(200).json({
       status: "success",
-      message: "All staff fetched successfully",
+      message: "All staff fetched successfully with roles",
       data: staff,
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({
       status: "error",
-      message: "Error fetching staff",
+      message: "Error fetching staff with roles",
       data: [],
     });
   }
 };
+
 
 // suspend/activate staff
 const updateStaffStatus = async (req, res) => {
