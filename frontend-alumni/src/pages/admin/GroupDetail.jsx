@@ -7,7 +7,7 @@ import API from "../../services/api";
 import CreateBar from "../../components/CreatePostBar";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
-
+import communityCover from "./defualtCommunityCover.jpg"
 function GroupDetail({ group, goBack, updateGroup }) {
   const { t } = useTranslation();
   const [selectedGraduates, setSelectedGraduates] = useState([]);
@@ -352,12 +352,12 @@ const handleCommentSubmit = async (postId) => {
             {t("Created at")}: {new Date(group.createdAt).toLocaleString()}
           </div>
         </div>
+<img 
+  src={group.cover || communityCover} 
+  alt={group.name} 
+  className="cover-img" 
+/>
 
-        {group.cover ? (
-          <img src={group.cover} alt={group.name} className="cover-img" />
-        ) : (
-          <div className="cover-placeholder">{t("No Cover Image")}</div>
-        )}
 
         <h1 style={{ color: "#1e3a8a" }}>{group.name}</h1>
 

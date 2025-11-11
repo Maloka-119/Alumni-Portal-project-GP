@@ -6,6 +6,7 @@ import API from "../../services/api";
 import imageCompression from "browser-image-compression";
 import { useTranslation } from "react-i18next";
 import Swal from "sweetalert2";
+import communityCover from "./defualtCommunityCover.jpg"
 function GroupsPage() {
   const { t } = useTranslation();
   const [groups, setGroups] = useState([]);
@@ -288,11 +289,11 @@ const handleDeleteGroup = async (id) => {
       <div className="groups-list">
         {filteredGroups.map((g) => (
           <div className="group-card" key={g.id} style={{ position: "relative" }}>
-            {g.cover ? (
-              <img src={g.cover} alt={g.name} className="cover-img" />
-            ) : (
-              <div style={{ height: "180px", background: "#ddd" }}></div>
-            )}
+        <img
+  src={g.cover || communityCover}
+  alt={g.name}
+  className="cover-img"
+/>
 
             <div className="groverlay">
               <h2>{g.name}</h2>

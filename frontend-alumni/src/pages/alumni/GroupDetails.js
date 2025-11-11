@@ -5,7 +5,7 @@ import API from "../../services/api";
 import PostCard from "../../components/PostCard";
 import PROFILE from "./PROFILE.jpeg";
 import "./GroupDetails.css";
-
+import communityCover from "./defualtCommunityCover.jpg"
 function GroupDetails({ group, goBack }) {
   const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
@@ -159,11 +159,11 @@ const filteredGraduates = availableGraduates.filter((f) =>
           </div>
         </div>
 
-        {group.groupImage || group.cover ? (
-          <img src={group.groupImage || group.cover} alt={group.groupName || group.name} className="cover-img" />
-        ) : (
-          <div className="cover-placeholder">{t("No Cover Image")}</div>
-        )}
+<img
+  src={group.groupImage || group.cover || communityCover}
+  alt={group.groupName || group.name}
+  className="cover-img"
+/>
 
         <h1>{group.groupName || group.name}</h1>
         <p className="group-description">{group.description}</p>
