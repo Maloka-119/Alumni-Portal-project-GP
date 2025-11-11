@@ -28,6 +28,11 @@ const Graduate = sequelize.define(
       type: DataTypes.BOOLEAN,
       defaultValue: true,
     },
+    cv_public_id: {
+  type: DataTypes.STRING,
+  allowNull: true
+}
+,
  "status-to-login": { type: DataTypes.ENUM("accepted", "pending","rejected") },
   },
   {

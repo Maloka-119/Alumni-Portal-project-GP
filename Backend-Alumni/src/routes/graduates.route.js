@@ -9,6 +9,10 @@ router.route("/").get(graduateController.getAllGraduates);
 // Update graduate profile (protected)
 router.put("/profile", protect, uploadFiles, graduateController.updateProfile);
 
+
+// GET CV
+router.get("/:id/cv", graduateController.downloadCv);
+
 // admin يوافق على خريج
 router.put("/approve/:id", protect, graduateController.approveGraduate);
 
