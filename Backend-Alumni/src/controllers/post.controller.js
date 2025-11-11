@@ -7,6 +7,7 @@ const Graduate = require("../models/Graduate");
 const Post = require("../models/Post");
 const PostImage = require("../models/PostImage");
 const Staff = require("../models/Staff");
+const Friendship = require("../models/Friendship");
 const { Op } = require("sequelize");
 const moment = require("moment");
 
@@ -322,17 +323,232 @@ const getGroupPosts = async (req, res) => {
 };
 
 // get all posts
+// const getAllPostsOfUsers = async (req, res) => {
+//   try {
+//     const user = req.user;
+//     const isAdmin = user && user["user-type"] === "admin";
+
+//     // ⬇️⬇️⬇️ أول سطرين تضيفهم - جلب page و limit من query parameters
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     const offset = (page - 1) * limit;
+
+//     const whereCondition = isAdmin ? {} : { "is-hidden": false };
+
+//     const posts = await Post.findAll({
+//       where: whereCondition,
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "first-name", "last-name", "email", "user-type"],
+//           include: [
+//             { model: Graduate, attributes: ["profile-picture-url"] },
+//             { model: Staff, attributes: ["status-to-login"] },
+//           ],
+//         },
+//         {
+//           model: PostImage,
+//           attributes: ["image-url"],
+//         },
+//         {
+//           model: Like,
+//           attributes: ["like_id", "user-id"],
+//           include: [
+//             {
+//               model: User,
+//               attributes: ["id", "first-name", "last-name"],
+//             },
+//           ],
+//         },
+//         {
+//           model: Comment,
+//           attributes: [
+//             "comment_id",
+//             "content",
+//             "created-at",
+//             "edited",
+//             "author-id",
+//           ],
+//           include: [
+//             {
+//               model: User,
+//               attributes: [
+//                 "id",
+//                 "first-name",
+//                 "last-name",
+//                 "email",
+//                 "user-type",
+//               ],
+//               include: [
+//                 {
+//                   model: Graduate,
+//                   as: "Graduate",
+//                   attributes: ["profile-picture-url"],
+//                 },
+//               ],
+//             },
+//           ],
+//           order: [["created-at", "DESC"]],
+//         },
+//       ],
+//       order: [["created-at", "DESC"]],
+//       // ⬇️⬇️⬇️ ثاني سطرين تضيفهم - الـ limit والـ offset
+//       limit: limit,
+//       offset: offset,
+//     });
+
+//     // ⬇️⬇️⬇️ علشان تعرف إذا في المزيد من البيانات أو لا
+//     const totalPosts = await Post.count({ where: whereCondition });
+//     const totalPages = Math.ceil(totalPosts / limit);
+//     const hasMore = page < totalPages;
+
+//     const currentUserId = req.user?.id || null;
+
+//     const responseData = posts.map((post) => {
+//       // Calculate likesCount and isLikedByYou
+//       const likesCount = post.Likes ? post.Likes.length : 0;
+//       const isLikedByYou = currentUserId
+//         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+//         : false;
+
+//       return {
+//         post_id: post.post_id,
+//         category: post.category,
+//         content: post.content,
+//         description: post.description,
+//         "created-at": post["created-at"],
+//         author: {
+//           id: post.User.id,
+//           "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+//           email: post.User.email,
+//           type: post.User["user-type"],
+//           image: post.User.Graduate
+//             ? post.User.Graduate["profile-picture-url"]
+//             : null,
+//         },
+//         "group-id": post["group-id"],
+//         "in-landing": post["in-landing"],
+//         images: post.PostImages
+//           ? post.PostImages.map((img) => img["image-url"])
+//           : [],
+//         "is-hidden": post["is-hidden"],
+//         likesCount: likesCount,
+//         isLikedByYou: isLikedByYou,
+//         likes: post.Likes
+//           ? post.Likes.map((like) => ({
+//               like_id: like.like_id,
+//               user: {
+//                 id: like.User?.id || "unknown",
+//                 "full-name":
+//                   `${like.User?.["first-name"] || ""} ${
+//                     like.User?.["last-name"] || ""
+//                   }`.trim() || "Unknown User",
+//               },
+//             }))
+//           : [],
+//         comments_count: post.Comments ? post.Comments.length : 0,
+//         comments: post.Comments
+//           ? post.Comments.map((comment) => ({
+//               comment_id: comment.comment_id,
+//               content: comment.content,
+//               "created-at": comment["created-at"],
+//               time_since: moment(comment["created-at"]).fromNow(),
+//               edited: comment.edited,
+//               author: {
+//                 id: comment.User?.id || "unknown",
+//                 "full-name":
+//                   `${comment.User?.["first-name"] || ""} ${
+//                     comment.User?.["last-name"] || ""
+//                   }`.trim() || "Unknown User",
+//                 email: comment.User?.email || "unknown",
+//                 image: comment.User?.Graduate
+//                   ? comment.User.Graduate["profile-picture-url"]
+//                   : null,
+//               },
+//             }))
+//           : [],
+//       };
+//     });
+
+//     res.status(200).json({
+//       status: "success",
+//       message: "All posts fetched successfully",
+//       data: responseData,
+//       // ⬇️⬇️⬇️ أضف معلومات الـ pagination في الـ response
+//       pagination: {
+//         currentPage: page,
+//         totalPages: totalPages,
+//         totalPosts: totalPosts,
+//         hasMore: hasMore,
+//         limit: limit,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Error details:", error);
+//     res.status(500).json({
+//       status: "error",
+//       message: "Failed to fetch posts: " + error.message,
+//       data: [],
+//     });
+//   }
+// };
+
 const getAllPostsOfUsers = async (req, res) => {
   try {
     const user = req.user;
     const isAdmin = user && user["user-type"] === "admin";
+    const isStaff = user && user["user-type"] === "staff";
+    const isGraduate = user && user["user-type"] === "graduate";
 
-    // ⬇️⬇️⬇️ أول سطرين تضيفهم - جلب page و limit من query parameters
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
-    const whereCondition = isAdmin ? {} : { "is-hidden": false };
+    let whereCondition = {};
+
+    if (isAdmin) {
+      // الأدمن يشوف كل البوستات
+      whereCondition = {};
+    } else if (isStaff) {
+      // الستاف يشوف البوستات الظاهرة فقط
+      whereCondition = { "is-hidden": false };
+    } else if (isGraduate) {
+      // الخريج يشوف: بوستاته + بوستات أصدقائه + كل بوستات الأدمن
+      const friendships = await Friendship.findAll({
+        where: {
+          [Op.or]: [
+            { sender_id: user.id, status: "accepted" },
+            { receiver_id: user.id, status: "accepted" },
+          ],
+        },
+      });
+
+      const friendIds = friendships.map((friendship) =>
+        friendship.sender_id === user.id
+          ? friendship.receiver_id
+          : friendship.sender_id
+      );
+
+      friendIds.push(user.id);
+
+      // نجيب كل مستخدمين الأدمن
+      const adminUsers = await User.findAll({
+        where: { "user-type": "admin" },
+        attributes: ["id"],
+      });
+
+      const adminIds = adminUsers.map((admin) => admin.id);
+
+      // ندمج IDs الأصدقاء + IDs الأدمن
+      const allAuthorIds = [...friendIds, ...adminIds];
+
+      whereCondition = {
+        "is-hidden": false,
+        "author-id": { [Op.in]: allAuthorIds },
+      };
+    } else {
+      whereCondition = { "is-hidden": false };
+    }
 
     const posts = await Post.findAll({
       where: whereCondition,
@@ -391,12 +607,10 @@ const getAllPostsOfUsers = async (req, res) => {
         },
       ],
       order: [["created-at", "DESC"]],
-      // ⬇️⬇️⬇️ ثاني سطرين تضيفهم - الـ limit والـ offset
       limit: limit,
       offset: offset,
     });
 
-    // ⬇️⬇️⬇️ علشان تعرف إذا في المزيد من البيانات أو لا
     const totalPosts = await Post.count({ where: whereCondition });
     const totalPages = Math.ceil(totalPosts / limit);
     const hasMore = page < totalPages;
@@ -404,7 +618,6 @@ const getAllPostsOfUsers = async (req, res) => {
     const currentUserId = req.user?.id || null;
 
     const responseData = posts.map((post) => {
-      // Calculate likesCount and isLikedByYou
       const likesCount = post.Likes ? post.Likes.length : 0;
       const isLikedByYou = currentUserId
         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
@@ -473,7 +686,6 @@ const getAllPostsOfUsers = async (req, res) => {
       status: "success",
       message: "All posts fetched successfully",
       data: responseData,
-      // ⬇️⬇️⬇️ أضف معلومات الـ pagination في الـ response
       pagination: {
         currentPage: page,
         totalPages: totalPages,
@@ -491,6 +703,7 @@ const getAllPostsOfUsers = async (req, res) => {
     });
   }
 };
+
 //بتجيب كل بوستات الخريجين بس
 const getAllPosts = async (req, res) => {
   try {
@@ -976,9 +1189,8 @@ const getMyPosts = async (req, res) => {
     const responseData = posts.map((post) => {
       // Calculate likesCount and isLikedByYou
       const likesCount = post.Likes ? post.Likes.length : 0;
-      const isLikedByYou = post.Likes?.some(
-        (like) => like["user-id"] === userId
-      ) || false;
+      const isLikedByYou =
+        post.Likes?.some((like) => like["user-id"] === userId) || false;
 
       return {
         post_id: post.post_id,
@@ -1480,9 +1692,9 @@ const getPostWithDetails = async (req, res) => {
 
     // Get comments for this post
     const comments = await Comment.findAll({
-        where: { 
+      where: {
         "post-id": postId,
-        "parent-comment-id": null // Only top-level comments
+        "parent-comment-id": null, // Only top-level comments
       },
       include: [
         {
@@ -1498,14 +1710,13 @@ const getPostWithDetails = async (req, res) => {
       ],
       order: [["created-at", "ASC"]],
     });
-    
 
     // Get all replies for these comments
-    const commentIds = comments.map(comment => comment.comment_id);
+    const commentIds = comments.map((comment) => comment.comment_id);
     const replies = await Comment.findAll({
-      where: { 
+      where: {
         "post-id": postId,
-        "parent-comment-id": { [Op.in]: commentIds }
+        "parent-comment-id": { [Op.in]: commentIds },
       },
       include: [
         {
@@ -1523,14 +1734,13 @@ const getPostWithDetails = async (req, res) => {
     });
     // Group replies by parent comment
     const repliesByParent = {};
-    replies.forEach(reply => {
+    replies.forEach((reply) => {
       const parentId = reply["parent-comment-id"];
       if (!repliesByParent[parentId]) {
         repliesByParent[parentId] = [];
       }
       repliesByParent[parentId].push(reply);
     });
-
 
     // Get likes for this post
     const likes = await Like.findAll({
@@ -1579,18 +1789,20 @@ const getPostWithDetails = async (req, res) => {
               ? comment.User.Graduate["profile-picture-url"]
               : null,
         },
-          replies: repliesByParent[comment.comment_id] ? repliesByParent[comment.comment_id].map((reply) => ({
-          comment_id: reply.comment_id,
-          content: reply.content,
-          "created-at": reply["created-at"],
-          edited: reply.edited,
-          "parent-comment-id": reply["parent-comment-id"],
-          author: {
-            id: reply.User.id,
-            "full-name": `${reply.User["first-name"]} ${reply.User["last-name"]}`,
-            email: reply.User.email,
-          },
-        })) : [],
+        replies: repliesByParent[comment.comment_id]
+          ? repliesByParent[comment.comment_id].map((reply) => ({
+              comment_id: reply.comment_id,
+              content: reply.content,
+              "created-at": reply["created-at"],
+              edited: reply.edited,
+              "parent-comment-id": reply["parent-comment-id"],
+              author: {
+                id: reply.User.id,
+                "full-name": `${reply.User["first-name"]} ${reply.User["last-name"]}`,
+                email: reply.User.email,
+              },
+            }))
+          : [],
       })),
       likes: likes.map((like) => ({
         like_id: like.like_id,
@@ -1983,7 +2195,6 @@ const getCommentReplies = async (req, res) => {
   }
 };
 
-
 // set & delete in landong
 const toggleLandingStatus = async (req, res) => {
   try {
@@ -1993,7 +2204,10 @@ const toggleLandingStatus = async (req, res) => {
 
     // جلب بيانات الأدمن للتأكد إنه عنده الصلاحية
     const admin = await User.findByPk(adminId);
-    if (!admin || (admin["user-type"] !== "admin" && admin["user-type"] !== "staff")) {
+    if (
+      !admin ||
+      (admin["user-type"] !== "admin" && admin["user-type"] !== "staff")
+    ) {
       return res.status(403).json({ message: "Access denied. Admins only." });
     }
 
@@ -2006,9 +2220,14 @@ const toggleLandingStatus = async (req, res) => {
     if (!author) return res.status(404).json({ message: "Author not found" });
 
     // شرط لو الكاتب خريج
-    if (author["user-type"] === "graduate" && post.category !== "Success story" && inLanding === true) {
+    if (
+      author["user-type"] === "graduate" &&
+      post.category !== "Success story" &&
+      inLanding === true
+    ) {
       return res.status(400).json({
-        message: "Only 'Success story' posts by graduates can appear on the landing page.",
+        message:
+          "Only 'Success story' posts by graduates can appear on the landing page.",
       });
     }
 
@@ -2061,7 +2280,8 @@ const getLandingPosts = async (req, res) => {
         // Calculate likesCount and isLikedByYou
         const likesCount = post.Likes ? post.Likes.length : 0;
         const isLikedByYou = currentUserId
-          ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+          ? post.Likes?.some((like) => like["user-id"] === currentUserId) ||
+            false
           : false;
 
         return {
@@ -2073,7 +2293,9 @@ const getLandingPosts = async (req, res) => {
             id: author.id,
             "full-name": `${author["first-name"]} ${author["last-name"]}`,
             email: author.email,
-            image: author.Graduate ? author.Graduate["profile-picture-url"] : null,
+            image: author.Graduate
+              ? author.Graduate["profile-picture-url"]
+              : null,
           },
           "group-id": post["group-id"],
           "in-landing": post["in-landing"],
@@ -2099,8 +2321,6 @@ const getLandingPosts = async (req, res) => {
   }
 };
 
-
-
 module.exports = {
   createPost,
   getAllPosts,
@@ -2125,5 +2345,5 @@ module.exports = {
   deleteReply,
   getCommentReplies,
   toggleLandingStatus,
-  getLandingPosts
+  getLandingPosts,
 };
