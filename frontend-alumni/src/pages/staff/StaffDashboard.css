@@ -246,3 +246,47 @@
         font-size: 18px;
     }
 }
+
+.sidebar-link {
+    display: block;
+  padding: 12px 20px; 
+  margin: 8px 0; 
+  color: #1f2937;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  border: none; 
+  transition: all 0.2s;
+  width: 100%;
+  background-color: transparent;
+  font-size: 0.95rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #1e3a8a;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .sidebar-link:hover {
+    background-color: #e0e7ff;
+  }
+  
+  .sidebar-link.active {
+    background-color: #e5e7eb;
+    border-left: 4px solid #8b5cf6;
+    color: #2c52bb;
+    font-weight: 600;
+  }
+  
+  .child-link {
+    padding-left: 32px;
+    font-size: 14px;
+  }
+  
+  .child-link.active {
+    background-color: #dbeafe;
+    border-left: 4px solid #8b5cf6;
+    color: #2c52bb;
+    font-weight: 600;
+  }
+  

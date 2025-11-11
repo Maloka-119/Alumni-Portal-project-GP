@@ -282,7 +282,7 @@ const AdminPanel = ({ setUser }) => {
           <Route path="permissionsRoles" element={<RolesManagement />} />
           <Route path="adminPosts" element={<AdminPostsPage />} />
           <Route path="usersPosts" element={<UsersPostsPage />} />
-          <Route path="faqManage" element={<FAQManage />} />
+          <Route path="faqManage" element={<FAQManage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
         </Routes>
       </main>
     </div>
