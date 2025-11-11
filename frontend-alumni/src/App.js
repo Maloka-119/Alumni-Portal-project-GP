@@ -9,6 +9,8 @@ import AlumniPortal from './pages/alumni/AlumniPortal';
 import ProtectedRoute from './routes/ProtectedRoute';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import LandingPage from './pages/Landing/LandingPage'
+import { Navigate } from "react-router-dom";
+
 
 function App() {
   const [user, setUser] = useState(null);
@@ -33,6 +35,8 @@ function App() {
       <Router>
         <DarkModeProvider>
           <Routes>
+          {/* إعادة توجيه الصفحة الرئيسية للـ Landing */}
+  <Route path="/" element={<Navigate to="/helwan-alumni-portal" />} />
             {/* صفحات عامة */}
             <Route path="/helwan-alumni-portal" element={<LandingPage />} />
             <Route path="/helwan-alumni-portal/register" element={<Register />} />
