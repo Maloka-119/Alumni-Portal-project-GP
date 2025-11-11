@@ -982,6 +982,8 @@ const getAdminPosts = async (req, res) => {
               },
             }))
           : [],
+             // إضافة حالة اللاندينج
+    "in-landing": post["in-landing"] || false
       };
     });
 

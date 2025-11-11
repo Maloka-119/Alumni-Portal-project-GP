@@ -8,6 +8,10 @@ const Like = require("../models/Like");
 const GroupMember = require("../models/GroupMember");
 const { Op } = require("sequelize");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
+const cloudinary = require("../config/cloudinary");
+const axios = require("axios");
+
+
 
 //get all graduates
 const getAllGraduates = async (req, res) => {
@@ -343,6 +347,7 @@ const getGraduateProfile = async (req, res) => {
   }
 };
 
+//update profile
 const updateProfile = async (req, res) => {
   try {
     const graduate = await Graduate.findByPk(req.user.id, {
@@ -398,10 +403,23 @@ const updateProfile = async (req, res) => {
     }
 
     // 🔹 رفع CV
-    if (req.files?.cv?.[0]) {
-      const cvFile = req.files.cv[0];
-      graduate["cv-url"] = cvFile.path || cvFile.url;
+if (req.files?.cv?.[0]) {
+  const cvFile = req.files.cv[0];
+
+  // حذف القديم لو موجود
+  if (graduate.cv_public_id) {
+    try {
+      await cloudinary.uploader.destroy(graduate.cv_public_id);
+    } catch (deleteErr) {
+      console.warn("Failed to delete old CV:", deleteErr.message);
     }
+  }
+
+  // حفظ الجديد بشكل صحيح من multer-storage-cloudinary
+  graduate["cv-url"] = cvFile.path || cvFile.url; // URL للتحميل
+  graduate.cv_public_id = cvFile.filename || cvFile.public_id; // public_id الصحيح
+}
+
 
     await user.save();
     await graduate.save();
@@ -444,6 +462,56 @@ const updateProfile = async (req, res) => {
     });
   }
 };
+
+//download cv
+
+const downloadCv = async (req, res) => {
+  try {
+    const graduateId = req.params.id;
+    const graduate = await Graduate.findByPk(graduateId);
+
+    if (!graduate || !graduate["cv-url"]) {
+      return res.status(404).json({
+        status: "error",
+        message: "CV not found",
+        data: null,
+      });
+    }
+
+    // توليد signed URL
+    const signedUrl = cloudinary.url(graduate.cv_public_id, {
+      resource_type: "auto",
+      type: "authenticated",
+      sign_url: true,
+    });
+
+    // جلب الملف من Cloudinary
+    const response = await axios.get(signedUrl, { responseType: "stream" });
+console.log("Graduate found:", graduate);
+console.log("cv_public_id:", graduate.cv_public_id);
+console.log("cv-url:", graduate["cv-url"]);
+
+    // إعداد هيدر التحميل
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${graduate["cv-url"].split("/").pop()}"`
+    );
+    res.setHeader("Content-Type", response.headers["content-type"]);
+
+    // إرسال الملف للفرونت إند
+    response.data.pipe(res);
+  } catch (err) {
+    console.error("Error downloading CV:", err);
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      data: null,
+    });
+  }
+};
+
+
+
 
 // Activate / Inactivate Graduate
 const updateGraduateStatus = async (req, res) => {
@@ -818,4 +886,5 @@ module.exports = {
   approveGraduate,
   rejectGraduate,
   getGraduateProfileForUser,
+  downloadCv
 };
