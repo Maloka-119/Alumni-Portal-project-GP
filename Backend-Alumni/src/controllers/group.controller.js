@@ -321,7 +321,7 @@ const editGroup = async (req, res) => {
   try {
     const user = req.user;
     const { groupId } = req.params;
-    const { groupName, description } = req.body;
+    const { groupName, description, removeGroupImage } = req.body;
 
     if (user["user-type"] !== "admin") {
       return res
@@ -338,7 +338,12 @@ const editGroup = async (req, res) => {
     if (groupName) group["group-name"] = groupName;
     if (description) group.description = description;
 
-    // لو اترفع ملف صورة جديدة
+    // مسح صورة الجروب لو مطلوب
+    if (removeGroupImage) {
+      group["group-image"] = null;
+    }
+
+    // رفع صورة جديدة
     if (req.file) {
       const imageUrl = req.file.path || req.file.url || req.file.location;
       group["group-image"] = imageUrl;
