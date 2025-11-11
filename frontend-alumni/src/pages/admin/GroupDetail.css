@@ -117,7 +117,12 @@
     gap: 8px;
     margin: 0 16px 12px 16px;
   }
-  
+  .group-header .header-actions button {
+    flex: 1 1 auto; /* تكيف العرض حسب مساحة الحاوية */
+    min-width: 80px; /* عرض أدنى للأزرار */
+    max-width: 100%; /* لا يتجاوز حاوية الكارد */
+    box-sizing: border-box;
+}
   /* Buttons */
   .group-header button,
   .form-card button,
@@ -529,3 +534,9 @@
 }
 
 
+@media (max-width: 500px) {
+  .group-header .header-actions button {
+      padding: 4px 6px;
+      font-size: 12px;
+  }
+}
