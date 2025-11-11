@@ -81,10 +81,17 @@ function GroupDetail({ group, goBack, updateGroup }) {
   const fetchPosts = async () => {
     try {
       setLoading(true);
+      console.log("Fetching posts for group:", group.id); 
+  
       const res = await API.get(`/posts/${group.id}`);
+      console.log("API response:", res.data); 
+  
       if (res.data.status === "success") {
-        setPosts(formatPosts(res.data.data));
+        const formatted = formatPosts(res.data.data);
+        console.log("Formatted posts:", formatted);
+        setPosts(formatted);
       } else {
+        console.warn("No posts found or API status not success");
         setPosts([]);
       }
     } catch (err) {
@@ -94,6 +101,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
       setLoading(false);
     }
   };
+  
 
   const fetchFilters = () => {
     setColleges([
