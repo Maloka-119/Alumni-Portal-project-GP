@@ -57,7 +57,8 @@ const AdminPostsPage = () => {
         showComments: false, 
         author: {
           photo: AdminPostsImg
-        }
+        },
+         inLanding: post["in-landing"]
       };
     });
   };
@@ -238,12 +239,14 @@ const handleDelete = async (id) => {
   }, [success, error]);
 
 const handleLandingToggle = async (postId, currentValue) => {
+  // تحديث الـ state فورًا
+  setPosts(prev =>
+    prev.map(p => (p.id === postId ? { ...p, inLanding: !currentValue } : p))
+  );
+
   try {
     const res = await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
     if (res.data.status === "success") {
-      setPosts(prev => prev.map(p => 
-        p.id === postId ? { ...p, "in-landing": !currentValue } : p
-      ));
       Swal.fire({
         icon: "success",
         title: "Updated",
@@ -258,6 +261,12 @@ const handleLandingToggle = async (postId, currentValue) => {
     }
   } catch (err) {
     console.error("Error updating landing status", err);
+
+    // لو في خطأ، ارجع الحالة زي ما كانت
+    setPosts(prev =>
+      prev.map(p => (p.id === postId ? { ...p, inLanding: currentValue } : p))
+    );
+
     Swal.fire({
       icon: "error",
       title: "Error",
@@ -271,6 +280,7 @@ const handleLandingToggle = async (postId, currentValue) => {
     });
   }
 };
+
 
 
   const filteredPosts = filterType === 'All'
@@ -367,7 +377,7 @@ const handleLandingToggle = async (postId, currentValue) => {
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
   <div className="landing-tooltip-container">
     <button
-      onClick={() => handleLandingToggle(post.id, post.inLanding)}
+     onClick={() => handleLandingToggle(post.id, post.inLanding)}
       className="landing-btn"
     >
       {post.inLanding ? (
