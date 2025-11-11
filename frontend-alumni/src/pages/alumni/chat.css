@@ -326,3 +326,141 @@
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
+/* ================= Chat Container Dark Mode ================= */
+.dark .chat-container {
+  background: #111827;
+  color: #f9fafb;
+  border-left: 1px solid #374151;
+}
+
+.dark .chat-container h2 {
+  background: linear-gradient(135deg, #2563eb, #1e40af);
+  color: #f9fafb;
+}
+
+.dark .messages-box {
+  background: #1e293b;
+}
+
+.dark .message.sent {
+  background: #2563eb;
+  border: 1px solid #1d4ed8;
+  color: #f9fafb;
+}
+
+.dark .message.received {
+  background: #374151;
+  color: #f9fafb;
+}
+
+.dark .msg-text,
+.dark .reply-text,
+.dark .file-name,
+.dark .file-size {
+  color: #f9fafb;
+}
+
+.dark .reply-line {
+  color: #cbd5e1;
+  border-left: 3px solid #3b82f6;
+}
+
+.dark .reply-line svg {
+  color: #3b82f6;
+}
+
+.dark .chat-media {
+  filter: brightness(0.9);
+}
+
+.dark .file-link {
+  color: #60a5fa;
+}
+
+.dark .file-link:hover {
+  color: #2563eb;
+}
+
+.dark .actions .icon-btn.reply svg {
+  color: #22c55e;
+}
+
+.dark .actions .icon-btn.edit svg {
+  color: #facc15;
+}
+
+.dark .actions .icon-btn.delete svg {
+  color: #ef4444;
+}
+
+.dark .reply-preview {
+  background: #1f2937;
+  border-left: 4px solid #3b82f6;
+  color: #f9fafb;
+}
+
+.dark .file-preview {
+  background: #1f2937;
+  border: 1px solid #374151;
+  color: #f9fafb;
+}
+
+.dark .preview-btn {
+  background: #2563eb;
+  color: #f9fafb;
+}
+
+.dark .preview-btn:hover {
+  background: #1e40af;
+}
+
+.dark .preview-btn.remove {
+  background: #dc2626;
+}
+
+.dark .preview-btn.remove:hover {
+  background: #b91c1c;
+}
+
+.dark .input-box {
+  background: #1e293b;
+  border-top: 1px solid #374151;
+}
+
+.dark .input-box input[type="text"] {
+  background: #111827;
+  border: 1px solid #374151;
+  color: #f9fafb;
+}
+
+.dark .icon-btn.attach svg {
+  color: #22c55e;
+}
+
+.dark .icon-btn.send svg {
+  color: #60a5fa;
+}
+
+.dark .overlay {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.dark .close-overlay {
+  color: #f9fafb;
+}
+
+.dark .messages-box::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark .messages-box::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+
+.dark .messages-box::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
+}
+
+.dark .messages-box {
+  scrollbar-color: #374151 #1e293b;
+}

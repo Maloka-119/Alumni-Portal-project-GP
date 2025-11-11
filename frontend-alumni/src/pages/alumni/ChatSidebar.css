@@ -3,7 +3,7 @@
     position: fixed;
     top: 64px; 
     right: -400px;
-    width: 350px;
+    width: 300px;
     height: calc(100vh - 62px);
     background: #f8fafc;
     box-shadow: -2px 0 8px rgba(0, 0, 0, 0.15);
@@ -119,4 +119,25 @@
   .back-chat:hover {
     background: transparent;
   }
-  
+  .dark .chat-sidebar {
+    background: #1f2937; /* خلفية داكنة */
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.5);
+    color: #f9fafb; /* لون النصوص */
+}
+
+.dark .close-chat, .dark .back-chat {
+    color: #f9fafb; /* أيقونات بيضاء للدارك */
+}
+
+.dark .close-chat:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .back-chat:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* لو عندك أي نصوص داخل الشات */
+.dark .chat-sidebar * {
+    color: #f9fafb;
+}

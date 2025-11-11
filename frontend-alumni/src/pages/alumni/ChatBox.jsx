@@ -318,7 +318,7 @@ export default function ChatBox({
 
   return (
     <div className="chat-overlay" dir={direction}>
-      <div className="chat-header">
+      <div  className="chat-header">
         <span>{activeChatFriend?.name || activeChatFriend?.userName || "Unknown"}</span>
         <button onClick={onClose}><X size={18} /></button>
       </div>
