@@ -4,6 +4,7 @@ import API from "../../services/api";
 import GroupDetails from "../alumni/GroupDetails";
 import "./ExploreGroups.css";
 import Swal from "sweetalert2";
+import communityCover from "./defualtCommunityCover.jpg"
 function ExploreGroups() {
   const { t } = useTranslation();
   const [groups, setGroups] = useState([]);
@@ -102,11 +103,10 @@ function ExploreGroups() {
           const joined = myGroups.some((mg) => mg.id === g.id);
           return (
             <div key={g.id} className="explorer-card">
-              {g.groupImage && (
-                <div className="explorer-card-image">
-                  <img src={g.groupImage} alt={g.groupName} />
-                </div>
-              )}
+            <div className="explorer-card-image">
+  <img src={g.groupImage || communityCover} alt={g.groupName} />
+</div>
+
               <h3 className="explorer-name">{g.groupName}</h3>
               <div className="explorer-card-top">
                 <span className="explorer-badge">

@@ -5,6 +5,7 @@ import "./MyGroups.css";
 import { UserMinus , Eye} from "lucide-react";
 import Swal from "sweetalert2";
 import { useTranslation } from "react-i18next";
+import communityCover from "./defualtCommunityCover.jpg"
 function MyGroups() {
   const [groups, setGroups] = useState([]);
   const { t } = useTranslation();
@@ -78,15 +79,12 @@ return (
           <div key={g.id} className="mycommunity-card">
             {/* صورة الجروب + البادجات + الاسم */}
             <div className="mycommunity-image-wrapper">
-              {g.groupImage ? (
-                <img
-                  src={g.groupImage}
-                  alt={g.groupName}
-                  className="mycommunity-image"
-                />
-              ) : (
-                <div style={{ height: "160px", background: "#ddd" }}></div>
-              )}
+<img
+  src={g.groupImage || communityCover}
+  alt={g.groupName}
+  className="mycommunity-image"
+/>
+
 
               
 
