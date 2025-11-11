@@ -3,13 +3,13 @@
   display: flex;
   justify-content: space-between; /* الاسم على اليسار وزر الإغلاق على اليمين */
   align-items: center;
-  background-color: #007bff; /* لون أزرق */
+  background-color: #1e3a8a; /* لون أزرق */
   color: #fff;
   padding: 10px 15px;
   font-weight: bold;
   height: 50px;
   flex-shrink: 0;
-  border-bottom: 1px solid #0056b3; /* خط تحت الهيدر */
+  border-bottom: 1px solid #60a5fa; /* خط تحت الهيدر */
   border-radius: 8px 8px 0 0; /* حواف مدورة من فوق */
 }
 
@@ -123,4 +123,45 @@
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
+}
+/* Chat Sidebar Dark Mode */
+.dark .chat-header {
+  background-color: #1f2937; /* غامق */
+  color: #f9fafb;
+  border-bottom: 1px solid #374151;
+}
+
+.dark .chat-header button {
+  color: #f9fafb;
+}
+
+.dark .chat-item {
+  border-bottom: 1px solid #374151;
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+.dark .chat-item:hover {
+  background-color: #1e293b;
+}
+
+.dark .chat-item.selected {
+  background-color: #374151;
+}
+
+.dark .chat-text strong {
+  color: #f9fafb;
+}
+
+.dark .chat-text small {
+  color: #d1d5db;
+}
+
+.dark .chat-time {
+  color: #9ca3af;
+}
+
+.dark .unread-count {
+  background-color: #3b82f6;
+  color: #fff;
 }

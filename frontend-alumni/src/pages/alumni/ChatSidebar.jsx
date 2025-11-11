@@ -16,7 +16,7 @@ export default function ChatSidebar({ darkMode, chatOpen, setChatOpen }) {
 
   return (
     <div className={`chat-sidebar ${chatOpen ? "open" : ""}`}>
-      <div className="chat-header">
+      {/* <div className="sidechat-header">
       {selectedChat ? (
           <button onClick={handleBackToList} className="back-chat">
             <ArrowLeft size={18} />
@@ -27,7 +27,7 @@ export default function ChatSidebar({ darkMode, chatOpen, setChatOpen }) {
         </button>
         )}
         
-      </div>
+      </div> */}
 
       {!selectedChat ? (
         <ChatList darkMode={darkMode} onSelectChat={handleSelectChat} />
