@@ -83,7 +83,7 @@ function GroupDetail({ group, goBack, updateGroup }) {
       setLoading(true);
       console.log("Fetching posts for group:", group.id); 
   
-      const res = await API.get(`/posts/${group.id}`);
+      const res = await API.get(`/posts/group/${group.id}`);
       console.log("API response:", res.data); 
   
       if (res.data.status === "success") {
