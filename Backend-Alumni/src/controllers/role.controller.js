@@ -6,6 +6,7 @@ const Staff = require("../models/Staff");
 const StaffRole = require("../models/StaffRole");
 const User = require("../models/User");
 const { Op } = require("sequelize");
+const { notifyRoleUpdate } = require("../services/notificationService");
 
 // 🟢 إنشاء رول جديدة وربطها ببعض البرميشنز
 const createRole = async (req, res) => {
@@ -170,6 +171,11 @@ const assignRoleToStaff = async (req, res) => {
         StaffRole.create({ staff_id: staffId, role_id: role.id })
       )
     );
+
+    // Create notification for the staff member when roles are assigned
+    if (rolesToAdd.length > 0 && req.user) {
+      await notifyRoleUpdate(staffId, req.user.id);
+    }
 
     // جلب جميع الـ Roles النهائية للـ Staff مع Permissions
     const updatedStaffRoles = await StaffRole.findAll({
@@ -359,6 +365,20 @@ const updateRole = async (req, res) => {
         });
       })
     );
+
+    // Notify all staff members who have this role
+    if (req.user) {
+      const staffWithRole = await StaffRole.findAll({
+        where: { role_id: roleId },
+        include: [{ model: Staff, attributes: ['staff_id'] }]
+      });
+
+      await Promise.all(
+        staffWithRole.map(async (staffRole) => {
+          await notifyRoleUpdate(staffRole.staff_id, req.user.id);
+        })
+      );
+    }
 
     // ✅ رجع الريسبونس النهائي
     return res.status(200).json({

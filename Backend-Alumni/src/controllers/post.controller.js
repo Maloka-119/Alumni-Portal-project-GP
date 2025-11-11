@@ -10,6 +10,13 @@ const Staff = require("../models/Staff");
 const Friendship = require("../models/Friendship");
 const { Op } = require("sequelize");
 const moment = require("moment");
+const {
+  notifyPostLiked,
+  notifyPostCommented,
+  notifyCommentReplied,
+  notifyCommentEdited,
+  notifyCommentDeleted
+} = require("../services/notificationService");
 
 // Helper function to calculate likesCount and isLikedByYou for a post
 const getPostLikeInfo = async (postId, userId = null) => {
@@ -1372,6 +1379,11 @@ const likePost = async (req, res) => {
       "user-id": userId,
     });
 
+    // Create notification for post author (if not liking own post)
+    if (post["author-id"] !== userId) {
+      await notifyPostLiked(post["author-id"], userId);
+    }
+
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Post liked successfully",
@@ -1471,6 +1483,11 @@ const addComment = async (req, res) => {
       ],
     });
 
+    // Create notification for post author (if not commenting on own post)
+    if (post["author-id"] !== userId) {
+      await notifyPostCommented(post["author-id"], userId);
+    }
+
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Comment added successfully",
@@ -1537,6 +1554,12 @@ const editComment = async (req, res) => {
     comment.edited = true;
     await comment.save();
 
+    // Get the post to notify the post author
+    const post = await Post.findByPk(comment["post-id"]);
+    if (post && post["author-id"] !== userId) {
+      await notifyCommentEdited(post["author-id"], userId);
+    }
+
     // Fetch updated comment with author details
     const updatedComment = await Comment.findByPk(commentId, {
       include: [
@@ -1596,8 +1619,16 @@ const deleteComment = async (req, res) => {
       });
     }
 
+    // Get the post to notify the post author before deleting
+    const post = await Post.findByPk(comment["post-id"]);
+    
     // Delete the comment
     await comment.destroy();
+
+    // Create notification for post author (if not deleting own comment on own post)
+    if (post && post["author-id"] !== userId) {
+      await notifyCommentDeleted(post["author-id"], userId);
+    }
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -1988,6 +2019,11 @@ const addReply = async (req, res) => {
     await Post.increment("comments-count", {
       where: { post_id: parentComment["post-id"] },
     });
+
+    // Create notification for the parent comment author (if not replying to own comment)
+    if (parentComment["author-id"] !== userId) {
+      await notifyCommentReplied(parentComment["author-id"], userId);
+    }
 
     // Fetch reply with author details
     const replyWithAuthor = await Comment.findByPk(newReply.comment_id, {

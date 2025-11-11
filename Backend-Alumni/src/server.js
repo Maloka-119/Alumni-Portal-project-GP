@@ -95,6 +95,9 @@ app.use("/alumni-portal", reportsRoutes);
 const linkedinAuthRoutes = require("./routes/linkedinAuth.route");
 app.use("/alumni-portal/auth/linkedin", linkedinAuthRoutes);
 
+const notificationRoutes = require("./routes/notification.route");
+app.use("/alumni-portal/notifications", notificationRoutes);
+
 //  Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
@@ -165,9 +168,28 @@ const ensurePermissionsSeeded = async () => {
 // ✅ Sync Database and Seed Default Admin + Permissions
 // ==================================================
 sequelize
-  .sync({ alter: true })
+  .sync({ alter: false }) // Changed to false to prevent auto-alter conflicts
   .then(async () => {
-    console.log("Database synced successfully with alter true.");
+    console.log("Database synced successfully.");
+    
+    // Ensure Notification table has correct structure
+    const Notification = require('./models/Notification');
+    try {
+      // Check if table exists and has correct structure
+      const tableDescription = await sequelize.getQueryInterface().describeTable('Notification');
+      
+      // If table exists but missing new columns, add them
+      if (!tableDescription['receiver-id'] || !tableDescription['sender-id'] || !tableDescription['type'] || !tableDescription['message']) {
+        console.log("⚠️  Notification table structure needs update. Please run the migration or SQL script.");
+      } else {
+        console.log("✅ Notification table structure is correct.");
+      }
+    } catch (error) {
+      // Table doesn't exist, create it
+      console.log("📝 Creating Notification table...");
+      await Notification.sync({ force: false, alter: true });
+      console.log("✅ Notification table created successfully.");
+    }
 
     const existingAdmin = await User.findByPk(1);
     if (!existingAdmin) {

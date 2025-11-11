@@ -2,6 +2,7 @@ const { Op } = require("sequelize");
 const Friendship = require("../models/Friendship");
 const Graduate = require("../models/Graduate");
 const User = require("../models/User");
+const { notifyUserAdded, notifyRequestAccepted } = require("../services/notificationService");
 
 
 //1- View Suggestions
@@ -87,6 +88,9 @@ const sendRequest = async (req, res) => {
       where: { graduate_id: receiverId },
       include: [{ model: User, attributes: ["first-name", "last-name"] }],
     });
+
+    // Create notification for the receiver
+    await notifyUserAdded(receiverId, senderId);
 
     res.json({
       message: "Request sent successfully",
@@ -193,6 +197,9 @@ const confirmRequest = async (req, res) => {
       where: { graduate_id: senderId },
       include: [{ model: User, attributes: ["first-name", "last-name"] }],
     });
+
+    // Create notification for the sender (who sent the original request)
+    await notifyRequestAccepted(senderId, receiverId);
 
     res.json({
       message: "Friend request accepted",
