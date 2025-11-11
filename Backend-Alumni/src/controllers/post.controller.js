@@ -10,6 +10,26 @@ const Staff = require("../models/Staff");
 const { Op } = require("sequelize");
 const moment = require("moment");
 
+// Helper function to calculate likesCount and isLikedByYou for a post
+const getPostLikeInfo = async (postId, userId = null) => {
+  const likesCount = await Like.count({
+    where: { "post-id": postId },
+  });
+
+  let isLikedByYou = false;
+  if (userId) {
+    const userLike = await Like.findOne({
+      where: {
+        "post-id": postId,
+        "user-id": userId,
+      },
+    });
+    isLikedByYou = !!userLike;
+  }
+
+  return { likesCount, isLikedByYou };
+};
+
 const createPost = async (req, res) => {
   console.log("🟢 ----- [createPost] START -----");
 
@@ -166,7 +186,7 @@ const getGroupPosts = async (req, res) => {
         // ⬇️⬇️⬇️ ضيف الـ Likes هنا ⬇️⬇️⬇️
         {
           model: Like,
-          attributes: ["like_id", "author-id"],
+          attributes: ["like_id", "user-id"],
           include: [
             {
               model: User,
@@ -209,6 +229,8 @@ const getGroupPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
+    const currentUserId = req.user?.id || null;
+
     const responseData = posts.map((post) => {
       let image = null;
 
@@ -217,6 +239,12 @@ const getGroupPosts = async (req, res) => {
       } else if (post.User.Staff) {
         image = null; // لو عندك عمود صورة staff ممكن تضيفه هنا
       }
+
+      // Calculate likesCount and isLikedByYou
+      const likesCount = post.Likes ? post.Likes.length : 0;
+      const isLikedByYou = currentUserId
+        ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+        : false;
 
       return {
         post_id: post.post_id,
@@ -239,7 +267,8 @@ const getGroupPosts = async (req, res) => {
           ? post.PostImages.map((img) => img["image-url"])
           : [],
         // ⬇️⬇️⬇️ ضيف الـ likes ⬇️⬇️⬇️
-        likes_count: post.Likes ? post.Likes.length : 0,
+        likesCount: likesCount,
+        isLikedByYou: isLikedByYou,
         likes: post.Likes
           ? post.Likes.map((like) => ({
               like_id: like.like_id,
@@ -322,7 +351,7 @@ const getAllPostsOfUsers = async (req, res) => {
         },
         {
           model: Like,
-          attributes: ["like_id", "author-id"],
+          attributes: ["like_id", "user-id"],
           include: [
             {
               model: User,
@@ -372,62 +401,73 @@ const getAllPostsOfUsers = async (req, res) => {
     const totalPages = Math.ceil(totalPosts / limit);
     const hasMore = page < totalPages;
 
-    const responseData = posts.map((post) => ({
-      post_id: post.post_id,
-      category: post.category,
-      content: post.content,
-      description: post.description,
-      "created-at": post["created-at"],
-      author: {
-        id: post.User.id,
-        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-        email: post.User.email,
-        type: post.User["user-type"],
-        image: post.User.Graduate
-          ? post.User.Graduate["profile-picture-url"]
-          : null,
-      },
-      "group-id": post["group-id"],
-      "in-landing": post["in-landing"],
-      images: post.PostImages
-        ? post.PostImages.map((img) => img["image-url"])
-        : [],
-      "is-hidden": post["is-hidden"],
-      likes_count: post.Likes ? post.Likes.length : 0,
-      likes: post.Likes
-        ? post.Likes.map((like) => ({
-            like_id: like.like_id,
-            user: {
-              id: like.User?.id || "unknown",
-              "full-name":
-                `${like.User?.["first-name"] || ""} ${
-                  like.User?.["last-name"] || ""
-                }`.trim() || "Unknown User",
-            },
-          }))
-        : [],
-      comments_count: post.Comments ? post.Comments.length : 0,
-      comments: post.Comments
-        ? post.Comments.map((comment) => ({
-            comment_id: comment.comment_id,
-            content: comment.content,
-            "created-at": comment["created-at"],
-            time_since: moment(comment["created-at"]).fromNow(),
-            edited: comment.edited,
-            author: {
-              id: comment.User?.id || "unknown",
-              "full-name":
-                `${comment.User?.["first-name"] || ""} ${
-                  comment.User?.["last-name"] || ""
-                }`.trim() || "Unknown User",
-              email: comment.User?.email || "unknown",
-              image: comment.User?.Graduate
-                ? comment.User.Graduate["profile-picture-url"]
-                : null,
-            },
-          }))
-        : [],
-    }));
+    const currentUserId = req.user?.id || null;
+
+    const responseData = posts.map((post) => {
+      // Calculate likesCount and isLikedByYou
+      const likesCount = post.Likes ? post.Likes.length : 0;
+      const isLikedByYou = currentUserId
+        ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+        : false;
+
+      return {
+        post_id: post.post_id,
+        category: post.category,
+        content: post.content,
+        description: post.description,
+        "created-at": post["created-at"],
+        author: {
+          id: post.User.id,
+          "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+          email: post.User.email,
+          type: post.User["user-type"],
+          image: post.User.Graduate
+            ? post.User.Graduate["profile-picture-url"]
+            : null,
+        },
+        "group-id": post["group-id"],
+        "in-landing": post["in-landing"],
+        images: post.PostImages
+          ? post.PostImages.map((img) => img["image-url"])
+          : [],
+        "is-hidden": post["is-hidden"],
+        likesCount: likesCount,
+        isLikedByYou: isLikedByYou,
+        likes: post.Likes
+          ? post.Likes.map((like) => ({
+              like_id: like.like_id,
+              user: {
+                id: like.User?.id || "unknown",
+                "full-name":
+                  `${like.User?.["first-name"] || ""} ${
+                    like.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+              },
+            }))
+          : [],
+        comments_count: post.Comments ? post.Comments.length : 0,
+        comments: post.Comments
+          ? post.Comments.map((comment) => ({
+              comment_id: comment.comment_id,
+              content: comment.content,
+              "created-at": comment["created-at"],
+              time_since: moment(comment["created-at"]).fromNow(),
+              edited: comment.edited,
+              author: {
+                id: comment.User?.id || "unknown",
+                "full-name":
+                  `${comment.User?.["first-name"] || ""} ${
+                    comment.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+                email: comment.User?.email || "unknown",
+                image: comment.User?.Graduate
+                  ? comment.User.Graduate["profile-picture-url"]
+                  : null,
+              },
+            }))
+          : [],
+      };
+    });
 
     res.status(200).json({
       status: "success",
@@ -479,7 +519,7 @@ const getAllPosts = async (req, res) => {
         },
         {
           model: Like,
-          attributes: ["like_id", "author-id"],
+          attributes: ["like_id", "user-id"],
           include: [
             {
               model: User,
@@ -527,61 +567,72 @@ const getAllPosts = async (req, res) => {
       posts.slice(0, 3).map((p) => p["is-hidden"])
     ); // 🔍 نشوف أول 3 قيم من is-hidden
 
-    const responseData = posts.map((post) => ({
-      post_id: post.post_id,
-      category: post.category,
-      content: post.content,
-      description: post.description,
-      "created-at": post["created-at"],
-      author: {
-        id: post.User.id,
-        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-        email: post.User.email,
-        image: post.User.Graduate
-          ? post.User.Graduate["profile-picture-url"]
-          : null,
-      },
-      "group-id": post["group-id"],
-      "in-landing": post["in-landing"],
-      images: post.PostImages
-        ? post.PostImages.map((img) => img["image-url"])
-        : [],
-      "is-hidden": post["is-hidden"],
-      likes_count: post.Likes ? post.Likes.length : 0,
-      likes: post.Likes
-        ? post.Likes.map((like) => ({
-            like_id: like.like_id,
-            user: {
-              id: like.User?.id || "unknown",
-              "full-name":
-                `${like.User?.["first-name"] || ""} ${
-                  like.User?.["last-name"] || ""
-                }`.trim() || "Unknown User",
-            },
-          }))
-        : [],
-      comments_count: post.Comments ? post.Comments.length : 0,
-      comments: post.Comments
-        ? post.Comments.map((comment) => ({
-            comment_id: comment.comment_id,
-            content: comment.content,
-            "created-at": comment["created-at"],
-            time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
-            edited: comment.edited,
-            author: {
-              id: comment.User?.id || "unknown",
-              "full-name":
-                `${comment.User?.["first-name"] || ""} ${
-                  comment.User?.["last-name"] || ""
-                }`.trim() || "Unknown User",
-              email: comment.User?.email || "unknown",
-              image: comment.User?.Graduate
-                ? comment.User.Graduate["profile-picture-url"]
-                : null,
-            },
-          }))
-        : [],
-    }));
+    const currentUserId = req.user?.id || null;
+
+    const responseData = posts.map((post) => {
+      // Calculate likesCount and isLikedByYou
+      const likesCount = post.Likes ? post.Likes.length : 0;
+      const isLikedByYou = currentUserId
+        ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+        : false;
+
+      return {
+        post_id: post.post_id,
+        category: post.category,
+        content: post.content,
+        description: post.description,
+        "created-at": post["created-at"],
+        author: {
+          id: post.User.id,
+          "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+          email: post.User.email,
+          image: post.User.Graduate
+            ? post.User.Graduate["profile-picture-url"]
+            : null,
+        },
+        "group-id": post["group-id"],
+        "in-landing": post["in-landing"],
+        images: post.PostImages
+          ? post.PostImages.map((img) => img["image-url"])
+          : [],
+        "is-hidden": post["is-hidden"],
+        likesCount: likesCount,
+        isLikedByYou: isLikedByYou,
+        likes: post.Likes
+          ? post.Likes.map((like) => ({
+              like_id: like.like_id,
+              user: {
+                id: like.User?.id || "unknown",
+                "full-name":
+                  `${like.User?.["first-name"] || ""} ${
+                    like.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+              },
+            }))
+          : [],
+        comments_count: post.Comments ? post.Comments.length : 0,
+        comments: post.Comments
+          ? post.Comments.map((comment) => ({
+              comment_id: comment.comment_id,
+              content: comment.content,
+              "created-at": comment["created-at"],
+              time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+              edited: comment.edited,
+              author: {
+                id: comment.User?.id || "unknown",
+                "full-name":
+                  `${comment.User?.["first-name"] || ""} ${
+                    comment.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+                email: comment.User?.email || "unknown",
+                image: comment.User?.Graduate
+                  ? comment.User.Graduate["profile-picture-url"]
+                  : null,
+              },
+            }))
+          : [],
+      };
+    });
 
     res.status(200).json({
       status: "success",
@@ -613,7 +664,7 @@ const getAdminPosts = async (req, res) => {
         },
         {
           model: Like,
-          attributes: ["like_id", "author-id"],
+          attributes: ["like_id", "user-id"],
           include: [
             {
               model: User,
@@ -655,60 +706,71 @@ const getAdminPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    const responseData = posts.map((post) => ({
-      post_id: post.post_id,
-      category: post.category,
-      content: post.content,
-      description: post.description,
-      "created-at": post["created-at"],
-      author: {
-        id: post.User?.id || "unknown",
-        "full-name":
-          `${post.User?.["first-name"] || ""} ${
-            post.User?.["last-name"] || ""
-          }`.trim() || "Unknown User",
-        email: post.User?.email || "unknown",
-      },
-      "group-id": post["group-id"],
+    const currentUserId = req.user?.id || null;
 
-      images: post.PostImages
-        ? post.PostImages.map((img) => img["image-url"])
-        : [],
-      likes_count: post.Likes ? post.Likes.length : 0,
-      likes: post.Likes
-        ? post.Likes.map((like) => ({
-            like_id: like.like_id,
-            user: {
-              id: like.User?.id || "unknown",
-              "full-name":
-                `${like.User?.["first-name"] || ""} ${
-                  like.User?.["last-name"] || ""
-                }`.trim() || "Unknown User",
-            },
-          }))
-        : [],
-      comments_count: post.Comments ? post.Comments.length : 0,
-      comments: post.Comments
-        ? post.Comments.map((comment) => ({
-            comment_id: comment.comment_id,
-            content: comment.content,
-            "created-at": comment["created-at"],
-            time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
-            edited: comment.edited,
-            author: {
-              id: comment.User?.id || "unknown",
-              "full-name":
-                `${comment.User?.["first-name"] || ""} ${
-                  comment.User?.["last-name"] || ""
-                }`.trim() || "Unknown User",
-              email: comment.User?.email || "unknown",
-              image: comment.User?.Graduate
-                ? comment.User.Graduate["profile-picture-url"]
-                : null,
-            },
-          }))
-        : [],
-    }));
+    const responseData = posts.map((post) => {
+      // Calculate likesCount and isLikedByYou
+      const likesCount = post.Likes ? post.Likes.length : 0;
+      const isLikedByYou = currentUserId
+        ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+        : false;
+
+      return {
+        post_id: post.post_id,
+        category: post.category,
+        content: post.content,
+        description: post.description,
+        "created-at": post["created-at"],
+        author: {
+          id: post.User?.id || "unknown",
+          "full-name":
+            `${post.User?.["first-name"] || ""} ${
+              post.User?.["last-name"] || ""
+            }`.trim() || "Unknown User",
+          email: post.User?.email || "unknown",
+        },
+        "group-id": post["group-id"],
+
+        images: post.PostImages
+          ? post.PostImages.map((img) => img["image-url"])
+          : [],
+        likesCount: likesCount,
+        isLikedByYou: isLikedByYou,
+        likes: post.Likes
+          ? post.Likes.map((like) => ({
+              like_id: like.like_id,
+              user: {
+                id: like.User?.id || "unknown",
+                "full-name":
+                  `${like.User?.["first-name"] || ""} ${
+                    like.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+              },
+            }))
+          : [],
+        comments_count: post.Comments ? post.Comments.length : 0,
+        comments: post.Comments
+          ? post.Comments.map((comment) => ({
+              comment_id: comment.comment_id,
+              content: comment.content,
+              "created-at": comment["created-at"],
+              time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+              edited: comment.edited,
+              author: {
+                id: comment.User?.id || "unknown",
+                "full-name":
+                  `${comment.User?.["first-name"] || ""} ${
+                    comment.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+                email: comment.User?.email || "unknown",
+                image: comment.User?.Graduate
+                  ? comment.User.Graduate["profile-picture-url"]
+                  : null,
+              },
+            }))
+          : [],
+      };
+    });
 
     res.status(200).json({
       status: "success",
@@ -754,7 +816,7 @@ const getGraduatePosts = async (req, res) => {
         },
         {
           model: Like,
-          attributes: ["like_id", "author-id"],
+          attributes: ["like_id", "user-id"],
           include: [
             {
               model: User,
@@ -796,61 +858,72 @@ const getGraduatePosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    const responseData = posts.map((post) => ({
-      id: post.post_id,
-      category: post.category,
-      content: post.content,
-      description: post.description,
-      "created-at": post["created-at"],
-      author: {
-        id: post.User.id,
-        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-        email: post.User.email,
-        image: post.User.Graduate
-          ? post.User.Graduate["profile-picture-url"]
-          : null,
-      },
-      "group-id": post["group-id"],
-      "in-landing": post["in-landing"],
-      "is-hidden": post["is-hidden"],
-      images: post.PostImages
-        ? post.PostImages.map((img) => img["image-url"])
-        : [],
-      likes_count: post.Likes ? post.Likes.length : 0,
-      likes: post.Likes
-        ? post.Likes.map((like) => ({
-            like_id: like.like_id,
-            user: {
-              id: like.User?.id || "unknown",
-              "full-name":
-                `${like.User?.["first-name"] || ""} ${
-                  like.User?.["last-name"] || ""
-                }`.trim() || "Unknown User",
-            },
-          }))
-        : [],
-      comments_count: post.Comments ? post.Comments.length : 0,
-      comments: post.Comments
-        ? post.Comments.map((comment) => ({
-            comment_id: comment.comment_id,
-            content: comment.content,
-            "created-at": comment["created-at"],
-            time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
-            edited: comment.edited,
-            author: {
-              id: comment.User?.id || "unknown",
-              "full-name":
-                `${comment.User?.["first-name"] || ""} ${
-                  comment.User?.["last-name"] || ""
-                }`.trim() || "Unknown User",
-              email: comment.User?.email || "unknown",
-              image: comment.User?.Graduate
-                ? comment.User.Graduate["profile-picture-url"]
-                : null,
-            },
-          }))
-        : [],
-    }));
+    const currentUserId = req.user?.id || null;
+
+    const responseData = posts.map((post) => {
+      // Calculate likesCount and isLikedByYou
+      const likesCount = post.Likes ? post.Likes.length : 0;
+      const isLikedByYou = currentUserId
+        ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+        : false;
+
+      return {
+        id: post.post_id,
+        category: post.category,
+        content: post.content,
+        description: post.description,
+        "created-at": post["created-at"],
+        author: {
+          id: post.User.id,
+          "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+          email: post.User.email,
+          image: post.User.Graduate
+            ? post.User.Graduate["profile-picture-url"]
+            : null,
+        },
+        "group-id": post["group-id"],
+        "in-landing": post["in-landing"],
+        "is-hidden": post["is-hidden"],
+        images: post.PostImages
+          ? post.PostImages.map((img) => img["image-url"])
+          : [],
+        likesCount: likesCount,
+        isLikedByYou: isLikedByYou,
+        likes: post.Likes
+          ? post.Likes.map((like) => ({
+              like_id: like.like_id,
+              user: {
+                id: like.User?.id || "unknown",
+                "full-name":
+                  `${like.User?.["first-name"] || ""} ${
+                    like.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+              },
+            }))
+          : [],
+        comments_count: post.Comments ? post.Comments.length : 0,
+        comments: post.Comments
+          ? post.Comments.map((comment) => ({
+              comment_id: comment.comment_id,
+              content: comment.content,
+              "created-at": comment["created-at"],
+              time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+              edited: comment.edited,
+              author: {
+                id: comment.User?.id || "unknown",
+                "full-name":
+                  `${comment.User?.["first-name"] || ""} ${
+                    comment.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+                email: comment.User?.email || "unknown",
+                image: comment.User?.Graduate
+                  ? comment.User.Graduate["profile-picture-url"]
+                  : null,
+              },
+            }))
+          : [],
+      };
+    });
 
     res.status(200).json({
       status: "success",
@@ -892,32 +965,46 @@ const getMyPosts = async (req, res) => {
           model: PostImage,
           attributes: ["image-url"],
         },
+        {
+          model: Like,
+          attributes: ["like_id", "author-id", "user-id"],
+        },
       ],
       order: [["created-at", "DESC"]],
     });
 
-    const responseData = posts.map((post) => ({
-      post_id: post.post_id,
-      category: post.category,
-      content: post.content,
-      description: post.description,
-      "created-at": post["created-at"],
-      author: {
-        id: post.User.id,
-        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-        email: post.User.email,
-        type: post.User["user-type"],
-        image: post.User.Graduate
-          ? post.User.Graduate["profile-picture-url"]
-          : null,
-      },
-      "group-id": post["group-id"],
-      "in-landing": post["in-landing"],
-      "is-hidden": post["is-hidden"],
-      images: post.PostImages
-        ? post.PostImages.map((img) => img["image-url"])
-        : [],
-    }));
+    const responseData = posts.map((post) => {
+      // Calculate likesCount and isLikedByYou
+      const likesCount = post.Likes ? post.Likes.length : 0;
+      const isLikedByYou = post.Likes?.some(
+        (like) => like["user-id"] === userId
+      ) || false;
+
+      return {
+        post_id: post.post_id,
+        category: post.category,
+        content: post.content,
+        description: post.description,
+        "created-at": post["created-at"],
+        author: {
+          id: post.User.id,
+          "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
+          email: post.User.email,
+          type: post.User["user-type"],
+          image: post.User.Graduate
+            ? post.User.Graduate["profile-picture-url"]
+            : null,
+        },
+        "group-id": post["group-id"],
+        "in-landing": post["in-landing"],
+        "is-hidden": post["is-hidden"],
+        images: post.PostImages
+          ? post.PostImages.map((img) => img["image-url"])
+          : [],
+        likesCount: likesCount,
+        isLikedByYou: isLikedByYou,
+      };
+    });
 
     res.status(200).json({
       status: "success",
@@ -1456,6 +1543,13 @@ const getPostWithDetails = async (req, res) => {
       ],
     });
 
+    // Calculate likesCount and isLikedByYou
+    const currentUserId = req.user?.id || null;
+    const likesCount = likes.length;
+    const isLikedByYou = currentUserId
+      ? likes.some((like) => like["user-id"] === currentUserId) || false
+      : false;
+
     const responseData = {
       post_id: post.post_id,
       category: post.category,
@@ -1506,7 +1600,8 @@ const getPostWithDetails = async (req, res) => {
           email: like.User.email,
         },
       })),
-      likesCount: likes.length,
+      likesCount: likesCount,
+      isLikedByYou: isLikedByYou,
     };
 
     res.status(200).json({
@@ -1934,12 +2029,20 @@ const toggleLandingStatus = async (req, res) => {
 // landing posts
 const getLandingPosts = async (req, res) => {
   try {
+    const currentUserId = req.user?.id || null;
+
     // جلب جميع البوستات في اللاندينج وغير مخفية
     const posts = await Post.findAll({
       where: {
         "in-landing": true,
         "is-hidden": false,
       },
+      include: [
+        {
+          model: Like,
+          attributes: ["like_id", "author-id", "user-id"],
+        },
+      ],
       order: [["created-at", "DESC"]],
     });
 
@@ -1955,6 +2058,12 @@ const getLandingPosts = async (req, res) => {
           ],
         });
 
+        // Calculate likesCount and isLikedByYou
+        const likesCount = post.Likes ? post.Likes.length : 0;
+        const isLikedByYou = currentUserId
+          ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+          : false;
+
         return {
           post_id: post.post_id,
           category: post.category,
@@ -1969,6 +2078,8 @@ const getLandingPosts = async (req, res) => {
           "group-id": post["group-id"],
           "in-landing": post["in-landing"],
           "is-hidden": post["is-hidden"],
+          likesCount: likesCount,
+          isLikedByYou: isLikedByYou,
         };
       })
     );

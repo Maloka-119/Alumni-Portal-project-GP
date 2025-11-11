@@ -59,11 +59,11 @@ router.put(
   postController.editPost
 );
 
-//get posts in specific group
-router.get("/:groupId", authMiddleware.protect, postController.getGroupPosts);
-
-// جلب تفاصيل بوست مع التعليقات واللايكات
+// جلب تفاصيل بوست مع التعليقات واللايكات (MUST be before /:groupId route)
 router.get("/:postId", postController.getPostWithDetails);
+
+//get posts in specific group (MUST be after /:postId route to avoid conflict)
+router.get("/group/:groupId", authMiddleware.protect, postController.getGroupPosts);
 
 // لايك / إلغاء لايك على بوست
 router.post("/:postId/like", authMiddleware.protect, postController.likePost);
