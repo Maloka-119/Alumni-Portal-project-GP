@@ -110,7 +110,7 @@ function AdminDashboard() {
 
   return (
     <div className="dashboard-container">
-      <h1 style={{ color: "#4f46e5" }}>Admin Dashboard</h1>
+      <h1 style={{ color: "#4f46e5" }}>Portal Reports</h1>
 
       <div className="dashboard-row">
         <Card>
