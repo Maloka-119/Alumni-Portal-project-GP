@@ -416,35 +416,36 @@ const updateProfile = async (req, res) => {
       graduate["profile-picture-public-id"] = null;
     }
 
-    // 🔹 رفع أو استبدال CV
-    if (req.files?.cv?.[0]) {
-      const cvFile = req.files.cv[0];
+  // 🔹 رفع أو استبدال CV
+if (req.files?.cv?.[0]) {
+  const cvFile = req.files.cv[0];
 
-      // حذف القديم لو موجود
-      if (graduate.cv_public_id) {
-        try {
-          await cloudinary.uploader.destroy(graduate.cv_public_id);
-        } catch (deleteErr) {
-          console.warn("Failed to delete old CV:", deleteErr.message);
-        }
-      }
-
-      graduate["cv-url"] = cvFile.path || cvFile.url;
-      graduate.cv_public_id = cvFile.filename || cvFile.public_id;
+  // حذف القديم لو موجود
+  if (graduate.cv_public_id) {
+    try {
+      await cloudinary.uploader.destroy(graduate.cv_public_id, { resource_type: "raw" });
+    } catch (deleteErr) {
+      console.warn("Failed to delete old CV:", deleteErr.message);
     }
+  }
 
-    // 🔹 مسح CV لو حابة
-    if (req.body.removeCV) {
-      if (graduate.cv_public_id) {
-        try {
-          await cloudinary.uploader.destroy(graduate.cv_public_id);
-        } catch (err) {
-          console.warn("Failed to delete CV:", err.message);
-        }
-      }
-      graduate["cv-url"] = null;
-      graduate.cv_public_id = null;
+  graduate["cv-url"] = cvFile.path || cvFile.url;
+  graduate.cv_public_id = cvFile.filename || cvFile.public_id;
+}
+
+
+ // 🔹 مسح CV لو حابة
+if (req.body.removeCV) {
+  if (graduate.cv_public_id) {
+    try {
+      await cloudinary.uploader.destroy(graduate.cv_public_id, { resource_type: "raw" });
+    } catch (err) {
+      console.warn("Failed to delete CV:", err.message);
     }
+  }
+  graduate["cv-url"] = null;
+  graduate.cv_public_id = null;
+}
 
     await user.save();
     await graduate.save();
@@ -484,121 +485,7 @@ const updateProfile = async (req, res) => {
   }
 };
 
-// //update profile
-// const updateProfile = async (req, res) => {
-//   try {
-//     const graduate = await Graduate.findByPk(req.user.id, {
-//       include: [{ model: User }],
-//     });
 
-//     if (!graduate) {
-//       return res.status(404).json({
-//         status: HttpStatusHelper.FAIL,
-//         message: "Graduate not found",
-//         data: null,
-//       });
-//     }
-
-//     const user = graduate.User;
-
-//     // 🔹 تحديث بيانات User
-//     const userFields = ["firstName", "lastName", "phoneNumber"];
-//     userFields.forEach((field) => {
-//       if (req.body[field] !== undefined) {
-//         if (field === "firstName") user["first-name"] = req.body[field];
-//         else if (field === "lastName") user["last-name"] = req.body[field];
-//         else if (field === "phoneNumber") user.phoneNumber = req.body[field];
-//       }
-//     });
-
-//     // 🔹 تحديث بيانات Graduate
-//     const graduateFields = [
-//       { bodyKey: "bio", dbKey: "bio" },
-//       { bodyKey: "skills", dbKey: "skills" },
-//       { bodyKey: "currentJob", dbKey: "current-job" },
-//       { bodyKey: "faculty", dbKey: "faculty" },
-//       { bodyKey: "graduationYear", dbKey: "graduation-year" },
-//       { bodyKey: "linkedlnLink", dbKey: "linkedln-link" },
-//     ];
-
-//     graduateFields.forEach(({ bodyKey, dbKey }) => {
-//       if (req.body[bodyKey] !== undefined) {
-//         graduate[dbKey] = req.body[bodyKey];
-//       }
-//     });
-
-//     // 🔹 تحديث إعدادات الخصوصية الجديدة
-//     if (req.body.showCV !== undefined) graduate.show_cv = req.body.showCV;
-//     if (req.body.showLinkedIn !== undefined)
-//       graduate.show_linkedin = req.body.showLinkedIn;
-//     if (req.body.showPhone !== undefined) user.show_phone = req.body.showPhone;
-
-//     // 🔹 رفع صورة البروفايل
-//     if (req.files?.profilePicture?.[0]) {
-//       const profilePic = req.files.profilePicture[0];
-//       graduate["profile-picture-url"] = profilePic.path || profilePic.url;
-//     }
-
-//     // 🔹 رفع CV
-// if (req.files?.cv?.[0]) {
-//   const cvFile = req.files.cv[0];
-
-//   // حذف القديم لو موجود
-//   if (graduate.cv_public_id) {
-//     try {
-//       await cloudinary.uploader.destroy(graduate.cv_public_id);
-//     } catch (deleteErr) {
-//       console.warn("Failed to delete old CV:", deleteErr.message);
-//     }
-//   }
-
-//   // حفظ الجديد بشكل صحيح من multer-storage-cloudinary
-//   graduate["cv-url"] = cvFile.path || cvFile.url; // URL للتحميل
-//   graduate.cv_public_id = cvFile.filename || cvFile.public_id; // public_id الصحيح
-// }
-
-
-//     await user.save();
-//     await graduate.save();
-
-//     // ✅ صاحب البروفايل يشوف كل حاجة دايمًا
-//     const isOwner = true;
-
-//     // 🔹 نفس شكل الداتا اللي بترجع من getGraduateProfile
-//     const graduateProfile = {
-//       profilePicture: graduate["profile-picture-url"],
-//       fullName: `${user["first-name"]} ${user["last-name"]}`,
-//       faculty: graduate.faculty,
-//       graduationYear: graduate["graduation-year"],
-//       bio: graduate.bio,
-//       skills: graduate.skills,
-//       currentJob: graduate["current-job"],
-
-//       // 🔹 إعدادات الخصوصية
-//       showCV: graduate.show_cv,
-//       showLinkedIn: graduate.show_linkedin,
-//       showPhone: user.show_phone,
-
-//       // 🔹 البيانات اللي ممكن تبان حسب الخصوصية (بس هنا المالك يشوف الكل)
-//       CV: graduate["cv-url"],
-//       linkedlnLink: graduate["linkedln-link"],
-//       phoneNumber: user.phoneNumber,
-//     };
-
-//     return res.json({
-//       status: HttpStatusHelper.SUCCESS,
-//       message: "Graduate profile updated successfully",
-//       data: graduateProfile,
-//     });
-//   } catch (err) {
-//     console.error("Error in updateProfile:", err);
-//     return res.status(500).json({
-//       status: HttpStatusHelper.ERROR || "error",
-//       message: err.message,
-//       data: null,
-//     });
-//   }
-// };
 
 //download cv
 
