@@ -298,7 +298,7 @@ function FAQManage({ currentUser }) {
         )}
       </div>
 
-      {showForm && faqPerm.canAdd && (
+      {showForm && (faqPerm.canAdd || faqPerm.canEdit) && (
         <div className="faq-form">
           <input
             type="text"
