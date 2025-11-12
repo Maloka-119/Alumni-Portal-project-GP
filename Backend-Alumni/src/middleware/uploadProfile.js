@@ -15,8 +15,8 @@ const uploadFiles = multer({
         return {
           folder: "cvs",
           allowed_formats: ["pdf", "doc", "docx"],
-          resource_type: "auto",   // مهم عشان PDF أو DOC
-          type: "upload",          // خليها public بدل authenticated
+         resource_type: "raw", // بدل auto
+        type: "upload",         // خليها public بدل authenticated
         };
       }
     },
