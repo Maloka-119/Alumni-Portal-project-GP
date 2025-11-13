@@ -9,13 +9,14 @@ const PostImage = require("../models/PostImage");
 const Staff = require("../models/Staff");
 const Friendship = require("../models/Friendship");
 const { Op } = require("sequelize");
+
 const moment = require("moment");
 const {
   notifyPostLiked,
   notifyPostCommented,
   notifyCommentReplied,
   notifyCommentEdited,
-  notifyCommentDeleted
+  notifyCommentDeleted,
 } = require("../services/notificationService");
 
 // Helper function to calculate likesCount and isLikedByYou for a post
@@ -38,6 +39,132 @@ const getPostLikeInfo = async (postId, userId = null) => {
   return { likesCount, isLikedByYou };
 };
 
+// const createPost = async (req, res) => {
+//   console.log("🟢 ----- [createPost] START -----");
+
+//   try {
+//     console.log("📦 Headers Content-Type:", req.headers["content-type"]);
+//     console.log("👤 Auth User:", req.user ? req.user : "❌ req.user undefined");
+//     console.log("🧾 req.body:", req.body);
+//     console.log("📦 req.files:", req.files);
+
+//     const { category, content, groupId, inLanding, type } = req.body;
+//     const userId = req.user?.id;
+
+//     const finalCategory = category || type || "General";
+
+//     console.log("🔹 finalCategory:", finalCategory);
+//     console.log("🔹 content:", content);
+//     console.log("🔹 groupId:", groupId);
+//     console.log("🔹 inLanding:", inLanding);
+
+//     // 🟥 التحقق من المستخدم
+//     if (!userId) {
+//       return res.status(401).json({
+//         status: "fail",
+//         message: "User not authenticated",
+//       });
+//     }
+
+//     const user = await User.findByPk(userId);
+//     console.log(
+//       "👤 Found User:",
+//       user ? `${user["first-name"]} (${user["user-type"]})` : "❌ Not Found"
+//     );
+
+//     if (!user) {
+//       return res.status(404).json({
+//         status: "error",
+//         message: "User not found",
+//       });
+//     }
+
+//     // 🧩 تحقق من نوع المستخدم
+//     if (user["user-type"] === "graduate") {
+//       const graduate = await Graduate.findOne({
+//         where: { graduate_id: user.id },
+//       });
+
+//       if (!graduate) {
+//         return res.status(404).json({
+//           status: "fail",
+//           message: "Graduate record not found",
+//         });
+//       }
+
+//       // تحقق من الحالة
+//       if (graduate.status !== "active") {
+//         return res.status(403).json({
+//           status: "fail",
+//           message:
+//             "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
+//         });
+//       }
+//     }
+
+//     //  إنشاء البوست
+//     console.log("🪄 Creating post...");
+//     const newPost = await Post.create({
+//       category: finalCategory,
+//       content: content || "",
+//       "author-id": userId,
+//       "group-id": groupId || null,
+//       "in-landing": inLanding || false,
+//     });
+
+//     console.log("✅ Post created with ID:", newPost.post_id);
+
+//     // 🖼️ رفع الصور
+//     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+//       console.log(`🖼️ Found ${req.files.length} file(s) to attach`);
+
+//       try {
+//         const imagesData = req.files.map((file) => ({
+//           "post-id": newPost.post_id,
+//           "image-url": file.path || file.url || file.location || null,
+//         }));
+
+//         await PostImage.bulkCreate(imagesData);
+//         console.log("✅ Images saved to PostImage table");
+//       } catch (imgErr) {
+//         console.error("❌ Error saving images to DB:", imgErr);
+//       }
+//     }
+
+//     // 📥 استرجاع الصور بعد الحفظ
+//     const savedImages = await PostImage.findAll({
+//       where: { "post-id": newPost.post_id },
+//       attributes: ["image-url"],
+//     });
+
+//     console.log(
+//       "🖼️ Saved images in DB:",
+//       savedImages.map((img) => img["image-url"])
+//     );
+//     console.log("🟢 ----- [createPost] END SUCCESS -----");
+
+//     return res.status(201).json({
+//       status: "success",
+//       message: "Post created successfully",
+//       post: {
+//         ...newPost.toJSON(),
+//         images: savedImages.map((img) => img["image-url"]),
+//       },
+//     });
+//   } catch (error) {
+//     console.error("❌ [createPost] Error:", error);
+//     console.error("🟥 Stack:", error.stack);
+//     console.log("🟢 ----- [createPost] END ERROR -----");
+
+//     return res.status(500).json({
+//       status: "error",
+//       message: error.message || "Failed to create post",
+//     });
+//   }
+// };
+
+//get all posts in specific group
+
 const createPost = async (req, res) => {
   console.log("🟢 ----- [createPost] START -----");
 
@@ -47,7 +174,8 @@ const createPost = async (req, res) => {
     console.log("🧾 req.body:", req.body);
     console.log("📦 req.files:", req.files);
 
-    const { category, content, groupId, inLanding, type } = req.body;
+    const { category, content, groupId, inLanding, type, postAsAdmin } =
+      req.body; // ⬅️ ضيفنا postAsAdmin
     const userId = req.user?.id;
 
     const finalCategory = category || type || "General";
@@ -56,6 +184,7 @@ const createPost = async (req, res) => {
     console.log("🔹 content:", content);
     console.log("🔹 groupId:", groupId);
     console.log("🔹 inLanding:", inLanding);
+    console.log("🔹 postAsAdmin:", postAsAdmin); // ⬅️ نطبع القيمة الجديدة
 
     // 🟥 التحقق من المستخدم
     if (!userId) {
@@ -76,6 +205,25 @@ const createPost = async (req, res) => {
         status: "error",
         message: "User not found",
       });
+    }
+
+    // ⬇️⬇️⬇️ التعديل هنا: تحديد author-id بناءً على الصلاحيات ⬇️⬇️⬇️
+    let authorId = userId; // الافتراضي: اليوزر نفسه
+
+    // لو Staff وعايز ينشئ بوست باسم الأدمن
+    if (postAsAdmin && user["user-type"] === "staff") {
+      // نجيب أول أدمن متاح
+      const adminUser = await User.findOne({
+        where: { "user-type": "admin" },
+        attributes: ["id"],
+      });
+
+      if (adminUser) {
+        authorId = adminUser.id;
+        console.log("🔹 Posting as Admin, Author ID:", authorId);
+      } else {
+        console.log("⚠️ No admin user found, posting as staff");
+      }
     }
 
     // 🧩 تحقق من نوع المستخدم
@@ -106,12 +254,13 @@ const createPost = async (req, res) => {
     const newPost = await Post.create({
       category: finalCategory,
       content: content || "",
-      "author-id": userId,
+      "author-id": authorId, // ⬅️ نستخدم authorId الجديد
       "group-id": groupId || null,
       "in-landing": inLanding || false,
     });
 
     console.log("✅ Post created with ID:", newPost.post_id);
+    console.log("✅ Post author ID:", authorId);
 
     // 🖼️ رفع الصور
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
@@ -142,12 +291,22 @@ const createPost = async (req, res) => {
     );
     console.log("🟢 ----- [createPost] END SUCCESS -----");
 
+    // جلب بيانات المؤلف النهائي للـ response
+    const finalAuthor = await User.findByPk(authorId, {
+      attributes: ["id", "first-name", "last-name", "user-type"],
+    });
+
     return res.status(201).json({
       status: "success",
       message: "Post created successfully",
       post: {
         ...newPost.toJSON(),
         images: savedImages.map((img) => img["image-url"]),
+        author: {
+          id: finalAuthor.id,
+          "full-name": `${finalAuthor["first-name"]} ${finalAuthor["last-name"]}`,
+          type: finalAuthor["user-type"],
+        },
       },
     });
   } catch (error) {
@@ -162,7 +321,6 @@ const createPost = async (req, res) => {
   }
 };
 
-//get all posts in specific group
 const getGroupPosts = async (req, res) => {
   try {
     const { groupId } = req.params;
@@ -329,18 +487,62 @@ const getGroupPosts = async (req, res) => {
   }
 };
 
-// get all posts
 // const getAllPostsOfUsers = async (req, res) => {
 //   try {
 //     const user = req.user;
 //     const isAdmin = user && user["user-type"] === "admin";
+//     const isStaff = user && user["user-type"] === "staff";
+//     const isGraduate = user && user["user-type"] === "graduate";
 
-//     // ⬇️⬇️⬇️ أول سطرين تضيفهم - جلب page و limit من query parameters
 //     const page = parseInt(req.query.page) || 1;
 //     const limit = parseInt(req.query.limit) || 10;
 //     const offset = (page - 1) * limit;
 
-//     const whereCondition = isAdmin ? {} : { "is-hidden": false };
+//     let whereCondition = {};
+
+//     if (isAdmin) {
+//       // الأدمن يشوف كل البوستات
+//       whereCondition = {};
+//     } else if (isStaff) {
+//       // الستاف يشوف البوستات الظاهرة فقط
+//       whereCondition = { "is-hidden": false };
+//     } else if (isGraduate) {
+//       // الخريج يشوف: بوستاته + بوستات أصدقائه + كل بوستات الأدمن
+//       const friendships = await Friendship.findAll({
+//         where: {
+//           [Op.or]: [
+//             { sender_id: user.id, status: "accepted" },
+//             { receiver_id: user.id, status: "accepted" },
+//           ],
+//         },
+//       });
+
+//       const friendIds = friendships.map((friendship) =>
+//         friendship.sender_id === user.id
+//           ? friendship.receiver_id
+//           : friendship.sender_id
+//       );
+
+//       friendIds.push(user.id);
+
+//       // نجيب كل مستخدمين الأدمن
+//       const adminUsers = await User.findAll({
+//         where: { "user-type": "admin" },
+//         attributes: ["id"],
+//       });
+
+//       const adminIds = adminUsers.map((admin) => admin.id);
+
+//       // ندمج IDs الأصدقاء + IDs الأدمن
+//       const allAuthorIds = [...friendIds, ...adminIds];
+
+//       whereCondition = {
+//         "is-hidden": false,
+//         "author-id": { [Op.in]: allAuthorIds },
+//       };
+//     } else {
+//       whereCondition = { "is-hidden": false };
+//     }
 
 //     const posts = await Post.findAll({
 //       where: whereCondition,
@@ -399,12 +601,10 @@ const getGroupPosts = async (req, res) => {
 //         },
 //       ],
 //       order: [["created-at", "DESC"]],
-//       // ⬇️⬇️⬇️ ثاني سطرين تضيفهم - الـ limit والـ offset
 //       limit: limit,
 //       offset: offset,
 //     });
 
-//     // ⬇️⬇️⬇️ علشان تعرف إذا في المزيد من البيانات أو لا
 //     const totalPosts = await Post.count({ where: whereCondition });
 //     const totalPages = Math.ceil(totalPosts / limit);
 //     const hasMore = page < totalPages;
@@ -412,7 +612,6 @@ const getGroupPosts = async (req, res) => {
 //     const currentUserId = req.user?.id || null;
 
 //     const responseData = posts.map((post) => {
-//       // Calculate likesCount and isLikedByYou
 //       const likesCount = post.Likes ? post.Likes.length : 0;
 //       const isLikedByYou = currentUserId
 //         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
@@ -481,7 +680,6 @@ const getGroupPosts = async (req, res) => {
 //       status: "success",
 //       message: "All posts fetched successfully",
 //       data: responseData,
-//       // ⬇️⬇️⬇️ أضف معلومات الـ pagination في الـ response
 //       pagination: {
 //         currentPage: page,
 //         totalPages: totalPages,
@@ -499,6 +697,8 @@ const getGroupPosts = async (req, res) => {
 //     });
 //   }
 // };
+
+//بتجيب كل بوستات الخريجين بس
 
 const getAllPostsOfUsers = async (req, res) => {
   try {
@@ -520,7 +720,7 @@ const getAllPostsOfUsers = async (req, res) => {
       // الستاف يشوف البوستات الظاهرة فقط
       whereCondition = { "is-hidden": false };
     } else if (isGraduate) {
-      // الخريج يشوف: بوستاته + بوستات أصدقائه + كل بوستات الأدمن
+      // الخريج يشوف: بوستاته + بوستات أصدقائه + كل بوستات الأدمن + كل بوستات الستاف
       const friendships = await Friendship.findAll({
         where: {
           [Op.or]: [
@@ -538,16 +738,18 @@ const getAllPostsOfUsers = async (req, res) => {
 
       friendIds.push(user.id);
 
-      // نجيب كل مستخدمين الأدمن
-      const adminUsers = await User.findAll({
-        where: { "user-type": "admin" },
+      // نجيب كل مستخدمين الأدمن والستاف
+      const adminAndStaffUsers = await User.findAll({
+        where: {
+          [Op.or]: [{ "user-type": "admin" }, { "user-type": "staff" }],
+        },
         attributes: ["id"],
       });
 
-      const adminIds = adminUsers.map((admin) => admin.id);
+      const adminAndStaffIds = adminAndStaffUsers.map((user) => user.id);
 
-      // ندمج IDs الأصدقاء + IDs الأدمن
-      const allAuthorIds = [...friendIds, ...adminIds];
+      // ندمج IDs الأصدقاء + IDs الأدمن والستاف
+      const allAuthorIds = [...friendIds, ...adminAndStaffIds];
 
       whereCondition = {
         "is-hidden": false,
@@ -711,21 +913,23 @@ const getAllPostsOfUsers = async (req, res) => {
   }
 };
 
-//بتجيب كل بوستات الخريجين بس
 const getAllPosts = async (req, res) => {
   try {
-    const user = req.user; // ⬅️ المستخدم الحالي (من التوكن)
-    console.log("🟩 Current user from token:", user); // 🔍 نطبع بيانات المستخدم
+    const user = req.user;
+    console.log("🟩 Current user from token:", user);
 
-    const isAdmin = user && user["user-type"] === "admin"; // ⬅️ نتحقق هل هو أدمن
-    console.log("🟦 isAdmin:", isAdmin); // 🔍 نطبع هل هو أدمن ولا لا
+    const isAdmin = user && user["user-type"] === "admin";
+    const isStaff = user && user["user-type"] === "staff";
 
-    // ⬅️ الشرط الأساسي: لو أدمن يشوف الكل، لو مش أدمن يشوف غير المخفي فقط
-    const whereCondition = isAdmin ? {} : { "is-hidden": false };
-    console.log("🟨 whereCondition used:", whereCondition); // 🔍 نعرف الفلتر المستخدم فعلاً
+    console.log("🟦 isAdmin:", isAdmin);
+    console.log("🟨 isStaff:", isStaff);
+
+    // ⬅️ الشرط الجديد: Admin و Staff يشوفوا الكل
+    const whereCondition = isAdmin || isStaff ? {} : { "is-hidden": false };
+    console.log("🟨 whereCondition used:", whereCondition);
 
     const posts = await Post.findAll({
-      where: whereCondition, // ⬅️ نطبق الفلتر هنا
+      where: whereCondition,
       include: [
         {
           model: User,
@@ -769,7 +973,7 @@ const getAllPosts = async (req, res) => {
               include: [
                 {
                   model: Graduate,
-                  as: "Graduate", // مهم جدًا
+                  as: "Graduate",
                   attributes: ["profile-picture-url"],
                 },
               ],
@@ -781,16 +985,15 @@ const getAllPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    console.log("🟧 Posts fetched count:", posts.length); // 🔍 نطبع عدد البوستات اللي رجعت
+    console.log("🟧 Posts fetched count:", posts.length);
     console.log(
       "🟪 Sample post is-hidden values:",
       posts.slice(0, 3).map((p) => p["is-hidden"])
-    ); // 🔍 نشوف أول 3 قيم من is-hidden
+    );
 
     const currentUserId = req.user?.id || null;
 
     const responseData = posts.map((post) => {
-      // Calculate likesCount and isLikedByYou
       const likesCount = post.Likes ? post.Likes.length : 0;
       const isLikedByYou = currentUserId
         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
@@ -836,7 +1039,7 @@ const getAllPosts = async (req, res) => {
               comment_id: comment.comment_id,
               content: comment.content,
               "created-at": comment["created-at"],
-              time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+              time_since: moment(comment["created-at"]).fromNow(),
               edited: comment.edited,
               author: {
                 id: comment.User?.id || "unknown",
@@ -868,7 +1071,249 @@ const getAllPosts = async (req, res) => {
     });
   }
 };
+
+const hideNegativePost = async (req, res) => {
+  try {
+    const user = req.user;
+    const { postId } = req.params;
+
+    // ✅ التعديل هنا: لازم يكون Admin أو Staff
+    if (
+      !user ||
+      (user["user-type"] !== "admin" && user["user-type"] !== "staff")
+    ) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only admins and staff can hide posts",
+        data: [],
+      });
+    }
+
+    // 🔍 تأكد أن البوست موجود
+    const post = await Post.findByPk(postId);
+    if (!post) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Post not found",
+        data: [],
+      });
+    }
+
+    // ✅ نحدث العمود يدويًا في قاعدة البيانات (بدون post.save)
+    await Post.update({ "is-hidden": true }, { where: { post_id: postId } });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Post hidden successfully",
+      data: [
+        {
+          postId: post.post_id,
+          content: post.content,
+          isHidden: true,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("Error in hideNegativePost:", err);
+    return res.status(500).json({
+      status: "error",
+      message: err.message,
+      data: [],
+    });
+  }
+};
+
+const unhidePost = async (req, res) => {
+  try {
+    const user = req.user;
+    const { postId } = req.params;
+
+    // ✅ التعديل هنا: لازم يكون Admin أو Staff
+    if (
+      !user ||
+      (user["user-type"] !== "admin" && user["user-type"] !== "staff")
+    ) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only admins and staff can unhide posts",
+        data: [],
+      });
+    }
+
+    // 🔍 تأكد أن البوست موجود
+    const post = await Post.findByPk(postId);
+    if (!post) {
+      return res.status(404).json({
+        status: "fail",
+        message: "Post not found",
+        data: [],
+      });
+    }
+
+    // ✅ نحدث العمود يدويًا
+    await Post.update({ "is-hidden": false }, { where: { post_id: postId } });
+
+    return res.status(200).json({
+      status: "success",
+      message: "Post unhidden successfully",
+      data: [
+        {
+          postId: post.post_id,
+          content: post.content,
+          isHidden: false,
+        },
+      ],
+    });
+  } catch (err) {
+    console.error("Error in unhidePost:", err);
+    return res.status(500).json({
+      status: "error",
+      message: err.message,
+      data: [],
+    });
+  }
+};
 //بتجيب بوستات الادمن بس
+// const getAdminPosts = async (req, res) => {
+//   try {
+//     const posts = await Post.findAll({
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "first-name", "last-name", "email", "user-type"],
+//           where: { "user-type": "admin" },
+//         },
+//         {
+//           model: PostImage,
+//           attributes: ["image-url"],
+//         },
+//         {
+//           model: Like,
+//           attributes: ["like_id", "user-id"],
+//           include: [
+//             {
+//               model: User,
+//               attributes: ["id", "first-name", "last-name"],
+//             },
+//           ],
+//         },
+//         {
+//           model: Comment,
+//           attributes: [
+//             "comment_id",
+//             "content",
+//             "created-at",
+//             "edited",
+//             "author-id",
+//           ],
+//           include: [
+//             {
+//               model: User,
+//               attributes: [
+//                 "id",
+//                 "first-name",
+//                 "last-name",
+//                 "email",
+//                 "user-type",
+//               ],
+//               include: [
+//                 {
+//                   model: Graduate,
+//                   as: "Graduate", // مهم جدًا
+//                   attributes: ["profile-picture-url"],
+//                 },
+//               ],
+//             },
+//           ],
+//           order: [["created-at", "DESC"]],
+//         },
+//       ],
+//       order: [["created-at", "DESC"]],
+//     });
+
+//     const currentUserId = req.user?.id || null;
+
+//     const responseData = posts.map((post) => {
+//       // Calculate likesCount and isLikedByYou
+//       const likesCount = post.Likes ? post.Likes.length : 0;
+//       const isLikedByYou = currentUserId
+//         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+//         : false;
+
+//       return {
+//         post_id: post.post_id,
+//         category: post.category,
+//         content: post.content,
+//         description: post.description,
+//         "created-at": post["created-at"],
+//         author: {
+//           id: post.User?.id || "unknown",
+//           "full-name":
+//             `${post.User?.["first-name"] || ""} ${
+//               post.User?.["last-name"] || ""
+//             }`.trim() || "Unknown User",
+//           email: post.User?.email || "unknown",
+//         },
+//         "group-id": post["group-id"],
+
+//         images: post.PostImages
+//           ? post.PostImages.map((img) => img["image-url"])
+//           : [],
+//         likesCount: likesCount,
+//         isLikedByYou: isLikedByYou,
+//         likes: post.Likes
+//           ? post.Likes.map((like) => ({
+//               like_id: like.like_id,
+//               user: {
+//                 id: like.User?.id || "unknown",
+//                 "full-name":
+//                   `${like.User?.["first-name"] || ""} ${
+//                     like.User?.["last-name"] || ""
+//                   }`.trim() || "Unknown User",
+//               },
+//             }))
+//           : [],
+//         comments_count: post.Comments ? post.Comments.length : 0,
+//         comments: post.Comments
+//           ? post.Comments.map((comment) => ({
+//               comment_id: comment.comment_id,
+//               content: comment.content,
+//               "created-at": comment["created-at"],
+//               time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+//               edited: comment.edited,
+//               author: {
+//                 id: comment.User?.id || "unknown",
+//                 "full-name":
+//                   `${comment.User?.["first-name"] || ""} ${
+//                     comment.User?.["last-name"] || ""
+//                   }`.trim() || "Unknown User",
+//                 email: comment.User?.email || "unknown",
+//                 image: comment.User?.Graduate
+//                   ? comment.User.Graduate["profile-picture-url"]
+//                   : null,
+//               },
+//             }))
+//           : [],
+//         // إضافة حالة اللاندينج
+//         "in-landing": post["in-landing"] || false,
+//       };
+//     });
+
+//     res.status(200).json({
+//       status: "success",
+//       message: "Admin posts fetched successfully",
+//       data: responseData,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching admin posts:", error);
+//     res.status(500).json({
+//       status: "error",
+//       message: "Failed to fetch admin posts",
+//       data: [],
+//     });
+//   }
+// };
+
 const getAdminPosts = async (req, res) => {
   try {
     const posts = await Post.findAll({
@@ -876,7 +1321,11 @@ const getAdminPosts = async (req, res) => {
         {
           model: User,
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
-          where: { "user-type": "admin" },
+          where: {
+            "user-type": {
+              [Op.in]: ["admin", "staff"], // ⬅️ التعديل هنا: نجيب الأدمن والستاف
+            },
+          },
         },
         {
           model: PostImage,
@@ -914,7 +1363,7 @@ const getAdminPosts = async (req, res) => {
               include: [
                 {
                   model: Graduate,
-                  as: "Graduate", // مهم جدًا
+                  as: "Graduate",
                   attributes: ["profile-picture-url"],
                 },
               ],
@@ -948,9 +1397,9 @@ const getAdminPosts = async (req, res) => {
               post.User?.["last-name"] || ""
             }`.trim() || "Unknown User",
           email: post.User?.email || "unknown",
+          type: post.User?.["user-type"] || "unknown", // ⬅️ بنضيف نوع اليوزر
         },
         "group-id": post["group-id"],
-
         images: post.PostImages
           ? post.PostImages.map((img) => img["image-url"])
           : [],
@@ -974,7 +1423,7 @@ const getAdminPosts = async (req, res) => {
               comment_id: comment.comment_id,
               content: comment.content,
               "created-at": comment["created-at"],
-              time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+              time_since: moment(comment["created-at"]).fromNow(),
               edited: comment.edited,
               author: {
                 id: comment.User?.id || "unknown",
@@ -989,25 +1438,25 @@ const getAdminPosts = async (req, res) => {
               },
             }))
           : [],
-             // إضافة حالة اللاندينج
-    "in-landing": post["in-landing"] || false
+        "in-landing": post["in-landing"] || false,
       };
     });
 
     res.status(200).json({
       status: "success",
-      message: "Admin posts fetched successfully",
+      message: "Admin and staff posts fetched successfully", // ⬅️ عدلنا الرسالة
       data: responseData,
     });
   } catch (error) {
-    console.error("Error fetching admin posts:", error);
+    console.error("Error fetching admin and staff posts:", error);
     res.status(500).json({
       status: "error",
-      message: "Failed to fetch admin posts",
+      message: "Failed to fetch admin and staff posts",
       data: [],
     });
   }
 };
+
 //
 const getGraduatePosts = async (req, res) => {
   try {
@@ -1253,7 +1702,13 @@ const editPost = async (req, res) => {
 
     // الحصول على البوست من قاعدة البيانات
     const post = await Post.findByPk(postId, {
-      include: [{ model: PostImage, attributes: ["image-url"] }],
+      include: [
+        { model: PostImage, attributes: ["image-url"] },
+        {
+          model: User,
+          attributes: ["id", "user-type"], // ⬅️ بنجيب نوع اليوزر عشان نتحقق
+        },
+      ],
     });
 
     if (!post) {
@@ -1263,12 +1718,15 @@ const editPost = async (req, res) => {
       });
     }
 
-    // السماح فقط لصاحب البوست بالتعديل (بغض النظر عن نوع المستخدم)
+    // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بالتعديل على بوستات الأدمن ⬇️⬇️⬇️
     const isPostOwner = post["author-id"] === req.user.id;
-    if (!isPostOwner) {
+    const isStaffEditingAdminPost =
+      req.user["user-type"] === "staff" && post.User["user-type"] === "admin";
+
+    if (!isPostOwner && !isStaffEditingAdminPost) {
       return res.status(403).json({
         status: "error",
-        message: "You can only edit your own posts",
+        message: "You can only edit your own posts or admin posts (for staff)",
       });
     }
 
@@ -1340,7 +1798,6 @@ const editPost = async (req, res) => {
     });
   }
 };
-
 // Like a post
 const likePost = async (req, res) => {
   try {
@@ -1621,7 +2078,7 @@ const deleteComment = async (req, res) => {
 
     // Get the post to notify the post author before deleting
     const post = await Post.findByPk(comment["post-id"]);
-    
+
     // Delete the comment
     await comment.destroy();
 
@@ -1667,15 +2124,21 @@ const deletePost = async (req, res) => {
       });
     }
 
-    // Allow deleting if: 1) It's the staff member's own post, OR 2) It's a graduate's post
+    // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بحذف بوستات الأدمن ⬇️⬇️⬇️
     const isOwnPost = post["author-id"] === userId;
     const isGraduatePost = postAuthor["user-type"] === "graduate";
+    const isStaffDeletingAdminPost =
+      req.user["user-type"] === "staff" && postAuthor["user-type"] === "admin";
 
-    if (!isOwnPost && !isGraduatePost) {
+    // Allow deleting if:
+    // 1) It's the user's own post, OR
+    // 2) It's a graduate's post, OR
+    // 3) Staff is deleting an admin's post
+    if (!isOwnPost && !isGraduatePost && !isStaffDeletingAdminPost) {
       return res.status(403).json({
         status: "error",
         message:
-          "You can only delete your own posts or posts created by graduates",
+          "You can only delete your own posts, posts created by graduates, or admin posts (for staff)",
       });
     }
 
@@ -1860,102 +2323,6 @@ const getPostWithDetails = async (req, res) => {
       status: "error",
       message: "Failed to fetch post details: " + error.message,
       data: null,
-    });
-  }
-};
-
-const hideNegativePost = async (req, res) => {
-  try {
-    const user = req.user;
-    const { postId } = req.params;
-
-    // ✅ لازم يكون Admin
-    if (!user || user["user-type"] !== "admin") {
-      return res.status(403).json({
-        status: "fail",
-        message: "Only admins can hide posts",
-        data: [],
-      });
-    }
-
-    // 🔍 تأكد أن البوست موجود
-    const post = await Post.findByPk(postId);
-    if (!post) {
-      return res.status(404).json({
-        status: "fail",
-        message: "Post not found",
-        data: [],
-      });
-    }
-
-    // ✅ نحدث العمود يدويًا في قاعدة البيانات (بدون post.save)
-    await Post.update({ "is-hidden": true }, { where: { post_id: postId } });
-
-    return res.status(200).json({
-      status: "success",
-      message: "Post hidden successfully",
-      data: [
-        {
-          postId: post.post_id,
-          content: post.content,
-          isHidden: true,
-        },
-      ],
-    });
-  } catch (err) {
-    console.error("Error in hideNegativePost:", err);
-    return res.status(500).json({
-      status: "error",
-      message: err.message,
-      data: [],
-    });
-  }
-};
-
-const unhidePost = async (req, res) => {
-  try {
-    const user = req.user;
-    const { postId } = req.params;
-
-    // ✅ لازم يكون Admin
-    if (!user || user["user-type"] !== "admin") {
-      return res.status(403).json({
-        status: "fail",
-        message: "Only admins can unhide posts",
-        data: [],
-      });
-    }
-
-    // 🔍 تأكد أن البوست موجود
-    const post = await Post.findByPk(postId);
-    if (!post) {
-      return res.status(404).json({
-        status: "fail",
-        message: "Post not found",
-        data: [],
-      });
-    }
-
-    // ✅ نحدث العمود يدويًا
-    await Post.update({ "is-hidden": false }, { where: { post_id: postId } });
-
-    return res.status(200).json({
-      status: "success",
-      message: "Post unhidden successfully",
-      data: [
-        {
-          postId: post.post_id,
-          content: post.content,
-          isHidden: false,
-        },
-      ],
-    });
-  } catch (err) {
-    console.error("Error in unhidePost:", err);
-    return res.status(500).json({
-      status: "error",
-      message: err.message,
-      data: [],
     });
   }
 };

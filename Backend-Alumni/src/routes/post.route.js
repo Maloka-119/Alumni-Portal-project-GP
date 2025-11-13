@@ -3,47 +3,41 @@ const router = express.Router();
 const authMiddleware = require("../middleware/authMiddleware");
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const multer = require("multer");
-const cloudinary = require("../config/cloudinary"); // ملف إعدادات Cloudinary
+const cloudinary = require("../config/cloudinary");
 const postController = require("../controllers/post.controller");
 
 // إعداد التخزين على Cloudinary
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
-    folder: "posts", // كل الصور هتتحط في فولدر اسمه posts
+    folder: "posts",
     allowed_formats: ["jpg", "png", "jpeg"],
   },
 });
 
 const upload = multer({ storage: storage });
 
-// رفع صور البوست (لحد 5 صور)
+// ==================== PUBLIC ROUTES ====================
+router.get("/categories", postController.getCategories);
+router.get("/landing", postController.getLandingPosts);
+router.get("/comments/:commentId/replies", postController.getCommentReplies);
+
+// ==================== AUTHENTICATED USERS ROUTES ====================
+// ⬇️⬇️⬇️ الـ routes المحددة لازم تكون قبل الـ dynamic routes ⬇️⬇️⬇️
 router.post(
   "/create-post",
   authMiddleware.protect,
-  upload.array("images", 5), // images = اسم الحقل من الـ frontend
+  upload.array("images", 5),
   postController.createPost
 );
 
-// جلب كل البوستات
-router.get("/", authMiddleware.protect, postController.getAllPosts);
-
-// جلب كل البوستات الخاصة بالمستخدمين (موجودة في الكود الأول)
 router.get(
-  "/user-posts",
+  "/user-posts", // ⬅️ دي لازم تكون قبل "/:postId"
   authMiddleware.protect,
   postController.getAllPostsOfUsers
 );
 
-// جلب تصنيفات البوستات
-router.get("/categories", postController.getCategories);
-router.get("/landing", postController.getLandingPosts);
-router.get("/admin", postController.getAdminPosts);
-
-// Get user's own posts (any authenticated user)
 router.get("/my-posts", authMiddleware.protect, postController.getMyPosts);
-
-// جلب بوستات الخريجين (موجودة في الكود الأول)
 
 router.get(
   "/my-graduate-posts",
@@ -51,7 +45,20 @@ router.get(
   postController.getGraduatePosts
 );
 
-// تعديل بوست
+router.get(
+  "/group/:groupId",
+  authMiddleware.protect,
+  postController.getGroupPosts
+);
+
+// ==================== ADMIN & STAFF ONLY ROUTES ====================
+router.get("/", authMiddleware.protect, postController.getAllPosts);
+router.get("/admin", authMiddleware.protect, postController.getAdminPosts);
+
+// ==================== DYNAMIC ROUTES (تأتي في النهاية) ====================
+// ⬇️⬇️⬇️ الـ dynamic routes لازم تكون في الآخر ⬇️⬇️⬇️
+router.get("/:postId", postController.getPostWithDetails);
+
 router.put(
   "/:postId/edit",
   authMiddleware.protect,
@@ -59,17 +66,6 @@ router.put(
   postController.editPost
 );
 
-// جلب تفاصيل بوست مع التعليقات واللايكات (MUST be before /:groupId route)
-router.get("/:postId", postController.getPostWithDetails);
-
-//get posts in specific group (MUST be after /:postId route to avoid conflict)
-router.get(
-  "/group/:groupId",
-  authMiddleware.protect,
-  postController.getGroupPosts
-);
-
-// لايك / إلغاء لايك على بوست
 router.post("/:postId/like", authMiddleware.protect, postController.likePost);
 router.delete(
   "/:postId/like",
@@ -77,66 +73,61 @@ router.delete(
   postController.unlikePost
 );
 
-// إضافة تعليق على بوست)
 router.post(
   "/:postId/comments",
   authMiddleware.protect,
   postController.addComment
 );
 
-// تعديل / حذف تعليق
+router.put(
+  "/:postId/hide",
+  authMiddleware.protect,
+  postController.hideNegativePost
+);
+
+router.put(
+  "/:postId/unhide",
+  authMiddleware.protect,
+  postController.unhidePost
+);
+
+router.patch(
+  "/:postId/landing",
+  authMiddleware.protect,
+  postController.toggleLandingStatus
+);
+
+router.delete("/:postId", authMiddleware.protect, postController.deletePost);
+
+// ==================== COMMENT ROUTES ====================
 router.put(
   "/comments/:commentId",
   authMiddleware.protect,
   postController.editComment
 );
+
 router.delete(
   "/comments/:commentId",
   authMiddleware.protect,
   postController.deleteComment
 );
 
-// حذف بوست
-router.delete("/:postId", authMiddleware.protect, postController.deletePost);
-
-router.put(
-  "/:postId/hide",
-  authMiddleware.protect,
-  postController.hideNegativePost
-);
-router.put(
-  "/:postId/unhide",
-  authMiddleware.protect,
-  postController.unhidePost
-);
-// Reply to comment routes
 router.post(
   "/comments/:commentId/reply",
   authMiddleware.protect,
   postController.addReply
 );
 
-// Edit reply
 router.put(
   "/comments/:commentId/reply",
   authMiddleware.protect,
   postController.editReply
 );
 
-// Delete reply
 router.delete(
   "/comments/:commentId/reply",
   authMiddleware.protect,
   postController.deleteReply
-);
-
-// Get replies for a comment
-router.get("/comments/:commentId/replies", postController.getCommentReplies);
-
-router.patch(
-  "/:postId/landing",
-  authMiddleware.protect,
-  postController.toggleLandingStatus
 );
 
 module.exports = router;
