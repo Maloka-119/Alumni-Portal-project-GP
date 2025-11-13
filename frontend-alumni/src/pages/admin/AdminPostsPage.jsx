@@ -1,14 +1,460 @@
+// import React, { useState, useEffect } from 'react';
+// import './AdminPostsPage.css';
+// import AdminPostsImg from './AdminPosts.jpeg';
+// import { Heart, MessageCircle, Share2, Edit, Trash2, Send } from 'lucide-react';
+// import { useTranslation } from 'react-i18next';
+// import API from "../../services/api";
+// import CreatePostBar from '../../components/CreatePostBar'; 
+// import Swal from "sweetalert2";
+// import { CheckCircle, Circle } from 'lucide-react';
+
+// const AdminPostsPage = () => {
+//   const { t } = useTranslation();
+//   const [posts, setPosts] = useState([]);
+//   const [types, setTypes] = useState([]);
+//   const [filterType, setFilterType] = useState('All');
+//   const [editingPostId, setEditingPostId] = useState(null);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState(null);
+//   const [success, setSuccess] = useState(null);
+//   const [commentInputs, setCommentInputs] = useState({});
+
+//   useEffect(() => {
+//     fetchPosts();
+//     fetchCategories();
+//   }, []);
+
+//   const formatPosts = (data) => {
+//     const filtered = (data || []).filter(p => !p['group-id']);
+    
+//     return filtered.map(post => {
+//       const formattedComments = (post.comments || []).map((comment) => ({
+//         id: comment.comment_id,
+//         userName: comment.author?.["full-name"] || "Anonymous",
+//         content: comment.content,
+//         avatar: comment.author?.image || AdminPostsImg,
+//         date: comment["created-at"],
+//       }));
+
+//       return {
+//         id: post.post_id,
+//         content: post.content,
+//         likes: post.likes_count || 0,
+//         liked: false, 
+//         comments: formattedComments,
+//         date: new Date(post['created-at']).toLocaleString('en-US', {
+//           year: 'numeric',
+//           month: 'short',
+//           day: 'numeric',
+//           hour: '2-digit',
+//           minute: '2-digit',
+//           hour12: true
+//         }),
+//         authorName: "Alumni Portal – Helwan University",
+//         shares: 0,
+//         type: post.category,
+//         images: post.images || [],
+//         showComments: false, 
+//         author: {
+//           photo: AdminPostsImg
+//         },
+//          inLanding: post["in-landing"]
+//       };
+//     });
+//   };
+
+//   const fetchPosts = async () => {
+//     setLoading(true);
+//     setError(null);
+//     try {
+//       const response = await API.get('/posts/admin');
+//       if (response.data.status === "success") {
+//         setPosts(formatPosts(response.data.data));
+//       } else {
+//         setPosts([]);
+//       }
+//     } catch (error) {
+//       console.error('❌ Error fetching posts:', error);
+//       setError(t("fetchPostsFailed"));
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const fetchCategories = async () => {
+//     try {
+//       const res = await API.get("/posts/categories");
+//       setTypes(res.data.data || []);
+//     } catch (err) {
+//       console.error("Error fetching categories", err);
+//       setTypes([]);
+//     }
+//   };
+// const handleCreateOrEdit = async (formData, postId = null) => {
+//   setError(null);
+//   setSuccess(null);
+//   try {
+//     if (postId) {
+//       await API.put(`/posts/${postId}/edit`, formData, {
+//         headers: { 'Content-Type': 'multipart/form-data' },
+//       });
+//       setSuccess(t("postUpdated"));
+//     } else {
+//       await API.post("/posts/create-post", formData, {
+//         headers: { 'Content-Type': 'multipart/form-data' },
+//       });
+//       setSuccess(t("postCreated"));
+//     }
+//     fetchPosts();
+//     setEditingPostId(null);
+//   } catch (err) {
+//     console.error("❌ Error saving post", err);
+//     setError(err.response?.data?.message || t("savePostFailed"));
+//   }
+// };
+
+
+
+// const handleDelete = async (id) => {
+//   const result = await Swal.fire({
+//     title: "Are you sure?",
+//     text: "You won't be able to revert this!",
+//     icon: "warning",
+//     showCancelButton: true,
+//     confirmButtonText: "Yes, delete it!",
+//     cancelButtonText: "Cancel",
+//   });
+
+//   if (result.isConfirmed) {
+//     try {
+//       await API.delete(`/posts/${id}`);
+//       Swal.fire({
+//         icon: "success",
+//         title: "Deleted!",
+//         text: "Post deleted successfully",
+//       });
+//       fetchPosts();
+//     } catch (err) {
+//       console.error("Error deleting post:", err);
+//       Swal.fire({
+//         icon: "error",
+//         title: "Error",
+//         text: "An error occurred while deleting the post",
+//       });
+//     }
+//   }
+// };
+//   const handleLike = async (postId) => {
+//     const postIndex = posts.findIndex(p => p.id === postId);
+//     if (postIndex === -1) return;
+
+//     try {
+//       const post = posts[postIndex];
+      
+//       try {
+//         await API.delete(`/posts/${postId}/like`);
+//         const updatedPosts = [...posts];
+//         updatedPosts[postIndex] = {
+//           ...post,
+//           likes: Math.max(0, post.likes - 1),
+//           liked: false
+//         };
+//         setPosts(updatedPosts);
+//         console.log("Successfully unliked post:", postId);
+        
+//       } catch (unlikeError) {
+//         if (unlikeError.response?.data?.message?.includes('not found')) {
+//           await API.post(`/posts/${postId}/like`);
+//           const updatedPosts = [...posts];
+//           updatedPosts[postIndex] = {
+//             ...post,
+//             likes: post.likes + 1,
+//             liked: true
+//           };
+//           setPosts(updatedPosts);
+//           console.log("Successfully liked post:", postId);
+//         } else {
+//           throw unlikeError;
+//         }
+//       }
+      
+//     } catch (err) {
+//       console.error("Error in handleLike:", err.response?.data || err);
+      
+//       await fetchPosts();
+//     }
+//   };
+//   const toggleComments = (postId) => {
+//     setPosts(prevPosts => prevPosts.map(p => 
+//       p.id === postId ? { ...p, showComments: !p.showComments } : p
+//     ));
+//   };
+
+//   const handleCommentChange = (postId, value) => {
+//     setCommentInputs({ ...commentInputs, [postId]: value });
+//   };
+
+//   const handleCommentSubmit = async (postId) => {
+//     const comment = commentInputs[postId];
+//     if (!comment) return;
+  
+//     try {
+//       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
+  
+//       console.log("Comment response from backend:", res.data);
+//       setPosts(prevPosts =>
+//         prevPosts.map(p =>
+//           p.id === postId
+//             ? {
+//                 ...p,
+//                 comments: [
+//                   ...(p.comments || []),
+//                   {
+//                     id: res.data.comment.comment_id,
+//                     userName: res.data.comment.author?.["full-name"] || "Admin",
+//                     content: res.data.comment.content,
+//                     avatar: res.data.comment.author?.image || AdminPostsImg, 
+//                     date: new Date().toLocaleString(),
+//                     "created-at": res.data.comment["created-at"]
+//                   }
+//                 ]
+//               }
+//             : p
+//         )
+//       );
+//       setCommentInputs({ ...commentInputs, [postId]: '' });
+  
+//     } catch (err) {
+//       console.error("Error submitting comment:", err);
+//     }
+//   };
+//   useEffect(() => {
+//     if (success || error) {
+//       const timer = setTimeout(() => {
+//         setSuccess(null);
+//         setError(null);
+//       }, 2000);
+//       return () => clearTimeout(timer);
+//     }
+//   }, [success, error]);
+
+// const handleLandingToggle = async (postId, currentValue) => {
+//   // تحديث الـ state فورًا
+//   setPosts(prev =>
+//     prev.map(p => (p.id === postId ? { ...p, inLanding: !currentValue } : p))
+//   );
+
+//   try {
+//     const res = await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
+//     if (res.data.status === "success") {
+//       Swal.fire({
+//         icon: "success",
+//         title: "Updated",
+//         text: `Post ${!currentValue ? "added to" : "removed from"} landing`,
+//         toast: true,
+//         position: "top-end",
+//         timer: 1800,
+//         showConfirmButton: false,
+//         background: "#fefefe",
+//         color: "#333",
+//       });
+//     }
+//   } catch (err) {
+//     console.error("Error updating landing status", err);
+
+//     // لو في خطأ، ارجع الحالة زي ما كانت
+//     setPosts(prev =>
+//       prev.map(p => (p.id === postId ? { ...p, inLanding: currentValue } : p))
+//     );
+
+//     Swal.fire({
+//       icon: "error",
+//       title: "Error",
+//       text: "Failed to update landing status",
+//       toast: true,
+//       position: "top-end",
+//       timer: 1800,
+//       showConfirmButton: false,
+//       background: "#fefefe",
+//       color: "#333",
+//     });
+//   }
+// };
+
+
+
+//   const filteredPosts = filterType === 'All'
+//     ? posts
+//     : posts.filter(p => p.type === filterType);
+
+//   return (
+//     <div className="feed-container">
+//       <h2 className="page-title">{t('Manage Alumni Posts')}</h2>
+
+//       {loading && <p>{t('loadingPosts')}</p>}
+//       {error && <div className="error-message">{error}</div>}
+//       {success && <div className="success-message">{success}</div>}
+
+//       <CreatePostBar
+//         types={types}
+//         editingPost={posts.find(p => p.id === editingPostId) || null}
+//         onSubmit={(formData, postId) => handleCreateOrEdit(formData, postId)}
+//       />
+
+//       {!loading && !error && (
+//         <>
+//           <div className="filter-bar">
+//             <label>{t('Filter by type:')}</label>
+//             <select
+//               value={filterType}
+//               onChange={(e) => setFilterType(e.target.value)}
+//             >
+//               <option value="All">{t('All')}</option>
+//               {types.map(type => (
+//                 <option key={type} value={type}>{type}</option>
+//               ))}
+//             </select>
+//           </div>
+
+//           <div className="posts-feed">
+//             {filteredPosts.length === 0 ? (
+//               <p className="no-posts">{t('noPosts')}</p>
+//             ) : (
+//               filteredPosts.map((post) => (
+//                 <div key={post.id} className="post-card">
+//                   <div className="post-header">
+//                     <img src={post.author?.photo || AdminPostsImg} alt="profile" className="profile-pic" />
+//                     <div className="post-header-info">
+//                       <strong>{post.authorName}</strong>
+//                       <div className="post-date">
+//                         {post.date}
+//                         {post['group-id'] ? ' - In Group' : ''}
+//                       </div>
+//                     </div>
+//                     <span className="post-type-badge">{post.type}</span>
+//                   </div>
+
+//                   <div className="post-content">
+//                     <p>{post.content}</p>
+//                     {post.images && post.images.length > 0 && (
+//                       <div className="post-images">
+//                         {post.images.map((imgUrl, index) => (
+//                           <img
+//                             key={index}
+//                             src={imgUrl}
+//                             alt={`post-${index}`}
+//                             className="post-image"
+//                             onError={(e) => { e.target.style.display = 'none'; }}
+//                           />
+//                         ))}
+//                       </div>
+//                     )}
+//                   </div>
+
+//                   {/* Post Actions */}
+//                   <div className="post-actions">
+//                     <button 
+//                       className={post.liked ? "liked" : ""}
+//                       onClick={() => handleLike(post.id)}
+//                     >
+//                       <Heart 
+//                         size={16} 
+//                       /> 
+//                       {post.likes}
+//                     </button>
+//                     <button onClick={() => toggleComments(post.id)}>
+//                       <MessageCircle size={16} /> {post.comments?.length || 0}
+//                     </button>
+//                     <button>
+//                       <Share2 size={16} /> {post.shares || 0}
+//                     </button>
+//                     <button onClick={() => setEditingPostId(post.id)} className="edit-btn">
+//                       <Edit size={16} />
+//                     </button>
+//                     <button onClick={() => handleDelete(post.id)} className="delete-btn">
+//                       <Trash2 size={16} />
+//                     </button>
+//                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+//   <div className="landing-tooltip-container">
+//     <button
+//      onClick={() => handleLandingToggle(post.id, post.inLanding)}
+//       className="landing-btn"
+//     >
+//       {post.inLanding ? (
+//         <CheckCircle size={20} color="#4CAF50" />
+//       ) : (
+//         <Circle size={20} color="#ccc" />
+//       )}
+//     </button>
+//     <span className="landing-tooltip">
+//       {post.inLanding ? "Remove from Landing Page" : "Add to Landing Page"}
+//     </span>
+//   </div>
+// </div>
+//                   </div>
+
+//                   {/* Comments Section - تظهر فقط عندما showComments = true */}
+//                   {post.showComments && (
+//                     <div className="comments-section">
+//                       <div className="existing-comments">
+//                         {post.comments.map((comment) => (
+//                           <div key={comment.id} className="comment-item">
+//                             <img
+//                               src={comment.avatar || AdminPostsImg}
+//                               alt={comment.userName}
+//                               className="comment-avatar"
+//                             />
+//                             <div className="comment-text">
+//                               <strong>{comment.userName}</strong>: {comment.content}
+//                             </div>
+//                             <div className="comment-date">
+//                               {new Date(comment["created-at"]).toLocaleString([], {
+//                                 year: "numeric",
+//                                 month: "2-digit",
+//                                 day: "2-digit",
+//                                 hour: "2-digit",
+//                                 minute: "2-digit",
+//                               })}
+//                             </div>
+//                           </div>
+//                         ))}
+//                       </div>
+//                       <div className="comment-input">
+//                         <input
+//                           type="text"
+//                           placeholder="Write a comment..."
+//                           value={commentInputs[post.id] || ""}
+//                           onChange={(e) => handleCommentChange(post.id, e.target.value)}
+//                         />
+//                         <button onClick={() => handleCommentSubmit(post.id)}>
+//                           <Send size={16} />
+//                         </button>
+//                       </div>
+//                     </div>
+//                   )}
+//                 </div>
+//               ))
+//             )}
+//           </div>
+//         </>
+//       )}
+//     </div>
+//   );
+// };
+
+// export default AdminPostsPage;
+
 import React, { useState, useEffect } from 'react';
 import './AdminPostsPage.css';
 import AdminPostsImg from './AdminPosts.jpeg';
-import { Heart, MessageCircle, Share2, Edit, Trash2, Send } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Edit, Trash2, Send, CheckCircle, Circle, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import API from "../../services/api";
 import CreatePostBar from '../../components/CreatePostBar'; 
 import Swal from "sweetalert2";
-import { CheckCircle, Circle } from 'lucide-react';
+import { getPermission } from "../../components/usePermission";
 
-const AdminPostsPage = () => {
+const AdminPostsPage = ({ currentUser }) => {
   const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
   const [types, setTypes] = useState([]);
@@ -19,20 +465,47 @@ const AdminPostsPage = () => {
   const [success, setSuccess] = useState(null);
   const [commentInputs, setCommentInputs] = useState({});
 
-  useEffect(() => {
-    fetchPosts();
-    fetchCategories();
-  }, []);
+  // صلاحيات المستخدم
+  const postPerm = currentUser?.userType === "admin"
+  ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
+  : getPermission("Portal posts management", currentUser) || { canView: false, canAdd: false, canEdit: false, canDelete: false };
 
+  useEffect(() => {
+    if (postPerm.canView) {
+      fetchPosts();
+      fetchCategories();
+    } else {
+      setLoading(false);
+    }
+  }, [currentUser]);
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+        setError(null);
+      }, 2000);
+  
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
+  
+  
   const formatPosts = (data) => {
     const filtered = (data || []).filter(p => !p['group-id']);
     
     return filtered.map(post => {
       const formattedComments = (post.comments || []).map((comment) => ({
         id: comment.comment_id,
-        userName: comment.author?.["full-name"] || "Anonymous",
+        userName:
+        comment.author?.userType === "admin" || comment.author?.userType === "staff"
+          ? "Alumni Portal – Helwan University"
+          : comment.author?.["full-name"] || "Anonymous",
+      avatar:
+        comment.author?.userType === "admin" || comment.author?.userType === "staff"
+          ? AdminPostsImg
+          : comment.author?.image || AdminPostsImg,
+      
         content: comment.content,
-        avatar: comment.author?.image || AdminPostsImg,
         date: comment["created-at"],
       }));
 
@@ -42,23 +515,13 @@ const AdminPostsPage = () => {
         likes: post.likes_count || 0,
         liked: false, 
         comments: formattedComments,
-        date: new Date(post['created-at']).toLocaleString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        }),
+        date: post['created-at'],
         authorName: "Alumni Portal – Helwan University",
         shares: 0,
         type: post.category,
         images: post.images || [],
-        showComments: false, 
-        author: {
-          photo: AdminPostsImg
-        },
-         inLanding: post["in-landing"]
+        showComments: false,
+        inLanding: post["in-landing"]
       };
     });
   };
@@ -68,13 +531,10 @@ const AdminPostsPage = () => {
     setError(null);
     try {
       const response = await API.get('/posts/admin');
-      if (response.data.status === "success") {
-        setPosts(formatPosts(response.data.data));
-      } else {
-        setPosts([]);
-      }
-    } catch (error) {
-      console.error('❌ Error fetching posts:', error);
+      if (response.data.status === "success") setPosts(formatPosts(response.data.data));
+      else setPosts([]);
+    } catch (err) {
+      console.error('❌ Error fetching posts:', err);
       setError(t("fetchPostsFailed"));
     } finally {
       setLoading(false);
@@ -90,354 +550,243 @@ const AdminPostsPage = () => {
       setTypes([]);
     }
   };
-const handleCreateOrEdit = async (formData, postId = null) => {
-  setError(null);
-  setSuccess(null);
-  try {
-    if (postId) {
-      await API.put(`/posts/${postId}/edit`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setSuccess(t("postUpdated"));
-    } else {
-      await API.post("/posts/create-post", formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-      setSuccess(t("postCreated"));
-    }
-    fetchPosts();
-    setEditingPostId(null);
-  } catch (err) {
-    console.error("❌ Error saving post", err);
-    setError(err.response?.data?.message || t("savePostFailed"));
-  }
-};
 
-
-
-const handleDelete = async (id) => {
-  const result = await Swal.fire({
-    title: "Are you sure?",
-    text: "You won't be able to revert this!",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, delete it!",
-    cancelButtonText: "Cancel",
-  });
-
-  if (result.isConfirmed) {
+  const handleCreateOrEdit = async (formData, postId = null) => {
+    setError(null);
+    setSuccess(null);
     try {
-      await API.delete(`/posts/${id}`);
-      Swal.fire({
-        icon: "success",
-        title: "Deleted!",
-        text: "Post deleted successfully",
-      });
+      if (postId) {
+        await API.put(`/posts/${postId}/edit`, formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        setSuccess(t("postUpdated"));
+      } else {
+        await API.post("/posts/create-post", formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        setSuccess(t("postCreated"));
+      }
       fetchPosts();
+      setEditingPostId(null);
     } catch (err) {
-      console.error("Error deleting post:", err);
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: "An error occurred while deleting the post",
-      });
+      console.error("❌ Error saving post", err);
+      setError(err.response?.data?.message || t("savePostFailed"));
     }
-  }
-};
+  };
+
+  const handleDelete = async (id) => {
+    if (!postPerm.canDelete) return;
+    const result = await Swal.fire({
+      title: "Are you sure?",
+      text: "You won't be able to revert this!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, delete it!",
+      cancelButtonText: "Cancel",
+    });
+    if (result.isConfirmed) {
+      try {
+        await API.delete(`/posts/${id}`);
+        Swal.fire({ icon: "success", title: "Deleted!", text: "Post deleted successfully" });
+        fetchPosts();
+      } catch (err) {
+        console.error("Error deleting post:", err);
+        Swal.fire({ icon: "error", title: "Error", text: "Failed to delete post" });
+      }
+    }
+  };
+
   const handleLike = async (postId) => {
+    if (!postPerm.canView) return;
     const postIndex = posts.findIndex(p => p.id === postId);
     if (postIndex === -1) return;
 
     try {
       const post = posts[postIndex];
-      
       try {
         await API.delete(`/posts/${postId}/like`);
         const updatedPosts = [...posts];
-        updatedPosts[postIndex] = {
-          ...post,
-          likes: Math.max(0, post.likes - 1),
-          liked: false
-        };
+        updatedPosts[postIndex] = { ...post, likes: Math.max(0, post.likes - 1), liked: false };
         setPosts(updatedPosts);
-        console.log("Successfully unliked post:", postId);
-        
       } catch (unlikeError) {
-        if (unlikeError.response?.data?.message?.includes('not found')) {
+        if (unlikeError.response?.status === 404) {
           await API.post(`/posts/${postId}/like`);
           const updatedPosts = [...posts];
-          updatedPosts[postIndex] = {
-            ...post,
-            likes: post.likes + 1,
-            liked: true
-          };
+          updatedPosts[postIndex] = { ...post, likes: post.likes + 1, liked: true };
           setPosts(updatedPosts);
-          console.log("Successfully liked post:", postId);
-        } else {
-          throw unlikeError;
-        }
+        } else { throw unlikeError; }
       }
-      
     } catch (err) {
       console.error("Error in handleLike:", err.response?.data || err);
-      
       await fetchPosts();
     }
   };
+
   const toggleComments = (postId) => {
-    setPosts(prevPosts => prevPosts.map(p => 
-      p.id === postId ? { ...p, showComments: !p.showComments } : p
-    ));
+    if (!postPerm.canView) return;
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, showComments: !p.showComments } : p));
   };
 
   const handleCommentChange = (postId, value) => {
+    if (!postPerm.canAdd) return;
     setCommentInputs({ ...commentInputs, [postId]: value });
   };
 
   const handleCommentSubmit = async (postId) => {
+    if (!postPerm.canAdd) return;
     const comment = commentInputs[postId];
-    if (!comment) return;
-  
+    if (!comment?.trim()) return;
+
     try {
       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
-  
-      console.log("Comment response from backend:", res.data);
-      setPosts(prevPosts =>
-        prevPosts.map(p =>
-          p.id === postId
-            ? {
-                ...p,
-                comments: [
-                  ...(p.comments || []),
-                  {
-                    id: res.data.comment.comment_id,
-                    userName: res.data.comment.author?.["full-name"] || "Admin",
-                    content: res.data.comment.content,
-                    avatar: res.data.comment.author?.image || AdminPostsImg, 
-                    date: new Date().toLocaleString(),
-                    "created-at": res.data.comment["created-at"]
-                  }
-                ]
-              }
-            : p
-        )
-      );
-      setCommentInputs({ ...commentInputs, [postId]: '' });
-  
+      if (res.data.comment) {
+        const newComment = {
+          id: res.data.comment.comment_id,
+          userName: res.data.comment.author?.["full-name"] || "Admin",
+          content: res.data.comment.content,
+          avatar: res.data.comment.author?.image || AdminPostsImg,
+          date: new Date().toLocaleString()
+        };
+        setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
+      }
+      setCommentInputs(prev => ({ ...prev, [postId]: "" }));
     } catch (err) {
-      console.error("Error submitting comment:", err);
+      console.error("Error submitting comment:", err.response?.data || err);
     }
   };
-  useEffect(() => {
-    if (success || error) {
-      const timer = setTimeout(() => {
-        setSuccess(null);
-        setError(null);
-      }, 2000);
-      return () => clearTimeout(timer);
+
+  const handleLandingToggle = async (postId, currentValue) => {
+    if (!postPerm.canAdd) return;
+    setPosts(prev => prev.map(p => p.id === postId ? { ...p, inLanding: !currentValue } : p));
+
+    try {
+      await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
+      Swal.fire({ icon: "success", title: "Updated", text: `Post ${!currentValue ? "added to" : "removed from"} landing`, toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+    } catch (err) {
+      console.error("Error updating landing status", err);
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, inLanding: currentValue } : p));
+      Swal.fire({ icon: "error", title: "Error", text: "Failed to update landing status", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
     }
-  }, [success, error]);
+  };
 
-const handleLandingToggle = async (postId, currentValue) => {
-  // تحديث الـ state فورًا
-  setPosts(prev =>
-    prev.map(p => (p.id === postId ? { ...p, inLanding: !currentValue } : p))
-  );
+  const filteredPosts = filterType === 'All' ? posts : posts.filter(p => p.type === filterType);
 
-  try {
-    const res = await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
-    if (res.data.status === "success") {
-      Swal.fire({
-        icon: "success",
-        title: "Updated",
-        text: `Post ${!currentValue ? "added to" : "removed from"} landing`,
-        toast: true,
-        position: "top-end",
-        timer: 1800,
-        showConfirmButton: false,
-        background: "#fefefe",
-        color: "#333",
-      });
-    }
-  } catch (err) {
-    console.error("Error updating landing status", err);
-
-    // لو في خطأ، ارجع الحالة زي ما كانت
-    setPosts(prev =>
-      prev.map(p => (p.id === postId ? { ...p, inLanding: currentValue } : p))
-    );
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Failed to update landing status",
-      toast: true,
-      position: "top-end",
-      timer: 1800,
-      showConfirmButton: false,
-      background: "#fefefe",
-      color: "#333",
-    });
-  }
-};
-
-
-
-  const filteredPosts = filterType === 'All'
-    ? posts
-    : posts.filter(p => p.type === filterType);
+  if (!postPerm.canView) return <p style={{ color: 'red' }}>{t("noPermission")}</p>;
+  if (loading) return <p>{t("loadingPosts")}</p>;
+  if (error) return <div className="error-message">{error}</div>;
 
   return (
     <div className="feed-container">
-      <h2 className="page-title">{t('Manage Alumni Posts')}</h2>
+      <h2 className="page-title">{t('Manage Portal Posts')}</h2>
 
-      {loading && <p>{t('loadingPosts')}</p>}
-      {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
 
-      <CreatePostBar
-        types={types}
-        editingPost={posts.find(p => p.id === editingPostId) || null}
-        onSubmit={(formData, postId) => handleCreateOrEdit(formData, postId)}
-      />
+      {(postPerm.canAdd || editingPostId) && (
+  <CreatePostBar
+    types={types}
+    editingPost={posts.find(p => p.id === editingPostId) || null}
+    onSubmit={handleCreateOrEdit}
+  />
+)}
 
-      {!loading && !error && (
-        <>
-          <div className="filter-bar">
-            <label>{t('Filter by type:')}</label>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-            >
-              <option value="All">{t('All')}</option>
-              {types.map(type => (
-                <option key={type} value={type}>{type}</option>
-              ))}
-            </select>
-          </div>
+      <div className="filter-bar">
+        <label>{t('Filter by type:')}</label>
+        <select value={filterType} onChange={e => setFilterType(e.target.value)}>
+          <option value="All">{t('All')}</option>
+          {types.map(type => <option key={type} value={type}>{type}</option>)}
+        </select>
+      </div>
 
-          <div className="posts-feed">
-            {filteredPosts.length === 0 ? (
-              <p className="no-posts">{t('noPosts')}</p>
-            ) : (
-              filteredPosts.map((post) => (
-                <div key={post.id} className="post-card">
-                  <div className="post-header">
-                    <img src={post.author?.photo || AdminPostsImg} alt="profile" className="profile-pic" />
-                    <div className="post-header-info">
-                      <strong>{post.authorName}</strong>
-                      <div className="post-date">
-                        {post.date}
-                        {post['group-id'] ? ' - In Group' : ''}
-                      </div>
-                    </div>
-                    <span className="post-type-badge">{post.type}</span>
+      <div className="posts-feed">
+        {filteredPosts.length === 0 ? <p className="no-posts">{t('noPosts')}</p> :
+          filteredPosts.map(post => (
+            <div key={post.id} className="post-card">
+              <div className="post-header">
+                <img src={post.author?.photo || AdminPostsImg} alt="profile" className="profile-pic" />
+                <div className="post-header-info">
+                  <strong>{post.authorName}</strong>
+                  <div className="post-date">{new Date(post.date).toLocaleString()}</div>
+                </div>
+                <span className="post-type-badge">{post.type}</span>
+                
+              </div>
+
+              <div className="post-content">
+                <p>{post.content}</p>
+                {post.images.length > 0 && (
+                  <div className="post-images">
+                    {post.images.map((imgUrl, index) => (
+                      <img key={index} src={imgUrl} alt={`post-${index}`} className="post-image" onError={e => e.target.style.display='none'} />
+                    ))}
                   </div>
+                )}
+              </div>
 
-                  <div className="post-content">
-                    <p>{post.content}</p>
-                    {post.images && post.images.length > 0 && (
-                      <div className="post-images">
-                        {post.images.map((imgUrl, index) => (
-                          <img
-                            key={index}
-                            src={imgUrl}
-                            alt={`post-${index}`}
-                            className="post-image"
-                            onError={(e) => { e.target.style.display = 'none'; }}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Post Actions */}
-                  <div className="post-actions">
-                    <button 
-                      className={post.liked ? "liked" : ""}
-                      onClick={() => handleLike(post.id)}
-                    >
-                      <Heart 
-                        size={16} 
-                      /> 
-                      {post.likes}
-                    </button>
-                    <button onClick={() => toggleComments(post.id)}>
-                      <MessageCircle size={16} /> {post.comments?.length || 0}
-                    </button>
-                    <button>
-                      <Share2 size={16} /> {post.shares || 0}
-                    </button>
-                    <button onClick={() => setEditingPostId(post.id)} className="edit-btn">
-                      <Edit size={16} />
-                    </button>
-                    <button onClick={() => handleDelete(post.id)} className="delete-btn">
-                      <Trash2 size={16} />
-                    </button>
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
-  <div className="landing-tooltip-container">
-    <button
-     onClick={() => handleLandingToggle(post.id, post.inLanding)}
-      className="landing-btn"
-    >
-      {post.inLanding ? (
-        <CheckCircle size={20} color="#4CAF50" />
-      ) : (
-        <Circle size={20} color="#ccc" />
-      )}
+              <div className="post-actions">
+                <button className={post.liked ? "liked" : ""} onClick={() => handleLike(post.id)}>
+                  <Heart size={16} /> {post.likes}
+                </button>
+                <button onClick={() => toggleComments(post.id)}>
+                  <MessageCircle size={16} /> {post.comments?.length || 0}
+                </button>
+                {/* <button><Share2 size={16} /> {post.shares || 0}</button> */}
+                <div style={{  display: 'flex', justifyContent: 'flex-end',marginLeft: "auto"}}>
+  {postPerm.canEdit && (
+    <button onClick={() => setEditingPostId(post.id)} className="edit-btn">
+      <Edit size={16} />
     </button>
-    <span className="landing-tooltip">
-      {post.inLanding ? "Remove from Landing Page" : "Add to Landing Page"}
-    </span>
-  </div>
-</div>
-                  </div>
+  )}
 
-                  {/* Comments Section - تظهر فقط عندما showComments = true */}
-                  {post.showComments && (
-                    <div className="comments-section">
-                      <div className="existing-comments">
-                        {post.comments.map((comment) => (
-                          <div key={comment.id} className="comment-item">
-                            <img
-                              src={comment.avatar || AdminPostsImg}
-                              alt={comment.userName}
-                              className="comment-avatar"
-                            />
-                            <div className="comment-text">
-                              <strong>{comment.userName}</strong>: {comment.content}
-                            </div>
-                            <div className="comment-date">
-                              {new Date(comment["created-at"]).toLocaleString([], {
-                                year: "numeric",
-                                month: "2-digit",
-                                day: "2-digit",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="comment-input">
-                        <input
-                          type="text"
-                          placeholder="Write a comment..."
-                          value={commentInputs[post.id] || ""}
-                          onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                        />
-                        <button onClick={() => handleCommentSubmit(post.id)}>
-                          <Send size={16} />
-                        </button>
-                      </div>
+  {postPerm.canDelete && (
+    <button onClick={() => handleDelete(post.id)} className="delete-btn">
+      <Trash2 size={16} />
+    </button>
+  )}
+
+  {postPerm.canAdd && (
+    <div className="landing-tooltip-container">
+      <button
+        onClick={() => handleLandingToggle(post.id, post.inLanding)}
+        className="landing-btn"
+      >
+        {post.inLanding ? (
+          <CheckCircle size={20} color="#4CAF50" />
+        ) : (
+          <Circle size={20} color="#ccc" />
+        )}
+      </button>
+      <span className="landing-tooltip">
+        {post.inLanding ? "Remove from Landing Page" : "Add to Landing Page"}
+      </span>
+    </div>
+  )}
+</div>
+
+
+              </div>
+
+              {post.showComments && (
+                <div className="comments-section">
+                  {post.comments.map(comment => (
+                    <div key={comment.id} className="comment-item">
+                      <img src={comment.avatar || AdminPostsImg} alt={comment.userName} className="comment-avatar" />
+                      <div className="comment-text"><strong>{comment.userName}</strong>: {comment.content}</div>
+                      <div className="comment-date">{new Date(comment.date).toLocaleString()}</div>
+                    </div>
+                  ))}
+                  {postPerm.canAdd && (
+                    <div className="comment-input">
+                      <input type="text" value={commentInputs[post.id] || ''} onChange={e => handleCommentChange(post.id, e.target.value)} placeholder="Write a comment..." />
+                      <button onClick={() => handleCommentSubmit(post.id)}><Send size={16} /></button>
                     </div>
                   )}
                 </div>
-              ))
-            )}
-          </div>
-        </>
-      )}
+              )}
+
+            </div>
+          ))
+        }
+      </div>
     </div>
   );
 };
