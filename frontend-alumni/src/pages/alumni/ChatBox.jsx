@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 import API from "../../services/api";
 import {
   initSocket,
-  sendMessageSocket,
   sendEditedMessageSocket,
   markMessagesAsReadSocket,
   joinChatSocket,
@@ -259,7 +258,7 @@ export default function ChatBox({
       };
 
       setMessages((prev) => [...prev, newMsg]);
-      sendMessageSocket(newMsg);
+      // Note: Socket event is emitted by the REST API, no need to call sendMessageSocket
       updateChatListLastMessage(newMsg);
 
       setNewMessage("");

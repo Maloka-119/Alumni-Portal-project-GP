@@ -435,6 +435,37 @@ const sendMessage = asyncHandler(async (req, res) => {
   // Create notification for the receiver
   await notifyMessageReceived(receiverId, senderId);
 
+  // Emit socket event to notify other user in real-time
+  if (global.chatSocket) {
+    // Broadcast to chat room
+    global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+    
+    // Also send to receiver's personal room if they're not in the chat room
+    const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
+    if (receiverSocketId) {
+      // Mark as delivered
+      await Message.update(
+        { status: 'delivered' },
+        { where: { message_id: messageWithDetails.message_id } }
+      );
+    }
+
+    // Update chat list for both users
+    global.chatSocket.io.to(`user_${senderId}`).emit('chat_updated', {
+      chatId: chatId,
+      lastMessage: messageWithDetails,
+      unreadCount: chat[`user${chat.user1_id === senderId ? '1' : '2'}_unread_count`]
+    });
+
+    if (receiverSocketId) {
+      global.chatSocket.io.to(`user_${receiverId}`).emit('chat_updated', {
+        chatId: chatId,
+        lastMessage: messageWithDetails,
+        unreadCount: chat[`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`]
+      });
+    }
+  }
+
   res.status(201).json({
     status: 'success',
     data: messageWithDetails
@@ -1151,6 +1182,37 @@ const sendImageMessage = asyncHandler(async (req, res) => {
   // Create notification for the receiver
   await notifyMessageReceived(receiverId, senderId);
 
+  // Emit socket event to notify other user in real-time
+  if (global.chatSocket) {
+    // Broadcast to chat room
+    global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+    
+    // Also send to receiver's personal room if they're not in the chat room
+    const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
+    if (receiverSocketId) {
+      // Mark as delivered
+      await Message.update(
+        { status: 'delivered' },
+        { where: { message_id: messageWithDetails.message_id } }
+      );
+    }
+
+    // Update chat list for both users
+    global.chatSocket.io.to(`user_${senderId}`).emit('chat_updated', {
+      chatId: chatId,
+      lastMessage: messageWithDetails,
+      unreadCount: chat[`user${chat.user1_id === senderId ? '1' : '2'}_unread_count`]
+    });
+
+    if (receiverSocketId) {
+      global.chatSocket.io.to(`user_${receiverId}`).emit('chat_updated', {
+        chatId: chatId,
+        lastMessage: messageWithDetails,
+        unreadCount: chat[`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`]
+      });
+    }
+  }
+
   res.status(201).json({
     status: 'success',
     data: messageWithDetails
@@ -1258,6 +1320,37 @@ const sendFileMessage = asyncHandler(async (req, res) => {
 
   // Create notification for the receiver
   await notifyMessageReceived(receiverId, senderId);
+
+  // Emit socket event to notify other user in real-time
+  if (global.chatSocket) {
+    // Broadcast to chat room
+    global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+    
+    // Also send to receiver's personal room if they're not in the chat room
+    const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
+    if (receiverSocketId) {
+      // Mark as delivered
+      await Message.update(
+        { status: 'delivered' },
+        { where: { message_id: messageWithDetails.message_id } }
+      );
+    }
+
+    // Update chat list for both users
+    global.chatSocket.io.to(`user_${senderId}`).emit('chat_updated', {
+      chatId: chatId,
+      lastMessage: messageWithDetails,
+      unreadCount: chat[`user${chat.user1_id === senderId ? '1' : '2'}_unread_count`]
+    });
+
+    if (receiverSocketId) {
+      global.chatSocket.io.to(`user_${receiverId}`).emit('chat_updated', {
+        chatId: chatId,
+        lastMessage: messageWithDetails,
+        unreadCount: chat[`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`]
+      });
+    }
+  }
 
   res.status(201).json({
     status: 'success',
