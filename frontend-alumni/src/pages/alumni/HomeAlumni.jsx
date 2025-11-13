@@ -110,7 +110,7 @@ const HomeAlumni = () => {
   
       const formatted = filteredData.map(post => {
         const isUniversityPost =
-          post.author?.userType === "admin" || post.author?.userType === "staff";
+          post.author?.type === "admin" || post.author?.type === "staff";
   
         const formattedPost = {
           id: post.post_id || post.id,
@@ -133,7 +133,7 @@ const HomeAlumni = () => {
           shares: 0,
           comments: (post.comments || []).map(comment => {
             const isUniversityComment =
-              comment.author?.userType === "admin" || comment.author?.userType === "staff";
+              comment.author?.type === "admin" || comment.author?.type === "staff";
   
             return {
               comment_id: comment.comment_id,
