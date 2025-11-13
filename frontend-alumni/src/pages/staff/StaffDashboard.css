@@ -11,7 +11,7 @@
     left: 0;
     right: 0;
     height: 64px;
-    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    background: linear-gradient(90deg, #1f3a85, #a78bfa);
     border-bottom: 1px solid #e2e8f0;
     display: flex;
     align-items: center;
@@ -273,8 +273,8 @@
   
   .sidebar-link.active {
     background-color: #e5e7eb;
-    border-left: 4px solid #8b5cf6;
-    color: #2c52bb;
+    border-left: 4px solid #1f3a85;
+    color: #8b5cf6;
     font-weight: 600;
   }
   
@@ -285,8 +285,8 @@
   
   .child-link.active {
     background-color: #dbeafe;
-    border-left: 4px solid #8b5cf6;
-    color: #2c52bb;
+    border-left: 4px solid #2648a3;
+    color: #8055e2;
     font-weight: 600;
   }
   
