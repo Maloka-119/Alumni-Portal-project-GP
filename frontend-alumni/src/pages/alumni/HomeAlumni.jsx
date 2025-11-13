@@ -143,9 +143,9 @@ const HomeAlumni = () => {
                 "full-name": isUniversityComment
                   ? "Alumni Portal - Helwan University"
                   : comment.author?.["full-name"] || "Unknown",
-                image: isUniversityComment
+                  image: isUniversityComment
                   ? AdminPostsImg
-                  : comment.author?.image || PROFILE,
+                  : comment.author?.image || PROFILE,                
               },
               "created-at": comment["created-at"],
             };

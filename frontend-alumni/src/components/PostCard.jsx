@@ -201,15 +201,14 @@ const PostCard = ({ post, onEdit, onDelete }) => {
                 <div className="comment-left">
                 <img
   src={
-    c.author?.userType === "staff"
-      ? Staffprof
-      : c.author?.userType === "admin"
+    c.author?.type === "admin" || c.author?.type === "staff"
       ? AdminPostsImg
-      : PROFILE
+      : c.author?.image || PROFILE
   }
   alt="avatar"
   className="comment-avatar"
 />
+
 
 
 
