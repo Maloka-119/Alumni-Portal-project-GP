@@ -188,9 +188,9 @@ const PostCard = ({ post, onEdit, onDelete }) => {
         <button onClick={() => setShowComments(!showComments)}>
           <MessageCircle size={16} /> {comments.length}
         </button>
-        <button>
+        {/* <button>
           <Share2 size={16} /> {post.shares}
-        </button>
+        </button> */}
       </div>
 
       {showComments && (

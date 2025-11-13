@@ -541,9 +541,9 @@ const UsersPostsPage = ({ currentUser }) => {
               <button onClick={() => toggleComments(post.id)}>
                 <MessageCircle size={16} /> {post.comments?.length || 0}
               </button>
-              <button>
+              {/* <button>
                 <Share2 size={16} /> {post.shares || 0}
-              </button>
+              </button> */}
             </div>
 
             {post.category === "Success story" && postPerm.canAdd && (
