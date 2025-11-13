@@ -279,14 +279,25 @@
   }
   
   .child-link {
-    padding-left: 32px;
-    font-size: 14px;
+    padding-left: 40px; /* زيادة المسافة عن الأب */
+    font-size: 0.9rem; /* حجم الخط أصغر */
+    color: #1f40a0; /* لون النص */
+    font-weight: 500; /* سمك الخط */
+    text-transform: capitalize; /* أول حرف كبير */
+    transition: all 0.2s;
+  }
+  
+  .child-link:hover {
+    background-color: #cfe0ff; /* لون عند المرور */
+    color: #0f2a75; /* تغيير لون النص عند hover */
   }
   
   .child-link.active {
-    background-color: #dbeafe;
-    border-left: 4px solid #2648a3;
-    color: #8055e2;
-    font-weight: 600;
+    background-color: #e0e7ff; /* نفس لون hover للأب */
+    border-left: none; /* نفس لون الـ border للأب */
+    color: #8b5cf6; /* لون مشابه للأب */
+    font-weight: 600; /* سمك كويس لكن مش مبالغ */
   }
+  
+  
   
