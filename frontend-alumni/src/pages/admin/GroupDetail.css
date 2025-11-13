@@ -423,22 +423,41 @@
     color: #1e293b;
 }
 
-.post-image {
-    width: 100%;
-    height: auto;
-    max-height: 400px;
-    object-fit: contain;
-    margin-top: 14px;
-    border-radius: 16px;
-    cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.1);
+.post-images {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-auto-rows: 200px; /* ارتفاع ثابت للصور */
+  gap: 8px;
+  width: 100%;
 }
 
-.post-image:hover {
-    transform: scale(1.03);
-    box-shadow: 0 14px 40px rgba(0,0,0,0.15);
+.post-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
 }
+
+.image-modal {
+  position: fixed;
+  top:0;
+  left:0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.image-modal img {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
 
 /* File link */
 .post-file-link {

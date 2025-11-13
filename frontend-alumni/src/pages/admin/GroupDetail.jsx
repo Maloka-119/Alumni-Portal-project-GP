@@ -27,7 +27,7 @@ function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
   const [commentInputs, setCommentInputs] = useState({});
   const [loading, setLoading] = useState(true);
   const formRef = useRef(null);
-
+  const [selectedImage, setSelectedImage] = useState(null)
 
 
   useEffect(() => {
@@ -491,16 +491,19 @@ const handlePostSubmit = async (formData, postId = null) => {
                 {post.images && post.images.length > 0 && (
                   <div className="post-images">
                     {post.images.map((imgUrl, index) => (
-                      <img
-                        key={index}
-                        src={imgUrl}
-                        alt={`post-${index}`}
-                        className="post-image"
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                        }}
-                      />
-                    ))}
+  <img
+    key={index}
+    src={imgUrl}
+    alt={`post-${index}`}
+    className="post-image"
+    onClick={() => setSelectedImage(imgUrl)}
+  />
+))}
+{selectedImage && (
+  <div className="image-modal" onClick={() => setSelectedImage(null)}>
+    <img src={selectedImage} alt="full" />
+  </div>
+)}
                   </div>
                 )}
               </div>
