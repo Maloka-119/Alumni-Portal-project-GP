@@ -50,7 +50,7 @@ function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
         avatar: comment.author?.image || AdminPostsImg,
         date: comment["created-at"],
       }));
-
+  
       return {
         ...post,
         id: post.post_id,
@@ -61,13 +61,14 @@ function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
         author: {
           id: post.author?.id,
           name: post.author?.["full-name"] || "Unknown",
-          photo: post.author?.image ||AdminPostsImg,
+          photo: post.author?.image || AdminPostsImg,
           type: post.author?.type || "user",
         },
+        showComments: false,  
       };
     });
   };
-
+  
   const fetchMembers = async () => {
     try {
       const res = await API.get(`/${group.id}/users`);
@@ -375,6 +376,15 @@ const handlePostSubmit = async (formData, postId = null) => {
     }
   };
 
+  const toggleComments = (postId) => {
+    setPosts(prev =>
+      prev.map(post =>
+        post.id === postId ? { ...post, showComments: !post.showComments } : post
+      )
+    );
+  };
+  
+
   return (
     <div className="containerr">
       <button className="back-btn" onClick={goBack}>
@@ -507,39 +517,56 @@ const handlePostSubmit = async (formData, postId = null) => {
                   />{" "}
                   {post.likes} {t("Likes")}
                 </button>
-                <button>
-                  <MessageCircle size={16} /> {post.comments?.length || 0}{" "}
-                  {t("Comments")}
-                </button>
+                <button onClick={() => toggleComments(post.id)}>
+  <MessageCircle size={16} /> {post.comments?.length || 0} {t("Comments")}
+</button>
+
               </div>
 
-              {/* Comments Section */}
-              <div className="comment-section">
-                {post.comments.map((comment) => (
-                  <div key={comment.id} className="comment-item">
-                    <img
-                      src={comment.avatar || PROFILE}
-                      alt={comment.userName}
-                      className="comment-avatar"
-                      onError={(e) => { e.target.src = PROFILE }}
-                    />
-                    <div className="comment-text">
-                      <strong>{comment.userName}</strong>: {comment.content}
-                    </div>
-                  </div>
-                ))}
-                <div className="comment-input">
-                  <input
-                    type="text"
-                    placeholder="Write a comment..."
-                    value={commentInputs[post.id] || ""}
-                    onChange={(e) => handleCommentChange(post.id, e.target.value)}
-                  />
-                  <button onClick={() => handleCommentSubmit(post.id)}>
-                    Send
-                  </button>
-                </div>
-              </div>
+              {post.showComments && (
+  <div className="comments-section">
+    <div className="existing-comments">
+      {post.comments.map((comment) => (
+        <div key={comment.id} className="comment-item">
+          <img
+            src={comment.avatar || PROFILE}
+            alt={comment.userName}
+            className="comment-avatar"
+            onError={(e) => { e.target.src = PROFILE }}
+          />
+          <div className="comment-text">
+            <strong className="comment-username">{comment.userName}</strong>: {comment.content}
+          </div>
+          <div className="comment-date">
+            {new Date(comment.date).toLocaleString([], { 
+              year: "numeric", 
+              month: "2-digit", 
+              day: "2-digit", 
+              hour: "2-digit", 
+              minute: "2-digit" 
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    {perms.postPerms.canAdd && (
+      <div className="comment-input">
+        <input
+          type="text"
+          placeholder="Write a comment..."
+          value={commentInputs[post.id] || ""}
+          onChange={(e) => handleCommentChange(post.id, e.target.value)}
+        />
+        <button onClick={() => handleCommentSubmit(post.id)}>
+          Send
+        </button>
+      </div>
+    )}
+  </div>
+)}
+
+
             </li>
           ))}
         </ul>
