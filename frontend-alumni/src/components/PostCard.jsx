@@ -6,6 +6,8 @@ import PROFILE from "../pages/alumni/PROFILE.jpeg";
 import "../pages/alumni/AlumniAdminPosts.css";
 import Swal from "sweetalert2";
 import ReactDOM from "react-dom";
+import AdminPostsImg from '../pages/alumni/AdminPosts.jpeg';
+import Staffprof from '../pages/alumni/Staffprof.jpg'
 
 const PostCard = ({ post, onEdit, onDelete }) => {
   const { t } = useTranslation();
@@ -186,9 +188,9 @@ const PostCard = ({ post, onEdit, onDelete }) => {
         <button onClick={() => setShowComments(!showComments)}>
           <MessageCircle size={16} /> {comments.length}
         </button>
-        <button>
+        {/* <button>
           <Share2 size={16} /> {post.shares}
-        </button>
+        </button> */}
       </div>
 
       {showComments && (
@@ -197,11 +199,20 @@ const PostCard = ({ post, onEdit, onDelete }) => {
             {comments.map((c) => (
               <div key={c.comment_id} className="comment-item">
                 <div className="comment-left">
-                  <img
-                    src={c.author?.image || PROFILE}
-                    alt="avatar"
-                    className="comment-avatar"
-                  />
+                <img
+  src={
+    c.author?.userType === "staff"
+      ? Staffprof
+      : c.author?.userType === "admin"
+      ? AdminPostsImg
+      : PROFILE
+  }
+  alt="avatar"
+  className="comment-avatar"
+/>
+
+
+
                   <div className="comment-text">
                     <strong>{c.author?.["full-name"]}</strong>
                     <p>{c.content}</p>
