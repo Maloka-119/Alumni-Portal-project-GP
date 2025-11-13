@@ -34,7 +34,7 @@ const admin = {
       "Post": "Post",
       "Cancel": "Cancel",
       "Alumni Portal – Helwan University": "Alumni Portal – Helwan University",
-      "userPosts": "User Posts",
+      "userPosts": "Graduates Posts",
       "loadingAlumniData": "Loading alumni data...",
       "showProfile": "Show Profile",
       "name": "Name",
@@ -167,6 +167,7 @@ const admin = {
   "add_to_group": "Add to Group",
   "phonenumber": "Phone Number",
   "Reject":"Reject",
+  "Posttype":"Post Type:",
 
 
       }
@@ -204,7 +205,7 @@ const admin = {
         "Post": "نشر",
         "Cancel": "إلغاء",
         "Alumni Portal – Helwan University": "بوابة الخريجين – جامعة حلوان",
-        "userPosts": "منشورات المستخدمين",
+        "userPosts": "منشورات الخريجين",
         "loadingAlumniData": "جاري تحميل بيانات الخريجين...",
         "showProfile": "عرض الملف الشخصي",
         "name": "الاسم",
@@ -213,6 +214,7 @@ const admin = {
         "status": "الحالة",
         "alumniId": "معرف الخريج",
         "actions": "الإجراءات",
+        
         "userManagement": "إدارة المستخدمين",
       "alumni": "الخريجين",
       "staff": "الموظفين",
@@ -339,7 +341,7 @@ const admin = {
 "Add to Group": "إضافة إلى المجموعة",
 "phonenumber": "رقم الهاتف",
 "Reject":"رفض",
-
+"Posttype":"نوع البوست: "
 
       }
     }
