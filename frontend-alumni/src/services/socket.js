@@ -35,7 +35,15 @@ export const initSocket = (token) => {
 export const joinChatSocket = (chatId) => {
   if (!socket) return console.warn("⚠️ Socket not initialized (joinChatSocket)");
   if (!chatId) return console.warn("⚠️ No chatId provided for joinChatSocket");
-  socket.emit("join_chat", chatId);
+  
+  // Wait for connection if not connected yet
+  if (socket.connected) {
+    socket.emit("join_chat", chatId);
+  } else {
+    socket.once("connect", () => {
+      socket.emit("join_chat", chatId);
+    });
+  }
 };
 
 export const leaveChatSocket = (chatId) => {
@@ -61,7 +69,15 @@ export const sendEditedMessageSocket = (message) => {
 export const markMessagesAsReadSocket = (chatId) => {
   if (!socket) return console.warn("⚠️ Socket not initialized (markMessagesAsReadSocket)");
   if (!chatId) return console.warn("⚠️ No chatId provided for markMessagesAsReadSocket");
-  socket.emit("mark_read", { chat_id: chatId });
+  
+  // Wait for connection if not connected yet
+  if (socket.connected) {
+    socket.emit("mark_read", { chat_id: chatId });
+  } else {
+    socket.once("connect", () => {
+      socket.emit("mark_read", { chat_id: chatId });
+    });
+  }
 };
 
 // -------------------- LISTENERS --------------------

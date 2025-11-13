@@ -69,6 +69,7 @@ class ChatSocketServer {
       
       this.handleConnection(socket);
       this.handleDisconnection(socket);
+      this.handleChatRoomEvents(socket);
       this.handleMessageEvents(socket);
       this.handlePresenceEvents(socket);
       this.handleTypingEvents(socket);
@@ -106,8 +107,85 @@ class ChatSocketServer {
       this.connectedUsers.delete(userId);
       this.userSockets.delete(socket.id);
 
+      // Clean up typing indicators
+      this.cleanupTypingIndicators(userId);
+
       // Update user presence using service
       await this.presenceService.setOffline(userId, socket.id);
+    });
+  }
+
+  handleChatRoomEvents(socket) {
+    // Join chat room
+    socket.on('join_chat', async (chatId) => {
+      try {
+        const userId = socket.userId;
+        
+        if (!chatId) {
+          socket.emit('error', { message: 'Chat ID is required' });
+          return;
+        }
+
+        // Verify user has access to this chat
+        const chat = await Chat.findOne({
+          where: {
+            chat_id: chatId,
+            [Op.or]: [
+              { user1_id: userId },
+              { user2_id: userId }
+            ]
+          }
+        });
+
+        if (!chat) {
+          socket.emit('error', { message: 'Chat not found or access denied' });
+          return;
+        }
+
+        // Join the chat room
+        socket.join(`chat_${chatId}`);
+        console.log(`User ${userId} joined chat ${chatId}`);
+
+        // Mark messages as read when joining
+        await Message.update(
+          { status: 'read' },
+          {
+            where: {
+              chat_id: chatId,
+              receiver_id: userId,
+              status: { [Op.in]: ['sent', 'delivered'] }
+            }
+          }
+        );
+
+        // Reset unread count
+        const unreadField = chat.user1_id === userId ? 'user1_unread_count' : 'user2_unread_count';
+        await chat.update({
+          [unreadField]: 0
+        });
+
+        // Notify other user that messages were read
+        const otherUserId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
+        const otherSocketId = this.connectedUsers.get(otherUserId);
+        if (otherSocketId) {
+          this.io.to(otherSocketId).emit('messages_read', {
+            chatId: chatId,
+            readBy: userId,
+            readAt: new Date()
+          });
+        }
+
+      } catch (error) {
+        console.error('Error joining chat:', error);
+        socket.emit('error', { message: 'Failed to join chat' });
+      }
+    });
+
+    // Leave chat room
+    socket.on('leave_chat', (chatId) => {
+      const userId = socket.userId;
+      socket.leave(`chat_${chatId}`);
+      console.log(`User ${userId} left chat ${chatId}`);
     });
   }
 
@@ -195,10 +273,12 @@ class ChatSocketServer {
         // Send to sender (confirmation)
         socket.emit('message_sent', messageWithDetails);
 
-        // Send to receiver if online
+        // Broadcast to chat room (both users will receive if they're in the room)
+        this.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+
+        // Also send to receiver's personal room if they're not in the chat room
         const receiverSocketId = this.connectedUsers.get(receiverId);
         if (receiverSocketId) {
-          this.io.to(receiverSocketId).emit('new_message', messageWithDetails);
           // Mark as delivered
           await message.update({ status: 'delivered' });
         }
@@ -224,10 +304,67 @@ class ChatSocketServer {
       }
     });
 
-    // Mark messages as read
+    // Mark messages as read (support both event names for compatibility)
     socket.on('mark_as_read', async (data) => {
       try {
-        const { chatId } = data;
+        const chatId = data.chatId || data.chat_id;
+        const userId = socket.userId;
+
+        // Verify chat access
+        const chat = await Chat.findOne({
+          where: {
+            chat_id: chatId,
+            [Op.or]: [
+              { user1_id: userId },
+              { user2_id: userId }
+            ]
+          }
+        });
+
+        if (!chat) {
+          socket.emit('error', { message: 'Chat not found or access denied' });
+          return;
+        }
+
+        // Mark messages as read
+        await Message.update(
+          { status: 'read' },
+          {
+            where: {
+              chat_id: chatId,
+              receiver_id: userId,
+              status: { [Op.in]: ['sent', 'delivered'] }
+            }
+          }
+        );
+
+        // Reset unread count
+        const unreadField = chat.user1_id === userId ? 'user1_unread_count' : 'user2_unread_count';
+        await chat.update({
+          [unreadField]: 0
+        });
+
+        // Notify sender that messages were read
+        const senderId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
+        const senderSocketId = this.connectedUsers.get(senderId);
+        if (senderSocketId) {
+          this.io.to(senderSocketId).emit('messages_read', {
+            chatId: chatId,
+            readBy: userId,
+            readAt: new Date()
+          });
+        }
+
+      } catch (error) {
+        console.error('Error marking messages as read:', error);
+        socket.emit('error', { message: 'Failed to mark messages as read' });
+      }
+    });
+
+    // Also handle mark_read event (frontend uses this)
+    socket.on('mark_read', async (data) => {
+      try {
+        const chatId = data.chatId || data.chat_id;
         const userId = socket.userId;
 
         // Verify chat access
