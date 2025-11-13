@@ -10,13 +10,12 @@ import ProtectedRoute from './routes/ProtectedRoute';
 import StaffDashboard from './pages/staff/StaffDashboard';
 import LandingPage from './pages/Landing/LandingPage'
 import { Navigate } from "react-router-dom";
-
+import Loading from "../src/components/Loading";
 
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // عند تحميل التطبيق، حاول تجيب اليوزر من localStorage
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
     if (savedUser) {
@@ -26,8 +25,7 @@ function App() {
   }, []);
 
   if (loading) {
-    // تمنع الريندر قبل ما نعرف إذا في يوزر ولا لأ
-    return <div>Loading...</div>;
+    return <Loading message="Loading communities..." />;
   }
 
   return (
