@@ -75,7 +75,7 @@ const AlumniAdminPosts = () => {
         comments:
           p.comments?.map(c => {
             const isUniversityComment =
-              c.author?.userType === "admin" || c.author?.userType === "staff";
+              c.author?.type === "admin" || c.author?.type === "staff";
   
             return {
               comment_id: c.comment_id,
@@ -283,7 +283,7 @@ const PostCard = ({ post, currentUser, handleLikeToggle, toggleComments, handleA
             <div key={c.comment_id} className="comment-item">
               <div className="comment-left">
                 <img src={c.avatar} className="uni-comment-avatar" />
-                <div className="comment-text" style={{color:"whitesmoke"}}>
+                <div className="comment-text">
                   <strong>{c.userName}</strong> {c.content}
                 </div>
                 <div className="comment-date">
