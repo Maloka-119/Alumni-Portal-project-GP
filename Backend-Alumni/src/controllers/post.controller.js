@@ -1173,146 +1173,6 @@ const unhidePost = async (req, res) => {
     });
   }
 };
-//بتجيب بوستات الادمن بس
-// const getAdminPosts = async (req, res) => {
-//   try {
-//     const posts = await Post.findAll({
-//       include: [
-//         {
-//           model: User,
-//           attributes: ["id", "first-name", "last-name", "email", "user-type"],
-//           where: { "user-type": "admin" },
-//         },
-//         {
-//           model: PostImage,
-//           attributes: ["image-url"],
-//         },
-//         {
-//           model: Like,
-//           attributes: ["like_id", "user-id"],
-//           include: [
-//             {
-//               model: User,
-//               attributes: ["id", "first-name", "last-name"],
-//             },
-//           ],
-//         },
-//         {
-//           model: Comment,
-//           attributes: [
-//             "comment_id",
-//             "content",
-//             "created-at",
-//             "edited",
-//             "author-id",
-//           ],
-//           include: [
-//             {
-//               model: User,
-//               attributes: [
-//                 "id",
-//                 "first-name",
-//                 "last-name",
-//                 "email",
-//                 "user-type",
-//               ],
-//               include: [
-//                 {
-//                   model: Graduate,
-//                   as: "Graduate", // مهم جدًا
-//                   attributes: ["profile-picture-url"],
-//                 },
-//               ],
-//             },
-//           ],
-//           order: [["created-at", "DESC"]],
-//         },
-//       ],
-//       order: [["created-at", "DESC"]],
-//     });
-
-//     const currentUserId = req.user?.id || null;
-
-//     const responseData = posts.map((post) => {
-//       // Calculate likesCount and isLikedByYou
-//       const likesCount = post.Likes ? post.Likes.length : 0;
-//       const isLikedByYou = currentUserId
-//         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
-//         : false;
-
-//       return {
-//         post_id: post.post_id,
-//         category: post.category,
-//         content: post.content,
-//         description: post.description,
-//         "created-at": post["created-at"],
-//         author: {
-//           id: post.User?.id || "unknown",
-//           "full-name":
-//             `${post.User?.["first-name"] || ""} ${
-//               post.User?.["last-name"] || ""
-//             }`.trim() || "Unknown User",
-//           email: post.User?.email || "unknown",
-//         },
-//         "group-id": post["group-id"],
-
-//         images: post.PostImages
-//           ? post.PostImages.map((img) => img["image-url"])
-//           : [],
-//         likesCount: likesCount,
-//         isLikedByYou: isLikedByYou,
-//         likes: post.Likes
-//           ? post.Likes.map((like) => ({
-//               like_id: like.like_id,
-//               user: {
-//                 id: like.User?.id || "unknown",
-//                 "full-name":
-//                   `${like.User?.["first-name"] || ""} ${
-//                     like.User?.["last-name"] || ""
-//                   }`.trim() || "Unknown User",
-//               },
-//             }))
-//           : [],
-//         comments_count: post.Comments ? post.Comments.length : 0,
-//         comments: post.Comments
-//           ? post.Comments.map((comment) => ({
-//               comment_id: comment.comment_id,
-//               content: comment.content,
-//               "created-at": comment["created-at"],
-//               time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
-//               edited: comment.edited,
-//               author: {
-//                 id: comment.User?.id || "unknown",
-//                 "full-name":
-//                   `${comment.User?.["first-name"] || ""} ${
-//                     comment.User?.["last-name"] || ""
-//                   }`.trim() || "Unknown User",
-//                 email: comment.User?.email || "unknown",
-//                 image: comment.User?.Graduate
-//                   ? comment.User.Graduate["profile-picture-url"]
-//                   : null,
-//               },
-//             }))
-//           : [],
-//         // إضافة حالة اللاندينج
-//         "in-landing": post["in-landing"] || false,
-//       };
-//     });
-
-//     res.status(200).json({
-//       status: "success",
-//       message: "Admin posts fetched successfully",
-//       data: responseData,
-//     });
-//   } catch (error) {
-//     console.error("Error fetching admin posts:", error);
-//     res.status(500).json({
-//       status: "error",
-//       message: "Failed to fetch admin posts",
-//       data: [],
-//     });
-//   }
-// };
 
 const getAdminPosts = async (req, res) => {
   try {
@@ -2655,7 +2515,7 @@ const getLandingPosts = async (req, res) => {
   try {
     const currentUserId = req.user?.id || null;
 
-    // جلب جميع البوستات في اللاندينج وغير مخفية
+    // جلب جميع البوستات في اللاندينج وغير مخفية مع الصور
     const posts = await Post.findAll({
       where: {
         "in-landing": true,
@@ -2666,11 +2526,15 @@ const getLandingPosts = async (req, res) => {
           model: Like,
           attributes: ["like_id", "author-id", "user-id"],
         },
+        {
+          model: PostImage, // إضافة الصور
+          attributes: ["post_image_id", "image-url"],
+        },
       ],
       order: [["created-at", "DESC"]],
     });
 
-    // جلب بيانات كل مؤلف (author) لكل بوست
+    // جلب بيانات كل مؤلف لكل بوست
     const postsWithDetails = await Promise.all(
       posts.map(async (post) => {
         const author = await User.findByPk(post["author-id"], {
@@ -2682,11 +2546,9 @@ const getLandingPosts = async (req, res) => {
           ],
         });
 
-        // Calculate likesCount and isLikedByYou
         const likesCount = post.Likes ? post.Likes.length : 0;
         const isLikedByYou = currentUserId
-          ? post.Likes?.some((like) => like["user-id"] === currentUserId) ||
-            false
+          ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
           : false;
 
         return {
@@ -2694,19 +2556,18 @@ const getLandingPosts = async (req, res) => {
           category: post.category,
           content: post.content,
           "created-at": post["created-at"],
+          images: post.PostImages?.map(img => img["image-url"]) || [], // هنا بنضيف الصور
           author: {
             id: author.id,
             "full-name": `${author["first-name"]} ${author["last-name"]}`,
             email: author.email,
-            image: author.Graduate
-              ? author.Graduate["profile-picture-url"]
-              : null,
+            image: author.Graduate ? author.Graduate["profile-picture-url"] : null,
           },
           "group-id": post["group-id"],
           "in-landing": post["in-landing"],
           "is-hidden": post["is-hidden"],
-          likesCount: likesCount,
-          isLikedByYou: isLikedByYou,
+          likesCount,
+          isLikedByYou,
         };
       })
     );
