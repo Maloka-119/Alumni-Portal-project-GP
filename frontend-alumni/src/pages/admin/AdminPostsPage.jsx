@@ -232,6 +232,55 @@ const AdminPostsPage = ({ currentUser }) => {
   if (loading) return <p>{t("loadingPosts")}</p>;
   if (error) return <div className="error-message">{error}</div>;
 
+  const handleEditComment = async (postId, comment) => {
+    const { value: newContent } = await Swal.fire({
+      input: "textarea",
+      inputValue: comment.content,
+      showCancelButton: true,
+      confirmButtonText: "Save"
+    });
+  
+    if (!newContent || newContent === comment.content) return;
+  
+    try {
+      await API.put(`/posts/${postId}/comments/${comment.id}`, {
+        content: newContent
+      });
+  
+      setPosts(prev =>
+        prev.map(p =>
+          p.id === postId
+            ? {
+                ...p,
+                comments: p.comments.map(c =>
+                  c.id === comment.id ? { ...c, content: newContent } : c
+                )
+              }
+            : p
+        )
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleDeleteComment = async (postId, commentId) => {
+    try {
+      await API.delete(`/posts/${postId}/comments/${commentId}`);
+  
+      setPosts(prev =>
+        prev.map(p =>
+          p.id === postId
+            ? { ...p, comments: p.comments.filter(c => c.id !== commentId) }
+            : p
+        )
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  
+
   return (
     <div className="feed-container">
       <h2 className="page-title">{t('Manage Portal Posts')}</h2>
@@ -365,10 +414,34 @@ const AdminPostsPage = ({ currentUser }) => {
                 <div className="comments-section">
                   {post.comments.map(comment => (
                     <div key={comment.id} className="comment-item">
-                      <img src={comment.avatar || AdminPostsImg} alt={comment.userName} className="comment-avatar" />
-                      <div className="comment-text"><strong>{comment.userName}</strong>: {comment.content}</div>
-                      <div className="comment-date">{new Date(comment.date).toLocaleString()}</div>
+                    <img
+                      src={comment.avatar || AdminPostsImg}
+                      alt={comment.userName}
+                      className="comment-avatar"
+                    />
+                  
+                    <div className="comment-text">
+                      <strong>{comment.userName}</strong> 
+                      {comment.content}
                     </div>
+                  
+                    <div className="comment-date">
+                      {new Date(comment.date).toLocaleString()}
+                    </div>
+                  
+                    {(comment.author?.type === "admin" || comment.author?.type === "staff") && (
+                      <div className="comment-actions">
+                        <button onClick={() => handleEditComment(post.id, comment)}>
+                          <Edit size={14} />
+                        </button>
+                  
+                        <button onClick={() => handleDeleteComment(post.id, comment.id)}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
                   ))}
                   {postPerm.canAdd && (
                     <div className="comment-input">
