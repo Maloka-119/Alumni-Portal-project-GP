@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Image } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import './AlumniAdminPosts.css';
@@ -6,7 +6,6 @@ import API from "../../services/api";
 import PROFILE from './PROFILE.jpeg';
 import PostCard from '../../components/PostCard'; 
 import Swal from 'sweetalert2';
-
 
 const PostsAlumni = () => {
   const { t } = useTranslation();
@@ -24,19 +23,21 @@ const PostsAlumni = () => {
   const [editingPostId, setEditingPostId] = useState(null);
   const [isEditingMode, setIsEditingMode] = useState(false);
 
+  const formRef = useRef(null);
+  const postRefs = useRef({});
+
   const user = JSON.parse(localStorage.getItem("user")) || null;
   const token = localStorage.getItem("token");
+
   useEffect(() => {
     if (successMsg || error) {
       const timer = setTimeout(() => {
         setSuccessMsg(null);
         setError(null);
       }, 1000); 
-  
       return () => clearTimeout(timer);
     }
   }, [successMsg, error]);
-  
 
   const formatPosts = (data) => {
     return data
@@ -104,30 +105,36 @@ const PostsAlumni = () => {
     try {
       if (isEditingMode && editingPostId) {
         await API.put(`/posts/${editingPostId}/edit`, formData, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
+
+        // تحديث محلي للبوست
+        setPosts(prev => prev.map(p =>
+          p.id === editingPostId ? { ...p, content: newPost.content, category: newPost.category } : p
+        ));
+
         setSuccessMsg("Post updated");
+
+        // scroll للبوست بعد التحديث
+        setTimeout(() => {
+          postRefs.current[editingPostId]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+
       } else {
         await API.post('/posts/create-post', formData, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'multipart/form-data'
-          }
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
         setSuccessMsg("Post created");
+        await fetchPosts();
       }
-
-      await fetchPosts();
-      setNewPost({ content: '', category: 'General', image: null, link: '' });
-      setShowForm(false);
-      setEditingPostId(null);
-      setIsEditingMode(false);
     } catch (err) {
       setError(err.response?.data?.message || "Failed to save post");
     }
+
+    setShowForm(false);
+    setEditingPostId(null);
+    setIsEditingMode(false);
+    setNewPost({ content: '', category: 'General', image: null, link: '' });
   };
 
   const handleEditPostClick = (post) => {
@@ -140,6 +147,10 @@ const PostsAlumni = () => {
       image: null,
       link: post.link || ''
     });
+
+    setTimeout(() => {
+      formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
   };
 
   const handleDelete = async (postId) => {
@@ -171,12 +182,15 @@ const PostsAlumni = () => {
             setShowForm(true);
             setIsEditingMode(false);
             setNewPost({ content: '', image: null, link: '', category: 'General' });
+            setTimeout(() => {
+              formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
           }}>
             <input placeholder={t('createNewPost')} readOnly />
           </div>
 
           {showForm && (
-            <form className="uni-post-form" onSubmit={handleAddOrEditPost}>
+            <form ref={formRef} className="uni-post-form" onSubmit={handleAddOrEditPost}>
               <textarea
                 placeholder={t('writePost')}
                 value={newPost.content}
@@ -186,34 +200,31 @@ const PostsAlumni = () => {
               <div className="uni-category-select">
                 <label>{t('category')}:</label>
                 <select
-  value={newPost.category}
-  onChange={(e) => {
-    const selected = e.target.value;
-    setNewPost({ ...newPost, category: selected });
-
-    if (selected === "Success story") {
-      Swal.fire({
-        icon: "info",
-        title: "Public Post",
-        html: `
-          <div style="text-align: left;">
-            <p>Success story posts can be featured publicly on the main page.</p>
-<p>يمكن للبوستات التي تصنف كقصة نجاح أن تظهر بشكل عام على الصفحة الرئيسية.</p>
-
-          </div>
-        `,
-        confirmButtonText: "OK",
-        background: "#fefefe",
-        color: "#333",
-      });
-    }
-  }}
->
-  <option value="General">General</option>
-  <option value="Internship">Internship</option>
-  <option value="Success story">Success story</option>
-</select>
-
+                  value={newPost.category}
+                  onChange={(e) => {
+                    const selected = e.target.value;
+                    setNewPost({ ...newPost, category: selected });
+                    if (selected === "Success story") {
+                      Swal.fire({
+                        icon: "info",
+                        title: "Public Post",
+                        html: `
+                          <div style="text-align: left;">
+                            <p>Success story posts can be featured publicly on the main page.</p>
+                            <p>يمكن للبوستات التي تصنف كقصة نجاح أن تظهر بشكل عام على الصفحة الرئيسية.</p>
+                          </div>
+                        `,
+                        confirmButtonText: "OK",
+                        background: "#fefefe",
+                        color: "#333",
+                      });
+                    }
+                  }}
+                >
+                  <option value="General">General</option>
+                  <option value="Internship">Internship</option>
+                  <option value="Success story">Success story</option>
+                </select>
               </div>
               <div className="uni-optional-icons">
                 <label title={t('addImage')}>
@@ -244,12 +255,13 @@ const PostsAlumni = () => {
           )}
 
           {!loading && posts.map(post => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onEdit={() => handleEditPostClick(post)}
-              onDelete={() => handleDelete(post.id)}
-            />
+            <div key={post.id} ref={el => postRefs.current[post.id] = el}>
+              <PostCard
+                post={post}
+                onEdit={() => handleEditPostClick(post)}
+                onDelete={() => handleDelete(post.id)}
+              />
+            </div>
           ))}
         </>
       )}
@@ -258,6 +270,7 @@ const PostsAlumni = () => {
 };
 
 export default PostsAlumni;
+
 
 // import { Heart, MessageCircle, Share2, Image, FileText, Link as LinkIcon, Trash2, MoreVertical, Edit } from 'lucide-react';
 // import { useTranslation } from 'react-i18next';
