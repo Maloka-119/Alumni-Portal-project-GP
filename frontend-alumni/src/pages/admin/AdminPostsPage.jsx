@@ -243,6 +243,8 @@ const AdminPostsPage = ({ currentUser }) => {
     types={types}
     editingPost={posts.find(p => p.id === editingPostId) || null}
     onSubmit={handleCreateOrEdit}
+    canAdd={postPerm.canAdd}
+    onCancelEdit={() => setEditingPostId(null)}
   />
 )}
 
