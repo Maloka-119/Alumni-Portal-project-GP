@@ -29,22 +29,34 @@ function GroupsPage({ currentUser }) {
   const token = localStorage.getItem("token");
   const authHeaders = { Authorization: `Bearer ${token}` };
 
-  const comPerm = getPermission("Communities management", currentUser);
-  const parentPerms = {
-    canView: comPerm?.canView || false,
-    canAdd: comPerm?.canAdd || false,
-    canEdit: comPerm?.canEdit || false,
-    canDelete: comPerm?.canDelete || false,
-  };
-  
-  const postPerms = getPermission("Community Post's management", currentUser);
-  const memberPerms = getPermission("Community Members management", currentUser);
-  const perms = {
-    canView: postPerms?.canView || memberPerms?.canView, 
-    canAdd: postPerms?.canAdd || memberPerms?.canAdd, 
-    canEdit: postPerms?.canEdit || memberPerms?.canEdit, 
-    canDelete: postPerms?.canDelete || memberPerms?.canDelete, 
-  };
+  const isAdmin = currentUser?.userType === "admin";
+
+const comPerm = isAdmin
+  ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
+  : getPermission("Communities management", currentUser);
+
+const parentPerms = {
+  canView: comPerm.canView,
+  canAdd: comPerm.canAdd,
+  canEdit: comPerm.canEdit,
+  canDelete: comPerm.canDelete,
+};
+
+const postPerms = isAdmin
+  ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
+  : getPermission("Community Post's management", currentUser);
+
+const memberPerms = isAdmin
+  ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
+  : getPermission("Community Members management", currentUser);
+
+const perms = {
+  canView: postPerms.canView || memberPerms.canView,
+  canAdd: postPerms.canAdd || memberPerms.canAdd,
+  canEdit: postPerms.canEdit || memberPerms.canEdit,
+  canDelete: postPerms.canDelete || memberPerms.canDelete,
+};
+
 
   const fetchGroups = async () => {
     try {
