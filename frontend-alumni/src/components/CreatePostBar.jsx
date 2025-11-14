@@ -7,7 +7,7 @@ import './CreatePostBar.css';
 import Swal from "sweetalert2";
 
 
-const CreatePostBar = ({ types = [], onSubmit, editingPost, canAdd }) => {
+const CreatePostBar = ({ types = [], onSubmit, editingPost, canAdd, onCancelEdit  }) => {
   const { t } = useTranslation();
   const [showForm, setShowForm] = useState(false);
   const [content, setContent] = useState('');
@@ -124,17 +124,19 @@ const CreatePostBar = ({ types = [], onSubmit, editingPost, canAdd }) => {
               {editingPost ? t('Update') : t('Post')}
             </button>
             <button
-              type="button"
-              className="cancel-btn"
-              onClick={() => {
-                setShowForm(false);
-                setContent('');
-                setType('');
-                setImage(null);
-              }}
-            >
-              {t('Cancel')}
-            </button>
+  type="button"
+  className="cancel-btn"
+  onClick={() => {
+    setShowForm(false)
+    setContent('')
+    setType('')
+    setImage(null)
+    if (editingPost) onCancelEdit()
+  }}
+>
+  {t('Cancel')}
+</button>
+
           </div>
         </form>
       )}
