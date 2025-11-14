@@ -404,3 +404,19 @@ body.dark-mode .file-input:hover {
 .dark .file-name {
   color: #10b981;
 }
+
+.file-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.delete-icon {
+  cursor: pointer;
+  color: red;
+}
+
+.delete-icon:hover {
+  color: darkred;
+}
