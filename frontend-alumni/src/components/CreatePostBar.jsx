@@ -342,7 +342,7 @@ const CreatePostBar = ({ types = [], onSubmit, editingPost, canAdd, onCancelEdit
                 setContent('');
                 setType('');
                 setImages([]);
-                if (editingPost) onCancelEdit();
+                onCancelEdit();
               }}
             >
               {t('Cancel')}
