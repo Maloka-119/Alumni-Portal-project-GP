@@ -203,22 +203,30 @@ const UsersPostsPage = ({ currentUser }) => {
       <div className="posts-feed">
         {filteredPosts.map((post) => (
           <div key={post.id} className="post-card" style={post.isHidden ? { backgroundColor: 'rgba(66, 64, 64, 0.15)' } : {}}>
-            <div className="post-header">
-              <img src={post.author?.photo || PROFILE} alt="profile" className="profile-pic" />
-              <div className="post-header-info">
-                <strong>{post.author?.name || t('unknown')}</strong>
-                <div className="post-date">
-                  {new Date(post["created-at"]).toLocaleString()} - {post.category}
-                  {post['group-id'] ? ' - In Group' : ''}
-                </div>
-              </div>
+           <div className="post-header">
+  <div className="post-header-left">
+    <img src={post.author?.photo || PROFILE} alt="profile" className="profile-pic" />
+    <div className="post-header-info">
+      <strong>{post.author?.name || t('unknown')}</strong>
+      <div className="post-date-right">
+        {new Date(post["created-at"]).toLocaleString(undefined, {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric'
+        })} - {post.category}
+        {post['group-id'] ? ' - In Group' : ''}
+      </div>
+    </div>
+  </div>
 
-              {postPerm.canEdit && (!post.isHidden ? (
-                <button onClick={() => handleHide(post.id)} className="hide-btn-top"><EyeOff size={16} /></button>
-              ) : (
-                <button onClick={() => handleUnhide(post.id)} className="hide-btn-top"><Eye size={16} /></button>
-              ))}
-            </div>
+  {postPerm.canEdit && (!post.isHidden ? (
+    <button onClick={() => handleHide(post.id)} className="hide-btn-top"><EyeOff size={16} /></button>
+  ) : (
+    <button onClick={() => handleUnhide(post.id)} className="hide-btn-top"><Eye size={16} /></button>
+  ))}
+</div>
 
             <div className="post-content">
               <p>{post.content}</p>
