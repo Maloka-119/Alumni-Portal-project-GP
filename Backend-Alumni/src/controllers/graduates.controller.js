@@ -11,8 +11,6 @@ const HttpStatusHelper = require("../utils/HttpStatuHelper");
 const cloudinary = require("../config/cloudinary");
 const axios = require("axios");
 
-
-
 //get all graduates
 const getAllGraduates = async (req, res) => {
   try {
@@ -50,11 +48,14 @@ const getAllGraduates = async (req, res) => {
 // Get active graduates (GraduatesInPortal) - Admin only
 const getGraduatesInPortal = async (req, res) => {
   try {
-    // التحقق إن المستخدم Admin
-    if (req.user["user-type"] !== "admin") {
+    // التحقق إن المستخدم Admin أو Staff
+    if (
+      req.user["user-type"] !== "admin" &&
+      req.user["user-type"] !== "staff"
+    ) {
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
-        message: "Access denied. Admins only.",
+        message: "Access denied. Admins or Staff only.",
         data: [],
       });
     }
@@ -94,11 +95,14 @@ const getGraduatesInPortal = async (req, res) => {
 // Get inactive graduates (requested to join) - Admin only
 const getRequestedGraduates = async (req, res) => {
   try {
-    // التحقق إن المستخدم Admin
-    if (req.user["user-type"] !== "admin") {
+    // التحقق إن المستخدم Admin أو Staff
+    if (
+      req.user["user-type"] !== "admin" &&
+      req.user["user-type"] !== "staff"
+    ) {
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
-        message: "Access denied. Admins only.",
+        message: "Access denied. Admins and staff only.",
         data: [],
       });
     }
@@ -138,11 +142,14 @@ const getRequestedGraduates = async (req, res) => {
 //reject graduate by admin
 const rejectGraduate = async (req, res) => {
   try {
-    // تأكيد إن المستخدم Admin
-    if (req.user["user-type"] !== "admin") {
+    // تأكيد إن المستخدم Admin أو Staff
+    if (
+      req.user["user-type"] !== "admin" &&
+      req.user["user-type"] !== "staff"
+    ) {
       return res.status(403).json({
         status: "error",
-        message: "Access denied. Admin only",
+        message: "Access denied. Admin and staff only",
       });
     }
 
@@ -247,10 +254,13 @@ const approveGraduate = async (req, res) => {
     const { id } = req.params; // graduate_id من URL
     const { faculty, graduationYear } = req.body; // من body
 
-    // ✅ التحقق من أن اللي بينفذ هو admin
-    if (!req.user || req.user["user-type"] !== "admin") {
+    // ✅ التحقق من أن اللي بينفذ هو admin أو staff
+    if (
+      !req.user ||
+      (req.user["user-type"] !== "admin" && req.user["user-type"] !== "staff")
+    ) {
       return res.status(403).json({
-        message: "Access denied: Only admin can approve graduates.",
+        message: "Access denied: Only admin and staff can approve graduates.",
       });
     }
 
@@ -400,14 +410,17 @@ const updateProfile = async (req, res) => {
     if (req.files?.profilePicture?.[0]) {
       const profilePic = req.files.profilePicture[0];
       graduate["profile-picture-url"] = profilePic.path || profilePic.url;
-      graduate["profile-picture-public-id"] = profilePic.filename || profilePic.public_id;
+      graduate["profile-picture-public-id"] =
+        profilePic.filename || profilePic.public_id;
     }
 
     // 🔹 مسح صورة البروفايل لو حابة
     if (req.body.removeProfilePicture) {
       if (graduate["profile-picture-public-id"]) {
         try {
-          await cloudinary.uploader.destroy(graduate["profile-picture-public-id"]);
+          await cloudinary.uploader.destroy(
+            graduate["profile-picture-public-id"]
+          );
         } catch (err) {
           console.warn("Failed to delete profile picture:", err.message);
         }
@@ -416,36 +429,39 @@ const updateProfile = async (req, res) => {
       graduate["profile-picture-public-id"] = null;
     }
 
-  // 🔹 رفع أو استبدال CV
-if (req.files?.cv?.[0]) {
-  const cvFile = req.files.cv[0];
+    // 🔹 رفع أو استبدال CV
+    if (req.files?.cv?.[0]) {
+      const cvFile = req.files.cv[0];
 
-  // حذف القديم لو موجود
-  if (graduate.cv_public_id) {
-    try {
-      await cloudinary.uploader.destroy(graduate.cv_public_id, { resource_type: "raw" });
-    } catch (deleteErr) {
-      console.warn("Failed to delete old CV:", deleteErr.message);
+      // حذف القديم لو موجود
+      if (graduate.cv_public_id) {
+        try {
+          await cloudinary.uploader.destroy(graduate.cv_public_id, {
+            resource_type: "raw",
+          });
+        } catch (deleteErr) {
+          console.warn("Failed to delete old CV:", deleteErr.message);
+        }
+      }
+
+      graduate["cv-url"] = cvFile.path || cvFile.url;
+      graduate.cv_public_id = cvFile.filename || cvFile.public_id;
     }
-  }
 
-  graduate["cv-url"] = cvFile.path || cvFile.url;
-  graduate.cv_public_id = cvFile.filename || cvFile.public_id;
-}
-
-
- // 🔹 مسح CV لو حابة
-if (req.body.removeCV) {
-  if (graduate.cv_public_id) {
-    try {
-      await cloudinary.uploader.destroy(graduate.cv_public_id, { resource_type: "raw" });
-    } catch (err) {
-      console.warn("Failed to delete CV:", err.message);
+    // 🔹 مسح CV لو حابة
+    if (req.body.removeCV) {
+      if (graduate.cv_public_id) {
+        try {
+          await cloudinary.uploader.destroy(graduate.cv_public_id, {
+            resource_type: "raw",
+          });
+        } catch (err) {
+          console.warn("Failed to delete CV:", err.message);
+        }
+      }
+      graduate["cv-url"] = null;
+      graduate.cv_public_id = null;
     }
-  }
-  graduate["cv-url"] = null;
-  graduate.cv_public_id = null;
-}
 
     await user.save();
     await graduate.save();
@@ -485,8 +501,6 @@ if (req.body.removeCV) {
   }
 };
 
-
-
 //download cv
 
 const downloadCv = async (req, res) => {
@@ -511,9 +525,9 @@ const downloadCv = async (req, res) => {
 
     // جلب الملف من Cloudinary
     const response = await axios.get(signedUrl, { responseType: "stream" });
-console.log("Graduate found:", graduate);
-console.log("cv_public_id:", graduate.cv_public_id);
-console.log("cv-url:", graduate["cv-url"]);
+    console.log("Graduate found:", graduate);
+    console.log("cv_public_id:", graduate.cv_public_id);
+    console.log("cv-url:", graduate["cv-url"]);
 
     // إعداد هيدر التحميل
     res.setHeader(
@@ -534,14 +548,23 @@ console.log("cv-url:", graduate["cv-url"]);
   }
 };
 
-
-
-
 // Activate / Inactivate Graduate
 const updateGraduateStatus = async (req, res) => {
   try {
     const { id } = req.params; // graduate_id
     const { status } = req.body; // "active" or "inactive"
+
+    // ⬇️⬇️⬇️ التحقق من صلاحيات Admin أو Staff ⬇️⬇️⬇️
+    if (
+      req.user["user-type"] !== "admin" &&
+      req.user["user-type"] !== "staff"
+    ) {
+      return res.status(403).json({
+        status: HttpStatusHelper.ERROR,
+        message: "Access denied. Admins and staff only.",
+        data: null,
+      });
+    }
 
     if (!["active", "inactive"].includes(status)) {
       return res.status(400).json({
@@ -910,5 +933,5 @@ module.exports = {
   approveGraduate,
   rejectGraduate,
   getGraduateProfileForUser,
-  downloadCv
+  downloadCv,
 };

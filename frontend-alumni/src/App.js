@@ -1,14 +1,14 @@
-import './App.css';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { useEffect, useState } from 'react';
-import { DarkModeProvider } from './pages/alumni/DarkModeContext';
-import Register from './auth/Register';
-import AdminPanel from './pages/admin/AdminPanel';
-import Login from './auth/Login';
-import AlumniPortal from './pages/alumni/AlumniPortal';
-import ProtectedRoute from './routes/ProtectedRoute';
-import StaffDashboard from './pages/staff/StaffDashboard';
-import LandingPage from './pages/Landing/LandingPage'
+import "./App.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { DarkModeProvider } from "./pages/alumni/DarkModeContext";
+import Register from "./auth/Register";
+import AdminPanel from "./pages/admin/AdminPanel";
+import Login from "./auth/Login";
+import AlumniPortal from "./pages/alumni/AlumniPortal";
+import ProtectedRoute from "./routes/ProtectedRoute";
+import StaffDashboard from "./pages/staff/StaffDashboard";
+import LandingPage from "./pages/Landing/LandingPage";
 import { Navigate } from "react-router-dom";
 import Loading from "../src/components/Loading";
 
@@ -33,12 +33,18 @@ function App() {
       <Router>
         <DarkModeProvider>
           <Routes>
-          {/* إعادة توجيه الصفحة الرئيسية للـ Landing */}
-  <Route path="/" element={<Navigate to="/helwan-alumni-portal" />} />
+            {/* إعادة توجيه الصفحة الرئيسية للـ Landing */}
+            <Route path="/" element={<Navigate to="/helwan-alumni-portal" />} />
             {/* صفحات عامة */}
             <Route path="/helwan-alumni-portal" element={<LandingPage />} />
-            <Route path="/helwan-alumni-portal/register" element={<Register />} />
-            <Route path="/helwan-alumni-portal/login" element={<Login setUser={setUser} />} />
+            <Route
+              path="/helwan-alumni-portal/register"
+              element={<Register />}
+            />
+            <Route
+              path="/helwan-alumni-portal/login"
+              element={<Login setUser={setUser} />}
+            />
 
             {/* صفحات محمية */}
             <Route
