@@ -34,8 +34,8 @@ function FriendshipPage() {
     try {
       setLoadingFriends(true);
       const res = await API.get("/friendships/friends");
-      const mapped = res.data.map(f => ({
-        id: f.graduate_id,           // صححت الـ id عشان profile API
+      const mapped = res.data.map((f) => ({
+        id: f.graduate_id, // صححت الـ id عشان profile API
         friendId: f.friendId,
         userName: f.fullName || "No Name",
         image: f.profilePicture || PROFILE,
@@ -52,8 +52,8 @@ function FriendshipPage() {
     try {
       setLoadingRequests(true);
       const res = await API.get("/friendships/requests");
-      const mapped = res.data.map(f => ({
-        id: f.senderId,              // صححت الـ id عشان profile API
+      const mapped = res.data.map((f) => ({
+        id: f.senderId, // صححت الـ id عشان profile API
         senderId: f.senderId,
         userName: f.fullName || "No Name",
         image: f.profilePicture || PROFILE,
@@ -66,37 +66,38 @@ function FriendshipPage() {
     }
   };
 
- const fetchSuggestions = async () => {
-  try {
-    setLoadingSuggestions(true);
-    const res = await API.get("/friendships/suggestions");
+  const fetchSuggestions = async () => {
+    try {
+      setLoadingSuggestions(true);
+      const res = await API.get("/friendships/suggestions");
 
-    const removed = JSON.parse(localStorage.getItem("removedSuggestions") || "{}");
-    const now = Date.now();
+      const removed = JSON.parse(
+        localStorage.getItem("removedSuggestions") || "{}"
+      );
+      const now = Date.now();
 
-    // فلترة الأشخاص اللي لسه ما كملوش 24 ساعة
-    const filtered = res.data.filter(f => {
-      const removedAt = removed[f.graduate_id];
-      if (!removedAt) return true; // مش محذوف أصلاً
-      const diffHours = (now - removedAt) / (1000 * 60 * 60); // فرق الساعات
-      return diffHours >= 24; // لو مرّ عليه 24 ساعة أو أكثر → يظهر تاني
-    });
+      // فلترة الأشخاص اللي لسه ما كملوش 24 ساعة
+      const filtered = res.data.filter((f) => {
+        const removedAt = removed[f.graduate_id];
+        if (!removedAt) return true; // مش محذوف أصلاً
+        const diffHours = (now - removedAt) / (1000 * 60 * 60); // فرق الساعات
+        return diffHours >= 24; // لو مرّ عليه 24 ساعة أو أكثر → يظهر تاني
+      });
 
-    const mapped = filtered.map(f => ({
-      id: f.graduate_id,
-      userName: f.fullName || "No Name",
-      image: f["profile-picture-url"] || PROFILE,
-      added: false,
-    }));
+      const mapped = filtered.map((f) => ({
+        id: f.graduate_id,
+        userName: f.fullName || "No Name",
+        image: f["profile-picture-url"] || PROFILE,
+        added: false,
+      }));
 
-    setSuggestions(mapped);
-  } catch (err) {
-    console.error("Suggestions API Error:", err);
-  } finally {
-    setLoadingSuggestions(false);
-  }
-};
-
+      setSuggestions(mapped);
+    } catch (err) {
+      console.error("Suggestions API Error:", err);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
 
   useEffect(() => {
     fetchFriends();
@@ -118,7 +119,7 @@ function FriendshipPage() {
   const unfriendFriend = async (friendId) => {
     try {
       await API.delete(`/friendships/friends/${friendId}`);
-      setFriends(prev => prev.filter(f => f.friendId !== friendId));
+      setFriends((prev) => prev.filter((f) => f.friendId !== friendId));
       fetchSuggestions();
     } catch (err) {
       console.error("Delete Friend API Error:", err);
@@ -142,38 +143,39 @@ function FriendshipPage() {
       } else {
         await API.delete(`/friendships/cancel/${receiverId}`);
       }
-      setSuggestions(prev =>
-        prev.map(f => (f.id === receiverId ? { ...f, added: !added } : f))
+      setSuggestions((prev) =>
+        prev.map((f) => (f.id === receiverId ? { ...f, added: !added } : f))
       );
     } catch (err) {
       console.error("Add/Cancel Request API Error:", err);
     }
   };
 
-const removeSuggestion = (id) => {
-  // حفظ وقت الحذف في localStorage
-  const removed = JSON.parse(localStorage.getItem("removedSuggestions") || "{}");
-  removed[id] = Date.now(); // وقت الحذف الحالي بالميللي ثانية
-  localStorage.setItem("removedSuggestions", JSON.stringify(removed));
+  const removeSuggestion = (id) => {
+    // حفظ وقت الحذف في localStorage
+    const removed = JSON.parse(
+      localStorage.getItem("removedSuggestions") || "{}"
+    );
+    removed[id] = Date.now(); // وقت الحذف الحالي بالميللي ثانية
+    localStorage.setItem("removedSuggestions", JSON.stringify(removed));
 
-  // إزالة من الواجهة
-  setSuggestions(prev => prev.filter(f => f.id !== id));
-};
-
+    // إزالة من الواجهة
+    setSuggestions((prev) => prev.filter((f) => f.id !== id));
+  };
 
   // -------------------- Chat Functions --------------------
   const openChat = async (friend) => {
     console.log("Friend Object Received:", friend);
-  
+
     // تأكدي من وجود ID صالح
     const receiverId = friend.friendId || friend.id;
     console.log("Receiver ID to send:", receiverId);
-  
+
     if (!receiverId) {
       console.error("❌ Friend ID is missing. Cannot open chat.", friend);
       return;
     }
-  
+
     try {
       // قبل الإرسال، تأكدي من الـ token
       const token = localStorage.getItem("token");
@@ -181,12 +183,14 @@ const removeSuggestion = (id) => {
         console.error("❌ No auth token found in localStorage");
         return;
       }
-  
+
       // عمل POST للـ conversation
-      const res = await API.post("/chat/conversation", { otherUserId: receiverId });
-  
+      const res = await API.post("/chat/conversation", {
+        otherUserId: receiverId,
+      });
+
       console.log("✅ Open Chat Response:", res.data);
-  
+
       if (res.data && res.data.data && res.data.data.chat_id) {
         setChatId(res.data.data.chat_id);
         setActiveChatFriend(friend);
@@ -194,16 +198,19 @@ const removeSuggestion = (id) => {
         console.warn("⚠️ Response received but chat_id missing", res.data);
       }
     } catch (err) {
-      console.error("❌ Open Chat Error:", err.response?.data || err.message || err);
+      console.error(
+        "❌ Open Chat Error:",
+        err.response?.data || err.message || err
+      );
     }
   };
-  
+
   const closeChat = () => {
     setActiveChatFriend(null);
     setChatId(null);
   };
 
-  const filteredSuggestions = suggestions.filter(f =>
+  const filteredSuggestions = suggestions.filter((f) =>
     f.userName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -214,7 +221,8 @@ const removeSuggestion = (id) => {
         return (
           <>
             <h2 className="Title">
-              {t("friendsList")} <span className="req-count">({friends.length})</span>
+              {t("friendsList")}{" "}
+              <span className="req-count">({friends.length})</span>
             </h2>
             {loadingFriends ? (
               <p>{t("loadingFriends")}</p>
@@ -227,14 +235,21 @@ const removeSuggestion = (id) => {
                     <img className="imgreq" src={f.image} alt={f.userName} />
                     <span
                       className="user-name"
-                      onClick={() => navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${f.id}`)}
+                      onClick={() =>
+                        navigate(
+                          `/helwan-alumni-portal/graduate/dashboard/friends/${f.id}`
+                        )
+                      }
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
                       {f.userName}
                     </span>
                   </div>
                   <div className="friend-actions">
-                    <button className="chat-icon-btn" onClick={() => openChat(f)}>
+                    <button
+                      className="chat-icon-btn"
+                      onClick={() => openChat(f)}
+                    >
                       <MessageCircle size={18} />
                     </button>
                     <button
@@ -254,7 +269,8 @@ const removeSuggestion = (id) => {
         return (
           <>
             <h2 className="Title">
-              {t("friendRequests")} <span className="req-count">({friendRequests.length})</span>
+              {t("friendRequests")}{" "}
+              <span className="req-count">({friendRequests.length})</span>
             </h2>
             {loadingRequests ? (
               <p>{t("loadingRequests")}</p>
@@ -267,14 +283,21 @@ const removeSuggestion = (id) => {
                     <img className="imgreq" src={f.image} alt={f.userName} />
                     <span
                       className="user-name"
-                      onClick={() => navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${f.id}`)}
+                      onClick={() =>
+                        navigate(
+                          `/helwan-alumni-portal/graduate/dashboard/friends/${f.id}`
+                        )
+                      }
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
                       {f.userName}
                     </span>
                   </div>
                   <div className="friend-actions">
-                    <button className="button" onClick={() => confirmFriend(f.senderId)}>
+                    <button
+                      className="button"
+                      onClick={() => confirmFriend(f.senderId)}
+                    >
                       {t("confirm")}
                     </button>
                     <button
@@ -314,7 +337,11 @@ const removeSuggestion = (id) => {
                     <img className="imgreq" src={f.image} alt={f.userName} />
                     <span
                       className="user-name"
-                      onClick={() => navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${f.id}`)}
+                      onClick={() =>
+                        navigate(
+                          `/helwan-alumni-portal/graduate/dashboard/friends/${f.id}`
+                        )
+                      }
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
                       {f.userName}
@@ -323,7 +350,10 @@ const removeSuggestion = (id) => {
                   <div className="friend-actions">
                     {!f.added ? (
                       <>
-                        <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
+                        <button
+                          className="button"
+                          onClick={() => toggleRequest(f.id, f.added)}
+                        >
                           {t("add")}
                         </button>
                         <button
@@ -335,7 +365,10 @@ const removeSuggestion = (id) => {
                         </button>
                       </>
                     ) : (
-                      <button className="button" onClick={() => toggleRequest(f.id, f.added)}>
+                      <button
+                        className="button"
+                        onClick={() => toggleRequest(f.id, f.added)}
+                      >
                         {t("requested")}
                       </button>
                     )}
@@ -355,19 +388,25 @@ const removeSuggestion = (id) => {
     <div className="page">
       <div className="friendship-bar">
         <button
-          className={`friendship-link ${currentTab === "suggestions" ? "active" : ""}`}
+          className={`friendship-link ${
+            currentTab === "suggestions" ? "active" : ""
+          }`}
           onClick={() => setCurrentTab("suggestions")}
         >
           {t("Suggestions")}
         </button>
         <button
-          className={`friendship-link ${currentTab === "friends" ? "active" : ""}`}
+          className={`friendship-link ${
+            currentTab === "friends" ? "active" : ""
+          }`}
           onClick={() => setCurrentTab("friends")}
         >
           {t("Friends")}
         </button>
         <button
-          className={`friendship-link ${currentTab === "requests" ? "active" : ""}`}
+          className={`friendship-link ${
+            currentTab === "requests" ? "active" : ""
+          }`}
           onClick={() => setCurrentTab("requests")}
         >
           {t("Requests")}
@@ -377,7 +416,11 @@ const removeSuggestion = (id) => {
       <div className="content-area">{renderContent()}</div>
 
       {activeChatFriend && (
-        <ChatBox chatId={chatId} activeChatFriend={activeChatFriend} onClose={closeChat} />
+        <ChatBox
+          chatId={chatId}
+          activeChatFriend={activeChatFriend}
+          onClose={closeChat}
+        />
       )}
     </div>
   );
