@@ -192,7 +192,7 @@
 .dark .am-create-bar {
   background: #1f2937;
   color: #f3f4f6;
-  border: 1px solid #374151;
+  /* border: 1px solid #374151; */
   transition: all 0.2s ease-in-out;
 }
 
@@ -259,7 +259,7 @@
 /* Dark Mode Inputs & Textareas */
 .dark .uni-post-form input,
 .dark .uni-post-form textarea,
-.dark .am-create-bar input,
+
 .dark .am-comment-input input {
   background: #1f2937;
   color: #f3f4f6;
@@ -269,7 +269,7 @@
 
 .dark .uni-post-form input:focus,
 .dark .uni-post-form textarea:focus,
-.dark .am-create-bar input:focus,
+
 .dark .am-comment-input input:focus {
   background: #1f2937;
   color: #f3f4f6;

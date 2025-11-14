@@ -762,7 +762,19 @@
   background: #4b5563;
 }
 
-/* Light mode */
+/* Light mode simple */
+.uni-category-select {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.uni-category-select label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #2a4370;
+}
+
 .uni-category-select select {
   padding: 6px 10px;
   border: 1px solid #ccc;
@@ -772,7 +784,7 @@
   color: #333;
   outline: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .uni-category-select select:hover {
@@ -781,15 +793,7 @@
 
 .uni-category-select select:focus {
   border-color: #2a4370;
-  box-shadow: 0 0 5px rgba(42, 67, 112, 0.4);
-}
-
-.uni-category-select label {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #2a4370;
+  box-shadow: 0 0 4px rgba(42, 67, 112, 0.2);
 }
 
 .uni-post-card.is-hidden {
@@ -857,6 +861,7 @@
 .uni-post-preview:hover {
   transform: scale(1.03);
 }
+
 
 .image-viewer-overlay {
   position: fixed;
