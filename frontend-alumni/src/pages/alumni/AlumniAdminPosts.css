@@ -1071,3 +1071,8 @@
   background-color: #272d3a;
   transform: scale(1.2);
 }
+
+.comment-text p {
+  margin: 0;
+  padding: 0;
+}
