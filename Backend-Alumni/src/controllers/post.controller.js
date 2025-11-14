@@ -1578,6 +1578,14 @@ const editPost = async (req, res) => {
       });
     }
 
+    // ⬇️⬇️⬇️ التحقق الجديد: منع التعديل إذا البوست مخفي ⬇️⬇️⬇️
+    if (post["is-hidden"]) {
+      return res.status(403).json({
+        status: "error",
+        message: "Cannot edit a hidden post",
+      });
+    }
+
     // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بالتعديل على بوستات الأدمن ⬇️⬇️⬇️
     const isPostOwner = post["author-id"] === req.user.id;
     const isStaffEditingAdminPost =
@@ -1972,6 +1980,14 @@ const deletePost = async (req, res) => {
       return res.status(404).json({
         status: "error",
         message: "Post not found",
+      });
+    }
+
+    // ⬇️⬇️⬇️ التحقق الجديد: منع الحذف إذا البوست مخفي ⬇️⬇️⬇️
+    if (post["is-hidden"]) {
+      return res.status(403).json({
+        status: "error",
+        message: "Cannot delete a hidden post",
       });
     }
 
@@ -2548,7 +2564,8 @@ const getLandingPosts = async (req, res) => {
 
         const likesCount = post.Likes ? post.Likes.length : 0;
         const isLikedByYou = currentUserId
-          ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
+          ? post.Likes?.some((like) => like["user-id"] === currentUserId) ||
+            false
           : false;
 
         return {
@@ -2556,12 +2573,14 @@ const getLandingPosts = async (req, res) => {
           category: post.category,
           content: post.content,
           "created-at": post["created-at"],
-          images: post.PostImages?.map(img => img["image-url"]) || [], // هنا بنضيف الصور
+          images: post.PostImages?.map((img) => img["image-url"]) || [], // هنا بنضيف الصور
           author: {
             id: author.id,
             "full-name": `${author["first-name"]} ${author["last-name"]}`,
             email: author.email,
-            image: author.Graduate ? author.Graduate["profile-picture-url"] : null,
+            image: author.Graduate
+              ? author.Graduate["profile-picture-url"]
+              : null,
           },
           "group-id": post["group-id"],
           "in-landing": post["in-landing"],

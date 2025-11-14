@@ -16,17 +16,13 @@ const getGraduatesForGroup = async (req, res) => {
     const { groupId } = req.params;
     const currentUserId = req.user.id;
 
-    // تحقق إن المستخدم عضو في الجروب أو Admin
-    const isMember = await GroupMember.findOne({
-      where: {
-        "group-id": groupId,
-        "user-id": currentUserId,
-      },
-    });
+    // تحقق إن المستخدم Admin أو Staff فقط
+    const isAdminOrStaff =
+      req.user["user-type"] === "admin" || req.user["user-type"] === "staff";
 
-    if (!isMember && req.user["user-type"] !== "admin") {
+    if (!isAdminOrStaff) {
       return res.status(403).json({
-        error: "You must be a member of this group to invite others.",
+        error: "Only admins and staff can invite others to groups.",
       });
     }
 
@@ -64,7 +60,7 @@ const getGraduatesForGroup = async (req, res) => {
       include: [
         {
           model: Graduate,
-          where: { "status-to-login": "accepted" }, 
+          where: { "status-to-login": "accepted" },
           attributes: ["profile-picture-url", "faculty", "graduation-year"],
           required: true, // مهم: يحذف اللي مش عنده سجل أو حالة غير accepted
         },
@@ -79,9 +75,7 @@ const getGraduatesForGroup = async (req, res) => {
       profilePicture: g.Graduate?.["profile-picture-url"] || null,
       faculty: g.Graduate?.faculty || null,
       graduationYear: g.Graduate?.["graduation-year"] || null,
-      invitationStatus: pendingIds.includes(g.id)
-        ? "pending"
-        : "not_invited",
+      invitationStatus: pendingIds.includes(g.id) ? "pending" : "not_invited",
       invitationId: pendingMap[g.id] || null,
     }));
 
@@ -92,38 +86,14 @@ const getGraduatesForGroup = async (req, res) => {
   }
 };
 
-
-
 //as an admin, i want to create group
 const createGroup = async (req, res) => {
   try {
-    console.log("🟢 ----- [createGroup] START -----");
-    console.log("📦 Headers Content-Type:", req.headers["content-type"]);
-    console.log("📦 Is multipart/form-data:", req.is("multipart/form-data"));
-    console.log("👤 Auth User:", req.user);
-
-    // 👇 نطبع كل حاجة عشان نعرف إذا في body ولا لأ
-    console.log("🧾 req.body:", req.body);
-    console.log("📸 req.file:", req.file);
-    console.log("📦 req.files:", req.files);
-
-    // أمان إضافي: لو الجسم undefined نعرف مكان المشكلة
-    if (!req.body) {
-      console.log(
-        "❌ req.body undefined — ممكن تكون مشكلة Multer أو ترتيب الميدل وير"
-      );
-    }
-
-    // نجرب نستخرج البيانات
-    const { groupName, description } = req.body || {};
-    console.log("🔹 groupName:", groupName);
-    console.log("🔹 description:", description);
-
+    const { groupName, description } = req.body;
     const user = req.user;
 
     // تحقق من البيانات
     if (!groupName || !description) {
-      console.log("❌ Missing groupName or description");
       return res.status(400).json({
         status: "fail",
         message: "Group name and description are required",
@@ -131,28 +101,22 @@ const createGroup = async (req, res) => {
       });
     }
 
-    // تحقق من صلاحية الأدمن
-    if (!user || user["user-type"] !== "admin") {
-      console.log("❌ Unauthorized user or not admin");
+    // تحقق من صلاحية الأدمن والستاف
+    if (
+      !user ||
+      (user["user-type"] !== "admin" && user["user-type"] !== "staff")
+    ) {
       return res.status(403).json({
         status: "fail",
-        message: "Only admins can create groups",
+        message: "Only admins and staff can create groups",
         data: [],
       });
     }
 
-    // 🔹 اختبار الصورة
+    // معالجة الصورة
     let imageUrl = null;
     if (req.file) {
-      console.log("✅ File detected. Checking available paths...");
-      console.log("req.file.path:", req.file.path);
-      console.log("req.file.url:", req.file.url);
-      console.log("req.file.location:", req.file.location);
-
       imageUrl = req.file.path || req.file.url || req.file.location || null;
-      console.log("🖼️ Final imageUrl:", imageUrl);
-    } else {
-      console.log("⚠️ No file uploaded.");
     }
 
     // إنشاء الجروب
@@ -167,14 +131,6 @@ const createGroup = async (req, res) => {
       where: { "group-id": group.id },
     });
 
-    console.log("✅ Group created successfully:", {
-      id: group.id,
-      name: group["group-name"],
-      image: group["group-image"],
-    });
-
-    console.log("🟢 ----- [createGroup] END -----");
-
     return res.status(201).json({
       status: "success",
       message: "Group created successfully",
@@ -188,12 +144,11 @@ const createGroup = async (req, res) => {
       },
     });
   } catch (err) {
-    console.error("🔥 Error in createGroup:", err);
+    console.error("Error in createGroup:", err);
     return res.status(500).json({
       status: "error",
       message: "Failed to create group",
       error: err.message,
-      stack: err.stack, // 👈 نطبع الستاك كمان عشان نعرف المكان بالظبط
       data: [],
     });
   }
@@ -245,10 +200,10 @@ const addUserToGroup = async (req, res) => {
     const user = req.user; // middleware بيرجع اليوزر الحالي
 
     // تأكد إنه Admin
-    if (user["user-type"] !== "admin") {
+    if (user["user-type"] !== "admin" && user["user-type"] !== "staff") {
       return res.status(403).json({
         status: "fail",
-        message: "Only admins can add users to groups",
+        message: "Only admins or staff can add users to groups",
         data: [],
       });
     }
@@ -323,10 +278,11 @@ const editGroup = async (req, res) => {
     const { groupId } = req.params;
     const { groupName, description, removeGroupImage } = req.body;
 
-    if (user["user-type"] !== "admin") {
-      return res
-        .status(403)
-        .json({ status: "fail", message: "Only admins can edit groups" });
+    if (user["user-type"] !== "admin" && user["user-type"] !== "staff") {
+      return res.status(403).json({
+        status: "fail",
+        message: "Only admins or staff can edit groups",
+      });
     }
 
     const group = await Group.findByPk(groupId);
@@ -381,10 +337,10 @@ const deleteGroup = async (req, res) => {
     const user = req.user;
     const { groupId } = req.params;
 
-    if (user["user-type"] !== "admin") {
+    if (user["user-type"] !== "admin" && user["user-type"] !== "staff") {
       return res.status(403).json({
         status: "fail",
-        message: "Only admins can delete groups",
+        message: "Only admins or staff can delete groups",
         data: [],
       });
     }
@@ -428,11 +384,10 @@ const getGroupMembersCount = async (req, res) => {
     const user = req.user;
     const { groupId } = req.params;
 
-    // لازم يكون Admin
-    if (user["user-type"] !== "admin") {
+    if (user["user-type"] !== "admin" && user["user-type"] !== "staff") {
       return res.status(403).json({
         status: "fail",
-        message: "Only admins can view members count",
+        message: "Only admins or staff can view members count",
         data: [],
       });
     }
@@ -690,12 +645,14 @@ const getGroupUsers = async (req, res) => {
     }
 
     // هنعمل تعديل صغير عشان لو مش موجود Graduate يرجع قيم افتراضية
-    const usersWithGraduateInfo = group.Users.map(user => {
+    const usersWithGraduateInfo = group.Users.map((user) => {
       return {
         ...user.toJSON(),
         faculty: user.Graduate ? user.Graduate.faculty : null,
         graduationYear: user.Graduate ? user.Graduate["graduation-year"] : null,
-        profilePicture: user.Graduate ? user.Graduate["profile-picture-url"] : null,
+        profilePicture: user.Graduate
+          ? user.Graduate["profile-picture-url"]
+          : null,
       };
     });
 
@@ -713,7 +670,6 @@ const getGroupUsers = async (req, res) => {
     });
   }
 };
-
 
 module.exports = {
   createGroup,
