@@ -273,8 +273,8 @@ class ChatSocketServer {
         // Send to sender (confirmation)
         socket.emit('message_sent', messageWithDetails);
 
-        // Broadcast to chat room (both users will receive if they're in the room)
-        this.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+        // Broadcast to chat room (exclude sender since they already got message_sent)
+        socket.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
 
         // Also send to receiver's personal room if they're not in the chat room
         const receiverSocketId = this.connectedUsers.get(receiverId);

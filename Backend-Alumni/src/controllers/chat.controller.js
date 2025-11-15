@@ -437,8 +437,14 @@ const sendMessage = asyncHandler(async (req, res) => {
 
   // Emit socket event to notify other user in real-time
   if (global.chatSocket) {
-    // Broadcast to chat room
-    global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+    // Get sender's socket ID to exclude them from the broadcast
+    const senderSocketId = global.chatSocket.connectedUsers.get(senderId);
+    // Broadcast to chat room (exclude sender since they already added it locally)
+    if (senderSocketId) {
+      global.chatSocket.io.to(`chat_${chatId}`).except(senderSocketId).emit('new_message', messageWithDetails);
+    } else {
+      global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+    }
     
     // Also send to receiver's personal room if they're not in the chat room
     const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
@@ -1184,8 +1190,14 @@ const sendImageMessage = asyncHandler(async (req, res) => {
 
   // Emit socket event to notify other user in real-time
   if (global.chatSocket) {
-    // Broadcast to chat room
-    global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+    // Get sender's socket ID to exclude them from the broadcast
+    const senderSocketId = global.chatSocket.connectedUsers.get(senderId);
+    // Broadcast to chat room (exclude sender since they already added it locally)
+    if (senderSocketId) {
+      global.chatSocket.io.to(`chat_${chatId}`).except(senderSocketId).emit('new_message', messageWithDetails);
+    } else {
+      global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+    }
     
     // Also send to receiver's personal room if they're not in the chat room
     const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
@@ -1323,8 +1335,14 @@ const sendFileMessage = asyncHandler(async (req, res) => {
 
   // Emit socket event to notify other user in real-time
   if (global.chatSocket) {
-    // Broadcast to chat room
-    global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+    // Get sender's socket ID to exclude them from the broadcast
+    const senderSocketId = global.chatSocket.connectedUsers.get(senderId);
+    // Broadcast to chat room (exclude sender since they already added it locally)
+    if (senderSocketId) {
+      global.chatSocket.io.to(`chat_${chatId}`).except(senderSocketId).emit('new_message', messageWithDetails);
+    } else {
+      global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+    }
     
     // Also send to receiver's personal room if they're not in the chat room
     const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
