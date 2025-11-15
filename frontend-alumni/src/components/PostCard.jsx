@@ -475,17 +475,23 @@ const PostCard = ({ post, onEdit, onDelete }) => {
       {comments.map((c) => (
         <div key={c.comment_id} className="comment-item">
           <div className="comment-left">
-            <img
-              src={
-                c.author?.type === "admin" || c.author?.type === "staff"
-                  ? AdminPostsImg
-                  : c.author?.image || PROFILE
-              }
-              alt="avatar"
-              className="comment-avatar"
-            />
+          <img
+  src={
+    c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff"
+      ? AdminPostsImg
+      : c.author?.image || PROFILE
+  }
+  alt="avatar"
+  className="comment-avatar"
+/>
+
             <div className="comment-text">
-              <strong>{c.author?.["full-name"]}</strong>
+            <strong>
+  {c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff"
+    ? "Alumni Portal - Helwan University"
+    : c.author?.["full-name"]}
+</strong>
+
               <p>{c.content}</p>
             </div>
             <div className="comment-date">

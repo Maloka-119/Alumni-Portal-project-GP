@@ -5,6 +5,8 @@ import PROFILE from "./PROFILE.jpeg";
 import "./Accountgrad.css";
 import PostCard from "../../components/PostCard"; 
 import { useTranslation } from "react-i18next";
+import AdminPostsImg from './AdminPosts.jpeg';
+
 
 function Accountgrad() {
   const { t } = useTranslation();
@@ -34,18 +36,45 @@ function Accountgrad() {
             category: p.category,
             date: p["created-at"],
             author: {
-              id: p.author?.id || null,
-              name: p.author?.["full-name"] || "Unknown",
-              photo: p.author?.image || PROFILE,
+              name:
+                p.author?.["user-type"] === "admin" || p.author?.["user-type"] === "staff"
+                  ? "Alumni Portal - Helwan University"
+                  : p.author?.["full-name"] || "Unknown",
+              photo:
+                p.author?.["user-type"] === "admin" || p.author?.["user-type"] === "staff"
+                  ? AdminPostsImg
+                  : p.author?.image || PROFILE,
             },
+          
             likes: Array.isArray(p.likes) ? p.likes : [],
-likesCount: Number(p.likes_count) || 0,
-likedByCurrentUser: p.like_id ? true : false,
+            likesCount: Number(p.likes_count) || 0,
+            likedByCurrentUser: !!p.like_id,
+          
+            comments: Array.isArray(p.comments)
+  ? p.comments.map((c) => {
+      const isUni =
+        c.author?.["full-name"]?.includes("Alumni Portal") ||
+        c.author?.["user-type"] === "admin" ||
+        c.author?.["user-type"] === "staff";
 
-            comments: Array.isArray(p.comments) ? p.comments : [],
+      return {
+        ...c,
+        author: {
+          ...c.author,
+          name: isUni
+            ? "Alumni Portal - Helwan University"
+            : c.author?.["full-name"] || "Unknown",
+          image: isUni ? AdminPostsImg : c.author?.image || PROFILE,
+        },
+      };
+    })
+  : [],
+
+          
             images: Array.isArray(p.images) ? p.images : [],
             shares: Number(p.shares) || 0,
-        }));
+          }));
+          
         
 
           setFormData({
