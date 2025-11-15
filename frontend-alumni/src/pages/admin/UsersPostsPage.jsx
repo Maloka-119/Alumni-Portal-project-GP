@@ -31,13 +31,17 @@ const UsersPostsPage = ({ currentUser }) => {
 
   const formatPosts = (data) => {
     return (data || []).map(post => {
-      const formattedComments = (post.comments || []).map(comment => ({
-        id: comment.comment_id,
-        userName: comment.author?.["full-name"] || "Unknown User",
-        content: comment.content,
-        avatar: comment.author?.image || PROFILE,
-        date: comment["created-at"],
-      }));
+      const formattedComments = (post.comments || []).map(comment => {
+        const isAdminOrStaff = ["admin", "staff"].includes(comment.author?.["user-type"]);
+        return {
+          id: comment.comment_id,
+          userName: isAdminOrStaff ? "Alumni Portal – Helwan University" : comment.author?.["full-name"] || "Unknown User",
+          content: comment.content,
+          avatar: isAdminOrStaff ? AdminPostsImg : comment.author?.image || PROFILE,
+          date: comment["created-at"],
+          author: comment.author, // حفظ المرجع الأصلي للوظائف الأخرى
+        };
+      });
   
       return {
         ...post,
@@ -47,16 +51,13 @@ const UsersPostsPage = ({ currentUser }) => {
         comments: formattedComments,
         images: post.images || [],
         showComments: false,
-        author: {
-          id: post.author?.id,
-          name: post.author?.["full-name"] || "Unknown",
-          photo: post.author?.image || PROFILE,
-        },
+        author: post.author,
         isHidden: post["is-hidden"] === true,
         inLanding: post["in-landing"] === true
       };
     });
   };
+  
   
 
   const fetchPosts = async () => {
@@ -151,19 +152,32 @@ const UsersPostsPage = ({ currentUser }) => {
     if (!postPerm.canAdd) return;
     const comment = commentInputs[postId];
     if (!comment?.trim()) return;
-
+  
     try {
       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
       if (res.data.comment) {
-        const newComment = { id: res.data.comment.comment_id, userName: res.data.comment.author?.["full-name"] || "You", content: res.data.comment.content, avatar: PROFILE, date: new Date().toLocaleString() };
-        setPosts((prev) => prev.map((post) => post.id === postId ? { ...post, comments: [...post.comments, newComment] } : post));
+        const isAdminOrStaff = ["admin", "staff"].includes(res.data.comment.author?.["user-type"]);
+        const newComment = {
+          id: res.data.comment.comment_id,
+          userName: isAdminOrStaff ? "Alumni Portal – Helwan University" : res.data.comment.author?.["full-name"] || "You",
+          content: res.data.comment.content,
+          avatar: isAdminOrStaff ? AdminPostsImg : res.data.comment.author?.image || PROFILE,
+          date: new Date().toLocaleString(),
+          author: res.data.comment.author,
+        };
+        setPosts(prev =>
+          prev.map(post =>
+            post.id === postId ? { ...post, comments: [...post.comments, newComment] } : post
+          )
+        );
       }
-      setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
+      setCommentInputs(prev => ({ ...prev, [postId]: "" }));
     } catch (err) {
       console.error("Error submitting comment:", err.response?.data || err);
       Swal.fire({ icon: "error", title: "Error", text: "Failed to add comment", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
     }
   };
+  
 
   if (loading) return <p>{t("loadingPosts")}</p>;
   if (!postPerm.canView) return <p style={{ color: 'red' }}>{t("noPermission")}</p>;
