@@ -4,15 +4,20 @@ import API from "../../services/api";
 import GroupDetails from "../alumni/GroupDetails";
 import "./ExploreGroups.css";
 import Swal from "sweetalert2";
-import communityCover from "./defualtCommunityCover.jpg"
+import communityCover from "./defualtCommunityCover.jpg";
+
 function ExploreGroups() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [groups, setGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
+    // ضبط اتجاه الصفحة حسب اللغة
+    document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
+
+    // جلب كل المجموعات
     const fetchGroups = async () => {
       try {
         const res = await API.get("/groups");
@@ -22,9 +27,13 @@ function ExploreGroups() {
       }
     };
 
+    // جلب المجموعات اللي أنا مشترك فيها
     const fetchMyGroups = async () => {
       try {
-        const res = await API.get("/groups/my-groups");
+        const token = localStorage.getItem("token");
+        const res = await API.get("/groups/my-groups", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
         setMyGroups(res.data.data || []);
       } catch {
         setMyGroups([]);
@@ -33,7 +42,7 @@ function ExploreGroups() {
 
     fetchGroups();
     fetchMyGroups();
-  }, []);
+  }, [i18n.language]);
 
   const handleJoin = async (groupId) => {
     try {
@@ -48,11 +57,13 @@ function ExploreGroups() {
         }
       );
 
+      // تحديث المجموعات الخاصة بي بعد الانضمام
       const res = await API.get("/groups/my-groups", {
         headers: { Authorization: `Bearer ${token}` },
       });
       setMyGroups(res.data.data || []);
 
+      // تحديث عدد الأعضاء للمجموعة
       setGroups((prev) =>
         prev.map((g) =>
           g.id === groupId
@@ -61,14 +72,14 @@ function ExploreGroups() {
         )
       );
 
-       Swal.fire({
+      Swal.fire({
         icon: "success",
         title: t("You joined the community successfully!"),
         showConfirmButton: false,
         timer: 1800,
       });
     } catch {
-     Swal.fire({
+      Swal.fire({
         icon: "error",
         title: t("Failed to join community"),
         text: t("Please try again later."),
@@ -77,10 +88,15 @@ function ExploreGroups() {
   };
 
   if (selectedGroup) {
-    return <GroupDetails group={selectedGroup} goBack={() => setSelectedGroup(null)} />;
+    return (
+      <GroupDetails
+        group={selectedGroup}
+        goBack={() => setSelectedGroup(null)}
+      />
+    );
   }
 
-  // فلترة المجموعات بناءً على السيرش
+  // فلترة المجموعات بناءً على البحث
   const filteredGroups = groups.filter((g) =>
     g.groupName.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -103,11 +119,12 @@ function ExploreGroups() {
           const joined = myGroups.some((mg) => mg.id === g.id);
           return (
             <div key={g.id} className="explorer-card">
-            <div className="explorer-card-image">
-  <img src={g.groupImage || communityCover} alt={g.groupName} />
-</div>
+              <div className="explorer-card-image">
+                <img src={g.groupImage || communityCover} alt={g.groupName} />
+              </div>
 
               <h3 className="explorer-name">{g.groupName}</h3>
+
               <div className="explorer-card-top">
                 <span className="explorer-badge">
                   {g.membersCount} {t("members")}

@@ -25,9 +25,13 @@ function FriendshipPage() {
   const [chatId, setChatId] = useState(null);
 
   // ضبط اتجاه النص حسب اللغة
-  useEffect(() => {
-    document.body.dir = i18n.language === "ar" ? "rtl" : "ltr";
-  }, [i18n.language]);
+// ضبط اتجاه الصفحة حسب اللغة (أفضل حل)
+useEffect(() => {
+  const dir = i18n.language === "ar" ? "rtl" : "ltr";
+  document.documentElement.setAttribute("dir", dir);
+  document.documentElement.setAttribute("lang", i18n.language);
+}, [i18n.language]);
+
 
   // -------------------- Fetch Functions --------------------
   const fetchFriends = async () => {
