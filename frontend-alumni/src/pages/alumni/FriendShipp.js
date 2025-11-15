@@ -235,11 +235,12 @@ function FriendshipPage() {
                     <img className="imgreq" src={f.image} alt={f.userName} />
                     <span
                       className="user-name"
-                      onClick={() =>
-                        navigate(
-                          `/helwan-alumni-portal/graduate/dashboard/friends/${f.id}`
-                        )
-                      }
+                      onClick={() => {
+                        const profileId = f.friendId || f.senderId || f.id;
+                        if(profileId) navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${profileId}`);
+                        else console.warn("No valid id for navigation", f);
+                      }}
+                      
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
                       {f.userName}
@@ -283,11 +284,12 @@ function FriendshipPage() {
                     <img className="imgreq" src={f.image} alt={f.userName} />
                     <span
                       className="user-name"
-                      onClick={() =>
-                        navigate(
-                          `/helwan-alumni-portal/graduate/dashboard/friends/${f.id}`
-                        )
-                      }
+                      onClick={() => {
+                        const profileId = f.friendId || f.senderId || f.id;
+                        if(profileId) navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${profileId}`);
+                        else console.warn("No valid id for navigation", f);
+                      }}
+                      
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
                       {f.userName}
@@ -337,11 +339,12 @@ function FriendshipPage() {
                     <img className="imgreq" src={f.image} alt={f.userName} />
                     <span
                       className="user-name"
-                      onClick={() =>
-                        navigate(
-                          `/helwan-alumni-portal/graduate/dashboard/friends/${f.id}`
-                        )
-                      }
+                      onClick={() => {
+                        const profileId = f.friendId || f.senderId || f.id;
+                        if(profileId) navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${profileId}`);
+                        else console.warn("No valid id for navigation", f);
+                      }}
+                      
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
                       {f.userName}
