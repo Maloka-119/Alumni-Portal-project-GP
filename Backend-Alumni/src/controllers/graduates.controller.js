@@ -637,6 +637,232 @@ const searchGraduates = async (req, res) => {
   }
 };
 // get graduate profile for user
+// const getGraduateProfileForUser = async (req, res) => {
+//   try {
+//     const { identifier } = req.params;
+//     const currentUserId = req.user.id;
+
+//     let graduate;
+
+//     // البحث عن الخريج بالإيدي
+//     if (!isNaN(identifier)) {
+//       graduate = await Graduate.findByPk(identifier, {
+//         include: [{ model: User }],
+//       });
+//     } else {
+//       // البحث بالإيميل
+//       const userByEmail = await User.findOne({
+//         where: { email: identifier },
+//         include: [{ model: Graduate }],
+//       });
+
+//       if (userByEmail) {
+//         graduate = userByEmail.Graduate;
+//       } else {
+//         // البحث بالاسم
+//         const usersByName = await User.findAll({
+//           where: {
+//             [Op.or]: [
+//               { "first-name": { [Op.like]: `%${identifier}%` } },
+//               { "last-name": { [Op.like]: `%${identifier}%` } },
+//             ],
+//           },
+//           include: [{ model: Graduate }],
+//         });
+
+//         for (let user of usersByName) {
+//           if (user.Graduate) {
+//             graduate = user.Graduate;
+//             break;
+//           }
+//         }
+//       }
+//     }
+
+//     if (!graduate || !graduate.User) {
+//       return res.status(404).json({
+//         status: HttpStatusHelper.FAIL,
+//         message: "Graduate not found",
+//         data: null,
+//       });
+//     }
+
+//     // تحديد حالة الصداقة
+//     let friendshipStatus = "no_relation";
+
+//     const existingFriendshipRequest = await Friendship.findOne({
+//       where: {
+//         [Op.or]: [
+//           { sender_id: currentUserId, receiver_id: graduate.graduate_id },
+//           { sender_id: graduate.graduate_id, receiver_id: currentUserId },
+//         ],
+//         status: "pending",
+//       },
+//     });
+
+//     if (existingFriendshipRequest) {
+//       friendshipStatus =
+//         existingFriendshipRequest.sender_id === currentUserId
+//           ? "i_sent_request"
+//           : "he_sent_request";
+//     }
+
+//     const friendship = await Friendship.findOne({
+//       where: {
+//         [Op.or]: [
+//           { sender_id: currentUserId, receiver_id: graduate.graduate_id },
+//           { sender_id: graduate.graduate_id, receiver_id: currentUserId },
+//         ],
+//         status: "accepted",
+//       },
+//     });
+
+//     if (friendship) friendshipStatus = "friends";
+
+//     // جلب بوستات الخريج
+//     const posts = await Post.findAll({
+//       where: {
+//         "author-id": graduate.graduate_id,
+//         "is-hidden": false,
+//         "group-id": null,
+//       },
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "first-name", "last-name"],
+//           include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
+//         },
+//         { model: PostImage, attributes: ["image-url"] },
+//         {
+//           model: Like,
+//           attributes: ["like_id", "user-id"],
+//           include: [
+//             {
+//               model: User,
+//               attributes: ["id", "first-name", "last-name"],
+//               include: [
+//                 { model: Graduate, attributes: ["profile-picture-url"] },
+//               ],
+//             },
+//           ],
+//         },
+//         {
+//           model: Comment,
+//           attributes: ["comment_id", "content", "created-at", "edited"],
+//           include: [
+//             {
+//               model: User,
+//               attributes: ["id", "first-name", "last-name"],
+//               include: [
+//                 { model: Graduate, attributes: ["profile-picture-url"] },
+//               ],
+//             },
+//           ],
+//           order: [["created-at", "ASC"]],
+//         },
+//       ],
+//       order: [["created-at", "DESC"]],
+//     });
+
+//     // تجهيز بيانات البوستات
+//     const postsData = posts.map((post) => {
+//       const authorUser = post.User;
+
+//       return {
+//         post_id: post.post_id,
+//         category: post.category,
+//         content: post.content,
+//         "created-at": post["created-at"],
+//         author: {
+//           id: authorUser?.id || "unknown",
+//           "full-name": `${authorUser?.["first-name"] || ""} ${
+//             authorUser?.["last-name"] || ""
+//           }`.trim(),
+//           image: authorUser?.Graduate
+//             ? authorUser.Graduate["profile-picture-url"]
+//             : null,
+//         },
+//         images: post.PostImages
+//           ? post.PostImages.map((img) => img["image-url"])
+//           : [],
+//         likes: post.Likes
+//           ? post.Likes.map((like) => ({
+//               like_id: like.like_id,
+//               user: like.User
+//                 ? {
+//                     id: like.User.id,
+//                     "full-name": `${like.User["first-name"] || ""} ${
+//                       like.User["last-name"] || ""
+//                     }`.trim(),
+//                     image: like.User.Graduate
+//                       ? like.User.Graduate["profile-picture-url"]
+//                       : null,
+//                   }
+//                 : null,
+//             }))
+//           : [],
+//         likes_count: post.Likes ? post.Likes.length : 0,
+//         comments: post.Comments
+//           ? post.Comments.map((comment) => ({
+//               comment_id: comment.comment_id,
+//               content: comment.content,
+//               "created-at": comment["created-at"],
+//               edited: comment.edited,
+//               author: {
+//                 id: comment.User?.id || "unknown",
+//                 "full-name":
+//                   `${comment.User?.["first-name"] || ""} ${
+//                     comment.User?.["last-name"] || ""
+//                   }`.trim() || "Unknown User",
+//                 "user-type": comment.User?.["user-type"] || "unknown",
+//                 image: comment.User?.Graduate
+//                   ? comment.User.Graduate["profile-picture-url"]
+//                   : null,
+//               },
+//             }))
+//           : [],
+//         comments_count: post.Comments ? post.Comments.length : 0,
+//       };
+//     });
+
+//     const userData = graduate.User;
+//     const isOwner = +currentUserId === +graduate.graduate_id;
+
+//     const profile = {
+//       profilePicture: graduate["profile-picture-url"],
+//       fullName: `${userData["first-name"]} ${userData["last-name"]}`,
+//       faculty: graduate.faculty,
+//       graduationYear: graduate["graduation-year"],
+//       bio: graduate.bio,
+//       skills: graduate.skills,
+//       currentJob: graduate["current-job"],
+//       showCV: graduate.show_cv,
+//       showLinkedIn: graduate.show_linkedin,
+//       showPhone: userData.show_phone,
+//       friendshipStatus: isOwner ? "owner" : friendshipStatus,
+//       posts: postsData,
+//     };
+
+//     if (graduate.show_cv) profile.CV = graduate["cv-url"];
+//     if (graduate.show_linkedin)
+//       profile.linkedlnLink = graduate["linkedln-link"];
+//     if (userData.show_phone) profile.phoneNumber = userData.phoneNumber;
+
+//     return res.json({
+//       status: HttpStatusHelper.SUCCESS,
+//       message: "Graduate Profile fetched successfully",
+//       data: profile,
+//     });
+//   } catch (err) {
+//     console.error("❌ خطأ في الفانكشن:", err);
+//     return res.status(500).json({
+//       status: HttpStatusHelper.ERROR,
+//       message: err.message,
+//       data: null,
+//     });
+//   }
+// };
+
 const getGraduateProfileForUser = async (req, res) => {
   try {
     const { identifier } = req.params;
@@ -729,7 +955,7 @@ const getGraduateProfileForUser = async (req, res) => {
       include: [
         {
           model: User,
-          attributes: ["id", "first-name", "last-name"],
+          attributes: ["id", "first-name", "last-name", "user-type"], // إضافة user-type هنا
           include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
         },
         { model: PostImage, attributes: ["image-url"] },
@@ -739,7 +965,7 @@ const getGraduateProfileForUser = async (req, res) => {
           include: [
             {
               model: User,
-              attributes: ["id", "first-name", "last-name"],
+              attributes: ["id", "first-name", "last-name", "user-type"], // إضافة user-type هنا
               include: [
                 { model: Graduate, attributes: ["profile-picture-url"] },
               ],
@@ -752,7 +978,7 @@ const getGraduateProfileForUser = async (req, res) => {
           include: [
             {
               model: User,
-              attributes: ["id", "first-name", "last-name"],
+              attributes: ["id", "first-name", "last-name", "user-type"], // إضافة user-type هنا
               include: [
                 { model: Graduate, attributes: ["profile-picture-url"] },
               ],
@@ -778,6 +1004,7 @@ const getGraduateProfileForUser = async (req, res) => {
           "full-name": `${authorUser?.["first-name"] || ""} ${
             authorUser?.["last-name"] || ""
           }`.trim(),
+          "user-type": authorUser?.["user-type"] || "unknown", // إضافة user-type هنا
           image: authorUser?.Graduate
             ? authorUser.Graduate["profile-picture-url"]
             : null,
@@ -794,6 +1021,7 @@ const getGraduateProfileForUser = async (req, res) => {
                     "full-name": `${like.User["first-name"] || ""} ${
                       like.User["last-name"] || ""
                     }`.trim(),
+                    "user-type": like.User["user-type"] || "unknown", // إضافة user-type هنا
                     image: like.User.Graduate
                       ? like.User.Graduate["profile-picture-url"]
                       : null,
