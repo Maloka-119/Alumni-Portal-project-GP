@@ -193,7 +193,9 @@ class ChatSocketServer {
     // Send message
     socket.on('send_message', async (data) => {
       try {
-        const { chatId, content, replyToMessageId } = data;
+        // Accept both replyToMessageId and reply_to_id for compatibility
+        const { chatId, content, replyToMessageId, reply_to_id } = data;
+        const replyToMsgId = replyToMessageId || reply_to_id || null;
         const senderId = socket.userId;
 
         // Verify chat access
@@ -233,7 +235,7 @@ class ChatSocketServer {
           receiver_id: receiverId,
           content: content,
           message_type: 'text',
-          reply_to_message_id: replyToMessageId || null
+          reply_to_message_id: replyToMsgId
         });
 
         // Update chat
@@ -243,7 +245,7 @@ class ChatSocketServer {
           [`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`]: chat[`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`] + 1
         });
 
-        // Fetch message with details
+        // Fetch message with details, including full replyTo data
         const messageWithDetails = await Message.findByPk(message.message_id, {
           include: [
             {
@@ -259,13 +261,15 @@ class ChatSocketServer {
             {
               model: Message,
               as: 'replyTo',
+              required: false,
               include: [
                 {
                   model: User,
                   as: 'sender',
-                  attributes: ['id', 'first-name', 'last-name']
+                  attributes: ['id', 'first-name', 'last-name', 'email']
                 }
-              ]
+              ],
+              attributes: ['message_id', 'content', 'sender_id', 'message_type', 'attachment_url', 'attachment_name', 'is_deleted', 'created-at']
             }
           ]
         });
@@ -273,14 +277,16 @@ class ChatSocketServer {
         // Send to sender (confirmation)
         socket.emit('message_sent', messageWithDetails);
 
-        // Broadcast to chat room (exclude sender since they already got message_sent)
-        socket.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
+        // Emit to the chat room so both sender and receiver receive it
+        this.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
 
-        // Also send to receiver's personal room if they're not in the chat room
+        // Also send to receiver's personal room as fallback if they're not in the chat room
         const receiverSocketId = this.connectedUsers.get(receiverId);
         if (receiverSocketId) {
           // Mark as delivered
           await message.update({ status: 'delivered' });
+          // Also emit to receiver's personal room as fallback
+          this.io.to(`user_${receiverId}`).emit('new_message', messageWithDetails);
         }
 
         // Update chat list for both users
@@ -455,15 +461,46 @@ class ChatSocketServer {
           edited_at: new Date()
         });
 
-        // Notify both users
+        // Fetch updated message with all associations for socket emission
+        const updatedMessage = await Message.findByPk(messageId, {
+          include: [
+            {
+              model: User,
+              as: 'sender',
+              attributes: ['id', 'first-name', 'last-name', 'email']
+            },
+            {
+              model: User,
+              as: 'receiver',
+              attributes: ['id', 'first-name', 'last-name', 'email']
+            },
+            {
+              model: Message,
+              as: 'replyTo',
+              include: [
+                {
+                  model: User,
+                  as: 'sender',
+                  attributes: ['id', 'first-name', 'last-name']
+                }
+              ]
+            }
+          ]
+        });
+
+        // Get chat to determine receiver
         const chat = await Chat.findByPk(message.chat_id);
-        const otherUserId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
+        const receiverId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
+
+        // Emit to the chat room so both users receive the update
+        this.io.to(`chat_${message.chat_id}`).emit('message_edited', updatedMessage);
         
-        socket.emit('message_edited', message);
+        // Also emit to both users' personal rooms to ensure they receive it even if not in chat room
+        this.io.to(`user_${userId}`).emit('message_edited', updatedMessage);
         
-        const otherSocketId = this.connectedUsers.get(otherUserId);
-        if (otherSocketId) {
-          this.io.to(otherSocketId).emit('message_edited', message);
+        const receiverSocketId = this.connectedUsers.get(receiverId);
+        if (receiverSocketId) {
+          this.io.to(`user_${receiverId}`).emit('message_edited', updatedMessage);
         }
 
       } catch (error) {
