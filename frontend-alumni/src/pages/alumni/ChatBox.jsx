@@ -1,5 +1,5 @@
 // ChatBox.jsx
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import API from "../../services/api";
 import {
@@ -50,7 +50,7 @@ export default function ChatBox({
   };
 
   // ------------------ تحديث Chat List ------------------
-  const updateChatListLastMessage = (msg) => {
+  const updateChatListLastMessage = useCallback((msg) => {
     const lastMsgContent = msg.message_type === "image" ? "[صورة]" :
                            msg.message_type === "pdf" ? `[ملف PDF: ${msg.file_name}]` :
                            msg.message_type === "file" ? `[ملف: ${msg.file_name}]` :
@@ -62,7 +62,7 @@ export default function ChatBox({
       message_type: msg.message_type || "text",
       file_name: msg.file_name || null,
     });
-  };
+  }, [updateChatList, chatId]);
 
   const markChatAsRead = async (targetChatId) => {
     if (!targetChatId) return;
@@ -118,7 +118,7 @@ export default function ChatBox({
     setMessages([]);
     fetchMessages();
     return () => { mounted = false; };
-  }, [chatId, token, t, userId]);
+  }, [chatId, token, t, userId, updateChatListLastMessage]);
 
   // ------------------ WebSocket ------------------
   useEffect(() => {
@@ -131,6 +131,10 @@ export default function ChatBox({
     const handleNew = (msg) => {
       if (msg.chat_id !== chatId) return;
       setMessages((prev) => {
+        // Check if message already exists to prevent duplicates
+        if (prev.some((m) => m.message_id === msg.message_id)) {
+          return prev;
+        }
         let replyMsg = null;
         if (msg.reply_to_message_id) {
           replyMsg = prev.find((m) => m.message_id === msg.reply_to_message_id) || msg.replyTo || null;
@@ -199,7 +203,7 @@ export default function ChatBox({
       leaveChatSocket(chatId);
       socket.off && socket.off("message_seen", handleSeen);
     };
-  }, [chatId, token, userId]);
+  }, [chatId, token, userId, updateChatListLastMessage, updateChatList]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
