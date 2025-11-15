@@ -1589,15 +1589,18 @@ const editPost = async (req, res) => {
       });
     }
 
-    // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بالتعديل على بوستات الأدمن ⬇️⬇️⬇️
+    // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بالتعديل على بوستات الأدمن والادمن على بوستات الاستاف ⬇️⬇️⬇️
     const isPostOwner = post["author-id"] === req.user.id;
     const isStaffEditingAdminPost =
       req.user["user-type"] === "staff" && post.User["user-type"] === "admin";
+    const isAdminEditingStaffPost =
+      req.user["user-type"] === "admin" && post.User["user-type"] === "staff"; // ⬅️ التعديل الجديد
 
-    if (!isPostOwner && !isStaffEditingAdminPost) {
+    if (!isPostOwner && !isStaffEditingAdminPost && !isAdminEditingStaffPost) {
       return res.status(403).json({
         status: "error",
-        message: "You can only edit your own posts or admin posts (for staff)",
+        message:
+          "You can only edit your own posts or admin posts (for staff) or staff posts (for admin)",
       });
     }
 
