@@ -1200,7 +1200,7 @@ const getAdminPosts = async (req, res) => {
           include: [
             {
               model: User,
-              attributes: ["id", "first-name", "last-name"],
+              attributes: ["id", "first-name", "last-name", "user-type"], // ⬅️ إضافة user-type هنا
             },
           ],
         },
@@ -1277,6 +1277,7 @@ const getAdminPosts = async (req, res) => {
                   `${like.User?.["first-name"] || ""} ${
                     like.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
+                "user-type": like.User?.["user-type"] || "unknown", // ⬅️ إضافة user-type هنا
               },
             }))
           : [],
@@ -1295,6 +1296,7 @@ const getAdminPosts = async (req, res) => {
                     comment.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
                 email: comment.User?.email || "unknown",
+                "user-type": comment.User?.["user-type"] || "unknown", // ⬅️ إضافة user-type هنا
                 image: comment.User?.Graduate
                   ? comment.User.Graduate["profile-picture-url"]
                   : null,
