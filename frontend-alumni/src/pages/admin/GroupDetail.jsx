@@ -43,19 +43,22 @@ function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
 
   const formatPosts = (data) => {
     return data.map((post) => {
-      const formattedComments = (post.comments || []).map((comment) => ({
-        id: comment.comment_id,
-        userName: comment.author?.["full-name"] || "Unknown User",
-        content: comment.content,
-        avatar: comment.author?.image || AdminPostsImg,
-        date: comment["created-at"],
-      }));
+      const formattedComments = (post.comments || []).map((comment) => {
+        const isAdminOrStaff = ["admin", "staff"].includes(comment.author?.["user-type"]);
+        return {
+          id: comment.comment_id,
+          userName: isAdminOrStaff ? "Alumni Portal – Helwan University" : comment.author?.["full-name"] || "Unknown User",
+          content: comment.content,
+          avatar: isAdminOrStaff ? AdminPostsImg : comment.author?.image || PROFILE,
+          date: comment["created-at"],
+        };
+      });
   
       return {
         ...post,
         id: post.post_id,
-        likes: post.likes_count || 0,
-        liked: post.liked || false,
+        likes: post.likesCount || 0,
+        liked: post.isLikedByYou || false,
         comments: formattedComments,
         images: post.images || [],
         author: {
@@ -68,6 +71,7 @@ function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
       };
     });
   };
+  
   
   const fetchMembers = async () => {
     try {
@@ -219,91 +223,65 @@ const addGraduates = async () => {
   }
 };
 
-  const handleLike = async (postId) => {
-    const postIndex = posts.findIndex((p) => p.id === postId);
-    if (postIndex === -1) return;
+const handleLike = async (postId) => {
+  const postIndex = posts.findIndex((p) => p.id === postId);
+  if (postIndex === -1) return;
 
-    try {
-      const post = posts[postIndex];
+  const post = posts[postIndex];
+  const action = post.liked ? "delete" : "post";
 
-      try {
-        await API.delete(`/posts/${postId}/like`);
-        const updatedPosts = [...posts];
-        updatedPosts[postIndex] = {
-          ...post,
-          likes: Math.max(0, post.likes - 1),
-          liked: false,
-        };
-        setPosts(updatedPosts);
-        console.log("Successfully unliked post:", postId);
-      } catch (unlikeError) {
-        if (unlikeError.response?.status === 404) {
-          await API.post(`/posts/${postId}/like`);
-          const updatedPosts = [...posts];
-          updatedPosts[postIndex] = {
-            ...post,
-            likes: post.likes + 1,
-            liked: true,
-          };
-          setPosts(updatedPosts);
-          console.log(" Successfully liked post:", postId);
-        } else {
-          throw unlikeError;
-        }
-      }
-    } catch (err) {
-      console.error(" Error in handleLike:", err.response?.data || err);
-      
-      await fetchPosts();
+  try {
+    if (action === "post") {
+      await API.post(`/posts/${postId}/like`);
+      posts[postIndex] = { ...post, liked: true, likes: post.likes + 1 };
+    } else {
+      await API.delete(`/posts/${postId}/like`);
+      posts[postIndex] = { ...post, liked: false, likes: Math.max(0, post.likes - 1) };
     }
-  };
+    setPosts([...posts]);
+  } catch (err) {
+    console.error("Error toggling like:", err.response?.data || err);
+  }
+};
+
   const handleCommentChange = (postId, value) => {
     setCommentInputs({ ...commentInputs, [postId]: value });
   };
 
-const handleCommentSubmit = async (postId) => {
-  const comment = commentInputs[postId];
-  if (!comment?.trim()) return;
-
-  try {
-    const res = await API.post(`/posts/${postId}/comments`, {
-      content: comment,
-    });
-
-    if (res.data.comment) {
-      const newComment = {
-        id: res.data.comment.comment_id,
-        userName: res.data.comment.author?.["full-name"] || "You",
-        content: res.data.comment.content,
-        avatar: res.data.comment.author?.image || PROFILE,
-        date: new Date().toLocaleString(),
-      };
-
-      setPosts((prev) =>
-        prev.map((post) =>
-          post.id === postId
-            ? { ...post, comments: [...post.comments, newComment] }
-            : post
-        )
-      );
+  const handleCommentSubmit = async (postId) => {
+    const comment = commentInputs[postId];
+    if (!comment?.trim()) return;
+  
+    try {
+      const res = await API.post(`/posts/${postId}/comments`, { content: comment });
+  
+      if (res.data.comment) {
+        const isAdminOrStaff = ["admin", "staff"].includes(res.data.comment.author?.["user-type"]);
+        const newComment = {
+          id: res.data.comment.comment_id,
+          userName: isAdminOrStaff ? "Alumni Portal – Helwan University" : res.data.comment.author?.["full-name"] || "You",
+          content: res.data.comment.content,
+          avatar: isAdminOrStaff ? AdminPostsImg : res.data.comment.author?.image || PROFILE,
+          date: new Date().toLocaleString(),
+        };
+  
+        setPosts((prev) =>
+          prev.map((post) =>
+            post.id === postId
+              ? { ...post, comments: [...post.comments, newComment] }
+              : post
+          )
+        );
+      }
+  
+      setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
+      Swal.fire({ icon: "success", title: "Comment added!", showConfirmButton: false, timer: 1200 });
+    } catch (err) {
+      console.error("Error submitting comment:", err.response?.data || err);
+      Swal.fire({ icon: "error", title: "Failed to add comment", text: err.response?.data?.message || "" });
     }
-
-    setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
-    Swal.fire({
-      icon: "success",
-      title: "Comment added!",
-      showConfirmButton: false,
-      timer: 1200,
-    });
-  } catch (err) {
-    console.error("🔴 Error submitting comment:", err.response?.data || err);
-    Swal.fire({
-      icon: "error",
-      title: "Failed to add comment",
-      text: err.response?.data?.message || "",
-    });
-  }
-};
+  };
+  
 
 
 
@@ -516,14 +494,11 @@ const handlePostSubmit = async (formData, postId = null) => {
                   className={post.liked ? "liked" : ""}
                   onClick={() => handleLike(post.id)}
                 >
-                  <Heart 
-                    size={16} 
-                    fill={post.liked ? "currentColor" : "none"} 
-                  />{" "}
-                  {post.likes} {t("Likes")}
+                  <Heart size={16} color={post.liked ? "#e0245e" : "#555"} />{" "}
+                  {post.likes} 
                 </button>
                 <button onClick={() => toggleComments(post.id)}>
-  <MessageCircle size={16} /> {post.comments?.length || 0} {t("Comments")}
+  <MessageCircle size={16} /> {post.comments?.length || 0} 
 </button>
 
               </div>
