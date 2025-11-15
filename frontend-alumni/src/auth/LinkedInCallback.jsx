@@ -19,22 +19,44 @@ const LinkedInCallback = ({ setUser }) => {
 
     const loginWithLinkedIn = async () => {
       try {
-        const res = await API.post("/auth/linkedin/callback", { code, state });
+        // ✅ استخدم GET بدلاً من POST مع query parameters
+        const res = await API.get("/auth/linkedin/callback", {
+          params: { code, state },
+          withCredentials: true, // مهم للـ session cookies
+        });
+
+        // ✅ تحقق من structure الرد
+        if (res.data?.status !== 'success') {
+          throw new Error(res.data?.message || 'Authentication failed');
+        }
 
         const { user, token } = res.data?.data || {};
 
         if (!user || !token) {
-          throw new Error("Invalid response from server");
+          console.error('Response data:', res.data);
+          throw new Error("Invalid response from server - missing user or token");
         }
 
+        // ✅ استخدم 'user-type' بدلاً من userType
+        const userType = user['user-type'] || user.userType; // دعم كلا الشكلين
+        
         // خزّن الـ token والمستخدم
         localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        setUser(user);
+        localStorage.setItem("user", JSON.stringify({
+          id: user.id,
+          email: user.email,
+          userType: userType, // احفظه كـ userType للفرونت
+          firstName: user['first-name'],
+          lastName: user['last-name'],
+        }));
+        setUser({
+          id: user.id,
+          email: user.email,
+          userType: userType,
+        });
 
         // تحويل المستخدم حسب النوع
-        const type = user.userType?.toLowerCase();
-        switch (type) {
+        switch (userType?.toLowerCase()) {
           case "admin":
             navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
             break;
@@ -45,13 +67,14 @@ const LinkedInCallback = ({ setUser }) => {
             navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
             break;
           default:
-            // لو النوع غير معروف، ارجعيه للصفحة الرئيسية بدل login
+            console.warn("Unknown user type:", userType);
             navigate("/helwan-alumni-portal", { replace: true });
             break;
         }
       } catch (err) {
         console.error("Error during LinkedIn login:", err);
-        alert("LinkedIn login failed. Please try again.");
+        console.error("Error response:", err.response?.data);
+        alert(err.response?.data?.message || err.message || "LinkedIn login failed. Please try again.");
         navigate("/helwan-alumni-portal", { replace: true });
       }
     };

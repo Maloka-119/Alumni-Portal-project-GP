@@ -60,7 +60,12 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     const { code, state } = req.query;
     
     // Verify state parameter for security
-    if (state !== req.session.linkedinState) {
+    if (!req.session || state !== req.session.linkedinState) {
+      console.error('State mismatch:', { 
+        received: state, 
+        expected: req.session?.linkedinState,
+        hasSession: !!req.session 
+      });
       return res.status(400).json({
         status: 'error',
         message: 'Invalid state parameter'
@@ -75,27 +80,54 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     }
     
     // Exchange authorization code for access token
-    const tokenResponse = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', {
-      grant_type: 'authorization_code',
-      code: code,
-      client_id: LINKEDIN_CLIENT_ID,
-      client_secret: LINKEDIN_CLIENT_SECRET,
-      redirect_uri: LINKEDIN_REDIRECT_URI
-    }, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
+    let tokenResponse;
+    try {
+      tokenResponse = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', {
+        grant_type: 'authorization_code',
+        code: code,
+        client_id: LINKEDIN_CLIENT_ID,
+        client_secret: LINKEDIN_CLIENT_SECRET,
+        redirect_uri: LINKEDIN_REDIRECT_URI
+      }, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
+    } catch (tokenError) {
+      console.error('LinkedIn token exchange error:', tokenError.response?.data || tokenError.message);
+      return res.status(400).json({
+        status: 'error',
+        message: 'Failed to exchange authorization code for access token',
+        error: tokenError.response?.data?.error_description || tokenError.message
+      });
+    }
     
     const { access_token, expires_in } = tokenResponse.data;
     
+    if (!access_token) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'No access token received from LinkedIn'
+      });
+    }
+    
     // Fetch user profile using OpenID Connect userinfo endpoint
     // This endpoint returns profile information when using openid, profile, email scopes
-    const userInfoResponse = await axios.get('https://api.linkedin.com/v2/userinfo', {
-      headers: {
-        'Authorization': `Bearer ${access_token}`
-      }
-    });
+    let userInfoResponse;
+    try {
+      userInfoResponse = await axios.get('https://api.linkedin.com/v2/userinfo', {
+        headers: {
+          'Authorization': `Bearer ${access_token}`
+        }
+      });
+    } catch (userInfoError) {
+      console.error('LinkedIn userinfo error:', userInfoError.response?.data || userInfoError.message);
+      return res.status(400).json({
+        status: 'error',
+        message: 'Failed to fetch user profile from LinkedIn',
+        error: userInfoError.response?.data?.error_description || userInfoError.message
+      });
+    }
     
     const userInfo = userInfoResponse.data;
     
@@ -189,6 +221,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     // Clear the state from session
     delete req.session.linkedinState;
     
+    // ✅ تأكد من أن الرد يحتوي على كل البيانات المطلوبة
     res.status(200).json({
       status: 'success',
       message: 'LinkedIn authentication successful',
@@ -198,7 +231,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
           'first-name': user['first-name'],
           'last-name': user['last-name'],
           email: user.email,
-          'user-type': user['user-type'],
+          'user-type': user['user-type'], // ✅ مهم جداً
           profile_picture_url: user.profile_picture_url,
           linkedin_profile_url: user.linkedin_profile_url,
           linkedin_headline: user.linkedin_headline,
@@ -206,12 +239,13 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
           auth_provider: user.auth_provider,
           is_linkedin_verified: user.is_linkedin_verified
         },
-        token
+        token // ✅ مهم جداً
       }
     });
     
   } catch (error) {
     console.error('LinkedIn callback error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       status: 'error',
       message: 'LinkedIn authentication failed',
