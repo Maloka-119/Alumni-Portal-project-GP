@@ -112,7 +112,7 @@ likedByCurrentUser: p.like_id ? true : false,
           formData.posts.map((post) => (
             <PostCard
               key={post.id}
-              post={post}  // مررنا الـ object بعد الفورمات
+              post={post}  
             />
           ))
         ) : (
