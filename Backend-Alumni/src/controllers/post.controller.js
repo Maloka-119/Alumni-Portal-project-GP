@@ -2004,21 +2004,29 @@ const deletePost = async (req, res) => {
       });
     }
 
-    // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بحذف بوستات الأدمن ⬇️⬇️⬇️
+    // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بحذف بوستات الأدمن والادمن بحذف بوستات الاستاف ⬇️⬇️⬇️
     const isOwnPost = post["author-id"] === userId;
     const isGraduatePost = postAuthor["user-type"] === "graduate";
     const isStaffDeletingAdminPost =
       req.user["user-type"] === "staff" && postAuthor["user-type"] === "admin";
+    const isAdminDeletingStaffPost =
+      req.user["user-type"] === "admin" && postAuthor["user-type"] === "staff"; // ⬅️ التعديل الجديد
 
     // Allow deleting if:
     // 1) It's the user's own post, OR
     // 2) It's a graduate's post, OR
-    // 3) Staff is deleting an admin's post
-    if (!isOwnPost && !isGraduatePost && !isStaffDeletingAdminPost) {
+    // 3) Staff is deleting an admin's post, OR
+    // 4) Admin is deleting a staff's post
+    if (
+      !isOwnPost &&
+      !isGraduatePost &&
+      !isStaffDeletingAdminPost &&
+      !isAdminDeletingStaffPost
+    ) {
       return res.status(403).json({
         status: "error",
         message:
-          "You can only delete your own posts, posts created by graduates, or admin posts (for staff)",
+          "You can only delete your own posts, posts created by graduates, or admin posts (for staff), or staff posts (for admin)",
       });
     }
 
