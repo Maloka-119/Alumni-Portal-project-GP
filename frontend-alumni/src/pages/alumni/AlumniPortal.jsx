@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, User, FileText, Bell, IdCard,
@@ -73,6 +73,11 @@ const Dashboard = ({ setUser }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
+
+  // ====== تحديث اتجاه الصفحة تلقائي حسب اللغة ======
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
+  }, [i18n.language]);
 
   const handleSidebarAction = async (action) => {
     if(action === "toggleDark") setDarkMode(!darkMode);

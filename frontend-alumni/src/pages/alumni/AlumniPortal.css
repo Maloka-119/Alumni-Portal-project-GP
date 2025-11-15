@@ -36,8 +36,8 @@ html, body {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
+  inset-inline-start: 0;
+  inset-inline-end: 0;
   z-index: 1000;
   transition: background 0.3s;
 }
@@ -122,8 +122,7 @@ html, body {
   display: flex;
   flex: 1;
   overflow: hidden;
-  margin-top: 63px; 
-  
+  margin-top: 63px;
 }
 
 /* Sidebar */
@@ -133,6 +132,13 @@ html, body {
   padding: 16px;
   overflow-y: auto;
   transition: all 0.3s ease;
+
+  /* أهم تعديل */
+  position: fixed;
+  top: 63px;
+  inset-inline-start: 0;     /* بدل left */
+  height: calc(100vh - 63px);
+  z-index: 1000;
 }
 
 .dark .alumni-sidebar {
@@ -145,6 +151,7 @@ html, body {
   overflow: hidden;
 }
 
+/* Sidebar items */
 .alumni-sidebar-section h3 {
   font-size: 14px;
   margin-bottom: 8px;
@@ -186,7 +193,15 @@ html, body {
   justify-content: center;
   align-items: flex-start;
   text-align: center;
-  margin-top: 0;
+
+  /* أهم تعديل */
+  margin-inline-start: 240px;   /* بدل margin-left */
+  transition: margin-inline-start 0.3s ease;
+}
+
+/* لما السايدبار يتقفل */
+.alumni-sidebar.closed + .alumni-main-content {
+  margin-inline-start: 0;
 }
 
 .alumni-card {
@@ -204,9 +219,32 @@ html, body {
   color: #f3f4f6;
 }
 
-/* Footer */
-footer {
-  flex-shrink: 0;
+/* Responsive */
+@media (max-width: 768px) {
+  .alumni-sidebar {
+    position: fixed;
+    top: 64px;
+    inset-inline-start: 0;
+    height: calc(100% - 64px);
+    z-index: 1000;
+  }
+
+  .alumni-sidebar.closed {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+  }
+
+  html[dir="rtl"] .alumni-sidebar.closed {
+    transform: translateX(100%);
+  }
+
+  .alumni-sidebar.open {
+    transform: translateX(0);
+  }
+
+  .alumni-main-content {
+    margin-inline-start: 0;
+  }
 }
 
 /* Scrollbar */
@@ -226,57 +264,11 @@ footer {
   background: #4b5563;
 }
 
-.alumni-sidebar::-webkit-scrollbar-track,
-.alumni-main-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-  .alumni-sidebar {
-    position: absolute;
-    top: 64px;
-    left: 0;
-    height: calc(100% - 64px);
-    z-index: 1000;
-  }
-
-  .alumni-sidebar.closed {
-    transform: translateX(-100%);
-    transition: transform 0.3s ease;
-  }
-
-  .alumni-sidebar.open {
-    transform: translateX(0);
-  }
-}
-
-/* Scrollbar لكل الصفحة */
-body::-webkit-scrollbar {
-  width: 10px;
-}
-
-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-body::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 5px;
-  border: 2px solid transparent;
-  background-clip: content-box;
-}
-
-/* Dark Mode scrollbar */
-.dark body::-webkit-scrollbar-thumb {
-  background-color: #4b5563;
-}
-
 /* Contact button */
 .contact-btn {
   position: absolute;
   bottom: 24px;
-  right: 24px;
+  inset-inline-end: 24px;
   background: #1e3a8a;
   color: white;
   border: none;
@@ -291,17 +283,17 @@ body::-webkit-scrollbar-thumb {
 }
 
 .dark .contact-btn {
-  background-color: #1f2937; 
+  background-color: #1f2937;
   color: #f3f4f6;
 }
 
 .dark .contact-btn:hover {
-  background-color: #374151; 
+  background-color: #374151;
 }
 
 /* Submenu */
 .alumni-sidebar-submenu {
-  margin-left: 20px;
+  margin-inline-start: 20px;
   list-style: none;
   padding: 5px 0;
 }
@@ -323,7 +315,6 @@ body::-webkit-scrollbar-thumb {
   color: #1e3a8a;
 }
 
-/* Dark Mode for submenu */
 .dark .alumni-sidebar-subitem:hover {
   background: #4b5563;
   color: #f3f4f6;
@@ -332,41 +323,4 @@ body::-webkit-scrollbar-thumb {
 .dark .alumni-sidebar-subitem.active {
   background: #374151;
   color: #f9fafb;
-}
-.alumni-sidebar {
-  position: fixed;
-  top: 63px; /* ارتفاع الهيدر */
-  left: 0;
-  height: calc(100vh - 63px);
-  overflow-y: auto;
-  z-index: 1000;
-}
-
-/* علشان المحتوى يتحرك مع فتح السايدبار */
-.alumni-main-content {
-  flex: 1;
-  padding: 24px;
-  overflow-y: auto;
-  margin-left: 240px;
-  transition: margin-left 0.3s ease;
-}
-
-/* لما السايدبار يتقفل يرجع المحتوى يمين */
-.alumni-sidebar.closed + .alumni-main-content {
-  margin-left: 0;
-}
-
-/* للموبايل */
-@media (max-width: 768px) {
-  .alumni-sidebar {
-    position: fixed;
-    top: 64px;
-    left: 0;
-    height: calc(100% - 64px);
-    z-index: 1000;
-  }
-
-  .alumni-main-content {
-    margin-left: 0;
-  }
 }

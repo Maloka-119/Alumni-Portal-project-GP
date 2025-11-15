@@ -6,12 +6,17 @@ import { UserMinus , Eye} from "lucide-react";
 import Swal from "sweetalert2";
 import { useTranslation } from "react-i18next";
 import communityCover from "./defualtCommunityCover.jpg"
+
 function MyGroups() {
   const [groups, setGroups] = useState([]);
-  const { t } = useTranslation();
-
+  const { t, i18n } = useTranslation();
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showInviteOnly, setShowInviteOnly] = useState(false);
+
+  // ====== تحديث اتجاه الصفحة تلقائي حسب اللغة ======
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
+  }, [i18n.language]);
 
   useEffect(() => {
     const fetchGroups = async () => {
@@ -62,77 +67,64 @@ function MyGroups() {
       <GroupDetails
         group={selectedGroup}
         goBack={() => setSelectedGroup(null)}
-        showInviteOnly={showInviteOnly} // لتفعيل Invite section مباشرة
+        showInviteOnly={showInviteOnly} 
       />
     );
   }
 
-return (
-  <div className="mycommunity-panel">
-    <h2 className="uni-header">My Communities</h2>
+  return (
+    <div className="mycommunity-panel">
+      <h2 className="uni-header">My Communities</h2>
 
-    {groups.length === 0 ? (
-      <p className="mycommunity-empty">No Communities found</p>
-    ) : (
-      <div className="mycommunity-grid">
-        {groups.map((g) => (
-          <div key={g.id} className="mycommunity-card">
-            {/* صورة الجروب + البادجات + الاسم */}
-            <div className="mycommunity-image-wrapper">
-<img
-  src={g.groupImage || communityCover}
-  alt={g.groupName}
-  className="mycommunity-image"
-/>
-
-
-              
-
-              {/* عدد الأعضاء */}
-              <span className="mycommunity-members">
-                {g.membersCount} Members
-              </span>
-
-              {/* Invite Badge */}
-              <div
-                className="myinvite-badge"
-                onClick={() => openGroupDetails(g, true)}
-              >
-                +
-                <span className="tooltip-text">
-                  Invite people to this community
+      {groups.length === 0 ? (
+        <p className="mycommunity-empty">No Communities found</p>
+      ) : (
+        <div className="mycommunity-grid">
+          {groups.map((g) => (
+            <div key={g.id} className="mycommunity-card">
+              <div className="mycommunity-image-wrapper">
+                <img
+                  src={g.groupImage || communityCover}
+                  alt={g.groupName}
+                  className="mycommunity-image"
+                />
+                <span className="mycommunity-members">
+                  {g.membersCount} Members
                 </span>
+                <div
+                  className="myinvite-badge"
+                  onClick={() => openGroupDetails(g, true)}
+                >
+                  +
+                  <span className="tooltip-text">
+                    Invite people to this community
+                  </span>
+                </div>
+              </div>
+              <div className="mycommunity-footer">
+                <div className="mycommunity-name">
+                  {g.groupName}
+                </div>
+                <div className="mycoomunity-butn">
+                  <button className="viewgr-btn" onClick={() => openGroupDetails(g)}>
+                    <Eye size={16} style={{ marginRight: "5px" }} />
+                    View Details
+                  </button>
+                  <div
+                    className="leave-icon"
+                    onClick={() => handleLeave(g.id)}
+                    title="Leave group"
+                  >
+                    <UserMinus size={18} />
+                  </div>
+                </div>
               </div>
             </div>
-
-            {/* أزرار View و Leave */}
-            <div className="mycommunity-footer">
-  <div className="mycommunity-name">
-    {g.groupName}
-  </div>
-  <div className="mycoomunity-butn">
-  <button className="viewgr-btn" onClick={() => openGroupDetails(g)}>
-  <Eye size={16} style={{ marginRight: "5px" }} />
-  View Details
-</button>
-  <div
-  className="leave-icon"
-  onClick={() => handleLeave(g.id)}
-  title="Leave group"
->
-  <UserMinus size={18} />
-</div>
-</div>
-  
-</div>
-
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-);
-
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export default MyGroups;

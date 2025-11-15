@@ -3,12 +3,11 @@
   margin: 0 auto;
   padding: 20px 20px 40px 20px;
   min-height: 100vh;
+  direction: inherit; /* يستخدم اتجاه الصفحة تلقائيًا */
 }
 
 .uni-header {
-  
   font-weight: 600;
-  
   margin-bottom: 30px;
   text-align: center;
 }
@@ -19,6 +18,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 25px;
 }
+
 /* Card */
 .explorer-card {
   background: white;
@@ -44,13 +44,10 @@
   margin: 8px 12px; 
 }
 
-
 .explorer-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px rgba(0,0,0,0.15);
 }
-
-
 
 .explorer-card-image img {
   width: 100%;
@@ -68,7 +65,7 @@
 .explorer-badge {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 10px; /* في RTL يتحول تلقائيًا */
   background-color: #2563eb;
   color: white;
   padding: 5px 12px;
@@ -77,6 +74,12 @@
   font-weight: 500;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   z-index: 2;
+}
+
+/* دعم RTL للبادج */
+[dir="rtl"] .explorer-badge {
+  right: auto;
+  left: 10px;
 }
 
 /* Group name */
@@ -95,13 +98,13 @@
   text-align: center;
 }
 
-
 /* Actions */
 .explorer-actions {
   display: flex;
   gap: 10px;
   padding: 10px 15px 15px 15px;
   flex-shrink: 0;
+  direction: inherit;
 }
 
 .explorer-btn {
@@ -194,6 +197,7 @@
   color: #aaa;
   font-size: 14px;
 }
+
 /* Dark Mode for Search Input */
 .dark .explorer-search {
   background-color: #1f2937;
