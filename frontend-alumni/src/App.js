@@ -1,5 +1,5 @@
 import "./App.css";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { DarkModeProvider } from "./pages/alumni/DarkModeContext";
 import Register from "./auth/Register";
@@ -10,8 +10,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import LandingPage from "./pages/Landing/LandingPage";
 import LinkedInCallback from "./auth/LinkedInCallback";
-import { Navigate } from "react-router-dom";
-import Loading from "../src/components/Loading";
+import LinkedInSignUp from "./auth/LinkedInSignUp";
+import Loading from "./components/Loading";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -26,7 +26,7 @@ function App() {
   }, []);
 
   if (loading) {
-    return <Loading message="Loading communities..." />;
+    return <Loading message="Loading..." />;
   }
 
   return (
@@ -34,18 +34,16 @@ function App() {
       <Router>
         <DarkModeProvider>
           <Routes>
-            {/* إعادة توجيه الصفحة الرئيسية للـ Landing */}
+            {/* إعادة توجيه الصفحة الرئيسية */}
             <Route path="/" element={<Navigate to="/helwan-alumni-portal" />} />
+
             {/* صفحات عامة */}
             <Route path="/helwan-alumni-portal" element={<LandingPage />} />
-            <Route
-              path="/helwan-alumni-portal/register"
-              element={<Register />}
-            />
-            <Route
-              path="/helwan-alumni-portal/login"
-              element={<Login setUser={setUser} />}
-            />
+            <Route path="/helwan-alumni-portal/register" element={<Register />} />
+            <Route path="/helwan-alumni-portal/login" element={<Login setUser={setUser} />} />
+
+            {/* LinkedIn routes */}
+            <Route path="/helwan-alumni-portal/auth/linkedin/signup" element={<LinkedInSignUp />} />
             <Route
               path="/helwan-alumni-portal/auth/linkedin/callback"
               element={<LinkedInCallback setUser={setUser} />}
@@ -78,6 +76,9 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* أي مسار غير معروف يعيد للتسجيل/اللاندنج */}
+            <Route path="*" element={<Navigate to="/helwan-alumni-portal" />} />
           </Routes>
         </DarkModeProvider>
       </Router>

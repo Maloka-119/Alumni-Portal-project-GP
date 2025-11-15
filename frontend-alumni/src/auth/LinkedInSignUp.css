@@ -1,0 +1,32 @@
+.linkedin-button {
+    color: white;
+    background-color: #1e3a8a;
+    padding: 0.75rem 3rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+    margin-left: 420px;
+    margin-top: 20px;
+  }
+  
+  .linkedin-button:hover {
+    background-color: #1e40af; /* اللون الجديد للـ hover */
+  }
+  
+  .linkedin-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+  
+  .linkedin-button img {
+    width: 20px;
+    height: 20px;
+  }
+  

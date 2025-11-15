@@ -429,7 +429,7 @@ export default function ChatBox({
                         : m.localStatus === "delivered"
                         ? "✓✓"
                         : m.localStatus === "seen"
-                        ? "seen"
+                        ?  t("Seen") 
                         : ""}
                     </span>
                   )}

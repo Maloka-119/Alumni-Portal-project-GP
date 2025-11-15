@@ -737,7 +737,13 @@ const getGraduateProfileForUser = async (req, res) => {
           model: Like,
           attributes: ["like_id", "user-id"],
           include: [
-            { model: User, attributes: ["id", "first-name", "last-name"] },
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name"],
+              include: [
+                { model: Graduate, attributes: ["profile-picture-url"] },
+              ],
+            },
           ],
         },
         {
@@ -780,14 +786,19 @@ const getGraduateProfileForUser = async (req, res) => {
           ? post.PostImages.map((img) => img["image-url"])
           : [],
         likes: post.Likes
-          ? post.Likes.filter((like) => like.User).map((like) => ({
+          ? post.Likes.map((like) => ({
               like_id: like.like_id,
-              user: {
-                id: like.User.id,
-                "full-name": `${like.User["first-name"] || ""} ${
-                  like.User["last-name"] || ""
-                }`.trim(),
-              },
+              user: like.User
+                ? {
+                    id: like.User.id,
+                    "full-name": `${like.User["first-name"] || ""} ${
+                      like.User["last-name"] || ""
+                    }`.trim(),
+                    image: like.User.Graduate
+                      ? like.User.Graduate["profile-picture-url"]
+                      : null,
+                  }
+                : null,
             }))
           : [],
         likes_count: post.Likes ? post.Likes.length : 0,
@@ -817,31 +828,6 @@ const getGraduateProfileForUser = async (req, res) => {
     const userData = graduate.User;
     const isOwner = +currentUserId === +graduate.graduate_id;
 
-    if (isOwner) {
-      return res.json({
-        status: HttpStatusHelper.SUCCESS,
-        message: "Graduate Profile fetched successfully",
-        data: {
-          profilePicture: graduate["profile-picture-url"],
-          fullName: `${userData["first-name"]} ${userData["last-name"]}`,
-          faculty: graduate.faculty,
-          graduationYear: graduate["graduation-year"],
-          bio: graduate.bio,
-          skills: graduate.skills,
-          currentJob: graduate["current-job"],
-          showCV: graduate.show_cv,
-          showLinkedIn: graduate.show_linkedin,
-          showPhone: userData.show_phone,
-          CV: graduate["cv-url"],
-          linkedlnLink: graduate["linkedln-link"],
-          phoneNumber: userData.phoneNumber,
-          friendshipStatus: "owner",
-          posts: postsData,
-        },
-      });
-    }
-
-    // بيانات الآخرين حسب الخصوصية
     const profile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${userData["first-name"]} ${userData["last-name"]}`,
@@ -853,7 +839,7 @@ const getGraduateProfileForUser = async (req, res) => {
       showCV: graduate.show_cv,
       showLinkedIn: graduate.show_linkedin,
       showPhone: userData.show_phone,
-      friendshipStatus,
+      friendshipStatus: isOwner ? "owner" : friendshipStatus,
       posts: postsData,
     };
 
@@ -868,6 +854,7 @@ const getGraduateProfileForUser = async (req, res) => {
       data: profile,
     });
   } catch (err) {
+    console.error("❌ خطأ في الفانكشن:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: err.message,
