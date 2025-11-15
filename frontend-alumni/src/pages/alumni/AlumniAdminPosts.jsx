@@ -46,9 +46,9 @@ const AlumniAdminPosts = () => {
   comments:
   p.comments?.map(c => {
     const isUniversityComment =
-      c.author?.["full-name"]?.includes("Alumni Portal") ||
-      c.author?.type === "admin" ||
-      c.author?.type === "staff";
+      c.author?.["full-name"]?.includes("Alumni Portal - Helwan University",) ||
+      c.author?.["user-type"] === "admin" ||
+      c.author?.["user-type"] === "staff";
 
     return {
       comment_id: c.comment_id,
