@@ -6,7 +6,7 @@ const asyncHandler = require('express-async-handler');
 // LinkedIn OAuth 2.0 configuration
 const LINKEDIN_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
-const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || 'http://localhost:3000/auth/linkedin/callback';
+const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || 'http://localhost:3000/helwan-alumni-portal/auth/linkedin/callback';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 /**
