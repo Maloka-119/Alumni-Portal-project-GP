@@ -39,7 +39,7 @@ const UsersPostsPage = ({ currentUser }) => {
           content: comment.content,
           avatar: isAdminOrStaff ? AdminPostsImg : comment.author?.image || PROFILE,
           date: comment["created-at"],
-          author: comment.author, // حفظ المرجع الأصلي للوظائف الأخرى
+          author: comment.author,
         };
       });
   
@@ -51,7 +51,11 @@ const UsersPostsPage = ({ currentUser }) => {
         comments: formattedComments,
         images: post.images || [],
         showComments: false,
-        author: post.author,
+        author: {
+          ...post.author,
+          name: post.author?.name || post.author?.["full-name"],
+          photo: post.author?.photo || post.author?.image || PROFILE
+        },
         isHidden: post["is-hidden"] === true,
         inLanding: post["in-landing"] === true
       };
@@ -155,28 +159,43 @@ const UsersPostsPage = ({ currentUser }) => {
   
     try {
       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
+  
       if (res.data.comment) {
-        const isAdminOrStaff = ["admin", "staff"].includes(res.data.comment.author?.["user-type"]);
         const newComment = {
           id: res.data.comment.comment_id,
-          userName: isAdminOrStaff ? "Alumni Portal – Helwan University" : res.data.comment.author?.["full-name"] || "You",
+          userName: "Alumni Portal – Helwan University",
           content: res.data.comment.content,
-          avatar: isAdminOrStaff ? AdminPostsImg : res.data.comment.author?.image || PROFILE,
+          avatar: AdminPostsImg,
           date: new Date().toLocaleString(),
-          author: res.data.comment.author,
+          author: {
+            ...res.data.comment.author,
+            "user-type": "admin" 
+          },
         };
+  
         setPosts(prev =>
           prev.map(post =>
-            post.id === postId ? { ...post, comments: [...post.comments, newComment] } : post
+            post.id === postId
+              ? { ...post, comments: [...post.comments, newComment], showComments: true }
+              : post
           )
         );
       }
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
     } catch (err) {
       console.error("Error submitting comment:", err.response?.data || err);
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to add comment", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to add comment",
+        toast: true,
+        position: "top-end",
+        timer: 1800,
+        showConfirmButton: false
+      });
     }
   };
+  
   
 
   if (loading) return <p>{t("loadingPosts")}</p>;
@@ -191,7 +210,7 @@ const UsersPostsPage = ({ currentUser }) => {
 
   const handleDeleteComment = async (postId, commentId) => {
     try {
-      await API.delete(`/posts/${postId}/comments/${commentId}`);
+      await API.delete(`/posts/comments/${commentId}`);
   
       setPosts(prev =>
         prev.map(p =>
@@ -216,7 +235,7 @@ const UsersPostsPage = ({ currentUser }) => {
     if (!newContent || newContent === comment.content) return;
   
     try {
-      await API.put(`/posts/${postId}/comments/${comment.id}`, {
+      await API.put(`/posts/comments/${comment.id}`, {
         content: newContent
       });
   
@@ -363,7 +382,7 @@ const UsersPostsPage = ({ currentUser }) => {
             })}
           </div>
 
-          {(comment.author?.type === "admin" || comment.author?.type === "staff") && (
+          {(comment.author?.["user-type"] === "admin" || comment.author?.["user-type"] === "staff") && (
             <div className="comment-actions">
               <button onClick={() => handleEditComment(post.id, comment)}>
                 <Edit size={14} />
