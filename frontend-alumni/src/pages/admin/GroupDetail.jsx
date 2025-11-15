@@ -93,14 +93,14 @@ function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      console.log("Fetching posts for group:", group.id); 
+      // console.log("Fetching posts for group:", group.id); 
   
       const res = await API.get(`/posts/group/${group.id}`);
-      console.log("API response:", res.data); 
+      // console.log("API response:", res.data); 
   
       if (res.data.status === "success") {
         const formatted = formatPosts(res.data.data);
-        console.log("Formatted posts:", formatted);
+        // console.log("Formatted posts:", formatted);
         setPosts(formatted);
       } else {
         console.warn("No posts found or API status not success");

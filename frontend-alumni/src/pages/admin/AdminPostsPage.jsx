@@ -51,21 +51,18 @@ const AdminPostsPage = ({ currentUser }) => {
     const filtered = (data || []).filter(p => !p['group-id']);
     
     return filtered.map(post => {
-      const formattedComments = (post.comments || []).map((comment) => ({
-        id: comment.comment_id,
-        userName:
-        comment.author?.userType === "admin" || comment.author?.userType === "staff"
-          ? "Alumni Portal – Helwan University"
-          : comment.author?.["full-name"] || "Anonymous",
-      avatar:
-        comment.author?.userType === "admin" || comment.author?.userType === "staff"
-          ? AdminPostsImg
-          : comment.author?.image || AdminPostsImg,
-      
-        content: comment.content,
-        date: comment["created-at"],
-      }));
-
+      const formattedComments = (post.comments || []).map((comment) => {
+        const isAdminOrStaff = ["admin", "staff"].includes(comment.author?.userType);
+        return {
+          id: comment.comment_id,
+          userName: isAdminOrStaff ? "Alumni Portal – Helwan University" : comment.author?.["full-name"] || "Anonymous",
+          avatar: isAdminOrStaff ? AdminPostsImg : comment.author?.image || AdminPostsImg,
+          content: comment.content,
+          date: comment["created-at"],
+          author: comment.author,
+        };
+      });
+  
       return {
         id: post.post_id,
         content: post.content,
@@ -82,13 +79,14 @@ const AdminPostsPage = ({ currentUser }) => {
       };
     });
   };
+  
 
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await API.get('/posts/admin');
-      // console.log(" API response:", response.data);
+      console.log(" API response:", response.data);
       if (response.data.status === "success") setPosts(formatPosts(response.data.data));
       else setPosts([]);
     } catch (err) {
@@ -190,25 +188,29 @@ const AdminPostsPage = ({ currentUser }) => {
     if (!postPerm.canAdd) return;
     const comment = commentInputs[postId];
     if (!comment?.trim()) return;
-
+  
     try {
       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
       if (res.data.comment) {
+        const isAdminOrStaff = ["admin", "staff"].includes(res.data.comment.author?.userType);
         const newComment = {
           id: res.data.comment.comment_id,
-          userName: res.data.comment.author?.["full-name"] || "Admin",
+          userName: isAdminOrStaff ? "Alumni Portal – Helwan University" : res.data.comment.author?.["full-name"] || "Admin",
+          avatar: isAdminOrStaff ? AdminPostsImg : res.data.comment.author?.image || AdminPostsImg,
           content: res.data.comment.content,
-          avatar: res.data.comment.author?.image || AdminPostsImg,
-          date: new Date().toLocaleString()
+          date: new Date().toLocaleString(),
+          author: res.data.comment.author,
         };
-        setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p));
+        setPosts(prev =>
+          prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p)
+        );
       }
       setCommentInputs(prev => ({ ...prev, [postId]: "" }));
     } catch (err) {
       console.error("Error submitting comment:", err.response?.data || err);
     }
   };
-
+  
   const handleLandingToggle = async (postId, currentValue) => {
     if (!postPerm.canAdd) return;
     setPosts(prev => prev.map(p => p.id === postId ? { ...p, inLanding: !currentValue } : p));
@@ -240,7 +242,7 @@ const AdminPostsPage = ({ currentUser }) => {
     if (!newContent || newContent === comment.content) return;
   
     try {
-      await API.put(`/posts/${postId}/comments/${comment.id}`, {
+      await API.put(`/posts/comments/${comment.id}`, {
         content: newContent
       });
   
@@ -263,7 +265,7 @@ const AdminPostsPage = ({ currentUser }) => {
 
   const handleDeleteComment = async (postId, commentId) => {
     try {
-      await API.delete(`/posts/${postId}/comments/${commentId}`);
+      await API.delete(`/posts/comments/${commentId}`);
   
       setPosts(prev =>
         prev.map(p =>
@@ -427,17 +429,17 @@ const AdminPostsPage = ({ currentUser }) => {
                       {new Date(comment.date).toLocaleString()}
                     </div>
                   
-                    {(comment.author?.type === "admin" || comment.author?.type === "staff") && (
-                      <div className="comment-actions">
-                        <button onClick={() => handleEditComment(post.id, comment)}>
-                          <Edit size={14} />
-                        </button>
-                  
-                        <button onClick={() => handleDeleteComment(post.id, comment.id)}>
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    )}
+                    {(["admin","staff"].includes(comment.author?.userType)) && (
+  <div className="comment-actions">
+    <button onClick={() => handleEditComment(post.id, comment)}>
+      <Edit size={14} />
+    </button>
+    <button onClick={() => handleDeleteComment(post.id, comment.id)}>
+      <Trash2 size={14} />
+    </button>
+  </div>
+)}
+
                   </div>
                   
                   ))}
