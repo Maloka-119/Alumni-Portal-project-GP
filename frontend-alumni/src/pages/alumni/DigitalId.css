@@ -48,13 +48,26 @@
   background-color: #37568d;
   color: white;
   text-align: center;
-  padding: 6px 0;   /* بدل 12px أو 20px */
+  padding: 6px 0;
   font-size: 18px;
   font-weight: bold;
-  height: 40px;     /* ارتفاع ثابت وصغير */
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.uni-logo {
+  height: 28px;
+  position: absolute;
+  left: 10px; /* يثبت اللوجو على أقصى اليسار */
+  object-fit: contain;
+}
+
+.header-text {
+  flex: 1;
+  text-align: center; 
 }
 
 .p {
