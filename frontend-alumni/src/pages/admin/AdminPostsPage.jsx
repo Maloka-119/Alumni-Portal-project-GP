@@ -242,7 +242,7 @@ const AdminPostsPage = ({ currentUser }) => {
     if (!newContent || newContent === comment.content) return;
   
     try {
-      await API.put(`/posts/${postId}/comments/${comment.id}`, {
+      await API.put(`/posts/comments/${comment.id}`, {
         content: newContent
       });
   
@@ -265,7 +265,7 @@ const AdminPostsPage = ({ currentUser }) => {
 
   const handleDeleteComment = async (postId, commentId) => {
     try {
-      await API.delete(`/posts/${postId}/comments/${commentId}`);
+      await API.delete(`/posts/comments/${commentId}`);
   
       setPosts(prev =>
         prev.map(p =>
