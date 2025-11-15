@@ -282,7 +282,7 @@ import ReactDOM from "react-dom";
 import AdminPostsImg from '../pages/alumni/AdminPosts.jpeg';
 
 const PostCard = ({ post, onEdit, onDelete }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [liked, setLiked] = useState(post.isLikedByYou || false);
   const [likesCount, setLikesCount] = useState(post.likesCount || 0);
@@ -301,13 +301,9 @@ const PostCard = ({ post, onEdit, onDelete }) => {
     setLikesCount(prev => prev + (newLiked ? 1 : -1));
     try {
       if (newLiked) {
-        await API.post(`/posts/${post.id}/like`, {}, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await API.post(`/posts/${post.id}/like`, {}, { headers: { Authorization: `Bearer ${token}` } });
       } else {
-        await API.delete(`/posts/${post.id}/like`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        await API.delete(`/posts/${post.id}/like`, { headers: { Authorization: `Bearer ${token}` } });
       }
     } catch (err) {
       setLiked(liked);
@@ -318,11 +314,7 @@ const PostCard = ({ post, onEdit, onDelete }) => {
   const handleAddComment = async () => {
     if (!token || !newComment.trim()) return;
     try {
-      const res = await API.post(
-        `/posts/${post.id}/comments`,
-        { content: newComment },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      const res = await API.post(`/posts/${post.id}/comments`, { content: newComment }, { headers: { Authorization: `Bearer ${token}` } });
       setComments((prev) => [...prev, res.data.comment]);
       setNewComment("");
     } catch (err) {
@@ -332,16 +324,9 @@ const PostCard = ({ post, onEdit, onDelete }) => {
 
   const handleDeleteComment = async (commentId) => {
     try {
-      await API.delete(`/posts/comments/${commentId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await API.delete(`/posts/comments/${commentId}`, { headers: { Authorization: `Bearer ${token}` } });
       setComments((prev) => prev.filter((c) => c.comment_id !== commentId));
-      Swal.fire({
-        icon: "success",
-        title: t("Comment deleted successfully"),
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      Swal.fire({ icon: "success", title: t("commentDeleted"), timer: 1500, showConfirmButton: false });
     } catch (err) {
       console.error("Error deleting comment:", err.response?.data || err);
     }
@@ -350,36 +335,32 @@ const PostCard = ({ post, onEdit, onDelete }) => {
   const handleEditComment = async (commentId, oldContent) => {
     const { value: newContent } = await Swal.fire({
       input: "textarea",
-      inputLabel: t("Edit your comment"),
+      inputLabel: t("editComment"),
       inputValue: oldContent,
       showCancelButton: true,
-      confirmButtonText: t("Save"),
+      confirmButtonText: t("save"),
+      cancelButtonText: t("cancel"),
     });
-
     if (!newContent) return;
 
     try {
-      const res = await API.put(
-        `/posts/comments/${commentId}`,
-        { content: newContent },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      setComments((prev) =>
-        prev.map((c) =>
-          c.comment_id === commentId ? { ...c, content: res.data.comment.content } : c
-        )
-      );
-
-      Swal.fire({
-        icon: "success",
-        title: t("Comment updated successfully"),
-        timer: 1500,
-        showConfirmButton: false,
-      });
+      const res = await API.put(`/posts/comments/${commentId}`, { content: newContent }, { headers: { Authorization: `Bearer ${token}` } });
+      setComments((prev) => prev.map((c) => c.comment_id === commentId ? { ...c, content: res.data.comment.content } : c));
+      Swal.fire({ icon: "success", title: t("commentUpdated"), timer: 1500, showConfirmButton: false });
     } catch (err) {
       console.error("Error editing comment:", err.response?.data || err);
     }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleString(i18n.language === 'ar' ? 'ar-EG' : 'en-US', {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true
+    });
   };
 
   return (
@@ -390,49 +371,19 @@ const PostCard = ({ post, onEdit, onDelete }) => {
           <div className="post-author-info">
             <strong>{post.author?.name || t("unknown")}</strong>
             <div className="uni-post-date">
-              {new Date(post.date).toLocaleString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-                hour12: true,
-              })}{" "}
-              - {post.category}
-              {post["group-id"] ? " - In Group" : ""}
+              {formatDate(post.date)} - {t(post.category)}
+              {post["group-id"] ? ` - ${t("inGroup")}` : ""}
             </div>
           </div>
         </div>
 
-        {/* أزرار Edit و Delete تظهر فقط لو البوست مش Hidden */}
         {!post["is-hidden"] && (onEdit || onDelete) && (
           <div className="post-actions-dropdown">
-            <button className="more-btn" onClick={() => setOpenDropdown(!openDropdown)}>
-              •••
-            </button>
-
+            <button className="more-btn" onClick={() => setOpenDropdown(!openDropdown)}>•••</button>
             {openDropdown && (
               <div className="dropdown-menu">
-                {onEdit && (
-                  <button
-                    onClick={() => {
-                      onEdit(post);
-                      setOpenDropdown(false);
-                    }}
-                  >
-                    <Edit size={16} /> {t("edit")}
-                  </button>
-                )}
-                {onDelete && (
-                  <button
-                    onClick={() => {
-                      onDelete();
-                      setOpenDropdown(false);
-                    }}
-                  >
-                    <Trash2 size={16} /> {t("delete")}
-                  </button>
-                )}
+                {onEdit && <button onClick={() => { onEdit(post); setOpenDropdown(false); }}><Edit size={16} /> {t("edit")}</button>}
+                {onDelete && <button onClick={() => { onDelete(); setOpenDropdown(false); }}><Trash2 size={16} /> {t("delete")}</button>}
               </div>
             )}
           </div>
@@ -441,99 +392,54 @@ const PostCard = ({ post, onEdit, onDelete }) => {
 
       <div className="uni-post-body">
         <p>{post.content}</p>
-        {post.images && post.images.length > 0 && (
+        {post.images?.length > 0 && (
           <div className="uni-post-images">
             {post.images.map((imgUrl, index) => (
-              <img
-                key={index}
-                src={imgUrl}
-                alt={`post-${index}`}
-                className="uni-post-preview"
-                onClick={() => setZoomedImage(imgUrl)}
-              />
+              <img key={index} src={imgUrl} alt={`post-${index}`} className="uni-post-preview" onClick={() => setZoomedImage(imgUrl)} />
             ))}
           </div>
         )}
       </div>
 
       <div className="uni-post-actions">
-  <button
-    className={liked ? "uni-liked" : ""}
-    onClick={() => !post["is-hidden"] && handleLikeToggle()}
-  >
-    <Heart size={16} color={liked ? "red" : "grey"} fill={liked ? "red" : "none"} />
-    {likesCount}
-  </button>
-  <button onClick={() => setShowComments(!showComments)}>
-    <MessageCircle size={16} /> {comments.length}
-  </button>
-</div>
+        <button className={liked ? "uni-liked" : ""} onClick={() => !post["is-hidden"] && handleLikeToggle()}>
+          <Heart size={16} color={liked ? "red" : "grey"} fill={liked ? "red" : "none"} /> {likesCount}
+        </button>
+        <button onClick={() => setShowComments(!showComments)}><MessageCircle size={16} /> {comments.length}</button>
+      </div>
 
-{showComments && (
-  <div className="uni-comments-section">
-    <div className="comments-list">
-      {comments.map((c) => (
-        <div key={c.comment_id} className="comment-item">
-          <div className="comment-left">
-          <img
-  src={
-    c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff"
-      ? AdminPostsImg
-      : c.author?.image || PROFILE
-  }
-  alt="avatar"
-  className="comment-avatar"
-/>
+      {showComments && (
+        <div className="uni-comments-section">
+          <div className="comments-list">
+            {comments.map((c) => (
+              <div key={c.comment_id} className="comment-item">
+                <div className="comment-left">
+                  <img src={c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff" ? AdminPostsImg : c.author?.image || PROFILE} alt="avatar" className="comment-avatar" />
+                  <div className="comment-text">
+                    <strong>{c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff" ? t("alumniPortalName") : c.author?.["full-name"]}</strong>
+                    <p>{c.content}</p>
+                  </div>
+                  <div className="comment-date">{formatDate(c["created-at"])}</div>
+                </div>
 
-            <div className="comment-text">
-            <strong>
-  {c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff"
-    ? "Alumni Portal - Helwan University"
-    : c.author?.["full-name"]}
-</strong>
-
-              <p>{c.content}</p>
-            </div>
-            <div className="comment-date">
-              {new Date(c["created-at"]).toLocaleString([], {
-                year: "numeric",
-                month: "2-digit",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </div>
+                {currentUser && c.author?.id === currentUser.id && !post["is-hidden"] && (
+                  <div className="comment-actions">
+                    <button onClick={() => handleEditComment(c.comment_id, c.content)}><Edit size={14} /></button>
+                    <button onClick={() => handleDeleteComment(c.comment_id)}><Trash2 size={14} /></button>
+                  </div>
+                )}
+              </div>
+            ))}
           </div>
 
-          {currentUser && c.author?.id === currentUser.id && !post["is-hidden"] && (
-            <div className="comment-actions">
-              <button onClick={() => handleEditComment(c.comment_id, c.content)}>
-                <Edit size={14} />
-              </button>
-              <button onClick={() => handleDeleteComment(c.comment_id)}>
-                <Trash2 size={14} />
-              </button>
+          {!post["is-hidden"] && (
+            <div className="comment-input">
+              <input placeholder={t("writeComment")} value={newComment} onChange={(e) => setNewComment(e.target.value)} />
+              <button onClick={handleAddComment}><Send size={16} /></button>
             </div>
           )}
         </div>
-      ))}
-    </div>
-
-    {!post["is-hidden"] && (
-      <div className="comment-input">
-        <input
-          placeholder={t("writeComment")}
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
-        />
-        <button onClick={handleAddComment}>
-          <Send size={16} />
-        </button>
-      </div>
-    )}
-  </div>
-)}
-
+      )}
 
       {zoomedImage &&
         ReactDOM.createPortal(

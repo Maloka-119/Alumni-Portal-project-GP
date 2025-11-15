@@ -316,7 +316,7 @@ const PostsAlumni = () => {
       .map(post => ({
         ...post,
         id: post.id || post.post_id,
-        date: new Date(post['created-at']).toLocaleString('en-US', {
+        date: new Date(post['created-at']).toLocaleString('ar-EG', {
           month: 'short',
           day: 'numeric',
           year: 'numeric',
@@ -324,16 +324,27 @@ const PostsAlumni = () => {
           minute: '2-digit',
           hour12: true
         }),
-        comments: post.comments || [],
+        comments: post.comments?.map(c => ({
+          ...c,
+          date: new Date(c['created-at']).toLocaleString('ar-EG', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          })
+        })) || [],
         likes: post.likes_count || 0,
         images: post.images || [],
         author: {
           id: post.author?.id,
-          name: post.author?.['full-name'] || 'Unknown',
+          name: post.author?.['full-name'] || t('unknown'),
           photo: post.author?.image || PROFILE
         }
       }));
   };
+  
 
   const fetchPosts = async () => {
     if (!token) return;
@@ -365,7 +376,7 @@ const PostsAlumni = () => {
     }
   
     if (!newPost.content && newPostImages.length === 0 && existingImages.length === 0) {
-      setError("Post cannot be empty");
+      setError(t('emptyPostError'));
       return;
     }
   
@@ -391,13 +402,15 @@ const PostsAlumni = () => {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
   
-        setSuccessMsg("Post updated");
+        setSuccessMsg(t("postUpdated")); // بدل "Post updated"
+
         await fetchPosts();
       } else {
         await API.post('/posts/create-post', formData, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
-        setSuccessMsg("Post created");
+        setSuccessMsg(t("postCreated")); // بدل "Post created"
+
         await fetchPosts();
       }
     } catch (err) {
@@ -498,31 +511,24 @@ const PostsAlumni = () => {
               <div className="uni-category-select">
                 <label>{t('category')}:</label>
                 <select
-                  value={newPost.category}
-                  onChange={(e) => {
-                    const selected = e.target.value;
-                    setNewPost({ ...newPost, category: selected });
-                    if (selected === "Success story") {
-                      Swal.fire({
-                        icon: "info",
-                        title: "Public Post",
-                        html: `
-                          <div style="text-align: left;">
-                            <p>Success story posts can be featured publicly on the main page.</p>
-                            <p>يمكن للبوستات التي تصنف كقصة نجاح أن تظهر بشكل عام على الصفحة الرئيسية.</p>
-                          </div>
-                        `,
-                        confirmButtonText: "OK",
-                        background: "#fefefe",
-                        color: "#333",
-                      });
-                    }
-                  }}
-                >
-                  <option value="General">General</option>
-                  <option value="Internship">Internship</option>
-                  <option value="Success story">Success story</option>
-                </select>
+  value={newPost.category}
+  onChange={(e) => {
+    const selected = e.target.value;
+    setNewPost({ ...newPost, category: selected });
+    if (selected === "Success story") {
+      Swal.fire({
+        icon: "info",
+        title: t('successStoryInfoTitle'),
+        html: t('successStoryInfoText'),
+        confirmButtonText: "OK"
+      });
+    }
+  }}
+>
+  <option value="General">{t('categoryGeneral')}</option>
+  <option value="Internship">{t('categoryInternship')}</option>
+  <option value="Success story">{t('categorySuccessStory')}</option>
+</select>
               </div>
 
               <div className="uni-optional-icons">

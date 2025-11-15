@@ -77,7 +77,8 @@ function MyGroups() {
       <h2 className="uni-header">My Communities</h2>
 
       {groups.length === 0 ? (
-        <p className="mycommunity-empty">No Communities found</p>
+       <p className="mycommunity-empty">{t("No Communities found")}</p>
+
       ) : (
         <div className="mycommunity-grid">
           {groups.map((g) => (
@@ -89,7 +90,7 @@ function MyGroups() {
                   className="mycommunity-image"
                 />
                 <span className="mycommunity-members">
-                  {g.membersCount} Members
+                  {g.membersCount}{t("Members")}
                 </span>
                 <div
                   className="myinvite-badge"
@@ -97,7 +98,7 @@ function MyGroups() {
                 >
                   +
                   <span className="tooltip-text">
-                    Invite people to this community
+                  {t("Invite people to this community")}
                   </span>
                 </div>
               </div>
@@ -108,7 +109,7 @@ function MyGroups() {
                 <div className="mycoomunity-butn">
                   <button className="viewgr-btn" onClick={() => openGroupDetails(g)}>
                     <Eye size={16} style={{ marginRight: "5px" }} />
-                    View Details
+                    {t("View Details")}
                   </button>
                   <div
                     className="leave-icon"
