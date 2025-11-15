@@ -224,10 +224,14 @@ useEffect(() => {
       case "friends":
         return (
           <>
-            <h2 className="Title">
-              {t("friendsList")}{" "}
-              <span className="req-count">({friends.length})</span>
-            </h2>
+<h2
+  className="Title"
+  style={{ textAlign: i18n.language === "ar" ? "right" : "left" }}
+>
+  {t("friendsList")}{" "}
+  <span className="req-count">({friends.length})</span>
+</h2>
+
             {loadingFriends ? (
               <p>{t("loadingFriends")}</p>
             ) : friends.length === 0 ? (
@@ -258,12 +262,12 @@ useEffect(() => {
                       <MessageCircle size={18} />
                     </button>
                     <button
-                      className="Removebutton"
-                      onClick={() => unfriendFriend(f.friendId)}
-                    >
-                     {t("unfriend")}
+  className="Removebutton"
+  onClick={() => unfriendFriend(f.friendId)}
+>
+  {t("unfriend")}
+</button>
 
-                    </button>
                   </div>
                 </div>
               ))
@@ -274,10 +278,13 @@ useEffect(() => {
       case "requests":
         return (
           <>
-            <h2 className="Title">
-              {t("friendRequests")}{" "}
-              <span className="req-count">({friendRequests.length})</span>
-            </h2>
+<h2
+  className="Title"
+  style={{ textAlign: i18n.language === "ar" ? "right" : "left" }}
+>
+  {t("friendRequests")}{" "}
+  <span className="req-count">({friendRequests.length})</span>
+</h2>
             {loadingRequests ? (
               <p>{t("loadingRequests")}</p>
             ) : friendRequests.length === 0 ? (
@@ -324,7 +331,13 @@ useEffect(() => {
       case "suggestions":
         return (
           <>
-            <h2 className="Title">{t("suggestedFriends")}</h2>
+           <h2
+  className="Title"
+  style={{ textAlign: i18n.language === "ar" ? "right" : "left" }}
+>
+  {t("suggestedFriends")}
+</h2>
+
             <div className="friendship-search">
               <input
                 type="text"
