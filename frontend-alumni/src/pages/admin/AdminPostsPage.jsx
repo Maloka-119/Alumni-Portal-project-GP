@@ -69,8 +69,8 @@ const AdminPostsPage = ({ currentUser }) => {
       return {
         id: post.post_id,
         content: post.content,
-        likes: post.likes_count || 0,
-        liked: false, 
+        likes: post.likesCount || 0,  
+        liked: post.isLikedByYou, 
         comments: formattedComments,
         date: post['created-at'],
         authorName: "Alumni Portal – Helwan University",
@@ -88,6 +88,7 @@ const AdminPostsPage = ({ currentUser }) => {
     setError(null);
     try {
       const response = await API.get('/posts/admin');
+      console.log(" API response:", response.data);
       if (response.data.status === "success") setPosts(formatPosts(response.data.data));
       else setPosts([]);
     } catch (err) {
@@ -154,30 +155,26 @@ const AdminPostsPage = ({ currentUser }) => {
   };
 
   const handleLike = async (postId) => {
-    if (!postPerm.canView) return;
     const postIndex = posts.findIndex(p => p.id === postId);
     if (postIndex === -1) return;
-
+  
+    const post = posts[postIndex];
+    const updatedPosts = [...posts];
+  
     try {
-      const post = posts[postIndex];
-      try {
+      if (post.liked) {
         await API.delete(`/posts/${postId}/like`);
-        const updatedPosts = [...posts];
         updatedPosts[postIndex] = { ...post, likes: Math.max(0, post.likes - 1), liked: false };
-        setPosts(updatedPosts);
-      } catch (unlikeError) {
-        if (unlikeError.response?.status === 404) {
-          await API.post(`/posts/${postId}/like`);
-          const updatedPosts = [...posts];
-          updatedPosts[postIndex] = { ...post, likes: post.likes + 1, liked: true };
-          setPosts(updatedPosts);
-        } else { throw unlikeError; }
+      } else {
+        await API.post(`/posts/${postId}/like`);
+        updatedPosts[postIndex] = { ...post, likes: post.likes + 1, liked: true };
       }
+      setPosts(updatedPosts);
     } catch (err) {
-      console.error("Error in handleLike:", err.response?.data || err);
-      await fetchPosts();
+      console.error("Error liking/unliking post:", err.response?.data || err);
     }
   };
+  
 
   const toggleComments = (postId) => {
     if (!postPerm.canView) return;
@@ -369,7 +366,8 @@ const AdminPostsPage = ({ currentUser }) => {
 
               <div className="post-actions">
                 <button className={post.liked ? "liked" : ""} onClick={() => handleLike(post.id)}>
-                  <Heart size={16} /> {post.likes}
+                <Heart size={16} color={post.liked ? "#e0245e" : "#555"} />
+                {post.likes}
                 </button>
                 <button onClick={() => toggleComments(post.id)}>
                   <MessageCircle size={16} /> {post.comments?.length || 0}
