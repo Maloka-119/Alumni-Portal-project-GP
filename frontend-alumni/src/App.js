@@ -9,6 +9,7 @@ import AlumniPortal from "./pages/alumni/AlumniPortal";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import StaffDashboard from "./pages/staff/StaffDashboard";
 import LandingPage from "./pages/Landing/LandingPage";
+import LinkedInCallback from "./auth/LinkedInCallback";
 import { Navigate } from "react-router-dom";
 import Loading from "../src/components/Loading";
 
@@ -44,6 +45,10 @@ function App() {
             <Route
               path="/helwan-alumni-portal/login"
               element={<Login setUser={setUser} />}
+            />
+            <Route
+              path="/helwan-alumni-portal/auth/linkedin/callback"
+              element={<LinkedInCallback setUser={setUser} />}
             />
 
             {/* صفحات محمية */}
