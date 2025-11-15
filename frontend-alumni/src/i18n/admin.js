@@ -43,7 +43,7 @@ const admin = {
       "status": "Status",
       "alumniId": "Alumni ID",
       "actions": "Actions",
-      "userManagement": "User Management",
+      "othersManagement": "Others Management",
       "alumni": "Alumni",
       "staff": "Staff",
       "staff": "Staff",
@@ -215,7 +215,7 @@ const admin = {
         "alumniId": "معرف الخريج",
         "actions": "الإجراءات",
         
-        "userManagement": "إدارة المستخدمين",
+        "othersManagement": "إدارة الطلبات الأخرى",
       "alumni": "الخريجين",
       "staff": "الموظفين",
       "staff": "الموظفين",
