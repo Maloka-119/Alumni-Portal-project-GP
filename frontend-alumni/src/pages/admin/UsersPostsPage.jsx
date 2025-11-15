@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import './AdminPostsPage.css';
-import { Heart, MessageCircle, Share2, EyeOff, Eye, Send, CheckCircle, Circle } from 'lucide-react';
+import { Heart, MessageCircle, Share2, EyeOff, Eye, Send, CheckCircle, Circle,Edit , Trash2 } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api';
 import PROFILE from './PROFILE.jpeg';
@@ -180,6 +180,55 @@ const UsersPostsPage = ({ currentUser }) => {
     return true;
   }).filter(p => typeFilter === 'All' ? true : p.category === typeFilter);
 
+  const handleDeleteComment = async (postId, commentId) => {
+    try {
+      await API.delete(`/posts/${postId}/comments/${commentId}`);
+  
+      setPosts(prev =>
+        prev.map(p =>
+          p.id === postId
+            ? { ...p, comments: p.comments.filter(c => c.id !== commentId) }
+            : p
+        )
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const handleEditComment = async (postId, comment) => {
+    const { value: newContent } = await Swal.fire({
+      input: "textarea",
+      inputValue: comment.content,
+      showCancelButton: true,
+      confirmButtonText: "Save"
+    });
+  
+    if (!newContent || newContent === comment.content) return;
+  
+    try {
+      await API.put(`/posts/${postId}/comments/${comment.id}`, {
+        content: newContent
+      });
+  
+      setPosts(prev =>
+        prev.map(p =>
+          p.id === postId
+            ? {
+                ...p,
+                comments: p.comments.map(c =>
+                  c.id === comment.id ? { ...c, content: newContent } : c
+                )
+              }
+            : p
+        )
+      );
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  
+
   return (
     <div className="feed-container">
       <h2 className="page-title">{t("userPosts")}</h2>
@@ -277,25 +326,66 @@ const UsersPostsPage = ({ currentUser }) => {
               </div>
             )}
 
-            {post.showComments && (
-              <div className="comments-section">
-                <div className="existing-comments">
-                  {post.comments.map((comment) => (
-                    <div key={comment.id} className="comment-item">
-                      <img src={comment.avatar || PROFILE} alt={comment.userName} className="comment-avatar" />
-                      <div className="comment-text"><strong>{comment.userName}</strong>: {comment.content}</div>
-                      <div className="comment-date">{new Date(comment.date).toLocaleString([], { year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" })}</div>
-                    </div>
-                  ))}
-                </div>
-                {postPerm.canAdd && (
-                  <div className="comment-input">
-                    <input type="text" placeholder="Write a comment..." value={commentInputs[post.id] || ""} onChange={(e) => handleCommentChange(post.id, e.target.value)} />
-                    <button onClick={() => handleCommentSubmit(post.id)}><Send size={16} /></button>
-                  </div>
-                )}
-              </div>
-            )}
+{post.showComments && (
+  <div className="comments-section">
+
+    <div className="existing-comments">
+      {post.comments.map((comment) => (
+        <div key={comment.id} className="comment-item">
+
+          <img
+            src={comment.avatar || PROFILE}
+            alt={comment.userName}
+            className="comment-avatar"
+          />
+
+          <div className="comment-text">
+            <strong>{comment.userName}</strong>: {comment.content}
+          </div>
+
+          <div className="comment-date">
+            {new Date(comment.date).toLocaleString([], {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+              hour: "2-digit",
+              minute: "2-digit"
+            })}
+          </div>
+
+          {(comment.author?.type === "admin" || comment.author?.type === "staff") && (
+            <div className="comment-actions">
+              <button onClick={() => handleEditComment(post.id, comment)}>
+                <Edit size={14} />
+              </button>
+
+              <button onClick={() => handleDeleteComment(post.id, comment.id)}>
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
+
+        </div>
+      ))}
+    </div>
+
+    {postPerm.canAdd && (
+      <div className="comment-input">
+        <input
+          type="text"
+          placeholder="Write a comment..."
+          value={commentInputs[post.id] || ""}
+          onChange={(e) => handleCommentChange(post.id, e.target.value)}
+        />
+        <button onClick={() => handleCommentSubmit(post.id)}>
+          <Send size={16} />
+        </button>
+      </div>
+    )}
+
+  </div>
+)}
+
           </div>
         ))}
       </div>

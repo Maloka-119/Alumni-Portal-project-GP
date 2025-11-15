@@ -842,21 +842,20 @@
 /* ====== Post Images Styling ====== */
 .uni-post-images {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* كل صورة تشغل نفس المساحة */
+  gap: 8px;
   margin-top: 10px;
   margin-bottom: 10px;
 }
 
 .uni-post-preview {
-  width: 85%;       
-  aspect-ratio: 1/1; 
-  object-fit: cover; 
-  cursor: pointer;
+  width: 100%;
+  aspect-ratio: 1/1; /* يجعل الصورة مربعة */
+  object-fit: cover; /* يملأ الصورة بدون تشويه */
   border-radius: 8px;
-  transition: transform 0.2s ease;
-  max-height: 350px;
+  max-height: 350px; /* تحدد أقصى ارتفاع للصورة */
 }
+
 
 .uni-post-preview:hover {
   transform: scale(1.03);
@@ -931,10 +930,25 @@
   height: 45px;
   border-radius: 50%;
   object-fit: cover;
-  margin-right: 0; 
-  flex-shrink: 0; 
-  
+  flex-shrink: 0;
+  transition: width 0.2s, height 0.2s;
 }
+
+/* للشاشات الصغيرة */
+@media (max-width: 768px) {
+  .profile-pic {
+    width: 35px;
+    height: 35px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-pic {
+    width: 30px;
+    height: 30px;
+  }
+}
+
 .post-author-info {
   display: flex;
   flex-direction: column;
@@ -1080,4 +1094,37 @@
 .comment-text p {
   margin: 0;
   padding: 0;
+}
+
+
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.image-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f5f5f5;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.delete-icon {
+  cursor: pointer;
+  color: red;
+}
+
+.delete-icon:hover {
+  color: darkred;
+}
+
+.file-name {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }

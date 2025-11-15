@@ -383,6 +383,7 @@ const handlePostSubmit = async (formData, postId = null) => {
       )
     );
   };
+ 
   
 
   return (
@@ -429,10 +430,11 @@ const handlePostSubmit = async (formData, postId = null) => {
       <div ref={formRef}>
   {(perms.postPerms.canAdd || editingPost) && (
     <CreateBar
-      types={types}
-      editingPost={editingPost}
-      onSubmit={handlePostSubmit}
-      canAdd={perms.postPerms.canAdd}
+    types={types}
+    editingPost={editingPost}
+    onSubmit={handlePostSubmit}
+    canAdd={perms.postPerms.canAdd}
+    onCancelEdit={() => setEditingPost(null)}
     />
   )}
 </div>
