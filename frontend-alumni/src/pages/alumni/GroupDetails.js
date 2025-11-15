@@ -15,7 +15,7 @@ function GroupDetails({ group, goBack }) {
   const [showForm, setShowForm] = useState(false);
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [newPost, setNewPost] = useState({ content: '', image: null, link: '', category: 'General' });
-  // جلب المستخدم الحالي
+
 const storedUser = localStorage.getItem("user");
 const currentUserId = storedUser ? JSON.parse(storedUser).id : null;
 
@@ -68,7 +68,7 @@ const filteredGraduates = availableGraduates.filter((f) =>
     try {
       const res = await API.get(`/groups/${group.id}/available-graduates`);
       console.log(res.data);
-      setAvailableGraduates(res.data || []); // تأكد من الحقل الصحيح
+      setAvailableGraduates(res.data || []); 
     } catch (err) {
       console.error(err);
     }
@@ -76,16 +76,20 @@ const filteredGraduates = availableGraduates.filter((f) =>
 
   const fetchInvitations = async () => {
     try {
-      const [sentRes, receivedRes] = await Promise.all([
-        API.get("/invitations/sent"),
-        API.get("/invitations/received"),
-      ]);
-      const allInvites = [...(sentRes.data.data || []), ...(receivedRes.data.data || [])];
+      const receivedRes = await API.get("/invitations/received");
+  
+      const receivedInvites = (receivedRes?.data?.data) || [];
+
+      const allInvites = [...receivedInvites]; 
+  
       setInvitations(allInvites.filter(inv => inv.group_id === group.id));
+  
     } catch (err) {
-      console.error(err);
+      console.error("خطأ أثناء جلب الدعوات:", err);
+      setInvitations([]); 
     }
   };
+  
 
   const handleToggleInvitation = async (friend) => {
     try {
@@ -131,7 +135,7 @@ const filteredGraduates = availableGraduates.filter((f) =>
       content: post.content,
       image: post.images?.[0] || null,
       category: post.category,
-      postId: post.id || post.post_id, // مهم للتحديث
+      postId: post.id || post.post_id, 
     });
   };
   
