@@ -15,15 +15,34 @@ const getGraduatesForGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
     const currentUserId = req.user.id;
+    const currentUserType = req.user["user-type"];
 
-    // تحقق إن المستخدم Admin أو Staff فقط
-    const isAdminOrStaff =
-      req.user["user-type"] === "admin" || req.user["user-type"] === "staff";
+    // تحقق إن المستخدم Admin أو Staff أو Graduate
+    const isAllowedUser =
+      currentUserType === "admin" ||
+      currentUserType === "staff" ||
+      currentUserType === "graduate";
 
-    if (!isAdminOrStaff) {
+    if (!isAllowedUser) {
       return res.status(403).json({
-        error: "Only admins and staff can invite others to groups.",
+        error: "Only admins, staff and graduates can invite others to groups.",
       });
+    }
+
+    // لو المستخدم خريج، تحقق إنه عضو في الجروب
+    if (currentUserType === "graduate") {
+      const isGroupMember = await GroupMember.findOne({
+        where: {
+          "group-id": groupId,
+          "user-id": currentUserId,
+        },
+      });
+
+      if (!isGroupMember) {
+        return res.status(403).json({
+          error: "You must be a member of the group to invite others.",
+        });
+      }
     }
 
     // IDs الأعضاء الموجودين في الجروب
@@ -55,6 +74,7 @@ const getGraduatesForGroup = async (req, res) => {
         "user-type": "graduate",
         id: {
           [Op.notIn]: memberIds,
+          [Op.ne]: currentUserId, // منع المستخدم من دعوة نفسه
         },
       },
       include: [
@@ -62,7 +82,7 @@ const getGraduatesForGroup = async (req, res) => {
           model: Graduate,
           where: { "status-to-login": "accepted" },
           attributes: ["profile-picture-url", "faculty", "graduation-year"],
-          required: true, // مهم: يحذف اللي مش عنده سجل أو حالة غير accepted
+          required: true,
         },
       ],
       attributes: ["id", "first-name", "last-name"],
