@@ -779,55 +779,84 @@ const getGraduateProfileForUser = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    // 🎯 تحضير بيانات البوستات
-    const postsData = posts.map((post) => ({
-      post_id: post.post_id,
-      category: post.category,
-      content: post.content,
-      "created-at": post["created-at"],
-      author: {
-        id: post.User.id,
-        "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-        image: post.User.Graduate
-          ? post.User.Graduate["profile-picture-url"]
-          : null,
-      },
-      images: post.PostImages
-        ? post.PostImages.map((img) => img["image-url"])
-        : [],
+    // 🎯 تحضير بيانات البوستات مع null checks
+    const postsData = posts
+      .map((post) => {
+        // التحقق من وجود post.User
+        const authorUser = post.User;
+        if (!authorUser) {
+          console.warn(`Post ${post.post_id} has no associated User`);
+          return null; // أو تعيد بيانات افتراضية
+        }
 
-      // اللايكات
-      likes: post.Likes
-        ? post.Likes.map((like) => ({
-            like_id: like.like_id,
-            user: {
-              id: like.User.id,
-              "full-name": `${like.User["first-name"]} ${like.User["last-name"]}`,
-            },
-          }))
-        : [],
+        // التحقق من وجود اللايكات
+        const safeLikes = (post.Likes || [])
+          .map((like) => {
+            if (!like || !like.User) {
+              console.warn(`Like ${like?.like_id} has no associated User`);
+              return null;
+            }
+            return {
+              like_id: like.like_id,
+              user: {
+                id: like.User.id,
+                "full-name": `${like.User["first-name"]} ${like.User["last-name"]}`,
+              },
+            };
+          })
+          .filter((like) => like !== null);
 
-      likes_count: post.Likes ? post.Likes.length : 0,
+        // التحقق من وجود الكومنتات
+        const safeComments = (post.Comments || [])
+          .map((comment) => {
+            if (!comment || !comment.User) {
+              console.warn(
+                `Comment ${comment?.comment_id} has no associated User`
+              );
+              return null;
+            }
+            return {
+              comment_id: comment.comment_id,
+              content: comment.content,
+              "created-at": comment["created-at"],
+              edited: comment.edited,
+              author: {
+                id: comment.User.id,
+                "full-name": `${comment.User["first-name"]} ${comment.User["last-name"]}`,
+                image: comment.User.Graduate
+                  ? comment.User.Graduate["profile-picture-url"]
+                  : null,
+              },
+            };
+          })
+          .filter((comment) => comment !== null);
 
-      // الكومنتات
-      comments: post.Comments
-        ? post.Comments.map((comment) => ({
-            comment_id: comment.comment_id,
-            content: comment.content,
-            "created-at": comment["created-at"],
-            edited: comment.edited,
-            author: {
-              id: comment.User.id,
-              "full-name": `${comment.User["first-name"]} ${comment.User["last-name"]}`,
-              image: comment.User.Graduate
-                ? comment.User.Graduate["profile-picture-url"]
-                : null,
-            },
-          }))
-        : [],
+        return {
+          post_id: post.post_id,
+          category: post.category,
+          content: post.content,
+          "created-at": post["created-at"],
+          author: {
+            id: authorUser.id,
+            "full-name": `${authorUser["first-name"]} ${authorUser["last-name"]}`,
+            image: authorUser.Graduate
+              ? authorUser.Graduate["profile-picture-url"]
+              : null,
+          },
+          images: post.PostImages
+            ? post.PostImages.map((img) => img["image-url"])
+            : [],
 
-      comments_count: post.Comments ? post.Comments.length : 0,
-    }));
+          // اللايكات الآمنة
+          likes: safeLikes,
+          likes_count: safeLikes.length,
+
+          // الكومنتات الآمنة
+          comments: safeComments,
+          comments_count: safeComments.length,
+        };
+      })
+      .filter((post) => post !== null); // إزالة أي بوستات null
 
     // ✅ تحديد البيانات اللي هتظهر حسب العلاقة والخصوصية
     const userData = graduate.User;
@@ -891,17 +920,14 @@ const getGraduateProfileForUser = async (req, res) => {
     };
 
     // 📊 إضافة البيانات الخاصة إذا مسموح بيها - للكل مش بس الأصدقاء
-    // الـ CV - يظهر إذا show_cv = true لأي شخص
     if (graduate.show_cv && graduate["cv-url"]) {
       graduateProfile.CV = graduate["cv-url"];
     }
 
-    // الـ LinkedIn - يظهر إذا show_linkedin = true لأي شخص
     if (graduate.show_linkedin && graduate["linkedln-link"]) {
       graduateProfile.linkedlnLink = graduate["linkedln-link"];
     }
 
-    // رقم التليفون - يظهر إذا show_phone = true لأي شخص
     if (userData.show_phone && userData.phoneNumber) {
       graduateProfile.phoneNumber = userData.phoneNumber;
     }
