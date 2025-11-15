@@ -9,23 +9,22 @@ import { useTranslation } from "react-i18next";
 function Accountgrad() {
   const { t } = useTranslation();
   const { userId } = useParams();
-  console.log("userId from useParams:", userId);
+  // console.log("userId from useParams:", userId);
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
-      console.log("userId from useParams:", userId);
+      // console.log("userId from useParams:", userId);
 
       try {
         const res = await API.get(`/graduates/profile/${userId}`);
-        console.log("Profile API response:", res.data);
+        // console.log("Profile API response:", res.data);
 
         if (res.data.status === "success" && res.data.data) {
           const data = res.data.data;
 
-          // تنسيق المهارات
           const skills = Array.isArray(data.skills) ? data.skills : JSON.parse(data.skills || "[]");
 
           const formattedPosts = (data.posts || []).map((p) => ({
@@ -39,7 +38,10 @@ function Accountgrad() {
               name: p.author?.["full-name"] || "Unknown",
               photo: p.author?.image || PROFILE,
             },
-            likes: Number(p.likes_count) || 0,
+            likes: Array.isArray(p.likes) ? p.likes : [],
+likesCount: Number(p.likes_count) || 0,
+likedByCurrentUser: p.like_id ? true : false,
+
             comments: Array.isArray(p.comments) ? p.comments : [],
             images: Array.isArray(p.images) ? p.images : [],
             shares: Number(p.shares) || 0,
@@ -52,7 +54,7 @@ function Accountgrad() {
             posts: formattedPosts,
           });
         } else {
-          console.log("Profile not found for userId:", userId);
+          // console.log("Profile not found for userId:", userId);
           setFormData(null);
         }
       } catch (err) {
