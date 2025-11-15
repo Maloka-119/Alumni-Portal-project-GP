@@ -34,6 +34,8 @@ const AlumniAdminPosts = () => {
     setError(null);
     try {
       const res = await API.get("/posts/admin");
+      // console.log("admin posts API response:", res.data);
+
       const filtered = (res.data?.data || []).filter(p => !p["group-id"]); 
   
       const formattedPosts = filtered.map(p => ({
@@ -41,24 +43,27 @@ const AlumniAdminPosts = () => {
         content: p.content,
         likes: Array.isArray(p.likesCount) ? p.likes_count.length : (p.likesCount || 0),
   liked: !!p.isLikedByYou,
-        comments:
-          p.comments?.map(c => {
-            const isUniversityComment =
-              c.author?.type === "admin" || c.author?.type === "staff";
-  
-            return {
-              comment_id: c.comment_id,
-              user_id: c.author?.id || 0,
-              userName: isUniversityComment
-                ? "Alumni Portal - Helwan University"
-                : c.author?.["full-name"] || "Anonymous",
-              content: c.content,
-              avatar: isUniversityComment
-                ? AdminPostsImg
-                : c.author?.image || PROFILE,
-              date: c["created-at"],
-            };
-          }) || [],
+  comments:
+  p.comments?.map(c => {
+    const isUniversityComment =
+      c.author?.["full-name"]?.includes("Alumni Portal") ||
+      c.author?.type === "admin" ||
+      c.author?.type === "staff";
+
+    return {
+      comment_id: c.comment_id,
+      user_id: c.author?.id || 0,
+      userName: isUniversityComment
+        ? "Alumni Portal - Helwan University"
+        : c.author?.["full-name"] || "Anonymous",
+      content: c.content,
+      avatar: isUniversityComment
+        ? AdminPostsImg
+        : c.author?.image || PROFILE,
+      date: c["created-at"],
+    };
+  }) || [],
+
         date: p["created-at"],
         authorName: "Alumni Portal - Helwan University",
         shares: 0,
@@ -246,9 +251,9 @@ const PostCard = ({ post, currentUser, handleLikeToggle, toggleComments, handleA
         <button onClick={() => { toggleComments(); setShowComments(!showComments); }}>
           <MessageCircle size={16} /> {post.comments.length}
         </button>
-        <button>
+        {/* <button>
           <Share2 size={16} /> {post.shares}
-        </button>
+        </button> */}
       </div>
 
       {showComments && (
