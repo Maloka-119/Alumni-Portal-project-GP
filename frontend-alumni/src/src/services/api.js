@@ -1,10 +1,19 @@
-// services/api.js
+// src/services/api.js
 import axios from "axios";
 
+// قراءة backend URL من ملف .env
+const BASE_URL = process.env.REACT_APP_BACKEND_URL
+  ? `${process.env.REACT_APP_BACKEND_URL}/alumni-portal`
+  : "http://localhost:5005/alumni-portal";
+
 const API = axios.create({
-  baseURL: "http://localhost:5005/alumni-portal",
+  baseURL: BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
 });
-// Interceptor to attach token automatically
+
+// إضافة interceptor لإرسال التوكن تلقائيًا لو موجود
 API.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -13,9 +22,7 @@ API.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 export default API;
