@@ -1553,6 +1553,123 @@ const getMyPosts = async (req, res) => {
     });
   }
 };
+
+// const editPost = async (req, res) => {
+//   try {
+//     const { postId } = req.params;
+//     const { category, type, content, link, groupId, inLanding, removeImages } =
+//       req.body;
+
+//     // تحديد الكاتيجوري النهائي
+//     const finalCategory = category || type;
+
+//     // الحصول على البوست من قاعدة البيانات
+//     const post = await Post.findByPk(postId, {
+//       include: [
+//         { model: PostImage, attributes: ["image-url"] },
+//         {
+//           model: User,
+//           attributes: ["id", "user-type"], // ⬅️ بنجيب نوع اليوزر عشان نتحقق
+//         },
+//       ],
+//     });
+
+//     if (!post) {
+//       return res.status(404).json({
+//         status: "error",
+//         message: "Post not found",
+//       });
+//     }
+
+//     // ⬇️⬇️⬇️ التحقق الجديد: منع التعديل إذا البوست مخفي ⬇️⬇️⬇️
+//     if (post["is-hidden"]) {
+//       return res.status(403).json({
+//         status: "error",
+//         message: "Cannot edit a hidden post",
+//       });
+//     }
+
+//     // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بالتعديل على بوستات الأدمن ⬇️⬇️⬇️
+//     const isPostOwner = post["author-id"] === req.user.id;
+//     const isStaffEditingAdminPost =
+//       req.user["user-type"] === "staff" && post.User["user-type"] === "admin";
+
+//     if (!isPostOwner && !isStaffEditingAdminPost) {
+//       return res.status(403).json({
+//         status: "error",
+//         message: "You can only edit your own posts or admin posts (for staff)",
+//       });
+//     }
+
+//     // تحديث الحقول
+//     if (finalCategory !== undefined) post.category = finalCategory;
+//     if (content !== undefined) post.content = content;
+//     if (link !== undefined) post.link = link;
+//     if (groupId !== undefined)
+//       post["group-id"] = groupId === null ? null : groupId;
+//     if (inLanding !== undefined) post["in-landing"] = inLanding;
+
+//     await post.save();
+
+//     // حذف الصور المطلوبة
+//     if (
+//       removeImages &&
+//       Array.isArray(removeImages) &&
+//       removeImages.length > 0
+//     ) {
+//       await PostImage.destroy({
+//         where: { "post-id": postId, "image-url": removeImages },
+//       });
+//     }
+
+//     // إضافة صور جديدة (لو موجودة)
+//     if (req.files && req.files.length > 0) {
+//       const uploadedImages = req.files.map((file) => ({
+//         "post-id": postId,
+//         "image-url": file.path || file.url || file.location,
+//       }));
+//       await PostImage.bulkCreate(uploadedImages);
+//     }
+
+//     // جلب البوست بعد التحديث
+//     const updatedPost = await Post.findByPk(postId, {
+//       include: [
+//         {
+//           model: User,
+//           attributes: ["id", "first-name", "last-name", "email", "user-type"],
+//         },
+//         {
+//           model: PostImage,
+//           attributes: ["image-url"],
+//         },
+//       ],
+//     });
+
+//     const responseData = {
+//       ...updatedPost.toJSON(),
+//       images: updatedPost.PostImages
+//         ? updatedPost.PostImages.map((img) => img["image-url"])
+//         : [],
+//       author: {
+//         id: updatedPost.User.id,
+//         "full-name": `${updatedPost.User["first-name"]} ${updatedPost.User["last-name"]}`,
+//         email: updatedPost.User.email,
+//       },
+//     };
+
+//     return res.status(200).json({
+//       status: "success",
+//       message: "Post updated successfully",
+//       data: responseData,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       status: "error",
+//       message: error.message,
+//     });
+//   }
+// };
+
 //edit post
 const editPost = async (req, res) => {
   try {
@@ -1973,6 +2090,75 @@ const deleteComment = async (req, res) => {
 };
 
 // Delete post - Users can delete their own posts, Admins can delete any post
+// const deletePost = async (req, res) => {
+//   try {
+//     const { postId } = req.params;
+//     const userId = req.user.id;
+
+//     // Find the post
+//     const post = await Post.findByPk(postId);
+//     if (!post) {
+//       return res.status(404).json({
+//         status: "error",
+//         message: "Post not found",
+//       });
+//     }
+
+//     // ⬇️⬇️⬇️ التحقق الجديد: منع الحذف إذا البوست مخفي ⬇️⬇️⬇️
+//     if (post["is-hidden"]) {
+//       return res.status(403).json({
+//         status: "error",
+//         message: "Cannot delete a hidden post",
+//       });
+//     }
+
+//     // Check if the post was created by the current staff member or by a graduate
+//     const postAuthor = await User.findByPk(post["author-id"]);
+//     if (!postAuthor) {
+//       return res.status(404).json({
+//         status: "error",
+//         message: "Post author not found",
+//       });
+//     }
+
+//     // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بحذف بوستات الأدمن ⬇️⬇️⬇️
+//     const isOwnPost = post["author-id"] === userId;
+//     const isGraduatePost = postAuthor["user-type"] === "graduate";
+//     const isStaffDeletingAdminPost =
+//       req.user["user-type"] === "staff" && postAuthor["user-type"] === "admin";
+
+//     // Allow deleting if:
+//     // 1) It's the user's own post, OR
+//     // 2) It's a graduate's post, OR
+//     // 3) Staff is deleting an admin's post
+//     if (!isOwnPost && !isGraduatePost && !isStaffDeletingAdminPost) {
+//       return res.status(403).json({
+//         status: "error",
+//         message:
+//           "You can only delete your own posts, posts created by graduates, or admin posts (for staff)",
+//       });
+//     }
+
+//     // Delete associated comments and likes first
+//     await Comment.destroy({ where: { "post-id": postId } });
+//     await Like.destroy({ where: { "post-id": postId } });
+
+//     // Delete the post
+//     await post.destroy();
+
+//     return res.status(200).json({
+//       status: HttpStatusHelper.SUCCESS,
+//       message: "Post deleted successfully",
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({
+//       status: HttpStatusHelper.ERROR,
+//       message: error.message,
+//     });
+//   }
+// };
+
 const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -2554,15 +2740,23 @@ const getLandingPosts = async (req, res) => {
       include: [
         {
           model: Like,
-          attributes: ["like_id", "author-id", "user-id"],
+          attributes: ["like_id", "user-id", "post-id"],
         },
         {
-          model: PostImage, // إضافة الصور
+          model: PostImage,
           attributes: ["post_image_id", "image-url"],
         },
       ],
       order: [["created-at", "DESC"]],
     });
+
+    if (posts.length === 0) {
+      return res.status(200).json({
+        status: "success",
+        message: "No posts found",
+        data: [],
+      });
+    }
 
     // جلب بيانات كل مؤلف لكل بوست
     const postsWithDetails = await Promise.all(
@@ -2587,15 +2781,24 @@ const getLandingPosts = async (req, res) => {
           category: post.category,
           content: post.content,
           "created-at": post["created-at"],
-          images: post.PostImages?.map((img) => img["image-url"]) || [], // هنا بنضيف الصور
-          author: {
-            id: author.id,
-            "full-name": `${author["first-name"]} ${author["last-name"]}`,
-            email: author.email,
-            image: author.Graduate
-              ? author.Graduate["profile-picture-url"]
-              : null,
-          },
+          images: post.PostImages
+            ? post.PostImages.map((img) => img["image-url"])
+            : [],
+          author: author
+            ? {
+                id: author.id,
+                "full-name": `${author["first-name"]} ${author["last-name"]}`,
+                email: author.email,
+                image: author.Graduate
+                  ? author.Graduate["profile-picture-url"]
+                  : null,
+              }
+            : {
+                id: post["author-id"],
+                "full-name": "Unknown Author",
+                email: null,
+                image: null,
+              },
           "group-id": post["group-id"],
           "in-landing": post["in-landing"],
           "is-hidden": post["is-hidden"],
@@ -2612,10 +2815,14 @@ const getLandingPosts = async (req, res) => {
     });
   } catch (error) {
     console.error("Error fetching landing posts:", error);
+
     res.status(500).json({
       status: "error",
       message: "Server error while fetching landing posts",
-      error,
+      error: {
+        name: error.name,
+        message: error.message,
+      },
     });
   }
 };
