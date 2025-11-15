@@ -6,6 +6,8 @@ import PostCard from "../../components/PostCard";
 import PROFILE from "./PROFILE.jpeg";
 import "./GroupDetails.css";
 import communityCover from "./defualtCommunityCover.jpg"
+import AdminPostsImg from './AdminPosts.jpeg';
+
 function GroupDetails({ group, goBack }) {
   const { t } = useTranslation();
   const [posts, setPosts] = useState([]);
@@ -45,9 +47,17 @@ const filteredGraduates = availableGraduates.filter((f) =>
         showComments: false, 
         author: {
           id: post.author?.id,
-          name: post.author?.["full-name"] || "Unknown",
-          photo: post.author?.image || PROFILE,
+          name:
+            post.author?.type === "admin" || post.author?.type === "staff"
+              ? "Alumni Portal - Helwan University"
+              : post.author?.["full-name"] || "Unknown",
+          photo:
+            post.author?.type === "admin" || post.author?.type === "staff"
+              ? AdminPostsImg // هنا الصورة الثابتة
+              : post.author?.image || PROFILE,
         },
+        date: post["created-at"],
+        
       };
     });
   };

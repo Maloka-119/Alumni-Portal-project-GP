@@ -27,7 +27,7 @@ const HomeAlumni = () => {
   
     try {
       const res = await API.get(`/posts/user-posts?page=${pageNum}&limit=10`);
-      console.log("Fetched posts response:", res.data); // اطبع الريسبونس كله
+      // console.log("Fetched posts response:", res.data);
     
       const filteredData = res.data.data.filter(post => post["group-id"] == null);
     
@@ -56,7 +56,8 @@ const HomeAlumni = () => {
           shares: 0,
           comments: (post.comments || []).map(comment => {
             const isUniversityComment =
-              comment.author?.type === "admin" || comment.author?.type === "staff";
+            comment.author?.["user-type"] === "admin" || 
+            comment.author?.["user-type"] === "staff";            
     
             return {
               comment_id: comment.comment_id,
@@ -64,18 +65,20 @@ const HomeAlumni = () => {
               author: {
                 id: comment.author?.id,
                 "full-name": isUniversityComment
-                  ? "Alumni Portal - Helwan University"
-                  : comment.author?.["full-name"] || "Unknown",
-                image: isUniversityComment
-                  ? AdminPostsImg
-                  : comment.author?.image || PROFILE,                
+  ? "Alumni Portal - Helwan University"
+  : comment.author?.["full-name"] || "Unknown",
+
+image: isUniversityComment
+  ? AdminPostsImg
+  : comment.author?.image || PROFILE,
+               
               },
               "created-at": comment["created-at"],
             };
           }),
         };
     
-        console.log("Formatted post:", formattedPost); // اطبع كل بوست بعد الفورمات
+        // console.log("Formatted post:", formattedPost); 
     
         return formattedPost;
       });
