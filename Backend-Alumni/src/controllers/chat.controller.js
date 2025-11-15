@@ -301,13 +301,15 @@ const getChatMessages = asyncHandler(async (req, res) => {
       {
         model: Message,
         as: 'replyTo',
+        required: false,
         include: [
           {
             model: User,
             as: 'sender',
-            attributes: ['id', 'first-name', 'last-name']
+            attributes: ['id', 'first-name', 'last-name', 'email']
           }
-        ]
+        ],
+        attributes: ['message_id', 'content', 'sender_id', 'message_type', 'attachment_url', 'attachment_name', 'is_deleted', 'created-at']
       }
     ],
     order: [['created-at', 'DESC']],
@@ -349,7 +351,9 @@ const getChatMessages = asyncHandler(async (req, res) => {
 // @access  Private
 const sendMessage = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
-  const { content, reply_to_message_id } = req.body;
+  // Accept both reply_to_id and reply_to_message_id for compatibility
+  const { content, reply_to_message_id, reply_to_id } = req.body;
+  const replyToMessageId = reply_to_message_id || reply_to_id || null;
   const senderId = req.user.id;
 
   // Verify user has access to this chat
@@ -395,7 +399,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     receiver_id: receiverId,
     content: content,
     message_type: 'text',
-    reply_to_message_id: reply_to_message_id || null
+    reply_to_message_id: replyToMessageId
   });
 
   // Update chat with last message info
@@ -405,7 +409,7 @@ const sendMessage = asyncHandler(async (req, res) => {
     [`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`]: chat[`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`] + 1
   });
 
-  // Fetch message with associations
+  // Fetch message with associations, including full replyTo data
   const messageWithDetails = await Message.findByPk(message.message_id, {
     include: [
       {
@@ -421,13 +425,15 @@ const sendMessage = asyncHandler(async (req, res) => {
       {
         model: Message,
         as: 'replyTo',
+        required: false,
         include: [
           {
             model: User,
             as: 'sender',
-            attributes: ['id', 'first-name', 'last-name']
+            attributes: ['id', 'first-name', 'last-name', 'email']
           }
-        ]
+        ],
+        attributes: ['message_id', 'content', 'sender_id', 'message_type', 'attachment_url', 'attachment_name', 'is_deleted', 'created-at']
       }
     ]
   });
@@ -435,18 +441,12 @@ const sendMessage = asyncHandler(async (req, res) => {
   // Create notification for the receiver
   await notifyMessageReceived(receiverId, senderId);
 
-  // Emit socket event to notify other user in real-time
+  // Emit socket event to notify both users in real-time
   if (global.chatSocket) {
-    // Get sender's socket ID to exclude them from the broadcast
-    const senderSocketId = global.chatSocket.connectedUsers.get(senderId);
-    // Broadcast to chat room (exclude sender since they already added it locally)
-    if (senderSocketId) {
-      global.chatSocket.io.to(`chat_${chatId}`).except(senderSocketId).emit('new_message', messageWithDetails);
-    } else {
-      global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
-    }
+    // Emit to the chat room so both sender and receiver receive it
+    global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
     
-    // Also send to receiver's personal room if they're not in the chat room
+    // Also send to receiver's personal room as fallback if they're not in the chat room
     const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
     if (receiverSocketId) {
       // Mark as delivered
@@ -454,6 +454,8 @@ const sendMessage = asyncHandler(async (req, res) => {
         { status: 'delivered' },
         { where: { message_id: messageWithDetails.message_id } }
       );
+      // Also emit to receiver's personal room as fallback
+      global.chatSocket.io.to(`user_${receiverId}`).emit('new_message', messageWithDetails);
     }
 
     // Update chat list for both users
@@ -570,9 +572,54 @@ const editMessage = asyncHandler(async (req, res) => {
     edited_at: new Date()
   });
 
+  // Fetch updated message with all associations for socket emission
+  const updatedMessage = await Message.findByPk(messageId, {
+    include: [
+      {
+        model: User,
+        as: 'sender',
+        attributes: ['id', 'first-name', 'last-name', 'email']
+      },
+      {
+        model: User,
+        as: 'receiver',
+        attributes: ['id', 'first-name', 'last-name', 'email']
+      },
+      {
+        model: Message,
+        as: 'replyTo',
+        include: [
+          {
+            model: User,
+            as: 'sender',
+            attributes: ['id', 'first-name', 'last-name']
+          }
+        ]
+      }
+    ]
+  });
+
+  // Get chat to determine receiver
+  const chat = await Chat.findByPk(message.chat_id);
+  const receiverId = chat.user1_id === userId ? chat.user2_id : chat.user1_id;
+
+  // Emit socket event to notify both users in real-time
+  if (global.chatSocket) {
+    // Emit to the chat room so both sender and receiver receive the update
+    global.chatSocket.io.to(`chat_${message.chat_id}`).emit('message_edited', updatedMessage);
+    
+    // Also emit to both users' personal rooms as fallback to ensure delivery
+    global.chatSocket.io.to(`user_${userId}`).emit('message_edited', updatedMessage);
+    
+    const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
+    if (receiverSocketId) {
+      global.chatSocket.io.to(`user_${receiverId}`).emit('message_edited', updatedMessage);
+    }
+  }
+
   res.status(200).json({
     status: 'success',
-    data: message
+    data: updatedMessage
   });
 });
 
@@ -1091,7 +1138,9 @@ const updateReportStatus = asyncHandler(async (req, res) => {
 // @access  Private
 const sendImageMessage = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
-  const { reply_to_message_id } = req.body;
+  // Accept both reply_to_id and reply_to_message_id for compatibility
+  const { reply_to_message_id, reply_to_id } = req.body;
+  const replyToMessageId = reply_to_message_id || reply_to_id || null;
   const senderId = req.user.id;
 
   if (!req.file) {
@@ -1148,7 +1197,7 @@ const sendImageMessage = asyncHandler(async (req, res) => {
     attachment_name: req.file.originalname,
     attachment_size: req.file.size,
     attachment_mime_type: req.file.mimetype,
-    reply_to_message_id: reply_to_message_id || null
+    reply_to_message_id: replyToMessageId
   });
 
   // Update chat with last message info
@@ -1158,7 +1207,7 @@ const sendImageMessage = asyncHandler(async (req, res) => {
     [`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`]: chat[`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`] + 1
   });
 
-  // Fetch message with associations
+  // Fetch message with associations, including full replyTo data
   const messageWithDetails = await Message.findByPk(message.message_id, {
     include: [
       {
@@ -1174,13 +1223,15 @@ const sendImageMessage = asyncHandler(async (req, res) => {
       {
         model: Message,
         as: 'replyTo',
+        required: false,
         include: [
           {
             model: User,
             as: 'sender',
-            attributes: ['id', 'first-name', 'last-name']
+            attributes: ['id', 'first-name', 'last-name', 'email']
           }
-        ]
+        ],
+        attributes: ['message_id', 'content', 'sender_id', 'message_type', 'attachment_url', 'attachment_name', 'is_deleted', 'created-at']
       }
     ]
   });
@@ -1188,18 +1239,12 @@ const sendImageMessage = asyncHandler(async (req, res) => {
   // Create notification for the receiver
   await notifyMessageReceived(receiverId, senderId);
 
-  // Emit socket event to notify other user in real-time
+  // Emit socket event to notify both users in real-time
   if (global.chatSocket) {
-    // Get sender's socket ID to exclude them from the broadcast
-    const senderSocketId = global.chatSocket.connectedUsers.get(senderId);
-    // Broadcast to chat room (exclude sender since they already added it locally)
-    if (senderSocketId) {
-      global.chatSocket.io.to(`chat_${chatId}`).except(senderSocketId).emit('new_message', messageWithDetails);
-    } else {
-      global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
-    }
+    // Emit to the chat room so both sender and receiver receive it
+    global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
     
-    // Also send to receiver's personal room if they're not in the chat room
+    // Also send to receiver's personal room as fallback if they're not in the chat room
     const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
     if (receiverSocketId) {
       // Mark as delivered
@@ -1207,6 +1252,8 @@ const sendImageMessage = asyncHandler(async (req, res) => {
         { status: 'delivered' },
         { where: { message_id: messageWithDetails.message_id } }
       );
+      // Also emit to receiver's personal room as fallback
+      global.chatSocket.io.to(`user_${receiverId}`).emit('new_message', messageWithDetails);
     }
 
     // Update chat list for both users
@@ -1236,7 +1283,9 @@ const sendImageMessage = asyncHandler(async (req, res) => {
 // @access  Private
 const sendFileMessage = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
-  const { reply_to_message_id } = req.body;
+  // Accept both reply_to_id and reply_to_message_id for compatibility
+  const { reply_to_message_id, reply_to_id } = req.body;
+  const replyToMessageId = reply_to_message_id || reply_to_id || null;
   const senderId = req.user.id;
 
   if (!req.file) {
@@ -1293,7 +1342,7 @@ const sendFileMessage = asyncHandler(async (req, res) => {
     attachment_name: req.file.originalname,
     attachment_size: req.file.size,
     attachment_mime_type: req.file.mimetype,
-    reply_to_message_id: reply_to_message_id || null
+    reply_to_message_id: replyToMessageId
   });
 
   // Update chat with last message info
@@ -1303,7 +1352,7 @@ const sendFileMessage = asyncHandler(async (req, res) => {
     [`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`]: chat[`user${chat.user1_id === senderId ? '2' : '1'}_unread_count`] + 1
   });
 
-  // Fetch message with associations
+  // Fetch message with associations, including full replyTo data
   const messageWithDetails = await Message.findByPk(message.message_id, {
     include: [
       {
@@ -1319,13 +1368,15 @@ const sendFileMessage = asyncHandler(async (req, res) => {
       {
         model: Message,
         as: 'replyTo',
+        required: false,
         include: [
           {
             model: User,
             as: 'sender',
-            attributes: ['id', 'first-name', 'last-name']
+            attributes: ['id', 'first-name', 'last-name', 'email']
           }
-        ]
+        ],
+        attributes: ['message_id', 'content', 'sender_id', 'message_type', 'attachment_url', 'attachment_name', 'is_deleted', 'created-at']
       }
     ]
   });
@@ -1333,18 +1384,12 @@ const sendFileMessage = asyncHandler(async (req, res) => {
   // Create notification for the receiver
   await notifyMessageReceived(receiverId, senderId);
 
-  // Emit socket event to notify other user in real-time
+  // Emit socket event to notify both users in real-time
   if (global.chatSocket) {
-    // Get sender's socket ID to exclude them from the broadcast
-    const senderSocketId = global.chatSocket.connectedUsers.get(senderId);
-    // Broadcast to chat room (exclude sender since they already added it locally)
-    if (senderSocketId) {
-      global.chatSocket.io.to(`chat_${chatId}`).except(senderSocketId).emit('new_message', messageWithDetails);
-    } else {
-      global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
-    }
+    // Emit to the chat room so both sender and receiver receive it
+    global.chatSocket.io.to(`chat_${chatId}`).emit('new_message', messageWithDetails);
     
-    // Also send to receiver's personal room if they're not in the chat room
+    // Also send to receiver's personal room as fallback if they're not in the chat room
     const receiverSocketId = global.chatSocket.connectedUsers.get(receiverId);
     if (receiverSocketId) {
       // Mark as delivered
@@ -1352,6 +1397,8 @@ const sendFileMessage = asyncHandler(async (req, res) => {
         { status: 'delivered' },
         { where: { message_id: messageWithDetails.message_id } }
       );
+      // Also emit to receiver's personal room as fallback
+      global.chatSocket.io.to(`user_${receiverId}`).emit('new_message', messageWithDetails);
     }
 
     // Update chat list for both users
