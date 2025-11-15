@@ -31,19 +31,19 @@ const UsersPostsPage = ({ currentUser }) => {
 
   const formatPosts = (data) => {
     return (data || []).map(post => {
-      const formattedComments = (post.comments || []).map((comment) => ({
+      const formattedComments = (post.comments || []).map(comment => ({
         id: comment.comment_id,
         userName: comment.author?.["full-name"] || "Unknown User",
         content: comment.content,
         avatar: comment.author?.image || PROFILE,
         date: comment["created-at"],
       }));
-
+  
       return {
         ...post,
         id: post.post_id,
-        likes: post.likes_count || 0,
-        liked: false,
+        likes: post.likesCount || 0,
+        liked: post.isLikedByYou || false,
         comments: formattedComments,
         images: post.images || [],
         showComments: false,
@@ -57,13 +57,14 @@ const UsersPostsPage = ({ currentUser }) => {
       };
     });
   };
+  
 
   const fetchPosts = async () => {
     setLoading(true);
     setError(null);
     try {
       const res = await API.get('/posts');
-      console.log("Fetch posts response:", res);
+      // console.log("Fetch posts response:", res);
       if (res.data.status === "success") {
         setPosts(formatPosts(res.data.data));
       } else {
@@ -93,7 +94,7 @@ const UsersPostsPage = ({ currentUser }) => {
     if (!postPerm.canEdit) return;
     try {
       const response = await API.put(`/posts/${id}/hide`);
-       console.log("Hide post response:", response);
+      //  console.log("Hide post response:", response);
       if (response.data.status === "success") {
         await fetchPosts();
         Swal.fire({ icon: "success", title: "Post hidden", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
@@ -119,29 +120,23 @@ const UsersPostsPage = ({ currentUser }) => {
   };
 
   const handleLike = async (postId) => {
-    if (!postPerm.canView) return;
-    const postIndex = posts.findIndex((p) => p.id === postId);
+    const postIndex = posts.findIndex(p => p.id === postId);
     if (postIndex === -1) return;
-    try {
-      const post = posts[postIndex];
-      try {
-        await API.delete(`/posts/${postId}/like`);
-        const updatedPosts = [...posts];
-        updatedPosts[postIndex] = { ...post, likes: Math.max(0, post.likes - 1), liked: false };
-        setPosts(updatedPosts);
-      } catch (unlikeError) {
-        if (unlikeError.response?.status === 404) {
-          await API.post(`/posts/${postId}/like`);
-          const updatedPosts = [...posts];
-          updatedPosts[postIndex] = { ...post, likes: post.likes + 1, liked: true };
-          setPosts(updatedPosts);
-        } else { throw unlikeError; }
-      }
-    } catch (err) {
-      console.error("Error in handleLike:", err.response?.data || err);
-      await fetchPosts();
+  
+    const post = posts[postIndex];
+    const updatedPosts = [...posts];
+  
+    if (post.liked) {
+      await API.delete(`/posts/${postId}/like`);
+      updatedPosts[postIndex] = { ...post, liked: false, likes: Math.max(0, post.likes - 1) };
+    } else {
+      await API.post(`/posts/${postId}/like`);
+      updatedPosts[postIndex] = { ...post, liked: true, likes: post.likes + 1 };
     }
+  
+    setPosts(updatedPosts);
   };
+  
 
   const toggleComments = (postId) => {
     if (!postPerm.canView) return;
@@ -302,9 +297,10 @@ const UsersPostsPage = ({ currentUser }) => {
             </div>
 
             <div className="post-actions">
-              <button className={post.liked ? "liked" : ""} onClick={() => handleLike(post.id)}>
-                <Heart size={16} fill={post.liked ? "currentColor" : "none"} /> {post.likes}
-              </button>
+            <button className={post.liked ? "liked" : ""} onClick={() => handleLike(post.id)}>
+            <Heart size={16} color={post.liked ? "#e0245e" : "#555"} /> {post.likes}
+</button>
+
               <button onClick={() => toggleComments(post.id)}>
                 <MessageCircle size={16} /> {post.comments?.length || 0}
               </button>
