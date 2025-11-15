@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import './Login.css';
 import API from "../services/api"; 
 import { useNavigate } from 'react-router-dom';
+import LinkedInSignUp from "./LinkedInSignUp";
 
 function Login() {
   const { t } = useTranslation();
@@ -239,7 +240,7 @@ function Login() {
           </div>
         )}
       </div>
-
+    <LinkedInSignUp/>
       <Footer />
     </div>
   );
