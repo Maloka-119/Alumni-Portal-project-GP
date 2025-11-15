@@ -2,6 +2,7 @@ import axios from "axios";
 
 const API = axios.create({
   baseURL: "http://localhost:5005/alumni-portal",
+  withCredentials: true, // Enable cookies for session management
 });
 
 // Interceptor to attach token automatically
