@@ -642,16 +642,15 @@ const getGraduateProfileForUser = async (req, res) => {
     const { identifier } = req.params;
     const currentUserId = req.user.id;
 
-    // 🔍 البحث عن الخريج
     let graduate;
 
-    // لو ID
+    // 🔍 البحث عن الخريج بالإيدي
     if (!isNaN(identifier)) {
       graduate = await Graduate.findByPk(identifier, {
         include: [{ model: User }],
       });
     } else {
-      // لو إيميل
+      // 🔍 البحث بالإيميل
       const userByEmail = await User.findOne({
         where: { email: identifier },
         include: [{ model: Graduate }],
@@ -660,7 +659,7 @@ const getGraduateProfileForUser = async (req, res) => {
       if (userByEmail) {
         graduate = userByEmail.Graduate;
       } else {
-        // لو اسم
+        // 🔍 البحث بالاسم
         const usersByName = await User.findAll({
           where: {
             [Op.or]: [
@@ -671,7 +670,6 @@ const getGraduateProfileForUser = async (req, res) => {
           include: [{ model: Graduate }],
         });
 
-        // ناخد أول خريج ليه graduate data
         for (let user of usersByName) {
           if (user.Graduate) {
             graduate = user.Graduate;
@@ -689,10 +687,9 @@ const getGraduateProfileForUser = async (req, res) => {
       });
     }
 
-    // 🔍 تحديد حالة العلاقة
+    // 🔍 تحديد حالة العلاقة (صداقة)
     let friendshipStatus = "no_relation";
 
-    // التحقق من طلبات الصداقة في جدول Friendship
     const existingFriendshipRequest = await Friendship.findOne({
       where: {
         [Op.or]: [
@@ -704,14 +701,12 @@ const getGraduateProfileForUser = async (req, res) => {
     });
 
     if (existingFriendshipRequest) {
-      if (existingFriendshipRequest.sender_id === currentUserId) {
-        friendshipStatus = "i_sent_request";
-      } else {
-        friendshipStatus = "he_sent_request";
-      }
+      friendshipStatus =
+        existingFriendshipRequest.sender_id === currentUserId
+          ? "i_sent_request"
+          : "he_sent_request";
     }
 
-    // التحقق إذا كنا أصدقاء
     const friendship = await Friendship.findOne({
       where: {
         [Op.or]: [
@@ -722,11 +717,9 @@ const getGraduateProfileForUser = async (req, res) => {
       },
     });
 
-    if (friendship) {
-      friendshipStatus = "friends";
-    }
+    if (friendship) friendshipStatus = "friends";
 
-    // 📝 جلب بوستات الخريج (مش مخفية وليست في جروب)
+    // 📝 جلب بوستات الخريج
     const posts = await Post.findAll({
       where: {
         "author-id": graduate.graduate_id,
@@ -737,12 +730,7 @@ const getGraduateProfileForUser = async (req, res) => {
         {
           model: User,
           attributes: ["id", "first-name", "last-name"],
-          include: [
-            {
-              model: Graduate,
-              attributes: ["profile-picture-url"],
-            },
-          ],
+          include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
         },
         {
           model: PostImage,
@@ -779,126 +767,103 @@ const getGraduateProfileForUser = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    // 🎯 تحضير بيانات البوستات مع null checks
-    const postsData = posts
-      .map((post) => {
-        // التحقق من وجود post.User
-        const authorUser = post.User;
-        if (!authorUser) {
-          console.warn(`Post ${post.post_id} has no associated User`);
-          return null; // أو تعيد بيانات افتراضية
-        }
+    // 🎯 تجهيز بيانات البوستات بنفس أسلوب الفانكشن الشغالة
+    const postsData = posts.map((post) => {
+      const authorUser = post.User;
 
-        // التحقق من وجود اللايكات
-        const safeLikes = (post.Likes || [])
-          .map((like) => {
-            if (!like || !like.User) {
-              console.warn(`Like ${like?.like_id} has no associated User`);
-              return null;
-            }
-            return {
+      return {
+        post_id: post.post_id,
+        category: post.category,
+        content: post.content,
+        "created-at": post["created-at"],
+
+        author: {
+          id: authorUser?.id || "unknown",
+          "full-name": `${authorUser?.["first-name"] || ""} ${
+            authorUser?.["last-name"] || ""
+          }`.trim(),
+          image: authorUser?.Graduate
+            ? authorUser.Graduate["profile-picture-url"]
+            : null,
+        },
+
+        images: post.PostImages
+          ? post.PostImages.map((img) => img["image-url"])
+          : [],
+
+        // 👍 نفس طريقة getAllPostsOfUsers
+        likes: post.Likes
+          ? post.Likes.map((like) => ({
               like_id: like.like_id,
               user: {
-                id: like.User.id,
-                "full-name": `${like.User["first-name"]} ${like.User["last-name"]}`,
+                id: like.User?.id || "unknown",
+                "full-name":
+                  `${like.User?.["first-name"] || ""} ${
+                    like.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
               },
-            };
-          })
-          .filter((like) => like !== null);
+            }))
+          : [],
+        likes_count: post.Likes ? post.Likes.length : 0,
 
-        // التحقق من وجود الكومنتات
-        const safeComments = (post.Comments || [])
-          .map((comment) => {
-            if (!comment || !comment.User) {
-              console.warn(
-                `Comment ${comment?.comment_id} has no associated User`
-              );
-              return null;
-            }
-            return {
+        comments: post.Comments
+          ? post.Comments.map((comment) => ({
               comment_id: comment.comment_id,
               content: comment.content,
               "created-at": comment["created-at"],
               edited: comment.edited,
               author: {
-                id: comment.User.id,
-                "full-name": `${comment.User["first-name"]} ${comment.User["last-name"]}`,
-                image: comment.User.Graduate
+                id: comment.User?.id || "unknown",
+                "full-name":
+                  `${comment.User?.["first-name"] || ""} ${
+                    comment.User?.["last-name"] || ""
+                  }`.trim() || "Unknown User",
+                image: comment.User?.Graduate
                   ? comment.User.Graduate["profile-picture-url"]
                   : null,
               },
-            };
-          })
-          .filter((comment) => comment !== null);
-
-        return {
-          post_id: post.post_id,
-          category: post.category,
-          content: post.content,
-          "created-at": post["created-at"],
-          author: {
-            id: authorUser.id,
-            "full-name": `${authorUser["first-name"]} ${authorUser["last-name"]}`,
-            image: authorUser.Graduate
-              ? authorUser.Graduate["profile-picture-url"]
-              : null,
-          },
-          images: post.PostImages
-            ? post.PostImages.map((img) => img["image-url"])
-            : [],
-
-          // اللايكات الآمنة
-          likes: safeLikes,
-          likes_count: safeLikes.length,
-
-          // الكومنتات الآمنة
-          comments: safeComments,
-          comments_count: safeComments.length,
-        };
-      })
-      .filter((post) => post !== null); // إزالة أي بوستات null
-
-    // ✅ تحديد البيانات اللي هتظهر حسب العلاقة والخصوصية
-    const userData = graduate.User;
-    const isOwner = parseInt(currentUserId) === parseInt(graduate.graduate_id);
-
-    // صاحب البروفايل بيشوف كل حاجة
-    if (isOwner) {
-      const graduateProfile = {
-        profilePicture: graduate["profile-picture-url"],
-        fullName: `${userData["first-name"]} ${userData["last-name"]}`,
-        faculty: graduate.faculty,
-        graduationYear: graduate["graduation-year"],
-        bio: graduate.bio,
-        skills: graduate.skills,
-        currentJob: graduate["current-job"],
-
-        // إعدادات الخصوصية
-        showCV: graduate.show_cv,
-        showLinkedIn: graduate.show_linkedin,
-        showPhone: userData.show_phone,
-
-        // البيانات (الصاحب بيشوف الكل)
-        CV: graduate["cv-url"],
-        linkedlnLink: graduate["linkedln-link"],
-        phoneNumber: userData.phoneNumber,
-
-        // حالة العلاقة
-        friendshipStatus: "owner",
-
-        // البوستات
-        posts: postsData,
+            }))
+          : [],
+        comments_count: post.Comments ? post.Comments.length : 0,
       };
+    });
 
+    const userData = graduate.User;
+    const isOwner = +currentUserId === +graduate.graduate_id;
+
+    // 👑 لو صاحب البروفايل
+    if (isOwner) {
       return res.json({
         status: HttpStatusHelper.SUCCESS,
         message: "Graduate Profile fetched successfully",
-        data: graduateProfile,
+        data: {
+          profilePicture: graduate["profile-picture-url"],
+          fullName: `${userData["first-name"]} ${userData["last-name"]}`,
+          faculty: graduate.faculty,
+          graduationYear: graduate["graduation-year"],
+          bio: graduate.bio,
+          skills: graduate.skills,
+          currentJob: graduate["current-job"],
+
+          // الخصوصية
+          showCV: graduate.show_cv,
+          showLinkedIn: graduate.show_linkedin,
+          showPhone: userData.show_phone,
+
+          // يظهر له كل حاجة
+          CV: graduate["cv-url"],
+          linkedlnLink: graduate["linkedln-link"],
+          phoneNumber: userData.phoneNumber,
+
+          friendshipStatus: "owner",
+
+          posts: postsData,
+        },
       });
     }
 
-    // 🎯 بناء البروفايل حسب العلاقة للآخرين
-    const graduateProfile = {
+    // 👥 الآخرين حسب الخصوصية
+    const profile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${userData["first-name"]} ${userData["last-name"]}`,
       faculty: graduate.faculty,
@@ -906,41 +871,27 @@ const getGraduateProfileForUser = async (req, res) => {
       bio: graduate.bio,
       skills: graduate.skills,
       currentJob: graduate["current-job"],
-
-      // إعدادات الخصوصية
       showCV: graduate.show_cv,
       showLinkedIn: graduate.show_linkedin,
       showPhone: userData.show_phone,
-
-      // حالة العلاقة
-      friendshipStatus: friendshipStatus,
-
-      // البوستات
+      friendshipStatus,
       posts: postsData,
     };
 
-    // 📊 إضافة البيانات الخاصة إذا مسموح بيها - للكل مش بس الأصدقاء
-    if (graduate.show_cv && graduate["cv-url"]) {
-      graduateProfile.CV = graduate["cv-url"];
-    }
-
-    if (graduate.show_linkedin && graduate["linkedln-link"]) {
-      graduateProfile.linkedlnLink = graduate["linkedln-link"];
-    }
-
-    if (userData.show_phone && userData.phoneNumber) {
-      graduateProfile.phoneNumber = userData.phoneNumber;
-    }
+    if (graduate.show_cv) profile.CV = graduate["cv-url"];
+    if (graduate.show_linkedin)
+      profile.linkedlnLink = graduate["linkedln-link"];
+    if (userData.show_phone) profile.phoneNumber = userData.phoneNumber;
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate Profile fetched successfully",
-      data: graduateProfile,
+      data: profile,
     });
   } catch (err) {
     console.error("Error in getGraduateProfileForUser:", err);
     return res.status(500).json({
-      status: HttpStatusHelper.ERROR || "error",
+      status: HttpStatusHelper.ERROR,
       message: err.message,
       data: null,
     });
