@@ -378,3 +378,22 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.icon-btn svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.5;
+}
+
+.message-time {
+  font-size: 10px;
+  opacity: 0.6;
+}
+
+.chat-message {
+  font-size: 14px;
+  font-weight: 500;
+}
+.message-actions .icon-btn svg {
+  width: 13px;
+  height: 13px;
+}
