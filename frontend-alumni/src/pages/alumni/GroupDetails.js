@@ -53,7 +53,7 @@ const filteredGraduates = availableGraduates.filter((f) =>
               : post.author?.["full-name"] || "Unknown",
           photo:
             post.author?.type === "admin" || post.author?.type === "staff"
-              ? AdminPostsImg // هنا الصورة الثابتة
+              ? AdminPostsImg 
               : post.author?.image || PROFILE,
         },
         date: post["created-at"],
@@ -77,7 +77,7 @@ const filteredGraduates = availableGraduates.filter((f) =>
   const fetchAvailableGraduates = async () => {
     try {
       const res = await API.get(`/groups/${group.id}/available-graduates`);
-      console.log(res.data);
+      // console.log(res.data);
       setAvailableGraduates(res.data || []); 
     } catch (err) {
       console.error(err);

@@ -14,12 +14,12 @@ const ViewFAQ = () => {
   const fetchFaqs = async () => {
     try {
       const res = await API.get("/faqs");
-      console.log("Raw API response:", res);
+      // console.log("Raw API response:", res);
 
       // احصل على array من data
       const faqArray = Array.isArray(res.data.data) ? res.data.data : [];
       setFaqs(faqArray);
-      console.log("FAQs state:", faqArray);
+      // console.log("FAQs state:", faqArray);
     } catch (err) {
       console.error("Error loading FAQs:", err);
     }
