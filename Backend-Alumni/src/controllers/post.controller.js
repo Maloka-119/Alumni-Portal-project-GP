@@ -463,6 +463,7 @@ const getGroupPosts = async (req, res) => {
                     comment.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
                 email: comment.User?.email || "unknown",
+                "user-type": comment.User?.["user-type"] || "unknown",
                 image: comment.User?.Graduate
                   ? comment.User.Graduate["profile-picture-url"]
                   : null,
@@ -882,6 +883,7 @@ const getAllPostsOfUsers = async (req, res) => {
                     comment.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
                 email: comment.User?.email || "unknown",
+                "user-type": comment.User?.["user-type"] || "unknown",
                 image: comment.User?.Graduate
                   ? comment.User.Graduate["profile-picture-url"]
                   : null,
@@ -1048,6 +1050,7 @@ const getAllPosts = async (req, res) => {
                     comment.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
                 email: comment.User?.email || "unknown",
+                "user-type": comment.User?.["user-type"] || "unknown",
                 image: comment.User?.Graduate
                   ? comment.User.Graduate["profile-picture-url"]
                   : null,
@@ -2154,8 +2157,9 @@ const getPostWithDetails = async (req, res) => {
           id: comment.User.id,
           "full-name": `${comment.User["first-name"]} ${comment.User["last-name"]}`,
           email: comment.User.email,
+          "user-type": comment.User["user-type"] || "unknown",
           image:
-            comment.User.user_type === "graduate" && comment.User.Graduate
+            comment.User["user-type"] === "graduate" && comment.User.Graduate
               ? comment.User.Graduate["profile-picture-url"]
               : null,
         },
@@ -2170,6 +2174,7 @@ const getPostWithDetails = async (req, res) => {
                 id: reply.User.id,
                 "full-name": `${reply.User["first-name"]} ${reply.User["last-name"]}`,
                 email: reply.User.email,
+                "user-type": reply.User["user-type"] || "unknown",
               },
             }))
           : [],

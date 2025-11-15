@@ -803,6 +803,7 @@ const getGraduateProfileForUser = async (req, res) => {
                   `${comment.User?.["first-name"] || ""} ${
                     comment.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
+                "user-type": comment.User?.["user-type"] || "unknown",
                 image: comment.User?.Graduate
                   ? comment.User.Graduate["profile-picture-url"]
                   : null,
