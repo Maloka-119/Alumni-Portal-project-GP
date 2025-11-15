@@ -9,12 +9,15 @@ import { useTranslation } from "react-i18next";
 function Accountgrad() {
   const { t } = useTranslation();
   const { userId } = useParams();
+  console.log("userId from useParams:", userId);
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
       setLoading(true);
+      console.log("userId from useParams:", userId);
+
       try {
         const res = await API.get(`/graduates/profile/${userId}`);
         console.log("Profile API response:", res.data);
@@ -25,7 +28,6 @@ function Accountgrad() {
           // تنسيق المهارات
           const skills = Array.isArray(data.skills) ? data.skills : JSON.parse(data.skills || "[]");
 
-          // تنسيق البوستات لتتناسب مع PostCard
           const formattedPosts = (data.posts || []).map((p) => ({
             ...p,
             id: p.post_id,
@@ -33,15 +35,16 @@ function Accountgrad() {
             category: p.category,
             date: p["created-at"],
             author: {
-              id: p.author?.id,
-              name: p.author?.["full-name"],
+              id: p.author?.id || null,
+              name: p.author?.["full-name"] || "Unknown",
               photo: p.author?.image || PROFILE,
             },
-            likes: p.likes_count || 0,
-            comments: p.comments || [],
-            images: p.images || [],
-            shares: p.shares || 0,
-          }));
+            likes: Number(p.likes_count) || 0,
+            comments: Array.isArray(p.comments) ? p.comments : [],
+            images: Array.isArray(p.images) ? p.images : [],
+            shares: Number(p.shares) || 0,
+        }));
+        
 
           setFormData({
             ...data,
