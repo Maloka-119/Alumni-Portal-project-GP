@@ -642,20 +642,15 @@ const getGraduateProfileForUser = async (req, res) => {
     const { identifier } = req.params;
     const currentUserId = req.user.id;
 
-    console.log("🔍 البحث عن الخريج:", { identifier, currentUserId });
-
     let graduate;
 
     // البحث عن الخريج بالإيدي
     if (!isNaN(identifier)) {
-      console.log("🔍 البحث بالإيدي:", identifier);
       graduate = await Graduate.findByPk(identifier, {
         include: [{ model: User }],
       });
-      console.log("✅ نتيجة البحث بالإيدي:", graduate ? "موجود" : "غير موجود");
     } else {
       // البحث بالإيميل
-      console.log("🔍 البحث بالإيميل:", identifier);
       const userByEmail = await User.findOne({
         where: { email: identifier },
         include: [{ model: Graduate }],
@@ -663,10 +658,8 @@ const getGraduateProfileForUser = async (req, res) => {
 
       if (userByEmail) {
         graduate = userByEmail.Graduate;
-        console.log("✅ وجد بالإيميل:", userByEmail.email);
       } else {
         // البحث بالاسم
-        console.log("🔍 البحث بالاسم:", identifier);
         const usersByName = await User.findAll({
           where: {
             [Op.or]: [
@@ -677,16 +670,9 @@ const getGraduateProfileForUser = async (req, res) => {
           include: [{ model: Graduate }],
         });
 
-        console.log("🔍 عدد النتائج بالاسم:", usersByName.length);
-
         for (let user of usersByName) {
           if (user.Graduate) {
             graduate = user.Graduate;
-            console.log(
-              "✅ وجد بالاسم:",
-              user["first-name"],
-              user["last-name"]
-            );
             break;
           }
         }
@@ -694,19 +680,12 @@ const getGraduateProfileForUser = async (req, res) => {
     }
 
     if (!graduate || !graduate.User) {
-      console.log("❌ الخريج غير موجود");
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
         data: null,
       });
     }
-
-    console.log(
-      "✅ تم العثور على الخريج:",
-      graduate.graduate_id,
-      graduate.User["first-name"]
-    );
 
     // تحديد حالة الصداقة
     let friendshipStatus = "no_relation";
@@ -740,11 +719,7 @@ const getGraduateProfileForUser = async (req, res) => {
 
     if (friendship) friendshipStatus = "friends";
 
-    console.log("🔍 حالة الصداقة:", friendshipStatus);
-
     // جلب بوستات الخريج
-    console.log("🔍 جلب البوستات للخريج:", graduate.graduate_id);
-
     const posts = await Post.findAll({
       where: {
         "author-id": graduate.graduate_id,
@@ -789,39 +764,9 @@ const getGraduateProfileForUser = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    console.log("🔍 عدد البوستات التي تم جلبها:", posts.length);
-
-    // لوج مفصل لكل بوست واللايكات
-    posts.forEach((post, index) => {
-      console.log(`\n📝 البوست ${index + 1}:`, post.post_id);
-      console.log(
-        "🔍 عدد اللايكات في البوست:",
-        post.Likes ? post.Likes.length : 0
-      );
-
-      if (post.Likes && post.Likes.length > 0) {
-        post.Likes.forEach((like, likeIndex) => {
-          console.log(`   ❤️  لايك ${likeIndex + 1}:`, {
-            like_id: like.like_id,
-            user_id: like["user-id"],
-            user_data: like.User ? `موجود (${like.User.id})` : "NULL",
-          });
-        });
-      } else {
-        console.log("   ❌ لا توجد لايكات في هذا البوست");
-      }
-    });
-
     // تجهيز بيانات البوستات
     const postsData = posts.map((post) => {
       const authorUser = post.User;
-
-      console.log(`🔍 تجهيز البوست ${post.post_id}:`, {
-        likes_count: post.Likes ? post.Likes.length : 0,
-        user_in_likes: post.Likes
-          ? post.Likes.map((like) => (like.User ? like.User.id : "NULL"))
-          : [],
-      });
 
       return {
         post_id: post.post_id,
@@ -841,28 +786,20 @@ const getGraduateProfileForUser = async (req, res) => {
           ? post.PostImages.map((img) => img["image-url"])
           : [],
         likes: post.Likes
-          ? post.Likes.map((like) => {
-              console.log("🔍 تجهيز لايك:", {
-                like_id: like.like_id,
-                user_id: like["user-id"],
-                user_data: like.User,
-              });
-
-              return {
-                like_id: like.like_id,
-                user: like.User
-                  ? {
-                      id: like.User.id,
-                      "full-name": `${like.User["first-name"] || ""} ${
-                        like.User["last-name"] || ""
-                      }`.trim(),
-                      image: like.User.Graduate
-                        ? like.User.Graduate["profile-picture-url"]
-                        : null,
-                    }
-                  : null,
-              };
-            })
+          ? post.Likes.map((like) => ({
+              like_id: like.like_id,
+              user: like.User
+                ? {
+                    id: like.User.id,
+                    "full-name": `${like.User["first-name"] || ""} ${
+                      like.User["last-name"] || ""
+                    }`.trim(),
+                    image: like.User.Graduate
+                      ? like.User.Graduate["profile-picture-url"]
+                      : null,
+                  }
+                : null,
+            }))
           : [],
         likes_count: post.Likes ? post.Likes.length : 0,
         comments: post.Comments
@@ -909,8 +846,6 @@ const getGraduateProfileForUser = async (req, res) => {
     if (graduate.show_linkedin)
       profile.linkedlnLink = graduate["linkedln-link"];
     if (userData.show_phone) profile.phoneNumber = userData.phoneNumber;
-
-    console.log("✅ تم تجهيز البروفايل بنجاح");
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
