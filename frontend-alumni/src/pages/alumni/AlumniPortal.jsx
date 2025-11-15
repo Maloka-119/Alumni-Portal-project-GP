@@ -84,7 +84,9 @@ const Dashboard = ({ setUser }) => {
     if(action === "logout") {
       try {
         const token = localStorage.getItem("token");
-        if(token) await API.post("/logout", {}, { headers: { Authorization: `Bearer ${token}` } });
+        if(token) {
+          await API.get("/logout", { headers: { Authorization: `Bearer ${token}` } });
+        }
       } catch(err) {
         console.error("Logout failed:", err);
       } finally {
@@ -93,6 +95,7 @@ const Dashboard = ({ setUser }) => {
         navigate('/helwan-alumni-portal/login', { replace: true });
       }
     }
+    
     if(action === "language") i18n.changeLanguage(i18n.language === "en" ? "ar" : "en");
   }
 
