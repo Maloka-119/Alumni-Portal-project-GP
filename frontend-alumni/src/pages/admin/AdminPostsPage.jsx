@@ -1,5 +1,5 @@
 
-
+import PROFILE from "./PROFILE.jpeg";
 import React, { useState, useEffect } from 'react';
 import './AdminPostsPage.css';
 import AdminPostsImg from './AdminPosts.jpeg';
@@ -52,11 +52,11 @@ const AdminPostsPage = ({ currentUser }) => {
     
     return filtered.map(post => {
       const formattedComments = (post.comments || []).map((comment) => {
-        const isAdminOrStaff = ["admin", "staff"].includes(comment.author?.userType);
+        const isAdminOrStaff = ["admin", "staff"].includes(comment.author?.["user-type"]);
         return {
           id: comment.comment_id,
           userName: isAdminOrStaff ? "Alumni Portal – Helwan University" : comment.author?.["full-name"] || "Anonymous",
-          avatar: isAdminOrStaff ? AdminPostsImg : comment.author?.image || AdminPostsImg,
+          avatar: isAdminOrStaff ? AdminPostsImg : comment.author?.image || PROFILE,
           content: comment.content,
           date: comment["created-at"],
           author: comment.author,
@@ -192,14 +192,17 @@ const AdminPostsPage = ({ currentUser }) => {
     try {
       const res = await API.post(`/posts/${postId}/comments`, { content: comment });
       if (res.data.comment) {
-        const isAdminOrStaff = ["admin", "staff"].includes(res.data.comment.author?.userType);
+        const isAdminOrStaff = ["admin", "staff"].includes(res.data.comment.author?.["user-type"]);
         const newComment = {
           id: res.data.comment.comment_id,
           userName: isAdminOrStaff ? "Alumni Portal – Helwan University" : res.data.comment.author?.["full-name"] || "Admin",
-          avatar: isAdminOrStaff ? AdminPostsImg : res.data.comment.author?.image || AdminPostsImg,
+          avatar: isAdminOrStaff ? AdminPostsImg : res.data.comment.author?.image || PROFILE,
           content: res.data.comment.content,
           date: new Date().toLocaleString(),
-          author: res.data.comment.author,
+          author: {
+            ...res.data.comment.author,
+            "user-type": "admin" 
+          },
         };
         setPosts(prev =>
           prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment] } : p)
@@ -429,7 +432,7 @@ const AdminPostsPage = ({ currentUser }) => {
                       {new Date(comment.date).toLocaleString()}
                     </div>
                   
-                    {(["admin","staff"].includes(comment.author?.userType)) && (
+                    {(["admin","staff"].includes(comment.author?.["user-type"])) && (
   <div className="comment-actions">
     <button onClick={() => handleEditComment(post.id, comment)}>
       <Edit size={14} />

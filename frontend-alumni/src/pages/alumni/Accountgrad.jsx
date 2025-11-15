@@ -53,7 +53,7 @@ function Accountgrad() {
             comments: Array.isArray(p.comments)
   ? p.comments.map((c) => {
       const isUni =
-        c.author?.["full-name"]?.includes("Alumni Portal") ||
+        c.author?.["full-name"]?.includes("Alumni Portal - Helwan University",) ||
         c.author?.["user-type"] === "admin" ||
         c.author?.["user-type"] === "staff";
 
