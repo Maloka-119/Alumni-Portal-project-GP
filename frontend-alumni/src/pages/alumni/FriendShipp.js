@@ -257,7 +257,8 @@ function FriendshipPage() {
                       className="Removebutton"
                       onClick={() => unfriendFriend(f.friendId)}
                     >
-                      {t("Unfriend")}
+                     {t("unfriend")}
+
                     </button>
                   </div>
                 </div>
