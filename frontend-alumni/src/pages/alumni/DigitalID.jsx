@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import PROFILE from "./PROFILE.jpeg";
 import { useTranslation } from "react-i18next";
 import API from "../../services/api";
+import UniLogo from '../../components/logo-white-deskt-min.png';
 
 function DigitalID() {
   const { t } = useTranslation();
@@ -92,9 +93,11 @@ function DigitalID() {
       <h4 className="h4">{t("digitalId_subtitle")}</h4>
 
       <div className="IdCardArea" ref={cardRef}>
-        <div className="card-header">
-          <p>{t("digitalId_cardHeader")}</p>
-        </div>
+      <div className="card-header">
+  <img src={UniLogo} alt="University Logo" className="uni-logo" />
+  <span className="header-text">{t("digitalId_cardHeader")}</span>
+</div>
+
 
         <div className="card-body">
           <div className="cardcontent">

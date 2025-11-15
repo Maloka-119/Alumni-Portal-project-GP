@@ -48,13 +48,26 @@
   background-color: #37568d;
   color: white;
   text-align: center;
-  padding: 6px 0;   /* بدل 12px أو 20px */
+  padding: 6px 0;
   font-size: 18px;
   font-weight: bold;
-  height: 40px;     /* ارتفاع ثابت وصغير */
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.uni-logo {
+  height: 28px;
+  position: absolute;
+  left: 10px; /* يثبت اللوجو على أقصى اليسار */
+  object-fit: contain;
+}
+
+.header-text {
+  flex: 1;
+  text-align: center; 
 }
 
 .p {
@@ -155,7 +168,7 @@
 .IdCardArea {
   max-width: 500px;
   width: 100%;
-  background: linear-gradient(135deg, #ffffff, #f2f2f2, #d9f2e6);
+  /* background: linear-gradient(135deg, #ffffff, #f2f2f2, #d9f2e6); */
   border-radius: 12px;
   box-shadow: 0 6px 25px rgba(0,0,0,0.35); 
   margin: 20px auto;
