@@ -644,13 +644,13 @@ const getGraduateProfileForUser = async (req, res) => {
 
     let graduate;
 
-    // 🔍 البحث عن الخريج بالإيدي
+    // البحث عن الخريج بالإيدي
     if (!isNaN(identifier)) {
       graduate = await Graduate.findByPk(identifier, {
         include: [{ model: User }],
       });
     } else {
-      // 🔍 البحث بالإيميل
+      // البحث بالإيميل
       const userByEmail = await User.findOne({
         where: { email: identifier },
         include: [{ model: Graduate }],
@@ -659,7 +659,7 @@ const getGraduateProfileForUser = async (req, res) => {
       if (userByEmail) {
         graduate = userByEmail.Graduate;
       } else {
-        // 🔍 البحث بالاسم
+        // البحث بالاسم
         const usersByName = await User.findAll({
           where: {
             [Op.or]: [
@@ -687,7 +687,7 @@ const getGraduateProfileForUser = async (req, res) => {
       });
     }
 
-    // 🔍 تحديد حالة العلاقة (صداقة)
+    // تحديد حالة الصداقة
     let friendshipStatus = "no_relation";
 
     const existingFriendshipRequest = await Friendship.findOne({
@@ -719,7 +719,7 @@ const getGraduateProfileForUser = async (req, res) => {
 
     if (friendship) friendshipStatus = "friends";
 
-    // 📝 جلب بوستات الخريج
+    // جلب بوستات الخريج
     const posts = await Post.findAll({
       where: {
         "author-id": graduate.graduate_id,
@@ -732,18 +732,12 @@ const getGraduateProfileForUser = async (req, res) => {
           attributes: ["id", "first-name", "last-name"],
           include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
         },
-        {
-          model: PostImage,
-          attributes: ["image-url"],
-        },
+        { model: PostImage, attributes: ["image-url"] },
         {
           model: Like,
           attributes: ["like_id", "user-id"],
           include: [
-            {
-              model: User,
-              attributes: ["id", "first-name", "last-name"],
-            },
+            { model: User, attributes: ["id", "first-name", "last-name"] },
           ],
         },
         {
@@ -754,10 +748,7 @@ const getGraduateProfileForUser = async (req, res) => {
               model: User,
               attributes: ["id", "first-name", "last-name"],
               include: [
-                {
-                  model: Graduate,
-                  attributes: ["profile-picture-url"],
-                },
+                { model: Graduate, attributes: ["profile-picture-url"] },
               ],
             },
           ],
@@ -767,7 +758,7 @@ const getGraduateProfileForUser = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    // 🎯 تجهيز بيانات البوستات بنفس أسلوب الفانكشن الشغالة
+    // تجهيز بيانات البوستات
     const postsData = posts.map((post) => {
       const authorUser = post.User;
 
@@ -776,7 +767,6 @@ const getGraduateProfileForUser = async (req, res) => {
         category: post.category,
         content: post.content,
         "created-at": post["created-at"],
-
         author: {
           id: authorUser?.id || "unknown",
           "full-name": `${authorUser?.["first-name"] || ""} ${
@@ -786,26 +776,21 @@ const getGraduateProfileForUser = async (req, res) => {
             ? authorUser.Graduate["profile-picture-url"]
             : null,
         },
-
         images: post.PostImages
           ? post.PostImages.map((img) => img["image-url"])
           : [],
-
-        // 👍 نفس طريقة getAllPostsOfUsers
         likes: post.Likes
-          ? post.Likes.map((like) => ({
+          ? post.Likes.filter((like) => like.User).map((like) => ({
               like_id: like.like_id,
               user: {
-                id: like.User?.id || "unknown",
-                "full-name":
-                  `${like.User?.["first-name"] || ""} ${
-                    like.User?.["last-name"] || ""
-                  }`.trim() || "Unknown User",
+                id: like.User.id,
+                "full-name": `${like.User["first-name"] || ""} ${
+                  like.User["last-name"] || ""
+                }`.trim(),
               },
             }))
           : [],
         likes_count: post.Likes ? post.Likes.length : 0,
-
         comments: post.Comments
           ? post.Comments.map((comment) => ({
               comment_id: comment.comment_id,
@@ -831,7 +816,6 @@ const getGraduateProfileForUser = async (req, res) => {
     const userData = graduate.User;
     const isOwner = +currentUserId === +graduate.graduate_id;
 
-    // 👑 لو صاحب البروفايل
     if (isOwner) {
       return res.json({
         status: HttpStatusHelper.SUCCESS,
@@ -844,25 +828,19 @@ const getGraduateProfileForUser = async (req, res) => {
           bio: graduate.bio,
           skills: graduate.skills,
           currentJob: graduate["current-job"],
-
-          // الخصوصية
           showCV: graduate.show_cv,
           showLinkedIn: graduate.show_linkedin,
           showPhone: userData.show_phone,
-
-          // يظهر له كل حاجة
           CV: graduate["cv-url"],
           linkedlnLink: graduate["linkedln-link"],
           phoneNumber: userData.phoneNumber,
-
           friendshipStatus: "owner",
-
           posts: postsData,
         },
       });
     }
 
-    // 👥 الآخرين حسب الخصوصية
+    // بيانات الآخرين حسب الخصوصية
     const profile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${userData["first-name"]} ${userData["last-name"]}`,
@@ -889,7 +867,6 @@ const getGraduateProfileForUser = async (req, res) => {
       data: profile,
     });
   } catch (err) {
-    console.error("Error in getGraduateProfileForUser:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: err.message,

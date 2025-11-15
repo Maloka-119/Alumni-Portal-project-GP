@@ -1667,14 +1667,13 @@ const editPost = async (req, res) => {
   }
 };
 // Like a post
+// Like a post (toggle)
 const likePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
 
-    // Any authenticated user can like posts
-
-    // Check if post exists
+    // تحقق من وجود البوست
     const post = await Post.findByPk(postId);
     if (!post) {
       return res.status(404).json({
@@ -1683,7 +1682,7 @@ const likePost = async (req, res) => {
       });
     }
 
-    // Check if user already liked this post
+    // تحقق لو المستخدم عمل Like قبل كده
     const existingLike = await Like.findOne({
       where: {
         "post-id": postId,
@@ -1692,19 +1691,21 @@ const likePost = async (req, res) => {
     });
 
     if (existingLike) {
-      return res.status(400).json({
-        status: "error",
-        message: "Post already liked by this user",
+      // لو موجود، نحذفه (unlike)
+      await existingLike.destroy();
+      return res.json({
+        status: HttpStatusHelper.SUCCESS,
+        message: "Like removed successfully",
       });
     }
 
-    // Create new like
+    // إنشاء Like جديد
     const newLike = await Like.create({
       "post-id": postId,
       "user-id": userId,
     });
 
-    // Create notification for post author (if not liking own post)
+    // إنشاء إشعار لصاحب البوست لو مش هو
     if (post["author-id"] !== userId) {
       await notifyPostLiked(post["author-id"], userId);
     }
@@ -1715,7 +1716,6 @@ const likePost = async (req, res) => {
       like: newLike,
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -1729,9 +1729,7 @@ const unlikePost = async (req, res) => {
     const { postId } = req.params;
     const userId = req.user.id;
 
-    // Any authenticated user can unlike posts
-
-    // Find and delete the like
+    // البحث عن Like
     const like = await Like.findOne({
       where: {
         "post-id": postId,
@@ -1746,6 +1744,7 @@ const unlikePost = async (req, res) => {
       });
     }
 
+    // حذف الـ Like
     await like.destroy();
 
     return res.status(200).json({
@@ -1753,7 +1752,6 @@ const unlikePost = async (req, res) => {
       message: "Post unliked successfully",
     });
   } catch (error) {
-    console.error(error);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
