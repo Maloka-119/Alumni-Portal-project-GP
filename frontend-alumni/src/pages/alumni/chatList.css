@@ -165,3 +165,10 @@
   background-color: #3b82f6;
   color: #fff;
 }
+.chat-list {
+  direction: ltr; /* افتراضي */
+}
+
+.chat-list.rtl {
+  direction: rtl;
+}

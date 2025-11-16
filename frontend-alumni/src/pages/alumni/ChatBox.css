@@ -1,10 +1,10 @@
-/* ================= Chat Overlay Light Mode Smooth ================= */
+/* ================= Chat Overlay ================= */
 .chat-overlay {
   position: fixed;
-  right: 20px;
-  bottom: 20px;
-  width: 360px;
-  height: 500px;
+  bottom: 20px;      /* يثبت الشات على الأسفل */
+  right: 20px;       /* يظهر على اليمين بشكل افتراضي */
+  width: 360px;      /* عرض ثابت */
+  height: 500px;     /* ارتفاع ثابت */
   display: flex;
   flex-direction: column;
   background: #fcfcfc;
@@ -13,11 +13,17 @@
   overflow: hidden;
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
   font-family: Arial, sans-serif;
+  transition: all 0.3s ease;
   z-index: 999;
 }
 
-/* Header */
-/* .chat-header {
+[dir="rtl"] .chat-overlay {
+  right: auto;
+  left: 20px;  /* يتحول للجهة اليسرى عند العربية */
+}
+
+/* ================= Header ================= */
+.chat-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,9 +33,9 @@
   font-weight: bold;
   border-bottom: 1px solid #60a5fa;
   border-radius: 12px 12px 0 0;
-} */
+}
 
-/* Messages container */
+/* ================= Messages Container ================= */
 .chat-messages {
   flex: 1;
   padding: 12px;
@@ -38,7 +44,6 @@
   flex-direction: column;
   gap: 8px;
   background: #f8f9fa;
-  border-radius: 0 0 12px 12px;
 }
 
 /* Scrollbar */
@@ -50,7 +55,7 @@
   border-radius: 3px;
 }
 
-/* Each message bubble */
+/* ================= Each Message ================= */
 .chat-message {
   display: flex;
   flex-direction: column;
@@ -60,9 +65,11 @@
   position: relative;
   word-wrap: break-word;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  font-size: 14px;
+  font-weight: 500;
 }
 
-/* Message from me */
+/* Me / Friend Bubbles */
 .chat-message.me {
   align-self: flex-end;
   background-color: #dbeafe;
@@ -70,7 +77,6 @@
   border-bottom-right-radius: 0;
 }
 
-/* Message from friend */
 .chat-message.friend {
   align-self: flex-start;
   background-color: #ffffff;
@@ -78,66 +84,17 @@
   border-bottom-left-radius: 0;
 }
 
-/* Reply inside message */
-.reply-box {
-  background: rgba(0,0,0,0.03);
-  padding: 5px 10px;
-  margin-bottom: 4px;
-  border-left: 3px solid #3b82f6;
-  font-size: 0.85rem;
-  border-radius: 10px;
+/* RTL Adjustments */
+.chat-overlay[dir="rtl"] .chat-message {
+  text-align: right;
 }
-
-/* Message time and status */
-.message-time {
-  font-size: 0.75rem;
-  color: #7b8794;
-  margin-top: 4px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 4px;
+.chat-overlay[dir="rtl"] .chat-message.me {
+  align-self: flex-start;
+  border-bottom-left-radius: 0;
 }
-
-/* Edited label */
-.edited-label {
-  font-size: 0.65rem;
-  color: #9ca3af;
-}
-
-/* Actions (edit, delete, reply) */
-.message-actions {
-  display: flex;
-  gap: 4px;
-  margin-top: 4px;
-}
-
-.icon-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 2px;
-}
-
-/* Deleted message */
-.deleted-message {
-  font-style: italic;
-  color: #9ca3af;
-}
-
-/* Reply preview at bottom */
-.reply-preview {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 12px;
-  background: #f1f5f9;
-  border-left: 4px solid #3b82f6;
-  border-radius: 10px;
-  margin-bottom: 4px;
-  font-size: 0.85rem;
-}
-.cancel-reply {
-  cursor: pointer;
+.chat-overlay[dir="rtl"] .chat-message.friend {
+  align-self: flex-end;
+  border-bottom-right-radius: 0;
 }
 
 /* ================= Input Area ================= */
@@ -150,7 +107,6 @@
   background-color: #f9fafc;
   border-radius: 0 0 12px 12px;
 }
-
 .chat-input input[type="text"] {
   flex: 1;
   padding: 10px 14px;
@@ -160,240 +116,11 @@
   background: #ffffff;
 }
 
-/* Send / Paperclip button */
-.blue-icon {
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
-}
-
-.blue-icon:hover {
-  background-color: #60a5fa;
-  transform: scale(1.05);
-}
-
-/* File selected state */
-.blue-icon.file-selected {
-  transform: scale(1.1);
-  background-color: #60a5fa;
-}
-
-/* ================= File Preview ================= */
-.file-preview {
-  display: flex;
-  align-items: center;
-  background-color: #f8f9fa;
-  padding: 6px 10px;
-  border-radius: 10px;
-  margin-bottom: 5px;
-  gap: 6px;
-  border: 1px solid #e2e8f0;
-}
-
-.file-preview img.preview-img {
-  width: 30px;
-  height: 30px;
-  object-fit: cover;
-  border-radius: 6px;
-}
-
-.file-preview button {
-  background: none;
-  border: none;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* ================= Edit Message ================= */
-.edit-message-box {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.edit-input {
-  flex: 1;
-  padding: 6px 8px;
-  border-radius: 10px;
-  border: 1px solid #cbd5e1;
-  outline: none;
-  background-color: #ffffff;
-}
-
-/* ================= Chat Overlay Dark Mode ================= */
-.dark .chat-overlay {
-  background: #111827;
-  border: 1px solid #374151;
-  color: #f9fafb;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-.dark .chat-header {
-  background: #1f2937;
-  color: #f9fafb;
-  border-bottom: 1px solid #374151;
-}
-
-.dark .chat-messages {
-  background: #1e293b;
-}
-
-.dark .chat-message.me {
-  background-color: #2563eb; /* أزرق داكن */
-  color: #f9fafb;
-}
-
-.dark .chat-message.friend {
-  background-color: #374151; /* رمادي غامق */
-  color: #f9fafb;
-}
-
-.dark .reply-box {
-  background: rgba(255,255,255,0.1);
-  border-left: 3px solid #3b82f6;
-  color: #f9fafb;
-}
-
-.dark .message-time,
-.dark .edited-label {
-  color: #9ca3af;
-}
-
-.dark .message-actions .icon-btn {
-  color: #f9fafb;
-}
-
-.dark .deleted-message {
-  color: #9ca3af;
-  font-style: italic;
-}
-
-.dark .reply-preview {
-  background: #1f2937;
-  border-left: 4px solid #3b82f6;
-  color: #f9fafb;
-}
-
-.dark .chat-input {
-  background-color: #1e293b;
-  border-top: 1px solid #374151;
-}
-
-.dark .chat-input input[type="text"] {
-  background: #111827;
-  color: #f9fafb;
-  border: 1px solid #374151;
-}
-
-.dark .blue-icon {
-  background-color: #2563eb;
-  color: #f9fafb;
-}
-
-.dark .blue-icon:hover {
-  background-color: #1d4ed8;
-}
-
-.dark .file-preview {
-  background-color: #1f2937;
-  color: #f9fafb;
-}
-
-.dark .file-preview button {
-  color: #f9fafb;
-}
-
-.dark .edit-message-box,
-.dark .edit-input {
-  background-color: #1f2937;
-  color: #f9fafb;
-  border: 1px solid #374151;
-}
-
-/* ================= Chat File Button ================= */
-.file-download-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background-color: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  cursor: pointer;
-  font-size: 14px;
-  color: #1d4ed8;
-  transition: background 0.2s, transform 0.1s;
-  width: fit-content;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.file-download-btn svg {
-  flex-shrink: 0;
-  width: 16px;
-  height: 16px;
-  color: #1e40af;
-}
-
-.file-download-btn:hover {
-  background-color: #e0f2fe;
-  transform: scale(1.02);
-}
-
-/* إذا محتوى الاسم طويل */
-.file-download-btn span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* ================= Chat File Button Dark Mode ================= */
-.dark .file-download-btn {
-  background-color: #1f2937; /* خلفية غامقة */
-  border: 1px solid #374151;
-  color: #60a5fa; /* نص أزرق فاتح */
-}
-
-.dark .file-download-btn svg {
-  color: #3b82f6; /* أيقونة أزرق فاتح */
-}
-
-.dark .file-download-btn:hover {
-  background-color: #111827; /* خلفية أغمق عند hover */
-  transform: scale(1.02);
-}
-
-.dark .file-download-btn span {
-  color: #60a5fa; /* اسم الملف */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.icon-btn svg {
-  width: 14px;
-  height: 14px;
-  opacity: 0.5;
-}
-
-.message-time {
-  font-size: 10px;
-  opacity: 0.6;
-}
-
-.chat-message {
-  font-size: 14px;
-  font-weight: 500;
-}
-.message-actions .icon-btn svg {
-  width: 13px;
-  height: 13px;
-}
+/* ================= Dark Mode ================= */
+.dark .chat-overlay { background: #111827; border: 1px solid #374151; color: #f9fafb; }
+.dark .chat-header { background: #1f2937; color: #f9fafb; border-bottom: 1px solid #374151; }
+.dark .chat-messages { background: #1e293b; }
+.dark .chat-message.me { background-color: #2563eb; color: #f9fafb; }
+.dark .chat-message.friend { background-color: #374151; color: #f9fafb; }
+.dark .chat-input { background-color: #1e293b; border-top: 1px solid #374151; }
+.dark .chat-input input[type="text"] { background: #111827; color: #f9fafb; border: 1px solid #374151; }

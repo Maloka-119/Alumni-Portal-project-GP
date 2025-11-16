@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import API from "../../services/api";
 import ChatBox from "./ChatBox";
+import { useTranslation } from "react-i18next";
 import "./chatList.css";
 
 export default function ChatList() {
+  const { t, i18n } = useTranslation();
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
 
@@ -16,9 +18,9 @@ export default function ChatList() {
           const lastMsg = chat.last_message;
           let displayContent = "";
           if (lastMsg) {
-            if (lastMsg.message_type === "image") displayContent = "[صورة]";
-            else if (lastMsg.message_type === "pdf") displayContent = `[ملف PDF: ${lastMsg.file_name}]`;
-            else if (lastMsg.message_type === "file") displayContent = `[ملف: ${lastMsg.file_name}]`;
+            if (lastMsg.message_type === "image") displayContent = t("chat.image");
+            else if (lastMsg.message_type === "pdf") displayContent = t("chat.pdfFile", { name: lastMsg.file_name });
+            else if (lastMsg.message_type === "file") displayContent = t("chat.file", { name: lastMsg.file_name });
             else displayContent = lastMsg.content || "";
           }
           return {
@@ -31,11 +33,11 @@ export default function ChatList() {
         });
         setChats(normalizedChats);
       } catch (err) {
-        console.error("Fetch Chats Error:", err);
+        console.error(t("chat.fetchError"), err);
       }
     };
     fetchChats();
-  }, []);
+  }, [t]);
 
   // ------------------ UPDATE CHAT LIST ------------------
   const updateChatList = (updatedMsg) => {
@@ -43,12 +45,11 @@ export default function ChatList() {
       prevChats.map((chat) => {
         if (chat.chat_id !== updatedMsg.chat_id) return chat;
 
-        // تحديد المحتوى الذي سيظهر في Chat List حسب نوع الرسالة
         let lastMsgText = updatedMsg.content || "";
 
-        if (updatedMsg.message_type === "image") lastMsgText = "[صورة]";
-        else if (updatedMsg.message_type === "pdf") lastMsgText = `[ملف PDF: ${updatedMsg.file_name}]`;
-        else if (updatedMsg.message_type === "file") lastMsgText = `[ملف: ${updatedMsg.file_name}]`;
+        if (updatedMsg.message_type === "image") lastMsgText = t("chat.image");
+        else if (updatedMsg.message_type === "pdf") lastMsgText = t("chat.pdfFile", { name: updatedMsg.file_name });
+        else if (updatedMsg.message_type === "file") lastMsgText = t("chat.file", { name: updatedMsg.file_name });
 
         return {
           ...chat,
@@ -67,24 +68,33 @@ export default function ChatList() {
   const openChat = async (chat) => {
     setActiveChat(chat);
 
-    // Reset unread count locally
     setChats((prevChats) =>
       prevChats.map((c) =>
         c.chat_id === chat.chat_id ? { ...c, unread_count: 0 } : c
       )
     );
 
-    // Mark messages as read in backend
     try {
       await API.put(`/chat/${chat.chat_id}/read`);
     } catch (err) {
-      console.error("Mark Messages as Read Error:", err);
+      console.error(t("chat.markReadError"), err);
     }
+  };
+
+  // ------------------ FORMAT TIME ------------------
+  const formatTime = (timestamp) => {
+    if (!timestamp) return "";
+    const options = { hour: "2-digit", minute: "2-digit", hour12: true };
+    return new Intl.DateTimeFormat(
+      i18n.language === "ar" ? "ar-EG" : "en-US",
+      options
+    ).format(new Date(timestamp));
   };
 
   return (
     <div className="chat-container">
-      <div className="chat-list">
+     <div className={`chat-list ${i18n.language === "ar" ? "rtl" : ""}`}>
+
         {chats.map((chat) => (
           <div
             key={chat.chat_id}
@@ -103,11 +113,7 @@ export default function ChatList() {
                   {chat.last_message?.content || ""}
                   {chat.last_message_at && (
                     <span className="chat-time">
-                      {" • " +
-                        new Date(chat.last_message_at).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                      {" • " + formatTime(chat.last_message_at)}
                     </span>
                   )}
                 </small>
@@ -121,12 +127,17 @@ export default function ChatList() {
       </div>
 
       {activeChat && (
-        <ChatBox
-          chatId={activeChat.chat_id}
-          activeChatFriend={activeChat.other_user}
-          onClose={() => setActiveChat(null)}
-          updateChatList={updateChatList}
-        />
+        <div 
+          className="chatbox-wrapper"
+          style={{ direction: i18n.language === "ar" ? "rtl" : "ltr" }}
+        >
+          <ChatBox
+            chatId={activeChat.chat_id}
+            activeChatFriend={activeChat.other_user}
+            onClose={() => setActiveChat(null)}
+            updateChatList={updateChatList}
+          />
+        </div>
       )}
     </div>
   );

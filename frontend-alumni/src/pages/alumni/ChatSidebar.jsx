@@ -1,34 +1,23 @@
+// ChatSidebar.jsx
 import React, { useState } from "react";
 import ChatList from "./chatList";
 import Chat from "./chat";
-import { X ,ArrowLeft } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import "./ChatSidebar.css";
 
 export default function ChatSidebar({ darkMode, chatOpen, setChatOpen }) {
+  const { i18n } = useTranslation();
   const [selectedChat, setSelectedChat] = useState(null);
 
-  const handleSelectChat = (chat) => {
-    setSelectedChat(chat);
-  };
-  const handleBackToList = () => {
-    setSelectedChat(null);
-  };
+  const handleSelectChat = (chat) => setSelectedChat(chat);
+  const handleBackToList = () => setSelectedChat(null);
 
   return (
-    <div className={`chat-sidebar ${chatOpen ? "open" : ""}`}>
-      {/* <div className="sidechat-header">
-      {selectedChat ? (
-          <button onClick={handleBackToList} className="back-chat">
-            <ArrowLeft size={18} />
-          </button>
-        ) : (
-          <button onClick={() => setChatOpen(false)} className="close-chat">
-          <X size={18} />
-        </button>
-        )}
-        
-      </div> */}
-
+    <div
+      className={`chat-sidebar ${chatOpen ? "open" : ""} ${
+        i18n.language === "ar" ? "rtl" : "ltr"
+      } ${darkMode ? "dark" : ""}`}
+    >
       {!selectedChat ? (
         <ChatList darkMode={darkMode} onSelectChat={handleSelectChat} />
       ) : (
@@ -37,6 +26,7 @@ export default function ChatSidebar({ darkMode, chatOpen, setChatOpen }) {
     </div>
   );
 }
+
 
 // import React from "react";
 // import ChatList from "./chatList";

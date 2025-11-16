@@ -1,4 +1,3 @@
-// ChatBox.jsx
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import API from "../../services/api";
@@ -19,7 +18,6 @@ export default function ChatBox({
   activeChatFriend,
   onClose,
   updateChatList,
-  fromChatList = true,
 }) {
   const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState([]);
@@ -49,7 +47,6 @@ export default function ChatBox({
     return "sent";
   };
 
-  // ------------------ تحديث Chat List ------------------
   const updateChatListLastMessage = useCallback((msg) => {
     const lastMsgContent = msg.message_type === "image" ? "[صورة]" :
                            msg.message_type === "pdf" ? `[ملف PDF: ${msg.file_name}]` :
@@ -73,7 +70,6 @@ export default function ChatBox({
     }
   };
 
-  // ------------------ جلب الرسائل ------------------
   useEffect(() => {
     if (!chatId || !token) return;
     let mounted = true;
@@ -120,7 +116,6 @@ export default function ChatBox({
     return () => { mounted = false; };
   }, [chatId, token, t, userId, updateChatListLastMessage]);
 
-  // ------------------ WebSocket ------------------
   useEffect(() => {
     if (!chatId || !token) return;
     const socket = initSocket(token);
@@ -131,16 +126,10 @@ export default function ChatBox({
     const handleNew = (msg) => {
       if (msg.chat_id !== chatId) return;
       setMessages((prev) => {
-        // Check if message already exists to prevent duplicates
-        if (prev.some((m) => m.message_id === msg.message_id)) {
-          return prev;
-        }
+        if (prev.some((m) => m.message_id === msg.message_id)) return prev;
         let replyMsg = null;
-        if (msg.reply_to_message_id) {
-          replyMsg = prev.find((m) => m.message_id === msg.reply_to_message_id) || msg.replyTo || null;
-        } else if (msg.replyTo) {
-          replyMsg = msg.replyTo;
-        }
+        if (msg.reply_to_message_id) replyMsg = prev.find((m) => m.message_id === msg.reply_to_message_id) || msg.replyTo || null;
+        else if (msg.replyTo) replyMsg = msg.replyTo;
         const normalizedMsg = {
           ...msg,
           file_url: msg.attachment_url || msg.file_url || null,
@@ -170,9 +159,7 @@ export default function ChatBox({
     const handleEdit = (updatedMsg) => {
       if (updatedMsg.chat_id !== chatId) return;
       setMessages((prev) =>
-        prev.map((msg) =>
-          msg.message_id === updatedMsg.message_id ? { ...msg, ...updatedMsg } : msg
-        )
+        prev.map((msg) => msg.message_id === updatedMsg.message_id ? { ...msg, ...updatedMsg } : msg)
       );
       updateChatListLastMessage(updatedMsg);
     };
@@ -186,13 +173,6 @@ export default function ChatBox({
             : msg
         )
       );
-      updateChatList?.((prevChats) =>
-        prevChats.map((chat) =>
-          chat.chat_id === chatId
-            ? { ...chat, unread_count: 0, last_message_actual: { ...chat.last_message_actual, localStatus: "seen" } }
-            : chat
-        )
-      );
     };
 
     onNewMessage(handleNew);
@@ -203,18 +183,17 @@ export default function ChatBox({
       leaveChatSocket(chatId);
       socket.off && socket.off("message_seen", handleSeen);
     };
-  }, [chatId, token, userId, updateChatListLastMessage, updateChatList]);
+  }, [chatId, token, userId, updateChatListLastMessage]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // ------------------ إرسال الملفات ------------------
   const handleFileChange = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
     const maxSize = 10 * 1024 * 1024;
-    const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/gif", "application/pdf", "text/plain"];
+    const allowedTypes = ["image/png","image/jpeg","image/jpg","image/gif","application/pdf","text/plain"];
     if (f.size > maxSize) return alert("حجم الملف كبير جدًا، استخدم ملف أصغر من 10MB");
     if (!allowedTypes.includes(f.type)) return alert("نوع الملف غير مدعوم");
 
@@ -227,7 +206,6 @@ export default function ChatBox({
     setFilePreview({ url, type, name: f.name });
   };
 
-  // ------------------ إرسال الرسائل ------------------
   const sendMessage = async () => {
     if (!newMessage.trim() && !file) return;
     try {
@@ -251,20 +229,14 @@ export default function ChatBox({
         message_type: isImage ? "image" : data.file_url?.endsWith(".pdf") ? "pdf" : data.message_type || (file ? "file" : "text"),
         file_url: data.file_url || data.attachment_url || null,
         file_name: data.file_name || data.attachment_name || (file?.name || null),
-        reply_to: data.replyTo
-          ? { ...data.replyTo }
-          : replyTo
-          ? { message_id: replyTo.message_id, sender_id: replyTo.sender_id, content: replyTo.content }
-          : null,
+        reply_to: replyTo ? { message_id: replyTo.message_id, sender_id: replyTo.sender_id, content: replyTo.content } : null,
         localStatus: "sent",
         edited: data.is_edited || false,
         created_at: data.created_at || new Date().toISOString(),
       };
 
       setMessages((prev) => [...prev, newMsg]);
-      // Note: Socket event is emitted by the REST API, no need to call sendMessageSocket
       updateChatListLastMessage(newMsg);
-
       setNewMessage("");
       setFile(null);
       setFilePreview(null);
@@ -276,7 +248,6 @@ export default function ChatBox({
     }
   };
 
-  // ------------------ تعديل الرسائل ------------------
   const startEditMessage = (message) => {
     setEditingMessageId(message.message_id);
     setEditContent(message.content);
@@ -293,7 +264,7 @@ export default function ChatBox({
       const updatedMsg = {
         message_id: messageId,
         content: res.data.data.content,
-        edited: res.data.data.is_edited || true,
+        edited: true,
         localStatus: normalizeStatus(res.data.data.status),
         chat_id: chatId,
       };
@@ -321,7 +292,7 @@ export default function ChatBox({
 
   return (
     <div className="chat-overlay" dir={direction}>
-      <div  className="chat-header">
+      <div className="chat-header">
         <span>{activeChatFriend?.name || activeChatFriend?.userName || "Unknown"}</span>
         <button onClick={onClose}><X size={18} /></button>
       </div>
@@ -331,26 +302,21 @@ export default function ChatBox({
           .slice()
           .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))
           .map((m) => {
-            const msgDate = new Date(m.created_at || Date.now());
-            const isToday = msgDate.toDateString() === new Date().toDateString();
             const isMine = String(m.sender_id) === String(userId);
             const timeString = toArabicNumbers(
-              isToday
-                ? msgDate.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
-                : msgDate.toLocaleString(locale, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })
+              new Date(m.created_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
             );
-            const replyMsg = m.reply_to;
 
             return (
               <div key={m.message_id} className={`chat-message ${isMine ? "me" : "friend"}`}>
-                {replyMsg && (
+                {m.reply_to && (
                   <div className="reply-box">
-                    <strong>{String(replyMsg.sender_id) === String(userId) ? t("You") : activeChatFriend?.name}</strong>
-                    <p>{replyMsg.content}</p>
+                    <strong>{String(m.reply_to.sender_id) === String(userId) ? t("You") : activeChatFriend?.name}</strong>
+                    <p>{m.reply_to.content}</p>
                   </div>
                 )}
 
-                {editingMessageId === m.message_id && m.message_type === "text" ? (
+                {editingMessageId === m.message_id ? (
                   <div className="edit-message-box">
                     <input
                       type="text"
@@ -360,85 +326,15 @@ export default function ChatBox({
                       className="edit-input"
                       autoFocus
                     />
-                    <button className="icon-btn save-edit" onClick={() => saveEditMessage(m.message_id)} title={t("Save")}><Check size={16} /></button>
-                    <button className="icon-btn cancel-edit" onClick={cancelEdit} title={t("Cancel")}><X size={16} /></button>
+                    <button className="icon-btn" onClick={() => saveEditMessage(m.message_id)}><Check size={16} /></button>
+                    <button className="icon-btn" onClick={cancelEdit}><X size={16} /></button>
                   </div>
                 ) : (
                   <>
-                    {m.is_deleted ? (
-                      <span className="deleted-message">[{t("Message deleted")}]</span>
-                    ) : (
-                      <>
-                        {(m.message_type === "text") && <span>{m.content}</span>}
-
-                        {(m.message_type === "image" && m.file_url) && (
-                          <>
-                            <img
-                              src={m.file_url}
-                              alt={m.file_name || "sent image"}
-                              className="sent-image"
-                              onClick={() => window.open(m.file_url, "_blank")}
-                            />
-                            {m.content && <p className="file-text-below">{m.content}</p>}
-                          </>
-                        )}
-
-                        {(m.message_type === "pdf" && m.file_url) && (
-                          <>
-                            <iframe
-                              src={m.file_url}
-                              title={m.file_name || "PDF"}
-                              style={{ width: "100%", height: "200px", border: "1px solid #ccc", marginTop: "5px" }}
-                            />
-                            {m.content && <p className="file-text-below">{m.content}</p>}
-                          </>
-                        )}
-
-                        {(m.message_type === "file" && m.file_url) && (
-                          <>
-                            <button
-                              className="file-download-btn"
-                              onClick={() => window.open(m.file_url, "_blank")}
-                            >
-                              <FileText size={16} style={{ marginRight: "5px" }} />
-                              {m.file_name || "Open File"}
-                            </button>
-                            {m.content && <p className="file-text-below">{m.content}</p>}
-                          </>
-                        )}
-
-                        <span className="message-actions">
-                          <button className="icon-btn" onClick={() => setReplyTo(m)} title={t("Reply")}><Reply size={16} /></button>
-                          {isMine && m.message_type === "text" && (
-                            <button className="icon-btn" onClick={() => startEditMessage(m)} title={t("Edit")}><Edit size={16} /></button>
-                          )}
-                          {isMine && (
-                            <button className="icon-btn" onClick={() => deleteMessage(m.message_id)} title={t("Delete")}><Trash2 size={16} /></button>
-                          )}
-                        </span>
-                      </>
-                    )}
+                    <span>{m.content}</span>
+                    <div className="message-time">{timeString}</div>
                   </>
                 )}
-
-                <div className="message-time">
-                  {timeString}
-                  {isMine && (
-                    <span
-                      className={`message-status ${m.localStatus === "seen" ? "seen" : m.localStatus === "delivered" ? "delivered" : "sent"}`}
-                      style={{ fontFamily: "Arial, sans-serif", fontWeight: "bold", color: "#007bff", marginLeft: "5px" }}
-                    >
-                      {m.localStatus === "sent"
-                        ? "✓"
-                        : m.localStatus === "delivered"
-                        ? "✓✓"
-                        : m.localStatus === "seen"
-                        ?  t("Seen") 
-                        : ""}
-                    </span>
-                  )}
-                  {m.edited && <span className="edited-label"> ({t("Edited")})</span>}
-                </div>
               </div>
             );
           })}
@@ -460,16 +356,10 @@ export default function ChatBox({
           <div className="file-preview">
             {filePreview.type === "image" ? (
               <img src={filePreview.url} alt={filePreview.name} className="preview-img" />
-            ) : filePreview.type === "pdf" ? (
-              <iframe
-                src={filePreview.url}
-                title={filePreview.name}
-                style={{ width: "100%", height: "150px", border: "1px solid #ccc" }}
-              />
             ) : (
-              <span><File size={16} style={{ marginRight: "5px" }}/> {filePreview.name}</span>
+              <span><File size={16} /> {filePreview.name}</span>
             )}
-            <button onClick={() => { setFile(null); setFilePreview(null); }} className="cancel-file"><X size={14} /></button>
+            <button onClick={() => { setFile(null); setFilePreview(null); }}><X size={14} /></button>
           </div>
         )}
 
@@ -479,17 +369,10 @@ export default function ChatBox({
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
-          disabled={!!file} // لو في ملف، حقل الكتابة يتعطل
         />
         <input type="file" style={{ display: "none" }} id="fileInput" onChange={handleFileChange} />
         <label htmlFor="fileInput" className="icon-btn"><Paperclip size={18} /></label>
-        <button
-          onClick={sendMessage}
-          className="icon-btn send-btn"
-          disabled={!newMessage.trim() && !file} // زرار الإرسال يتعطل لو لا شيء
-        >
-          <Send size={18} />
-        </button>
+        <button onClick={sendMessage} className="icon-btn send-btn"><Send size={18} /></button>
       </div>
     </div>
   );
