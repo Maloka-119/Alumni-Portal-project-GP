@@ -1356,7 +1356,7 @@ const getGraduatePosts = async (req, res) => {
           include: [
             {
               model: User,
-              attributes: ["id", "first-name", "last-name"],
+              attributes: ["id", "first-name", "last-name", "user-type"],
             },
           ],
         },
@@ -1382,7 +1382,7 @@ const getGraduatePosts = async (req, res) => {
               include: [
                 {
                   model: Graduate,
-                  as: "Graduate", // مهم جدًا
+                  as: "Graduate",
                   attributes: ["profile-picture-url"],
                 },
               ],
@@ -1397,7 +1397,6 @@ const getGraduatePosts = async (req, res) => {
     const currentUserId = req.user?.id || null;
 
     const responseData = posts.map((post) => {
-      // Calculate likesCount and isLikedByYou
       const likesCount = post.Likes ? post.Likes.length : 0;
       const isLikedByYou = currentUserId
         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
@@ -1413,6 +1412,7 @@ const getGraduatePosts = async (req, res) => {
           id: post.User.id,
           "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
           email: post.User.email,
+          "user-type": post.User["user-type"], // أضيف هنا
           image: post.User.Graduate
             ? post.User.Graduate["profile-picture-url"]
             : null,
@@ -1434,6 +1434,7 @@ const getGraduatePosts = async (req, res) => {
                   `${like.User?.["first-name"] || ""} ${
                     like.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
+                "user-type": like.User?.["user-type"] || "unknown", // أضيف هنا
               },
             }))
           : [],
@@ -1443,7 +1444,7 @@ const getGraduatePosts = async (req, res) => {
               comment_id: comment.comment_id,
               content: comment.content,
               "created-at": comment["created-at"],
-              time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+              time_since: moment(comment["created-at"]).fromNow(),
               edited: comment.edited,
               author: {
                 id: comment.User?.id || "unknown",
@@ -1452,6 +1453,7 @@ const getGraduatePosts = async (req, res) => {
                     comment.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
                 email: comment.User?.email || "unknown",
+                "user-type": comment.User?.["user-type"] || "unknown", // أضيف هنا
                 image: comment.User?.Graduate
                   ? comment.User.Graduate["profile-picture-url"]
                   : null,
