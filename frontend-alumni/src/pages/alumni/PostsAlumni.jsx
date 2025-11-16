@@ -279,6 +279,7 @@ import API from "../../services/api";
 import PROFILE from './PROFILE.jpeg';
 import PostCard from '../../components/PostCard'; 
 import Swal from 'sweetalert2';
+import AdminPostsImg from './AdminPosts.jpeg';
 
 const PostsAlumni = () => {
   const { t } = useTranslation();
@@ -310,20 +311,15 @@ const PostsAlumni = () => {
     }
   }, [successMsg, error]);
 
+  
+
   const formatPosts = (data) => {
     return data
       .sort((a, b) => new Date(b['created-at']) - new Date(a['created-at']))
       .map(post => ({
         ...post,
         id: post.id || post.post_id,
-        date: new Date(post['created-at']).toLocaleString('ar-EG', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          hour12: true
-        }),
+        date: post['created-at'],
         comments: post.comments?.map(c => ({
           ...c,
           date: new Date(c['created-at']).toLocaleString('ar-EG', {
@@ -333,7 +329,13 @@ const PostsAlumni = () => {
             hour: '2-digit',
             minute: '2-digit',
             hour12: true
-          })
+          }),
+          displayName: c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff" 
+                       ? "Alumni Portal - Helwan University" 
+                       : c.author?.["full-name"],
+          displayImage: c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff" 
+                       ? AdminPostsImg 
+                       : c.author?.image || PROFILE
         })) || [],
         likes: post.likes_count || 0,
         images: post.images || [],
@@ -345,6 +347,7 @@ const PostsAlumni = () => {
       }));
   };
   
+  
 
   const fetchPosts = async () => {
     if (!token) return;
@@ -353,6 +356,7 @@ const PostsAlumni = () => {
       const res = await API.get('/posts/my-graduate-posts', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      console.log(" posts API response:", res.data);
       setPosts(formatPosts(res.data.data));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
