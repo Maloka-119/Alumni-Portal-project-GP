@@ -183,6 +183,11 @@ const alumni = {
        "cancel": "Cancel",
        "commentUpdated": "Comment updated successfully",
        "commentDeleted": "Comment deleted successfully",
+       "image": "[Image]",
+       "pdfFile": "[PDF File: {{name}}]",
+       "file": "[File: {{name}}]",
+       "fetchError": "Error fetching chats:",
+       "markReadError": "Error marking messages as read:"
     },
   },
 
@@ -370,6 +375,11 @@ const alumni = {
         "editComment": "تعديل التعليق",
         "commentUpdated": "تم تعديل التعليق بنجاح",
         "commentDeleted": "تم حذف التعليق بنجاح",
+        "image": "[صورة]",
+        "pdfFile": "[ملف PDF: {{name}}]",
+        "file": "[ملف: {{name}}]",
+        "fetchError": "حدث خطأ أثناء جلب المحادثات:",
+        "markReadError": "حدث خطأ أثناء تعليم الرسائل كمقروءة:"
     },
   },
 };
