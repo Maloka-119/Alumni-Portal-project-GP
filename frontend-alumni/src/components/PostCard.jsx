@@ -416,7 +416,7 @@ const PostCard = ({ post, onEdit, onDelete }) => {
                 <div className="comment-left">
                   <img src={c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff" ? AdminPostsImg : c.author?.image || PROFILE} alt="avatar" className="comment-avatar" />
                   <div className="comment-text">
-                    <strong>{c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff" ? t("alumniPortalName") : c.author?.["full-name"]}</strong>
+                    <strong>{c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff" ? t("Alumni Portal - Helwan University") : c.author?.["full-name"]}</strong>
                     <p>{c.content}</p>
                   </div>
                   <div className="comment-date">{formatDate(c["created-at"])}</div>
