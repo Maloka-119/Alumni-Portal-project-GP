@@ -111,6 +111,8 @@ const alumni = {
       "friendRequests": "Friend Requests",
       "suggestedFriends": "Suggested Friends",
       "add": "Add",
+      addFriend: "Add Friend",
+    cancelRequest: "Cancel Request",
       "remove": "Remove",
       "confirm": "Confirm",
       "requested": "Requested",
@@ -379,7 +381,9 @@ const alumni = {
         "pdfFile": "[ملف PDF: {{name}}]",
         "file": "[ملف: {{name}}]",
         "fetchError": "حدث خطأ أثناء جلب المحادثات:",
-        "markReadError": "حدث خطأ أثناء تعليم الرسائل كمقروءة:"
+        "markReadError": "حدث خطأ أثناء تعليم الرسائل كمقروءة:",
+        addFriend: "إضافة صديق",
+    cancelRequest: "إلغاء الطلب",
     },
   },
 };
