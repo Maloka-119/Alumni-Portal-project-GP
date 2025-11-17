@@ -154,7 +154,7 @@
 
 // export default Accountgrad;
 
-
+import ChatBox from "./ChatBox";
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import API from "../../services/api";
@@ -170,6 +170,9 @@ function Accountgrad() {
   const { userId } = useParams();
   const [formData, setFormData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeChatFriend, setActiveChatFriend] = useState(null);
+const [chatId, setChatId] = useState(null);
+
 
   // --- Fetch Profile ---
   const fetchProfile = async () => {
@@ -281,6 +284,33 @@ function Accountgrad() {
     }
   };
 
+  const openChat = async (friend) => {
+    const receiverId = friend.friendId || friend.id;
+    if (!receiverId) return console.error("Friend ID missing");
+  
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) return console.error("No auth token");
+  
+      const res = await API.post("/chat/conversation", {
+        otherUserId: receiverId,
+      });
+  
+      if (res.data?.data?.chat_id) {
+        setChatId(res.data.data.chat_id);
+        setActiveChatFriend(friend);
+      } else {
+        console.warn("Chat ID missing in response");
+      }
+    } catch (err) {
+      console.error("Open Chat Error:", err);
+    }
+  };
+  
+  const closeChat = () => {
+    setActiveChatFriend(null);
+    setChatId(null);
+  };
   
 
   if (loading) return <p>{t("loading")}...</p>;
@@ -328,11 +358,26 @@ function Accountgrad() {
       </div>
     )}
     {formData.friendshipStatus === "friends" && (
-      <button onClick={unfriendFriend} className="rejectre-btn">
-        <FiUserMinus style={{ marginRight: "4px" }} />
-        {t("unfriend")}
-      </button>
-    )}
+  <div style={{ display: "flex", gap: "8px" }}>
+     <button
+  onClick={() =>
+    openChat({
+      id: userId,
+      name: formData.fullName,
+      photo: formData.profilePicture || PROFILE
+    })
+  }
+  className="friend-btn"
+>
+  <FiMessageCircle style={{ marginRight: "4px" }} />
+</button>
+
+    <button onClick={unfriendFriend} className="rejectre-btn">
+      <FiUserMinus style={{ marginRight: "4px" }} />
+      {t("unfriend")}
+    </button>
+  </div>
+)}
   </div>
 )}
 
@@ -364,6 +409,14 @@ function Accountgrad() {
           <p>{t("noPostsFound")}</p>
         )}
       </div>
+      {activeChatFriend && (
+  <ChatBox
+    chatId={chatId}
+    activeChatFriend={activeChatFriend}
+    onClose={closeChat}
+  />
+)}
+
     </div>
   );
 }

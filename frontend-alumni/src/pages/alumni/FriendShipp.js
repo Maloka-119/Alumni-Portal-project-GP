@@ -375,14 +375,14 @@ useEffect(() => {
                           className="button"
                           onClick={() => toggleRequest(f.id, f.added)}
                         >
-                          {t("add")}
+                           {t("addFriend")}
                         </button>
                         <button
                           className="button"
                           onClick={() => removeSuggestion(f.id)}
                           style={{ backgroundColor: "red", color: "white" }}
                         >
-                          {t("remove")}
+                          {t("cancelRequest")}
                         </button>
                       </>
                     ) : (
