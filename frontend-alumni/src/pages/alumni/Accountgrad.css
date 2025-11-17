@@ -137,3 +137,54 @@
   color: #f3f4f6;
   border-bottom: 1px solid #374151;
 }
+
+.friend-btn, .acceptre-btn, .rejectre-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+/* اللون الأساسي للأزرار العادية */
+.friend-btn {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.friend-btn:hover {
+  background-color: #e0e0e0;
+  transform: scale(1.1);
+}
+
+/* زر قبول الطلب */
+.acceptre-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.acceptre-btn:hover {
+  background-color: #45a049;
+  transform: scale(1.1);
+}
+
+/* زر رفض الطلب */
+.rejectre-btn {
+  background-color: #f44336;
+  color: white;
+}
+
+.rejectre-btn:hover {
+  background-color: #e53935;
+  transform: scale(1.1);
+}
+
+/* مسافة بين الأزرار */
+.friendship-buttons button + button {
+  margin-left: 5px;
+}
