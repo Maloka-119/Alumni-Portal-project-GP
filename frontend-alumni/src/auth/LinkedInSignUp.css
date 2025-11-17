@@ -1,32 +1,58 @@
 .linkedin-button {
-    color: white;
-    background-color: #1e3a8a;
-    padding: 0.75rem 3rem;
-    border: none;
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-    transition: background-color 0.2s ease, transform 0.2s ease;
-    margin-left: 420px;
-    margin-top: 20px;
-  }
+  width: 100%;
+  max-width: 320px;
+  margin: 24px auto 0;
+  padding: 0.9rem 1.2rem;
+  background-color: white;
+  color: #0a66c2;
+  border: none;
+  border-radius: 8px;
   
-  .linkedin-button:hover {
-    background-color: #1e40af; /* اللون الجديد للـ hover */
-  }
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
   
-  .linkedin-button:disabled {
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
+  font-size: 1rem;
+  font-weight: 600;
   
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  
+  box-shadow: 0 4px 8px rgba(10, 102, 194, 0.25);
+}
+
+.linkedin-button:hover {
+  background-color: #004182;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 14px rgba(10, 102, 194, 0.35);
+  color: white;
+}
+
+.linkedin-button:active {
+  transform: translateY(-1px);
+}
+
+.linkedin-button img {
+  width: 22px;
+  height: 22px;
+  
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .linkedin-button {
+    padding: 0.8rem 1rem;
+    font-size: 0.95rem;
+    border-radius: 6px;
+  }
+
   .linkedin-button img {
     width: 20px;
     height: 20px;
   }
-  
+}
+
+.linkedin-button img,
+.linkedin-button svg {
+  fill: white;
+}

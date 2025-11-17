@@ -11,13 +11,18 @@
   background: repeat-y center center fixed;
   background-size: cover; 
   width: 100%;
+  padding-top: 80px;
 }
 
 .wrapper {
   max-width: 1200px;
+  width: 100%;
   margin: 0 auto;
+  padding: 0 1rem;
   flex: 1;
-  padding-top: 60px; 
+  
+  flex-direction: column;
+  align-items: center;
 }
 
 .main-title {
@@ -28,13 +33,14 @@
 }
 
 .subtitle {
-  color: #6b7280;
+  color: #5a5e68;
   margin: 0;
 }
 
 .form-container {
-  background: rgba(255, 255, 255, 0.185);
-  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.788);
+  /* border-radius: 0.5rem; */
+  border-radius: 30px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   padding: 2rem;
 }
@@ -58,17 +64,21 @@
   font-size: 0.95rem;
 }
 
-.form-input {
+.form-inputre {
   width: 100%;
   padding: 0.75rem 1rem;
-  border: 2px solid #d1d5dbad;
+  border: 1px solid #1e3a8a;
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: all 0.2s ease;
-  background-color: rgba(255, 255, 255, 0.397);
+  background-color: rgba(255, 255, 255, 0.192);
+  color: #42444d;
+  backdrop-filter: blur(4px);
+  
 }
 
-.form-input:focus {
+
+.form-inputre:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
@@ -118,7 +128,7 @@
   color: #6b7280;
   font-size: 0.875rem;
 }
-
+/* 
 .linkedin-btn {
   display: flex;
   align-items: center;
@@ -149,7 +159,7 @@
   height: 20px;
   margin-right: 0.5rem;
   fill: currentColor;
-}
+} */
 
 /* Phone center field */
 .phone-center {
@@ -247,5 +257,39 @@
   
   .wrapper {
     padding: 1rem 0.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .wrapper {
+    padding-top: 50px; /* أقل من الكبير */
+  }
+  .recontainer{
+    padding-top: 50px;
+  }
+
+  .main-title {
+    font-size: 2rem;
+    text-align: center;
+  }
+
+  .form-container {
+    width: 100%;
+    padding: 1.5rem;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    padding-top: 40px;
+  }
+
+  .main-title {
+    font-size: 1.75rem;
   }
 }

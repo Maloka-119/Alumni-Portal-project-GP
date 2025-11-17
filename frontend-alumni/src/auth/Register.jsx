@@ -123,7 +123,7 @@ const handleSubmit = async (e) => {
                   name={field.name}
                   value={formData[field.name]}
                   onChange={handleInputChange}
-                  className="form-input"
+                  className="form-inputre"
                 />
               </div>
             ))}

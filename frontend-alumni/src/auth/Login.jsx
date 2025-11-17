@@ -119,7 +119,7 @@ function Login({ setUser }) {
   return (
     <div className="login-container" style={{ backgroundImage: `url(${Unibackground})` }}>
       <Header />
-
+      <div className="wrapperr">
       <div className="login-content">
         <h1 className="login-title">{t("welcomePortal")}</h1>
         <h4 className="login-subtitle">{t("helwanUniversity")}</h4>
@@ -130,7 +130,7 @@ function Login({ setUser }) {
               <label className="form-label">{t("email")}</label>
               <input
                 placeholder={t("enterYourEmail")}
-                className="form-input"
+                className="form-inputre"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -139,7 +139,7 @@ function Login({ setUser }) {
             <div className="form-group">
               <label className="form-label">{t("password")}</label>
               <input
-                className="form-input"
+                className="form-inputre"
                 required
                 placeholder={t("enterYourPassword")}
                 type="password"
@@ -262,7 +262,7 @@ function Login({ setUser }) {
           </div>
         )}
       </div>
-
+      </div>
       <Footer />
     </div>
   );
