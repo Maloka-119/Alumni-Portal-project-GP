@@ -355,8 +355,9 @@
   }
 
   .uni-post-actions {
-    flex-direction: column;
-    gap: 8px;
+    flex-direction: row;  /* بدل column نخليهم صف */
+    flex-wrap: wrap;      /* يسمح للصف بالانكسار لو ضيق */
+    gap: 8px;             /* مسافة بين الأزرار */
   }
 
   .uni-filter {
@@ -1127,4 +1128,70 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* ======= Responsive Comments ======= */
+@media (max-width: 768px) {
+  .comment-item {
+    flex-direction: column; /* خلي الكومنت عمودي */
+    align-items: flex-start;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+
+  .comment-left {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap; /* يسمح للنص والـ avatar بالانكسار */
+  }
+
+  .comment-avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  .comment-text {
+    font-size: 13px;
+    flex: 1;
+  }
+
+  .comment-actions {
+    margin-top: 4px;
+    gap: 6px;
+  }
+
+  .comment-date {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .comment-item {
+    gap: 4px;
+    padding: 4px 6px;
+  }
+
+  .comment-avatar {
+    width: 28px;
+    height: 28px;
+  }
+
+  .comment-text {
+    font-size: 12px;
+  }
+
+  .comment-actions {
+    gap: 4px;
+    flex-wrap: wrap; /* لو الأزرار زحمة يسمح لها بالانكسار */
+  }
+
+  .comment-input input {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  .comment-input button {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
 }
