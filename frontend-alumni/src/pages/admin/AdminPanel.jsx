@@ -1,4 +1,4 @@
-
+import FeedbackView from './FeedbackView';
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import './AdminPanel.css';
@@ -13,7 +13,7 @@ import FAQManage from './FAQManage';
 import RolesManagement from './RolesManagement';
 import { 
   Globe, LogOut, BarChart2, Users, FileText, Phone, 
-  UserCheck, User, Shield, Edit, Megaphone, HelpCircle, Wrench 
+  UserCheck, User, Shield, Edit, Megaphone, HelpCircle, Wrench ,Clipboard
 } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api'; 
@@ -47,6 +47,7 @@ const AdminPanel = ({ setUser }) => {
         { key: "communityManagement", icon: <Users size={16} /> },
         { key: "documentManagement", icon: <FileText size={16} /> },
         { key: "consultationRequests", icon: <Phone size={16} /> },
+        { key: "GraduatedFeedback", icon: <Clipboard size={16} /> },
       ],
     },
     {
@@ -149,6 +150,7 @@ const AdminPanel = ({ setUser }) => {
           <Route path="adminPosts" element={<AdminPostsPage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="usersPosts" element={<UsersPostsPage currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="faqManage" element={<FAQManage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
+          <Route path="GraduatedFeedback" element={<FeedbackView currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
         </Routes>
       </main>
     </div>
