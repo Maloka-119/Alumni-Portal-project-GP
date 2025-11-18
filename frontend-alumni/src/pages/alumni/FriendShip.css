@@ -284,145 +284,7 @@
     color: #aaa;
   }
   
- /* 📱 Responsive Enhancements */
-
-/* الأجهزة المتوسطة (تابلت) */
-@media (max-width: 992px) {
-  .friendship-container {
-    padding: 30px 15px;
-  }
-
-  .friend-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .friend-actions {
-    width: 100%;
-    justify-content: flex-end;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .friend-actions button {
-    min-width: 90px;
-    max-width: 130px;
-    text-align: center;
-    border-radius: 8px;
-  }
-
-  .friendship-bar {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .friendship-link {
-    font-size: 0.95rem;
-    padding: 8px 14px;
-  }
-
-  .Title {
-    font-size: 1.2rem;
-  }
-}
-
-/* الأجهزة الصغيرة (موبايل) */
-@media (max-width: 600px) {
-  .friendship-container {
-    padding: 25px 10px;
-  }
-
-  .friend-card {
-    padding: 12px 14px;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .friend-info img {
-    width: 50px;
-    height: 50px;
-  }
-
-  .friend-details h3 {
-    font-size: 1rem;
-  }
-
-  .friend-details p {
-    font-size: 0.85rem;
-  }
-
-  .friend-actions {
-    width: 100%;
-    justify-content: space-between;
-    gap: 8px;
-    flex-wrap: wrap;
-  }
-
-  .friend-actions button {
-    flex: 1;
-    padding: 8px 10px;
-    font-size: 0.9rem;
-    min-width: 80px;
-    max-width: 120px;
-    text-align: center;
-    border-radius: 8px;
-  }
-
-  .friend-actions button:active {
-    transform: scale(0.96);
-    opacity: 0.9;
-  }
-
-  .friendship-search input {
-    width: 90%;
-    max-width: none;
-  }
-
-  .friendship-bar {
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .Title {
-    font-size: 1.1rem;
-    padding-left: 8px;
-  }
-  .friend-actions button {
-    font-size: 0.9rem;
-    padding: 8px 14px;
-    border-radius: 8px;
-    min-width: 90px;
-    transition: all 0.2s ease;
-  }
-}
-
-/* الشاشات الصغيرة جداً */
-@media (max-width: 400px) {
-  .friend-card {
-    padding: 10px;
-  }
-
-  .friend-details h3 {
-    font-size: 0.95rem;
-  }
-
-  .friend-actions button {
-    flex: 1;
-    min-width: 80px;
-    max-width: 100px;
-    padding: 7px 10px;
-    font-size: 0.85rem;
-    border-radius: 7px;
-    transition: transform 0.15s ease, opacity 0.15s ease;
-  }
-
-  .friend-info img {
-    width: 45px;
-    height: 45px;
-  }
-}
+ 
 /* 🔍 Search Input Styling */
 .search-input {
   width: 100%;
@@ -480,4 +342,106 @@
   font-weight: 600;
   color: #5b9129;
   margin-left: 4px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .friend-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 16px;
+  }
+
+  .friend-actions {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+
+  .friendship-search input {
+    width: 90%;
+  }
+}
+
+@media (max-width: 768px) {
+  .friend-card {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 14px;
+  }
+
+  .friend-info {
+    gap: 12px;
+  }
+
+  .friend-info img,
+  .img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .friend-details h3 {
+    font-size: 1rem;
+  }
+
+  .friend-details p {
+    font-size: 0.85rem;
+  }
+
+  .friend-actions button {
+    padding: 6px 12px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .friend-card,
+  .user {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .friend-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .friend-actions button {
+    width: 100%;
+  }
+
+  .friendship-search input,
+  .search-input {
+    width: 95%;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
+
+  .friend-info img,
+  .img,
+  .imgreq {
+    width: 45px;
+    height: 45px;
+  }
+
+  .friend-details h3 {
+    font-size: 0.95rem;
+  }
+
+  .friend-details p {
+    font-size: 0.8rem;
+  }
+
+  .Title {
+    font-size: 1.1rem;
+    padding-left: 8px;
+  }
+
+  .friendship-link {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+  }
 }
