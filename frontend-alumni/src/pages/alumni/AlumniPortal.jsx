@@ -3,7 +3,7 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, User, FileText, Bell, IdCard,
   Users, Network, Briefcase,
-  File, MessageSquare, HelpCircle, MessageCircle,
+  File, MessageSquare, HelpCircle, MessageCircle,Clipboard,
   Menu, X, LogOut, Globe, Moon, Sun, ChevronDown, ChevronUp
 } from 'lucide-react';
 import './AlumniPortal.css';
@@ -24,6 +24,7 @@ import ChatSidebar from './ChatSidebar.jsx';
 import FriendshipPage from './FriendShipp.js';
 import EmptyPage from '../admin/EmptyPage';
 import Accountgrad from "./Accountgrad.jsx";
+import FeedbackPage from './FeedbackPage.jsx'
 
 const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
 
@@ -52,6 +53,7 @@ const sidebarSections = (darkMode, t) => [
       { name: t("documentRequests"), key: "documents", icon: <File size={18}/> },
       { name: t("consultations"), key: "consultations", icon: <MessageSquare size={18}/> },
       { name: t("faqHelp"), key: "faq", icon: <HelpCircle size={18}/> },
+      { name: t("feedbackSuggestions"), key: "feedback", icon: <Clipboard size={18}/> }
     ]
   },
   {
@@ -195,6 +197,8 @@ const Dashboard = ({ setUser }) => {
             <Route path="friends/:userId" element={<Accountgrad />} />
             <Route path="documents" element={<EmptyPage title="Document Requests" />} />
             <Route path="Consultations" element={<EmptyPage title="Consultation Requests" />} />
+            <Route path="feedback" element={<FeedbackPage />} />
+
           </Routes>
         </main>
       </div>
