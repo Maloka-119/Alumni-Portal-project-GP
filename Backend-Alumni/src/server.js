@@ -101,6 +101,9 @@ app.use("/alumni-portal/auth/linkedin", linkedinAuthRoutes);
 const notificationRoutes = require("./routes/notification.route");
 app.use("/alumni-portal/notifications", notificationRoutes);
 
+const feedbackRoutes = require("./routes/feedback.route.js");
+app.use("/alumni-portal/feedbacks", feedbackRoutes);
+
 //  Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
