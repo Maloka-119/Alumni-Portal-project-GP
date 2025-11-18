@@ -13,7 +13,7 @@ import communityCover from "./defualtCommunityCover.jpg";
 import { useRef } from "react";
 
 function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation(); 
   const [selectedGraduates, setSelectedGraduates] = useState([]);
   const [availableGraduates, setAvailableGraduates] = useState([]);
   const [filteredGraduates, setFilteredGraduates] = useState([]);
@@ -374,7 +374,18 @@ const handlePostSubmit = async (formData, postId = null) => {
         <div className="created-icon-wrapper">
           <Info size={18} color="#4f46e5" />
           <div className="tooltip">
-            {t("Created at")}: {new Date(group.createdAt).toLocaleString()}
+          {t("Created at")}: {new Date(group.createdAt).toLocaleString(
+  i18n.language === "ar" ? "ar-EG" : "en-US",
+  {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: i18n.language !== "ar"  // 12 ساعة للإنجليزي، 24 ساعة للعربي
+  }
+)}
+
           </div>
         </div>
 <img 
@@ -419,7 +430,8 @@ const handlePostSubmit = async (formData, postId = null) => {
 
 
 
-        {loading && <div className="loading">Loading posts...</div>}
+{loading && <div className="loading">{t("loadingPosts")}</div>}
+
         
         <ul className="posts-list">
         {posts.map((post) => (
@@ -438,7 +450,18 @@ const handlePostSubmit = async (formData, postId = null) => {
       <div className="post-header-info">
         <strong>{post.author?.name || "Unknown"}</strong>
         <div className="post-date">
-          {new Date(post["created-at"]).toLocaleString()} - {post.category}
+        {new Date(post["created-at"]).toLocaleString(
+  i18n.language === "ar" ? "ar-EG" : "en-US",
+  {
+    year: "numeric",
+    month: "short",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  }
+)} - {t(post.category)}
+
         </div>
       </div>
 
@@ -518,13 +541,18 @@ const handlePostSubmit = async (formData, postId = null) => {
             <strong className="comment-username">{comment.userName}</strong>: {comment.content}
           </div>
           <div className="comment-date">
-            {new Date(comment.date).toLocaleString([], { 
-              year: "numeric", 
-              month: "2-digit", 
-              day: "2-digit", 
-              hour: "2-digit", 
-              minute: "2-digit" 
-            })}
+          {new Date(comment.date).toLocaleString(
+  i18n.language === "ar" ? "ar-EG" : "en-US",
+  { 
+    year: "numeric", 
+    month: "2-digit", 
+    day: "2-digit", 
+    hour: "2-digit", 
+    minute: "2-digit",
+    hour12: true
+  }
+)}
+
           </div>
         </div>
       ))}
@@ -534,12 +562,12 @@ const handlePostSubmit = async (formData, postId = null) => {
       <div className="comment-input">
         <input
           type="text"
-          placeholder="Write a comment..."
+          placeholder={t("Write a comment...")}
           value={commentInputs[post.id] || ""}
           onChange={(e) => handleCommentChange(post.id, e.target.value)}
         />
         <button onClick={() => handleCommentSubmit(post.id)}>
-          Send
+        {t("Send")}
         </button>
       </div>
     )}

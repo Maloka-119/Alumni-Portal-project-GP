@@ -119,9 +119,9 @@ const toggleUserStatus = async (alumniId) => {
                       {t("showProfile")}
                     </button>
                     <button
-  onClick={() => toggleUserStatus(user.alumniId)}
-  className={`toggle-switch ${user.status === 'active' ? 'active' : ''}`}
->
+               onClick={() => toggleUserStatus(user.alumniId)}
+               className={`toggle-switch ${user.status === 'active' ? 'active' : ''}`}
+                  >
   <span className="toggle-slider"></span>
 </button>
 

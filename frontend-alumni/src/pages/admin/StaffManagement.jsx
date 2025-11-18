@@ -138,7 +138,7 @@ const StaffManagement = ({ currentUser }) => {
       <UserManagement activeTabName="Staff" />
 
       <div className="filter-container" style={{ marginBottom: '16px' }}>
-        <label>Status: </label>
+      <label>{t("Status")}</label>
         <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="All">{t("all")}</option>
           <option value="active">{t("active")}</option>

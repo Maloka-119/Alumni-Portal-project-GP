@@ -585,7 +585,7 @@ const RolesManagement = () => {
 
       <div className="permissions-section">
         <div className="permissions-header">
-          <h3 className="page-title">{selectedRole} Permissions</h3>
+          <h3 className="page-title">{selectedRole}{t("Permissions")}</h3>
           <button className="view-staff-btn" onClick={() => setShowStaffModal(true)}>
             <Eye size={16} /> {t("viewStaff")}
           </button>

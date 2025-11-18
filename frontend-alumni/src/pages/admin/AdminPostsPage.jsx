@@ -11,7 +11,8 @@ import Swal from "sweetalert2";
 import { getPermission } from "../../components/usePermission";
 
 const AdminPostsPage = ({ currentUser }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+
   const [posts, setPosts] = useState([]);
   const [types, setTypes] = useState([]);
   const [filterType, setFilterType] = useState('All');
@@ -239,7 +240,8 @@ const AdminPostsPage = ({ currentUser }) => {
       input: "textarea",
       inputValue: comment.content,
       showCancelButton: true,
-      confirmButtonText: "Save"
+      confirmButtonText: t("save"),   // ترجم Save
+      cancelButtonText: t("cancel")   // ترجم Cancel
     });
   
     if (!newContent || newContent === comment.content) return;
@@ -265,7 +267,7 @@ const AdminPostsPage = ({ currentUser }) => {
       console.log(err);
     }
   };
-
+  
   const handleDeleteComment = async (postId, commentId) => {
     try {
       await API.delete(`/posts/comments/${commentId}`);
@@ -303,7 +305,9 @@ const AdminPostsPage = ({ currentUser }) => {
         <label>{t('Filter by type:')}</label>
         <select value={filterType} onChange={e => setFilterType(e.target.value)}>
           <option value="All">{t('All')}</option>
-          {types.map(type => <option key={type} value={type}>{type}</option>)}
+          {types.map(type =>         <option key={type} value={type}>
+          {t(type)}
+        </option>)}
         </select>
       </div>
 
@@ -315,7 +319,13 @@ const AdminPostsPage = ({ currentUser }) => {
                 <img src={post.author?.photo || AdminPostsImg} alt="profile" className="profile-pic" />
                 <div className="post-header-info">
                   <strong>{post.authorName}</strong>
-                  <div className="post-date">{new Date(post.date).toLocaleString()}</div>
+                  <div className="post-date">
+  {post.date ? new Date(post.date).toLocaleString(
+    i18n.language === 'ar' ? 'ar-EG' : 'en-US',
+    { year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: true }
+  ) : t('unknownDate')}
+</div>
+
                 </div>
                 <span className="post-type-badge">{post.type}</span>
                 
@@ -404,7 +414,9 @@ const AdminPostsPage = ({ currentUser }) => {
         )}
       </button>
       <span className="landing-tooltip">
-        {post.inLanding ? "Remove from Landing Page" : "Add to Landing Page"}
+      {post.inLanding 
+  ? t("removeFromLandingPage") 
+  : t("addToLandingPage")}
       </span>
     </div>
   )}
@@ -415,23 +427,33 @@ const AdminPostsPage = ({ currentUser }) => {
 
               {post.showComments && (
                 <div className="comments-section">
-                  {post.comments.map(comment => (
-                    <div key={comment.id} className="comment-item">
-                    <img
-                      src={comment.avatar || AdminPostsImg}
-                      alt={comment.userName}
-                      className="comment-avatar"
-                    />
                   
-                    <div className="comment-text">
-                      <strong>{comment.userName}</strong> 
-                      {comment.content}
-                    </div>
-                  
-                    <div className="comment-date">
-                      {new Date(comment.date).toLocaleString()}
-                    </div>
-                  
+{post.comments.map(comment => (
+  <div key={comment.id} className="comment-item">
+    <img
+      src={comment.avatar || AdminPostsImg}
+      alt={comment.userName}
+      className="comment-avatar"
+    />
+  
+    <div className="comment-text">
+      <strong>{comment.userName}</strong> 
+      {comment.content}
+    </div>
+  
+    <div className="comment-date">
+      {new Date(comment.date).toLocaleString(
+        i18n.language === 'ar' ? 'ar-EG' : 'en-US',
+        {
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          hour12: true
+        }
+      )}
+    </div>
                     {(["admin","staff"].includes(comment.author?.["user-type"])) && (
   <div className="comment-actions">
     <button onClick={() => handleEditComment(post.id, comment)}>
@@ -448,7 +470,13 @@ const AdminPostsPage = ({ currentUser }) => {
                   ))}
                   {postPerm.canAdd && (
                     <div className="comment-input">
-                      <input type="text" value={commentInputs[post.id] || ''} onChange={e => handleCommentChange(post.id, e.target.value)} placeholder="Write a comment..." />
+<input
+  type="text"
+  value={commentInputs[post.id] || ''}
+  onChange={e => handleCommentChange(post.id, e.target.value)}
+  placeholder={t("writeComment")}  // ترجم "Write a comment..."
+/>
+
                       <button onClick={() => handleCommentSubmit(post.id)}><Send size={16} /></button>
                     </div>
                   )}

@@ -2,8 +2,11 @@ import React, { useState, useEffect } from "react";
 import { Trash2, Plus, Eye, X, ChevronRight } from "lucide-react";
 import API from "../../services/api";
 import "./RolesManagement.css";
+import { useTranslation } from "react-i18next";
+
 
 const RolesManagement = () => {
+  const { t } = useTranslation(); 
   const [selectedRole, setSelectedRole] = useState("");
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
@@ -363,7 +366,9 @@ const RolesManagement = () => {
 
       <div className="permissions-section">
         <div className="permissions-header">
-          <h3 className="page-title">{selectedRole} Permissions</h3>
+        <h3 className="page-title">
+  {selectedRole} {t("Permissions")}
+</h3>
           <button className="view-staff-btn" onClick={() => setShowStaffModal(true)}>
             <Eye size={16} /> View Staff
           </button>
@@ -410,7 +415,7 @@ const RolesManagement = () => {
 
         <div className="update-btn-container">
           <button onClick={handleUpdateRole} className="update-role-btn">
-            Update Permissions
+          {t("UpdatePermissions")}
           </button>
         </div>
       </div>
