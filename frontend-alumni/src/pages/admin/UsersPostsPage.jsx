@@ -11,7 +11,8 @@ import Staffprof from "../alumni/Staffprof.jpg";
 import AdminPostsImg from "../alumni/AdminPosts.jpeg";
 
 const UsersPostsPage = ({ currentUser }) => {
-  const { t } = useTranslation();
+const { t, i18n } = useTranslation();
+
   const [typeFilter, setTypeFilter] = useState('All');
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -270,11 +271,12 @@ const UsersPostsPage = ({ currentUser }) => {
         </select>
         <label style={{ marginRight: '8px' }}>{t("Posttype")}</label>
         <select value={typeFilter} onChange={e => setTypeFilter(e.target.value)}>
-          <option value="All">All</option>
-          <option value="General">General</option>
-          <option value="Internship">Internship</option>
-          <option value="Success story">Success story</option>
-        </select>
+  <option value="All">{t("all")}</option>
+  <option value="General">{t("general")}</option>
+  <option value="Internship">{t("internship")}</option>
+  <option value="Success story">{t("successStory")}</option>
+</select>
+
       </div>
 
       <div className="posts-feed">
@@ -286,15 +288,21 @@ const UsersPostsPage = ({ currentUser }) => {
     <div className="post-header-info">
       <strong>{post.author?.name || t('unknown')}</strong>
       <div className="post-date-right">
-        {new Date(post["created-at"]).toLocaleString(undefined, {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric',
-          hour: 'numeric',
-          minute: 'numeric'
-        })} - {post.category}
-        {post['group-id'] ? ' - In Group' : ''}
-      </div>
+      {new Date(post["created-at"]).toLocaleString(
+  i18n.language === 'ar' ? 'ar-EG' : 'en-US',
+  {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }
+)}
+- {t(post.category)}
+  {post['group-id'] ? ' - In Group' : ''}
+</div>
+
     </div>
   </div>
 
@@ -373,13 +381,18 @@ const UsersPostsPage = ({ currentUser }) => {
           </div>
 
           <div className="comment-date">
-            {new Date(comment.date).toLocaleString([], {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-              hour: "2-digit",
-              minute: "2-digit"
-            })}
+          {new Date(post["created-at"]).toLocaleString(
+  i18n.language === 'ar' ? 'ar-EG' : 'en-US',
+  {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  }
+)}
+
           </div>
 
           {(comment.author?.["user-type"] === "admin" || comment.author?.["user-type"] === "staff") && (

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import API from "../../services/api";
 import { Bar, Pie } from "react-chartjs-2";
 import {
@@ -16,18 +17,15 @@ import "./Analysis.css";
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 const Card = ({ children, className = "" }) => (
-  <div className={`dashboard-card ${className}`}>
-    {children}
-  </div>
+  <div className={`dashboard-card ${className}`}>{children}</div>
 );
 
 const CardContent = ({ children }) => (
-  <div className="dashboard-card-content">
-    {children}
-  </div>
+  <div className="dashboard-card-content">{children}</div>
 );
 
 function AdminDashboard() {
+  const { t } = useTranslation();
   const [data, setData] = useState(null);
 
   useEffect(() => {
@@ -42,7 +40,7 @@ function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  if (!data) return <p className="loading-text">Loading dashboard...</p>;
+  if (!data) return <p className="loading-text">{t("loadingDashboard")}</p>;
 
   const {
     totalGraduates,
@@ -64,33 +62,33 @@ function AdminDashboard() {
   const staffActivePercentage = totalStaff > 0 ? Math.round((activeStaff / totalStaff) * 100) : 0;
 
   const graduatesStatusData = {
-    labels: ["Accepted", "Pending", "Rejected"],
+    labels: [t("Accepted"), t("Pending"), t("Rejected")],
     datasets: [{ data: [acceptedGraduates, pendingGraduates, rejectedGraduates], backgroundColor: ["#16a34a", "#facc15", "#ef4444"] }],
   };
 
   const postsData = {
-    labels: ["Graduates Posts", "Staff Posts"],
+    labels: [t("GraduatesPosts"), t("StaffPosts")],
     datasets: [{ data: [postsByGraduates, postsByStaff], backgroundColor: ["#3b82f6", "#8b5cf6"] }],
   };
 
   const graduatesActivityData = {
-    labels: ["Active", "Inactive"],
+    labels: [t("Active"), t("Inactive")],
     datasets: [{ data: [activeGraduates, inactiveGraduates], backgroundColor: ["#22c55e", "#cbd5e1"] }],
   };
 
   const staffActivityData = {
-    labels: ["Active", "Inactive"],
+    labels: [t("Active"), t("Inactive")],
     datasets: [{ data: [activeStaff, inactiveStaff], backgroundColor: ["#10b981", "#cbd5e1"] }],
   };
 
   const facultyChartData = {
-    labels: graduatesByFaculty.map((f) => f.faculty || "Unknown"),
-    datasets: [{ label: "Graduates by Faculty", data: graduatesByFaculty.map((f) => f.count), backgroundColor: "rgba(37,99,235,0.6)", borderRadius: 5 }],
+    labels: graduatesByFaculty.map((f) => f.faculty || t("Unknown")),
+    datasets: [{ label: t("GraduatesByFaculty"), data: graduatesByFaculty.map((f) => f.count), backgroundColor: "rgba(37,99,235,0.6)", borderRadius: 5 }],
   };
 
   const rolesChartData = {
     labels: staffRoles.map((r) => r.Role["role-name"]),
-    datasets: [{ label: "Staff by Role", data: staffRoles.map((r) => r.count), backgroundColor: "rgba(236,72,153,0.6)", borderRadius: 5 }],
+    datasets: [{ label: t("StaffByRole"), data: staffRoles.map((r) => r.count), backgroundColor: "rgba(236,72,153,0.6)", borderRadius: 5 }],
   };
 
   const pieOptions = {
@@ -110,28 +108,28 @@ function AdminDashboard() {
 
   return (
     <div className="dashboard-container">
-      <h1 style={{ color: "#4f46e5" }}>Portal Reports</h1>
+      <h1 style={{ color: "#4f46e5" }}>{t("PortalReports")}</h1>
 
       <div className="dashboard-row">
         <Card>
           <CardContent>
-            <h2 className="card-title">Active Graduates</h2>
+            <h2 className="card-title">{t("ActiveGraduates")}</h2>
             <div className="chart-box">
               <Pie data={graduatesActivityData} options={pieOptions} />
             </div>
             <p className="card-number">{activeGraduates}</p>
-            <p className="card-sub">{graduatesActivePercentage}% of total</p>
+            <p className="card-sub">{graduatesActivePercentage}% {t("ofTotal")}</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardContent>
-            <h2 className="card-title">Active Staff</h2>
+            <h2 className="card-title">{t("ActiveStaff")}</h2>
             <div className="chart-box">
               <Pie data={staffActivityData} options={pieOptions} />
             </div>
             <p className="card-number">{activeStaff}</p>
-            <p className="card-sub">{staffActivePercentage}% of total</p>
+            <p className="card-sub">{staffActivePercentage}% {t("ofTotal")}</p>
           </CardContent>
         </Card>
       </div>
@@ -139,7 +137,7 @@ function AdminDashboard() {
       <div className="dashboard-row">
         <Card>
           <CardContent>
-            <h2 className="card-title">Graduates Status</h2>
+            <h2 className="card-title">{t("GraduatesStatus")}</h2>
             <div className="chart-box">
               <Pie data={graduatesStatusData} options={pieOptions} />
             </div>
@@ -148,7 +146,7 @@ function AdminDashboard() {
 
         <Card>
           <CardContent>
-            <h2 className="card-title">Posts Distribution</h2>
+            <h2 className="card-title">{t("PostsDistribution")}</h2>
             <div className="chart-box">
               <Pie data={postsData} options={pieOptions} />
             </div>
@@ -159,7 +157,7 @@ function AdminDashboard() {
       <div className="dashboard-row">
         <Card>
           <CardContent>
-            <h2 className="card-title">Graduates by Faculty</h2>
+            <h2 className="card-title">{t("GraduatesByFaculty")}</h2>
             <div className="bar-box">
               <Bar data={facultyChartData} options={barOptions} />
             </div>
@@ -168,7 +166,7 @@ function AdminDashboard() {
 
         <Card>
           <CardContent>
-            <h2 className="card-title">Staff by Role</h2>
+            <h2 className="card-title">{t("StaffByRole")}</h2>
             <div className="bar-box">
               <Bar data={rolesChartData} options={barOptions} />
             </div>

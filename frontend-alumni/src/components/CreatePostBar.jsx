@@ -269,8 +269,9 @@ const CreatePostBar = ({ types = [], onSubmit, editingPost, canAdd, onCancelEdit
           >
             <option value="">{t('Select type')}</option>
             {types.map((typeItem) => (
-              <option key={typeItem} value={typeItem}>{typeItem}</option>
-            ))}
+  <option key={typeItem} value={typeItem}>{t(typeItem)}</option>
+))}
+
           </select>
 
           <div className="optional-icons">

@@ -136,7 +136,7 @@ const alumni = {
       "unfriend": "Unfriend",
       "Seen": "seen",
       "Edited": "Edited" // ✅ أضفتها
-
+      
     }
   },
   ar: {

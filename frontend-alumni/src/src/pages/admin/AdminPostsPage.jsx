@@ -146,7 +146,9 @@ const AdminPostsPage = () => {
             <label>{t('Filter by type:')}</label>
             <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
               <option>{t('All')}</option>
-              {types.map(ti => <option key={ti}>{ti}</option>)}
+              {types.map(ti => <option key={ti}>{t(ti)}</option>)}
+
+
             </select>
           </div>
 
@@ -159,7 +161,9 @@ const AdminPostsPage = () => {
                     <strong>Alumni Portal – Helwan University</strong>
                     <div className="post-date">{post['created-at']}</div>
                   </div>
-                  <span className="post-type-badge">{post.category}</span>
+                  <span className="post-type-badge">{t(post.category)}</span>
+
+
                 </div>
                 <div className="post-content">
                   <p>{post.content}</p>
