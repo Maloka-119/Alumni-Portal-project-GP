@@ -127,19 +127,26 @@ const getRequestedGraduates = async (req, res) => {
       });
     }
 
-    // 3. لو staff → تحقق من الصلاحية
+    // 3. لو staff → تحقق من الصلاحيات (الصلاحيتين معاً)
     if (req.user["user-type"] === "staff") {
-      const hasPermission = await checkStaffPermission(
+      const hasGraduatePermission = await checkStaffPermission(
         req.user.id,
         "Graduate management",
         "view"
       );
 
-      if (!hasPermission) {
+      const hasRequestsPermission = await checkStaffPermission(
+        req.user.id,
+        "Others Requests management",
+        "view"
+      );
+
+      // Staff هيقدر يشوف لو عنده أي من الصلاحيتين
+      if (!hasGraduatePermission && !hasRequestsPermission) {
         return res.status(403).json({
           status: HttpStatusHelper.ERROR,
           message:
-            "Access denied. You don't have permission to view graduates.",
+            "Access denied. You don't have permission to view requested graduates.",
           data: [],
         });
       }
@@ -196,7 +203,7 @@ const rejectGraduate = async (req, res) => {
     if (req.user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
-        "Graduate management",
+        "Others Requests management",
         "edit"
       );
 
@@ -325,7 +332,7 @@ const approveGraduate = async (req, res) => {
     if (req.user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
-        "Graduate management",
+        "Others Requests management",
         "edit"
       );
 
