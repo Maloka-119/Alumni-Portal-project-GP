@@ -8,6 +8,8 @@ const Post = require("../models/Post");
 const PostImage = require("../models/PostImage");
 const Staff = require("../models/Staff");
 const Friendship = require("../models/Friendship");
+const checkStaffPermission = require("../utils/permissionChecker");
+
 const { Op } = require("sequelize");
 
 const moment = require("moment");
@@ -175,24 +177,44 @@ const createPost = async (req, res) => {
     console.log("📦 req.files:", req.files);
 
     const { category, content, groupId, inLanding, type, postAsAdmin } =
-      req.body; // ⬅️ ضيفنا postAsAdmin
+      req.body;
     const userId = req.user?.id;
 
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff", "graduate"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!userId || !allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "fail",
+        message: "Access denied.",
+      });
+    }
+
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        userId,
+        "Community Post's management",
+        "add"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Access denied. You don't have permission to create posts.",
+        });
+      }
+    }
+
+    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
     const finalCategory = category || type || "General";
 
     console.log("🔹 finalCategory:", finalCategory);
     console.log("🔹 content:", content);
     console.log("🔹 groupId:", groupId);
     console.log("🔹 inLanding:", inLanding);
-    console.log("🔹 postAsAdmin:", postAsAdmin); // ⬅️ نطبع القيمة الجديدة
-
-    // 🟥 التحقق من المستخدم
-    if (!userId) {
-      return res.status(401).json({
-        status: "fail",
-        message: "User not authenticated",
-      });
-    }
+    console.log("🔹 postAsAdmin:", postAsAdmin);
 
     const user = await User.findByPk(userId);
     console.log(
@@ -249,12 +271,13 @@ const createPost = async (req, res) => {
       }
     }
 
-    //  إنشاء البوست
+    // الباقي زي ما هو...
+    // إنشاء البوست
     console.log("🪄 Creating post...");
     const newPost = await Post.create({
       category: finalCategory,
       content: content || "",
-      "author-id": authorId, // ⬅️ نستخدم authorId الجديد
+      "author-id": authorId,
       "group-id": groupId || null,
       "in-landing": inLanding || false,
     });
@@ -325,6 +348,37 @@ const getGroupPosts = async (req, res) => {
   try {
     const { groupId } = req.params;
 
+    // 1. تحديد اليوزر types المسموح لهم - كل اليوزر types
+    const allowedUserTypes = ["admin", "staff", "graduate"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+        data: [],
+      });
+    }
+
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Community Post's management",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Access denied. You don't have permission to view group posts.",
+          data: [],
+        });
+      }
+    }
+
+    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
     const posts = await Post.findAll({
       where: {
         "group-id": groupId,
@@ -383,7 +437,7 @@ const getGroupPosts = async (req, res) => {
               include: [
                 {
                   model: Graduate,
-                  as: "Graduate", // مهم جدًا
+                  as: "Graduate",
                   attributes: ["profile-picture-url"],
                 },
               ],
@@ -403,7 +457,7 @@ const getGroupPosts = async (req, res) => {
       if (post.User.Graduate) {
         image = post.User.Graduate["profile-picture-url"];
       } else if (post.User.Staff) {
-        image = null; // لو عندك عمود صورة staff ممكن تضيفه هنا
+        image = null;
       }
 
       // Calculate likesCount and isLikedByYou
@@ -428,11 +482,9 @@ const getGroupPosts = async (req, res) => {
         "group-id": post["group-id"],
         "in-landing": post["in-landing"],
         "is-hidden": post["is-hidden"],
-        // ⬇️⬇️⬇️ ضيف الـ images ⬇️⬇️⬇️
         images: post.PostImages
           ? post.PostImages.map((img) => img["image-url"])
           : [],
-        // ⬇️⬇️⬇️ ضيف الـ likes ⬇️⬇️⬇️
         likesCount: likesCount,
         isLikedByYou: isLikedByYou,
         likes: post.Likes
@@ -447,14 +499,13 @@ const getGroupPosts = async (req, res) => {
               },
             }))
           : [],
-        // ⬇️⬇️⬇️ ضيف الـ comments ⬇️⬇️⬇️
         comments_count: post.Comments ? post.Comments.length : 0,
         comments: post.Comments
           ? post.Comments.map((comment) => ({
               comment_id: comment.comment_id,
               content: comment.content,
               "created-at": comment["created-at"],
-              time_since: moment(comment["created-at"]).fromNow(), // الوقت بالإنجليزي
+              time_since: moment(comment["created-at"]).fromNow(),
               edited: comment.edited,
               author: {
                 id: comment.User?.id || "unknown",
@@ -926,6 +977,24 @@ const getAllPosts = async (req, res) => {
     console.log("🟦 isAdmin:", isAdmin);
     console.log("🟨 isStaff:", isStaff);
 
+    // ✅ التحقق من الصلاحية للـ Staff
+    if (isStaff) {
+      const hasPermission = await checkStaffPermission(
+        user.id,
+        "Graduates posts management",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Access denied. You don't have permission to view graduates posts.",
+          data: [],
+        });
+      }
+    }
+
     // ⬅️ الشرط الجديد: Admin و Staff يشوفوا الكل
     const whereCondition = isAdmin || isStaff ? {} : { "is-hidden": false };
     console.log("🟨 whereCondition used:", whereCondition);
@@ -1092,6 +1161,24 @@ const hideNegativePost = async (req, res) => {
       });
     }
 
+    // ✅ التحقق من الصلاحية للـ Staff
+    if (user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        user.id,
+        "Graduates posts management",
+        "edit"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "fail",
+          message:
+            "Access denied. You don't have permission to hide graduates posts.",
+          data: [],
+        });
+      }
+    }
+
     // 🔍 تأكد أن البوست موجود
     const post = await Post.findByPk(postId);
     if (!post) {
@@ -1143,6 +1230,24 @@ const unhidePost = async (req, res) => {
       });
     }
 
+    // ✅ التحقق من الصلاحية للـ Staff
+    if (user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        user.id,
+        "Graduates posts management",
+        "edit"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "fail",
+          message:
+            "Access denied. You don't have permission to unhide graduates posts.",
+          data: [],
+        });
+      }
+    }
+
     // 🔍 تأكد أن البوست موجود
     const post = await Post.findByPk(postId);
     if (!post) {
@@ -1179,6 +1284,37 @@ const unhidePost = async (req, res) => {
 
 const getAdminPosts = async (req, res) => {
   try {
+    // 1. تحديد اليوزر types المسموح لهم - كل اليوزر types
+    const allowedUserTypes = ["admin", "staff", "graduate"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+        data: [],
+      });
+    }
+
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Portal posts management",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Access denied. You don't have permission to view portal posts.",
+          data: [],
+        });
+      }
+    }
+
+    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
     const posts = await Post.findAll({
       include: [
         {
@@ -1321,7 +1457,6 @@ const getAdminPosts = async (req, res) => {
     });
   }
 };
-
 //
 const getGraduatePosts = async (req, res) => {
   try {
@@ -1681,6 +1816,41 @@ const editPost = async (req, res) => {
     const { category, type, content, link, groupId, inLanding, removeImages } =
       req.body;
 
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff", "graduate"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+      });
+    }
+
+    // 3. لو staff → تحقق من الصلاحيات (Community أو Portal)
+    if (req.user["user-type"] === "staff") {
+      const hasCommunityPermission = await checkStaffPermission(
+        req.user.id,
+        "Community Post's management",
+        "edit"
+      );
+
+      const hasPortalPermission = await checkStaffPermission(
+        req.user.id,
+        "Portal posts management",
+        "edit"
+      );
+
+      // Staff هيقدر يعدل لو عنده أي من الصلاحيتين
+      if (!hasCommunityPermission && !hasPortalPermission) {
+        return res.status(403).json({
+          status: "error",
+          message: "Access denied. You don't have permission to edit posts.",
+        });
+      }
+    }
+
+    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
     // تحديد الكاتيجوري النهائي
     const finalCategory = category || type;
 
@@ -1690,7 +1860,7 @@ const editPost = async (req, res) => {
         { model: PostImage, attributes: ["image-url"] },
         {
           model: User,
-          attributes: ["id", "user-type"], // ⬅️ بنجيب نوع اليوزر عشان نتحقق
+          attributes: ["id", "user-type"],
         },
       ],
     });
@@ -1715,7 +1885,7 @@ const editPost = async (req, res) => {
     const isStaffEditingAdminPost =
       req.user["user-type"] === "staff" && post.User["user-type"] === "admin";
     const isAdminEditingStaffPost =
-      req.user["user-type"] === "admin" && post.User["user-type"] === "staff"; // ⬅️ التعديل الجديد
+      req.user["user-type"] === "admin" && post.User["user-type"] === "staff";
 
     if (!isPostOwner && !isStaffEditingAdminPost && !isAdminEditingStaffPost) {
       return res.status(403).json({
@@ -2168,6 +2338,41 @@ const deletePost = async (req, res) => {
     const { postId } = req.params;
     const userId = req.user.id;
 
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff", "graduate"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!userId || !allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+      });
+    }
+
+    // 3. لو staff → تحقق من الصلاحيات (Community أو Portal)
+    if (req.user["user-type"] === "staff") {
+      const hasCommunityPermission = await checkStaffPermission(
+        userId,
+        "Community Post's management",
+        "delete"
+      );
+
+      const hasPortalPermission = await checkStaffPermission(
+        userId,
+        "Portal posts management",
+        "delete"
+      );
+
+      // Staff هيقدر يحذف لو عنده أي من الصلاحيتين
+      if (!hasCommunityPermission && !hasPortalPermission) {
+        return res.status(403).json({
+          status: "error",
+          message: "Access denied. You don't have permission to delete posts.",
+        });
+      }
+    }
+
+    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
     // Find the post
     const post = await Post.findByPk(postId);
     if (!post) {
@@ -2200,7 +2405,7 @@ const deletePost = async (req, res) => {
     const isStaffDeletingAdminPost =
       req.user["user-type"] === "staff" && postAuthor["user-type"] === "admin";
     const isAdminDeletingStaffPost =
-      req.user["user-type"] === "admin" && postAuthor["user-type"] === "staff"; // ⬅️ التعديل الجديد
+      req.user["user-type"] === "admin" && postAuthor["user-type"] === "staff";
 
     // Allow deleting if:
     // 1) It's the user's own post, OR
@@ -2685,24 +2890,53 @@ const toggleLandingStatus = async (req, res) => {
   try {
     const { postId } = req.params;
     const { inLanding } = req.body; // true or false
-    const adminId = req.user.id;
 
-    // جلب بيانات الأدمن للتأكد إنه عنده الصلاحية
-    const admin = await User.findByPk(adminId);
-    if (
-      !admin ||
-      (admin["user-type"] !== "admin" && admin["user-type"] !== "staff")
-    ) {
-      return res.status(403).json({ message: "Access denied. Admins only." });
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+      });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Portal posts management",
+        "edit"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Access denied. You don't have permission to manage landing posts.",
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     // جلب البوست
     const post = await Post.findByPk(postId);
-    if (!post) return res.status(404).json({ message: "Post not found" });
+    if (!post) {
+      return res.status(404).json({
+        status: "error",
+        message: "Post not found",
+      });
+    }
 
     // جلب صاحب البوست
     const author = await User.findByPk(post["author-id"]);
-    if (!author) return res.status(404).json({ message: "Author not found" });
+    if (!author) {
+      return res.status(404).json({
+        status: "error",
+        message: "Author not found",
+      });
+    }
 
     // شرط لو الكاتب خريج
     if (
@@ -2711,6 +2945,7 @@ const toggleLandingStatus = async (req, res) => {
       inLanding === true
     ) {
       return res.status(400).json({
+        status: "error",
         message:
           "Only 'Success story' posts by graduates can appear on the landing page.",
       });
@@ -2720,13 +2955,26 @@ const toggleLandingStatus = async (req, res) => {
     post["in-landing"] = inLanding;
     await post.save();
 
-    res.status(200).json({
+    return res.status(200).json({
+      status: "success",
       message: `Post landing status updated successfully.`,
-      data: post,
+      data: {
+        post_id: post.post_id,
+        "in-landing": post["in-landing"],
+        category: post.category,
+        author: {
+          id: author.id,
+          "user-type": author["user-type"],
+        },
+      },
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error", error });
+    return res.status(500).json({
+      status: "error",
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 

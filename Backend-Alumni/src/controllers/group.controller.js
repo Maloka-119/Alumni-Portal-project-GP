@@ -7,6 +7,7 @@ const { Op } = require("sequelize");
 const Graduate = require("../models/Graduate");
 const GroupMember = require("../models/GroupMember");
 const Invitation = require("../models/Invitation");
+const checkStaffPermission = require("../utils/permissionChecker");
 const { notifyAddedToGroup } = require("../services/notificationService");
 
 // getGraduatesForGroup اللي مسموحلهم تبعتلهم دعوه للجروب دا او معموله دعوه لسه متقبلتش
@@ -121,18 +122,36 @@ const createGroup = async (req, res) => {
       });
     }
 
-    // تحقق من صلاحية الأدمن والستاف
-    if (
-      !user ||
-      (user["user-type"] !== "admin" && user["user-type"] !== "staff")
-    ) {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!user || !allowedUserTypes.includes(user["user-type"])) {
       return res.status(403).json({
         status: "fail",
-        message: "Only admins and staff can create groups",
+        message: "Access denied.",
         data: [],
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        user.id,
+        "Communities management",
+        "add"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Access denied. You don't have permission to create groups.",
+          data: [],
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     // معالجة الصورة
     let imageUrl = null;
     if (req.file) {
@@ -177,6 +196,22 @@ const createGroup = async (req, res) => {
 //as an admin & graduate ,i want to see all groups in community
 const getGroups = async (req, res) => {
   try {
+    // 1. تحديد اليوزر types المسموح لهم - كل اليوزر types
+    const allowedUserTypes = ["admin", "staff", "graduate"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+        data: [],
+      });
+    }
+
+    // 3. لو staff → يعدي مباشرة علشان يشوف الجروبات (من غير صلاحية)
+    // علشان يقدر يدير الـ Communities لازم يشوفها أولاً
+
+    // 4. لو admin أو graduate أو staff → اتركه يكمل
     // هات كل الجروبات
     const groups = await Group.findAll();
 
@@ -217,17 +252,39 @@ const getGroups = async (req, res) => {
 const addUserToGroup = async (req, res) => {
   try {
     const { groupId, userId } = req.body;
-    const user = req.user; // middleware بيرجع اليوزر الحالي
+    const user = req.user;
 
-    // تأكد إنه Admin
-    if (user["user-type"] !== "admin" && user["user-type"] !== "staff") {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!user || !allowedUserTypes.includes(user["user-type"])) {
       return res.status(403).json({
         status: "fail",
-        message: "Only admins or staff can add users to groups",
+        message: "Access denied.",
         data: [],
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        user.id,
+        "Community Members management",
+        "add"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "fail",
+          message:
+            "Access denied. You don't have permission to add users to groups.",
+          data: [],
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     // تأكد إن الجروب موجود
     const group = await Group.findByPk(groupId);
     if (!group) {
@@ -298,13 +355,34 @@ const editGroup = async (req, res) => {
     const { groupId } = req.params;
     const { groupName, description, removeGroupImage } = req.body;
 
-    if (user["user-type"] !== "admin" && user["user-type"] !== "staff") {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!user || !allowedUserTypes.includes(user["user-type"])) {
       return res.status(403).json({
         status: "fail",
-        message: "Only admins or staff can edit groups",
+        message: "Access denied.",
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        user.id,
+        "Communities management",
+        "edit"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Access denied. You don't have permission to edit groups.",
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const group = await Group.findByPk(groupId);
     if (!group)
       return res
@@ -357,14 +435,36 @@ const deleteGroup = async (req, res) => {
     const user = req.user;
     const { groupId } = req.params;
 
-    if (user["user-type"] !== "admin" && user["user-type"] !== "staff") {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!user || !allowedUserTypes.includes(user["user-type"])) {
       return res.status(403).json({
         status: "fail",
-        message: "Only admins or staff can delete groups",
+        message: "Access denied.",
         data: [],
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        user.id,
+        "Communities management",
+        "delete"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "fail",
+          message: "Access denied. You don't have permission to delete groups.",
+          data: [],
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const group = await Group.findByPk(groupId);
     if (!group) {
       return res.status(404).json({
@@ -404,14 +504,37 @@ const getGroupMembersCount = async (req, res) => {
     const user = req.user;
     const { groupId } = req.params;
 
-    if (user["user-type"] !== "admin" && user["user-type"] !== "staff") {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff", "graduate"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!user || !allowedUserTypes.includes(user["user-type"])) {
       return res.status(403).json({
         status: "fail",
-        message: "Only admins or staff can view members count",
+        message: "Access denied.",
         data: [],
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        user.id,
+        "Communities management",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "fail",
+          message:
+            "Access denied. You don't have permission to view members count.",
+          data: [],
+        });
+      }
+    }
+
+    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
     // اتأكد إن الجروب موجود
     const group = await Group.findByPk(groupId);
     if (!group) {
@@ -641,12 +764,41 @@ const getGroupUsers = async (req, res) => {
   try {
     const { groupId } = req.params;
 
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff", "graduate"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+      });
+    }
+
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Community Members management",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Access denied. You don't have permission to view group members.",
+        });
+      }
+    }
+
+    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
     const group = await Group.findByPk(groupId, {
       include: [
         {
           model: User,
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
-          through: { attributes: [] }, // اخفي بيانات الجدول الوسيط
+          through: { attributes: [] },
           include: [
             {
               model: Graduate,

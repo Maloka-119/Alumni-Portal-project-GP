@@ -5,10 +5,41 @@ const HttpStatusHelper = require("../utils/HttpStatuHelper");
 const Role = require("../models/Role");
 const Permission = require("../models/Permission");
 const RolePermission = require("../models/RolePermission");
+const checkStaffPermission = require("../utils/permissionChecker");
 
 // get all staff with roles
 const getAllStaff = async (req, res) => {
   try {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+        data: [],
+      });
+    }
+
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Staff management",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message: "Access denied. You don't have permission to view staff.",
+          data: [],
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const staff = await Staff.findAll({
       include: [
         {
@@ -26,8 +57,8 @@ const getAllStaff = async (req, res) => {
         },
         {
           model: Role,
-          attributes: ["role-name"], // نجيب بس اسم الرول
-          through: { attributes: [] }, // نحذف بيانات الجدول الوسيط StaffRole
+          attributes: ["role-name"],
+          through: { attributes: [] },
         },
       ],
     });
@@ -47,13 +78,43 @@ const getAllStaff = async (req, res) => {
   }
 };
 
-
 // suspend/activate staff
 const updateStaffStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body; // expected: "active" or "inactive"
+    const { status } = req.body;
 
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!allowedUserTypes.includes(req.user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+        data: null,
+      });
+    }
+
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Staff management",
+        "edit"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Access denied. You don't have permission to update staff status.",
+          data: null,
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     // validate
     if (!["active", "inactive"].includes(status)) {
       return res.status(400).json({
@@ -100,14 +161,41 @@ const getStaffProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Check if user is staff
-    if (req.user["user-type"] !== "staff") {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
         status: "error",
-        message: "Only staff members can access staff profiles",
+        message: "Access denied.",
       });
     }
 
+    // 3. لو staff → يتأكد إنه بيسأل على بروفايله الشخصي فقط (من غير صلاحية)
+    if (req.user["user-type"] === "staff") {
+      // Staff مش محتاج صلاحية علشان يشوف بروفايله
+      // بس يتأكد إنه بيسأل على بروفايله هو فقط
+      // (الكود الحالي بيشوف بروفايله هو لأن userId = req.user.id)
+    }
+    // 4. لو admin → بيتحقق من الصلاحية علشان يشوف أي بروفايل
+    else if (req.user["user-type"] === "admin") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Staff management",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Access denied. You don't have permission to view staff profiles.",
+        });
+      }
+    }
+
+    // 5. لو admin مع صلاحية أو staff → اتركه يكمل
     // Find staff record with user details, roles, and permissions
     const staff = await Staff.findByPk(userId, {
       include: [
@@ -126,9 +214,7 @@ const getStaffProfile = async (req, res) => {
         },
         {
           model: Role,
-          through: {
-            attributes: [], // Don't include StaffRole attributes
-          },
+          through: { attributes: [] },
           attributes: ["id", "role-name"],
           include: [
             {
@@ -156,16 +242,16 @@ const getStaffProfile = async (req, res) => {
     const profileData = {
       fullName: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
       nationalId: staff.User["national-id"],
-      workId: staff.staff_id, // Using staff_id as work ID
+      workId: staff.staff_id,
       email: staff.User.email,
       phoneNumber: staff.User["phone-number"],
       birthDate: staff.User["birth-date"],
       userType: staff.User["user-type"],
       status: staff["status-to-login"],
-      roles: staff.Roles.map(role => ({
+      roles: staff.Roles.map((role) => ({
         role_id: role.id,
         name: role["role-name"],
-        permissions: role.RolePermissions.map(rp => ({
+        permissions: role.RolePermissions.map((rp) => ({
           name: rp.Permission.name,
           "can-view": rp["can-view"] || false,
           "can-edit": rp["can-edit"] || false,
@@ -190,4 +276,3 @@ const getStaffProfile = async (req, res) => {
 };
 
 module.exports = { getAllStaff, updateStaffStatus, getStaffProfile };
-
