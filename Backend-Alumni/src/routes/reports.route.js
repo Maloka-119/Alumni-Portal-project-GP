@@ -6,6 +6,8 @@ const Role = require("../models/Role");
 const StaffRole = require("../models/StaffRole");
 const Post = require("../models/Post");
 const User = require("../models/User");
+const checkStaffPermission = require("../utils/permissionChecker");
+const authMiddleware = require("../middleware/authMiddleware"); // ⬅️ لازم تضيف ده
 
 const router = express.Router();
 
@@ -13,29 +15,80 @@ const router = express.Router();
 Post.belongsTo(User, { foreignKey: "author-id" });
 User.hasMany(Post, { foreignKey: "author-id" });
 
-router.get("/reports-stats", async (req, res) => {
+// ⬅️ أضف authMiddleware.protect هنا
+router.get("/reports-stats", authMiddleware.protect, async (req, res) => {
   try {
+    const user = req.user;
+    console.log("🔍 User in reports-stats:", user); // ⬅️ أضف ده لل debugging
+
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied.",
+      });
+    }
+
+    // 3. لو staff → تحقق من الصلاحية
+    if (user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        user.id,
+        "Portal Reports",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Access denied. You don't have permission to view portal reports.",
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     // 👩‍🎓 إجمالي وعدد حالات الخريجين
     const totalGraduates = await Graduate.count();
-    const activeGraduates = await Graduate.count({ where: { status: "active" } });
-    const inactiveGraduates = await Graduate.count({ where: { status: "inactive" } });
+    const activeGraduates = await Graduate.count({
+      where: { status: "active" },
+    });
+    const inactiveGraduates = await Graduate.count({
+      where: { status: "inactive" },
+    });
 
-    const acceptedGraduates = await Graduate.count({ where: { "status-to-login": "accepted" } });
-    const pendingGraduates = await Graduate.count({ where: { "status-to-login": "pending" } });
-    const rejectedGraduates = await Graduate.count({ where: { "status-to-login": "rejected" } });
+    const acceptedGraduates = await Graduate.count({
+      where: { "status-to-login": "accepted" },
+    });
+    const pendingGraduates = await Graduate.count({
+      where: { "status-to-login": "pending" },
+    });
+    const rejectedGraduates = await Graduate.count({
+      where: { "status-to-login": "rejected" },
+    });
 
     // 👨‍🏫 إجمالي وعدد حالات أعضاء هيئة التدريس
     const totalStaff = await Staff.count();
-    const activeStaff = await Staff.count({ where: { "status-to-login": "active" } });
-    const inactiveStaff = await Staff.count({ where: { "status-to-login": "inactive" } });
+    const activeStaff = await Staff.count({
+      where: { "status-to-login": "active" },
+    });
+    const inactiveStaff = await Staff.count({
+      where: { "status-to-login": "inactive" },
+    });
 
     // 📢 عدد البوستات من كل نوع مستخدم
     const postsByGraduates = await Post.count({
-      include: [{ model: User, where: { "user-type": "graduate" }, attributes: [] }],
+      include: [
+        { model: User, where: { "user-type": "graduate" }, attributes: [] },
+      ],
     });
 
     const postsByStaff = await Post.count({
-      include: [{ model: User, where: { "user-type": "staff" }, attributes: [] }],
+      include: [
+        { model: User, where: { "user-type": "staff" }, attributes: [] },
+      ],
     });
 
     // 🏫 عدد الخريجين في كل كلية
@@ -66,24 +119,32 @@ router.get("/reports-stats", async (req, res) => {
 
     // ✅ الإحصائيات النهائية بنفس ترتيب الـ frontend المطلوب
     res.status(200).json({
-      totalGraduates,
-      activeGraduates,
-      inactiveGraduates,
-      acceptedGraduates,
-      pendingGraduates,
-      rejectedGraduates,
-      totalStaff,
-      activeStaff,
-      inactiveStaff,
-      postsByGraduates,
-      postsByStaff,
-      graduatesByFaculty,
-      staffRoles,
-      activePercentage,
+      status: "success",
+      message: "Portal reports fetched successfully",
+      data: {
+        totalGraduates,
+        activeGraduates,
+        inactiveGraduates,
+        acceptedGraduates,
+        pendingGraduates,
+        rejectedGraduates,
+        totalStaff,
+        activeStaff,
+        inactiveStaff,
+        postsByGraduates,
+        postsByStaff,
+        graduatesByFaculty,
+        staffRoles,
+        activePercentage,
+      },
     });
   } catch (error) {
     console.error("Dashboard error:", error);
-    res.status(500).json({ message: "Internal server error", error });
+    res.status(500).json({
+      status: "error",
+      message: "Internal server error",
+      error: error.message,
+    });
   }
 });
 

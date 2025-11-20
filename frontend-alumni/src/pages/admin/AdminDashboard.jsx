@@ -27,20 +27,29 @@ const CardContent = ({ children }) => (
 function AdminDashboard() {
   const { t } = useTranslation();
   const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        setLoading(true);
         const response = await API.get("/reports-stats");
-        setData(response.data);
+        setData(response.data.data); // ⬅️ غير هنا من response.data إلى response.data.data
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
+        setError("Failed to fetch dashboard data");
+      } finally {
+        setLoading(false);
       }
     };
     fetchDashboardData();
   }, []);
 
-  if (!data) return <p className="loading-text">{t("loadingDashboard")}</p>;
+  // ⬅️ أضف loading و error handling
+  if (loading) return <p className="loading-text">{t("loadingDashboard")}</p>;
+  if (error) return <p className="error-text">{error}</p>;
+  if (!data) return <p className="loading-text">No data available</p>;
 
   const {
     totalGraduates,
@@ -54,8 +63,8 @@ function AdminDashboard() {
     inactiveStaff,
     postsByGraduates,
     postsByStaff,
-    graduatesByFaculty,
-    staffRoles,
+    graduatesByFaculty = [], // ⬅️ قيم افتراضية
+    staffRoles = [], // ⬅️ قيم افتراضية
   } = data;
 
   const graduatesActivePercentage = totalGraduates > 0 ? Math.round((activeGraduates / totalGraduates) * 100) : 0;
@@ -81,14 +90,26 @@ function AdminDashboard() {
     datasets: [{ data: [activeStaff, inactiveStaff], backgroundColor: ["#10b981", "#cbd5e1"] }],
   };
 
+  // ⬅️ تحقق من graduatesByFaculty قبل map
   const facultyChartData = {
     labels: graduatesByFaculty.map((f) => f.faculty || t("Unknown")),
-    datasets: [{ label: t("GraduatesByFaculty"), data: graduatesByFaculty.map((f) => f.count), backgroundColor: "rgba(37,99,235,0.6)", borderRadius: 5 }],
+    datasets: [{ 
+      label: t("GraduatesByFaculty"), 
+      data: graduatesByFaculty.map((f) => f.count), 
+      backgroundColor: "rgba(37,99,235,0.6)", 
+      borderRadius: 5 
+    }],
   };
 
+  // ⬅️ تحقق من staffRoles قبل map
   const rolesChartData = {
-    labels: staffRoles.map((r) => r.Role["role-name"]),
-    datasets: [{ label: t("StaffByRole"), data: staffRoles.map((r) => r.count), backgroundColor: "rgba(236,72,153,0.6)", borderRadius: 5 }],
+    labels: staffRoles.map((r) => r.Role ? r.Role["role-name"] : t("Unknown")),
+    datasets: [{ 
+      label: t("StaffByRole"), 
+      data: staffRoles.map((r) => r.count), 
+      backgroundColor: "rgba(236,72,153,0.6)", 
+      borderRadius: 5 
+    }],
   };
 
   const pieOptions = {
@@ -178,7 +199,6 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
-
 
 // import React, { useEffect, useState } from "react";
 // import API from "../../services/api";
