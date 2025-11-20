@@ -1,5 +1,4 @@
-import FeedbackView from './FeedbackView';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import './AdminPanel.css';
 import AlumniManagement from './AlumniManagement';
@@ -13,17 +12,21 @@ import FAQManage from './FAQManage';
 import RolesManagement from './RolesManagement';
 import { 
   Globe, LogOut, BarChart2, Users, FileText, Phone, 
-  UserCheck, User, Shield, Edit, Megaphone, HelpCircle, Wrench ,Clipboard
+  UserCheck, User, Shield, Edit, Megaphone, HelpCircle, Wrench, Clipboard
 } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api'; 
-
 
 const AdminPanel = ({ setUser }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
+
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+  }, [i18n.language]);
+
   const handleLogout = async () => {
     try {
       await API.get("/logout");
@@ -35,6 +38,7 @@ const AdminPanel = ({ setUser }) => {
       console.error("Logout failed:", err);
     }
   };
+
   const toggleLanguage = () => {
     i18n.changeLanguage(i18n.language === "en" ? "ar" : "en");
   };
@@ -102,9 +106,8 @@ const AdminPanel = ({ setUser }) => {
             {i18n.language === "en" ? "EN" : "AR"}
           </button>
           <button className="logout-btn" onClick={handleLogout}>
-  <LogOut size={16} />
-</button>
-
+            <LogOut size={16} />
+          </button>
         </div>
       </header>
 
@@ -137,10 +140,7 @@ const AdminPanel = ({ setUser }) => {
       <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         <Routes>
           <Route index element={<EmptyPage title="welcome to admin panel" />} />
-         <Route
-          path="reportsAnalysis"
-            element={<AdminDashboard title="Reports & Analytics" />}
-              />
+          <Route path="reportsAnalysis" element={<AdminDashboard title="Reports & Analytics" />} />
           <Route path="communityManagement" element={<GroupsPage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="documentManagement" element={<EmptyPage title="Document Management" />} />
           <Route path="consultationRequests" element={<EmptyPage title="Consultation Requests" />} />
@@ -150,7 +150,6 @@ const AdminPanel = ({ setUser }) => {
           <Route path="adminPosts" element={<AdminPostsPage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="usersPosts" element={<UsersPostsPage currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="faqManage" element={<FAQManage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
-          <Route path="GraduatedFeedback" element={<FeedbackView currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
         </Routes>
       </main>
     </div>
@@ -158,7 +157,6 @@ const AdminPanel = ({ setUser }) => {
 };
 
 export default AdminPanel;
-
 
 
 // import React, { useState } from 'react';

@@ -278,7 +278,7 @@ const admin = {
         "name": "الاسم",
         "nationalId": "الرقم القومي",
         "graduationYear": "سنة التخرج",
-        "status": "الحالة",
+      
         "alumniId": "معرف الخريج",
         "actions": "الإجراءات",
         
@@ -288,7 +288,6 @@ const admin = {
       "staff": "الموظفين",
       "alumni": "الخريجين",
       "userManagement": "إدارة المستخدمين",
-      "status": "الحالة",
       "all": "الكل",
       "pending": "قيد الانتظار",
       "active": "نشط",
@@ -443,7 +442,6 @@ const admin = {
    "Permissions": "الصلاحيات",
   "ConsultationRequests": "طلبات الاستشارة",
   "ComingSoonMessage": "تابعونا. شيء رائع قادم قريبًا.",
-    "Status": ":الحالة",
       "Permissions": "الصلاحيات",
       "General": "عام",
       "Internship": "تدريب",
@@ -475,7 +473,7 @@ const admin = {
   "internship": "تدريب",
   "successStory": "قصة نجاح",
     "loadingPosts": "جارٍ تحميل المنشورات...",
-
+  "Status": "الحالة:",
     "Write a comment...": "اكتب تعليق..." ,
       "Send": "إرسال"
       
@@ -484,4 +482,3 @@ const admin = {
   };
   
   export default admin;
-  
