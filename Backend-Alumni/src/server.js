@@ -131,8 +131,7 @@ const ensurePermissionsSeeded = async () => {
     "Consultation management",
     "FAQ management",
     "Graduates Feedback",
-    "Permissions management",
-    "Roles management",
+    "Roles and Permissions Management",
   ];
 
   try {
