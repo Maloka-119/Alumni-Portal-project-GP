@@ -18,10 +18,12 @@ require("./models/associations");
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true, // Allow cookies to be sent
-}));
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true, // Allow cookies to be sent
+  })
+);
 app.use(helmet());
 app.use(morgan("dev"));
 
@@ -128,6 +130,9 @@ const ensurePermissionsSeeded = async () => {
     "Document Requests management",
     "Consultation management",
     "FAQ management",
+    "Graduates Feedback",
+    "Permissions management",
+    "Roles management",
   ];
 
   try {
@@ -177,16 +182,25 @@ sequelize
   .sync({ alter: false }) // Changed to false to prevent auto-alter conflicts
   .then(async () => {
     console.log("Database synced successfully.");
-    
+
     // Ensure Notification table has correct structure
-    const Notification = require('./models/Notification');
+    const Notification = require("./models/Notification");
     try {
       // Check if table exists and has correct structure
-      const tableDescription = await sequelize.getQueryInterface().describeTable('Notification');
-      
+      const tableDescription = await sequelize
+        .getQueryInterface()
+        .describeTable("Notification");
+
       // If table exists but missing new columns, add them
-      if (!tableDescription['receiver-id'] || !tableDescription['sender-id'] || !tableDescription['type'] || !tableDescription['message']) {
-        console.log("⚠️  Notification table structure needs update. Please run the migration or SQL script.");
+      if (
+        !tableDescription["receiver-id"] ||
+        !tableDescription["sender-id"] ||
+        !tableDescription["type"] ||
+        !tableDescription["message"]
+      ) {
+        console.log(
+          "⚠️  Notification table structure needs update. Please run the migration or SQL script."
+        );
       } else {
         console.log("✅ Notification table structure is correct.");
       }

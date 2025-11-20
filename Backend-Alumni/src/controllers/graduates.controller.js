@@ -8,6 +8,7 @@ const Like = require("../models/Like");
 const GroupMember = require("../models/GroupMember");
 const { Op } = require("sequelize");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
+const checkStaffPermission = require("../utils/permissionChecker");
 const cloudinary = require("../config/cloudinary");
 const axios = require("axios");
 
@@ -48,18 +49,37 @@ const getAllGraduates = async (req, res) => {
 // Get active graduates (GraduatesInPortal) - Admin only
 const getGraduatesInPortal = async (req, res) => {
   try {
-    // التحقق إن المستخدم Admin أو Staff
-    if (
-      req.user["user-type"] !== "admin" &&
-      req.user["user-type"] !== "staff"
-    ) {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
-        message: "Access denied. Admins or Staff only.",
+        message: "Access denied.",
         data: [],
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Graduate management",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: HttpStatusHelper.ERROR,
+          message:
+            "Access denied. You don't have permission to view graduates.",
+          data: [],
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const graduates = await Graduate.findAll({
       where: { "status-to-login": "accepted" },
       include: {
@@ -95,18 +115,37 @@ const getGraduatesInPortal = async (req, res) => {
 // Get inactive graduates (requested to join) - Admin only
 const getRequestedGraduates = async (req, res) => {
   try {
-    // التحقق إن المستخدم Admin أو Staff
-    if (
-      req.user["user-type"] !== "admin" &&
-      req.user["user-type"] !== "staff"
-    ) {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
-        message: "Access denied. Admins and staff only.",
+        message: "Access denied.",
         data: [],
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Graduate management",
+        "view"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: HttpStatusHelper.ERROR,
+          message:
+            "Access denied. You don't have permission to view graduates.",
+          data: [],
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const graduates = await Graduate.findAll({
       where: { "status-to-login": "pending" },
       include: {
@@ -142,17 +181,35 @@ const getRequestedGraduates = async (req, res) => {
 //reject graduate by admin
 const rejectGraduate = async (req, res) => {
   try {
-    // تأكيد إن المستخدم Admin أو Staff
-    if (
-      req.user["user-type"] !== "admin" &&
-      req.user["user-type"] !== "staff"
-    ) {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
         status: "error",
-        message: "Access denied. Admin and staff only",
+        message: "Access denied.",
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Graduate management",
+        "edit"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: "error",
+          message:
+            "Access denied. You don't have permission to reject graduates.",
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const graduateId = req.params.id;
 
     // جلب الخريج من قاعدة البيانات
@@ -254,16 +311,33 @@ const approveGraduate = async (req, res) => {
     const { id } = req.params; // graduate_id من URL
     const { faculty, graduationYear } = req.body; // من body
 
-    // ✅ التحقق من أن اللي بينفذ هو admin أو staff
-    if (
-      !req.user ||
-      (req.user["user-type"] !== "admin" && req.user["user-type"] !== "staff")
-    ) {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
-        message: "Access denied: Only admin and staff can approve graduates.",
+        message: "Access denied.",
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Graduate management",
+        "edit"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          message:
+            "Access denied. You don't have permission to approve graduates.",
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     // ✅ التحقق إن الحقول المطلوبة موجودة
     if (!faculty || !graduationYear) {
       return res.status(400).json({
@@ -554,18 +628,37 @@ const updateGraduateStatus = async (req, res) => {
     const { id } = req.params; // graduate_id
     const { status } = req.body; // "active" or "inactive"
 
-    // ⬇️⬇️⬇️ التحقق من صلاحيات Admin أو Staff ⬇️⬇️⬇️
-    if (
-      req.user["user-type"] !== "admin" &&
-      req.user["user-type"] !== "staff"
-    ) {
+    // 1. تحديد اليوزر types المسموح لهم
+    const allowedUserTypes = ["admin", "staff"];
+
+    // 2. لو مش من النوع المسموح → ارفض
+    if (!allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
-        message: "Access denied. Admins and staff only.",
+        message: "Access denied.",
         data: null,
       });
     }
 
+    // 3. لو staff → تحقق من الصلاحية
+    if (req.user["user-type"] === "staff") {
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Graduate management",
+        "edit"
+      );
+
+      if (!hasPermission) {
+        return res.status(403).json({
+          status: HttpStatusHelper.ERROR,
+          message:
+            "Access denied. You don't have permission to update graduate status.",
+          data: null,
+        });
+      }
+    }
+
+    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     if (!["active", "inactive"].includes(status)) {
       return res.status(400).json({
         status: HttpStatusHelper.FAIL,
