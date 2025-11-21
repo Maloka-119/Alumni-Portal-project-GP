@@ -7,7 +7,7 @@ const checkStaffPermission = require("../utils/permissionChecker");
 // @route   GET /alumni-portal/faqs
 // @access  Public
 const getAllFAQs = asyncHandler(async (req, res) => {
-  const { category, search, sort = "order" } = req.query;
+  const { category, search, sort = "order", lang = "en" } = req.query;
 
   let whereClause = { is_active: true };
   let orderClause = [
@@ -20,12 +20,19 @@ const getAllFAQs = asyncHandler(async (req, res) => {
     whereClause.category = category;
   }
 
-  // Search functionality
+  // Search functionality based on language
   if (search) {
-    whereClause[Op.or] = [
-      { question: { [Op.iLike]: `%${search}%` } },
-      { answer: { [Op.iLike]: `%${search}%` } },
-    ];
+    if (lang === "ar") {
+      whereClause[Op.or] = [
+        { question_ar: { [Op.iLike]: `%${search}%` } },
+        { answer_ar: { [Op.iLike]: `%${search}%` } },
+      ];
+    } else {
+      whereClause[Op.or] = [
+        { question_en: { [Op.iLike]: `%${search}%` } },
+        { answer_en: { [Op.iLike]: `%${search}%` } },
+      ];
+    }
   }
 
   // Sorting options
@@ -50,10 +57,29 @@ const getAllFAQs = asyncHandler(async (req, res) => {
     ],
   });
 
+  // Format response based on language preference
+  const formattedFAQs = faqs.map(faq => ({
+    faq_id: faq.faq_id,
+    question: lang === "ar" ? faq.question_ar : faq.question_en,
+    answer: lang === "ar" ? faq.answer_ar : faq.answer_en,
+    question_ar: faq.question_ar,
+    question_en: faq.question_en,
+    answer_ar: faq.answer_ar,
+    answer_en: faq.answer_en,
+    order: faq.order,
+    category: faq.category,
+    is_active: faq.is_active,
+    created_by: faq.created_by,
+    updated_by: faq.updated_by,
+    "created-at": faq["created-at"],
+    "updated-at": faq["updated-at"],
+    creator: faq.creator
+  }));
+
   res.status(200).json({
     success: true,
-    count: faqs.length,
-    data: faqs,
+    count: formattedFAQs.length,
+    data: formattedFAQs,
   });
 });
 
@@ -63,7 +89,7 @@ const getAllFAQs = asyncHandler(async (req, res) => {
 const getAllFAQsAdmin = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
-    const { category, search, is_active, sort = "order" } = req.query;
+    const { category, search, is_active, sort = "order", lang = "en" } = req.query;
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
@@ -109,12 +135,19 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
       whereClause.is_active = is_active === "true";
     }
 
-    // Search functionality
+    // Search functionality based on language
     if (search) {
-      whereClause[Op.or] = [
-        { question: { [Op.iLike]: `%${search}%` } },
-        { answer: { [Op.iLike]: `%${search}%` } },
-      ];
+      if (lang === "ar") {
+        whereClause[Op.or] = [
+          { question_ar: { [Op.iLike]: `%${search}%` } },
+          { answer_ar: { [Op.iLike]: `%${search}%` } },
+        ];
+      } else {
+        whereClause[Op.or] = [
+          { question_en: { [Op.iLike]: `%${search}%` } },
+          { answer_en: { [Op.iLike]: `%${search}%` } },
+        ];
+      }
     }
 
     // Sorting options
@@ -144,10 +177,17 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
       ],
     });
 
+    // Format response with both languages
+    const formattedFAQs = faqs.map(faq => ({
+      ...faq.toJSON(),
+      question: lang === "ar" ? faq.question_ar : faq.question_en,
+      answer: lang === "ar" ? faq.answer_ar : faq.answer_en,
+    }));
+
     res.status(200).json({
       success: true,
-      count: faqs.length,
-      data: faqs,
+      count: formattedFAQs.length,
+      data: formattedFAQs,
     });
   } catch (error) {
     res.status(500).json({
@@ -161,6 +201,8 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
 // @route   GET /alumni-portal/faqs/:id
 // @access  Public
 const getFAQ = asyncHandler(async (req, res) => {
+  const { lang = "en" } = req.query;
+
   const faq = await FAQ.findOne({
     where: {
       faq_id: req.params.id,
@@ -182,9 +224,16 @@ const getFAQ = asyncHandler(async (req, res) => {
     });
   }
 
+  // Format response based on language preference
+  const formattedFAQ = {
+    ...faq.toJSON(),
+    question: lang === "ar" ? faq.question_ar : faq.question_en,
+    answer: lang === "ar" ? faq.answer_ar : faq.answer_en,
+  };
+
   res.status(200).json({
     success: true,
-    data: faq,
+    data: formattedFAQ,
   });
 });
 
@@ -194,7 +243,7 @@ const getFAQ = asyncHandler(async (req, res) => {
 const createFAQ = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
-    const { question, answer, order, category, is_active } = req.body;
+    const { question_ar, question_en, answer_ar, answer_en, order, category, is_active } = req.body;
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
@@ -224,11 +273,11 @@ const createFAQ = asyncHandler(async (req, res) => {
     }
 
     // 4. لو admin أو staff مع صلاحية → اتركه يكمل
-    // Validate required fields
-    if (!question || !answer) {
+    // Validate required fields for both languages
+    if (!question_ar || !question_en || !answer_ar || !answer_en) {
       return res.status(400).json({
         success: false,
-        message: "Question and answer are required",
+        message: "Question and answer in both Arabic and English are required",
       });
     }
 
@@ -242,8 +291,10 @@ const createFAQ = asyncHandler(async (req, res) => {
     }
 
     const faq = await FAQ.create({
-      question: question.trim(),
-      answer: answer.trim(),
+      question_ar: question_ar.trim(),
+      question_en: question_en.trim(),
+      answer_ar: answer_ar.trim(),
+      answer_en: answer_en.trim(),
       order: faqOrder,
       category: category?.trim() || "General",
       is_active: is_active !== undefined ? is_active : true,
@@ -281,7 +332,7 @@ const createFAQ = asyncHandler(async (req, res) => {
 const updateFAQ = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
-    const { question, answer, order, category, is_active } = req.body;
+    const { question_ar, question_en, answer_ar, answer_en, order, category, is_active } = req.body;
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
@@ -326,8 +377,10 @@ const updateFAQ = asyncHandler(async (req, res) => {
       "updated-at": new Date(),
     };
 
-    if (question !== undefined) updateData.question = question.trim();
-    if (answer !== undefined) updateData.answer = answer.trim();
+    if (question_ar !== undefined) updateData.question_ar = question_ar.trim();
+    if (question_en !== undefined) updateData.question_en = question_en.trim();
+    if (answer_ar !== undefined) updateData.answer_ar = answer_ar.trim();
+    if (answer_en !== undefined) updateData.answer_en = answer_en.trim();
     if (order !== undefined) updateData.order = order;
     if (category !== undefined) updateData.category = category.trim();
     if (is_active !== undefined) updateData.is_active = is_active;
@@ -475,7 +528,7 @@ const hardDeleteFAQ = asyncHandler(async (req, res) => {
       success: true,
       message: "FAQ permanently deleted",
     });
-  } catch (error) {
+  } catch ( error) {
     res.status(500).json({
       success: false,
       message: error.message,
