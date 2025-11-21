@@ -106,6 +106,9 @@ app.use("/alumni-portal/notifications", notificationRoutes);
 const feedbackRoutes = require("./routes/feedback.route.js");
 app.use("/alumni-portal/feedbacks", feedbackRoutes);
 
+const facultiesRoute = require("./routes/faculties.route.js");
+app.use("/alumni-portal/faculties", facultiesRoute);
+
 //  Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
