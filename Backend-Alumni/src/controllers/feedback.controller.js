@@ -32,7 +32,7 @@ const createFeedback = async (req, res) => {
   }
 };
 
-// 2️⃣ جلب كل Feedback
+// 1️⃣ جلب كل Feedback
 const getAllFeedback = async (req, res) => {
   try {
     const list = await Feedback.findAll({
@@ -40,12 +40,37 @@ const getAllFeedback = async (req, res) => {
     });
 
     res.json(list);
-
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// 2️⃣ جلب Feedback الخاص بالمستخدم الحالي
+const getMyFeedback = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "User not authenticated" });
+    }
+
+    // جلب الفيدباكس الخاصة بالمستخدم الحالي حسب graduate_id
+    const myList = await Feedback.findAll({
+      where: { graduate_id: req.user.id }, // استخدم graduate_id بدل userId
+      include: [
+        {
+          model: User,
+          attributes: ["first-name", "last-name", "email"],
+        },
+      ],
+    });
+
+    res.json(myList);
+  } catch (error) {
+    console.error("Error in getMyFeedback:", error); // اعرض الخطأ الكامل للتصحيح
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 
 // 3️⃣ جلب Feedback خاص بخريج محدد
 const getGraduateFeedback = async (req, res) => {
@@ -126,4 +151,5 @@ module.exports = {
   getByCategory,
   deleteFeedback,
   updateFeedback,
+  getMyFeedback
 };
