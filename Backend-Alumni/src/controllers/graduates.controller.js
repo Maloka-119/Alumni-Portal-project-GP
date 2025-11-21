@@ -11,6 +11,8 @@ const HttpStatusHelper = require("../utils/HttpStatuHelper");
 const checkStaffPermission = require("../utils/permissionChecker");
 const cloudinary = require("../config/cloudinary");
 const axios = require("axios");
+const { normalizeCollegeName, getCollegeNameByCode } = require("../services/facultiesService");
+
 
 //get all graduates
 const getAllGraduates = async (req, res) => {
@@ -312,6 +314,7 @@ const getDigitalID = async (req, res) => {
   }
 };
 
+
 // Approve Graduate by admin
 const approveGraduate = async (req, res) => {
   try {
@@ -323,9 +326,7 @@ const approveGraduate = async (req, res) => {
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
-      return res.status(403).json({
-        message: "Access denied.",
-      });
+      return res.status(403).json({ message: "Access denied." });
     }
 
     // 3. لو staff → تحقق من الصلاحية
@@ -344,17 +345,21 @@ const approveGraduate = async (req, res) => {
       }
     }
 
-    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
-    // ✅ التحقق إن الحقول المطلوبة موجودة
+    // 4. تحقق إن الحقول المطلوبة موجودة
     if (!faculty || !graduationYear) {
       return res.status(400).json({
         message: "Faculty and graduationYear are required.",
       });
     }
 
+    // 🔍 Normalize الكلية → يرجع الكود فقط
+    const facultyCode = normalizeCollegeName(faculty);
+    if (!facultyCode) {
+      return res.status(400).json({ message: "Invalid faculty name." });
+    }
+
     // 🔍 البحث عن الخريج في قاعدة البيانات
     const graduate = await Graduate.findOne({ where: { graduate_id: id } });
-
     if (!graduate) {
       return res.status(404).json({ message: "Graduate not found." });
     }
@@ -362,15 +367,19 @@ const approveGraduate = async (req, res) => {
     // ✅ تحديث الحالة والبيانات
     graduate["status-to-login"] = "accepted";
     graduate["graduation-year"] = graduationYear;
-    graduate.faculty = faculty;
+    graduate.faculty_code = facultyCode; // نخزن الكود فقط
 
     await graduate.save();
+
+    // لو حبيت تعرض الاسم حسب لغة المستخدم
+    const facultyName = getCollegeNameByCode(facultyCode, req.user.language || "ar");
 
     // ✅ رد النجاح
     return res.status(200).json({
       message: "Graduate approved successfully.",
       graduateId: id,
       newStatus: graduate["status-to-login"],
+      facultyName, // الاسم يظهر حسب لغة المستخدم
     });
   } catch (error) {
     console.error("Error approving graduate:", error.message);
