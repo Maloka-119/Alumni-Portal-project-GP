@@ -237,7 +237,9 @@ const alumni = {
   "Loading notifications...": "Loading notifications...",
   "Mark as Read": "Mark as Read",
   "Delete": "Delete"
-
+,
+  "edited": "Edited",
+    "Message deleted": "Message deleted"
     },
   },
 
@@ -477,6 +479,8 @@ const alumni = {
   "Loading notifications...": "جاري تحميل الإشعارات...",
   "Mark as Read": "تحديد كمقروء",
   "Delete": "حذف",
+    "edited": "تم التعديل",
+      "Message deleted": "تم حذف الرسالة"
   
     },
   },
