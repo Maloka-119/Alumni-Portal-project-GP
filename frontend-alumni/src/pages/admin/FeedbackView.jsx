@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import axios from "axios";
+import API from "../../services/api";
 import "./FeedbackView.css";
 
 export default function FeedbackView() {
@@ -11,13 +11,6 @@ export default function FeedbackView() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // Axios instance
-  const API = axios.create({
-    baseURL: "http://localhost:5005/alumni-portal",
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
 
   useEffect(() => {
     const fetchFeedbacks = async () => {
