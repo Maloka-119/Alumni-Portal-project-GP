@@ -234,8 +234,9 @@ const admin = {
       "loadingPosts": "Loading posts...",
     "successStory":"successStory",
      "Write a comment...": "Write a comment...",
-       "Send": "Send"
-  
+       "Send": "Send",
+      "notAllowed": "Not allowed",
+  "cannotModifyPermission": "You can't modify \"{{type}}\" permission for this module.",
 
       }
     },
@@ -475,7 +476,9 @@ const admin = {
     "loadingPosts": "جارٍ تحميل المنشورات...",
   "Status": "الحالة:",
     "Write a comment...": "اكتب تعليق..." ,
-      "Send": "إرسال"
+      "Send": "إرسال",
+       "notAllowed": "غير مسموح",
+  "cannotModifyPermission": "لا يمكنك تعديل صلاحية \"{{type}}\" لهذا الموديول."
       
       }
     }
