@@ -17,7 +17,8 @@ const GraduateRequests = ({ currentUser }) => {
   const [college, setCollege] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const { t } = useTranslation();
+  const [faculties, setFaculties] = useState([]);
+const { t , i18n } = useTranslation();
 
   const perms = currentUser?.userType === "admin"
     ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
@@ -93,6 +94,18 @@ const GraduateRequests = ({ currentUser }) => {
     r.alumniId.toString().includes(debouncedSearch)
   );
 
+  useEffect(() => {
+    const fetchFaculties = async () => {
+      try {
+        const res = await API.get("/faculties");
+        setFaculties(res.data.data);
+      } catch (err) {
+        console.error("Error fetching faculties:", err);
+      }
+    };
+    fetchFaculties();
+  }, []);
+
   return (
     <div>
       {currentUser.userType === "staff" && (
@@ -146,31 +159,19 @@ const GraduateRequests = ({ currentUser }) => {
               <label>{t("Graduation Year")}:
                 <input type="text" value={graduationYear} onChange={(e) => setGraduationYear(e.target.value)} />
               </label>
-              <label>{t("College")}
+              <label>
+  {t("College")}
   <select value={college} onChange={(e) => setCollege(e.target.value)}>
     <option value="">{t("Select College")}</option>
 
-    <option value="Faculty of Commerce and Business Administration">{t("College_Commerce")}</option>
-    <option value="Faculty of Law">{t("College_Law")}</option>
-    <option value="Faculty of Arts">{t("College_Arts")}</option>
-    <option value="Faculty of Science">{t("College_Science")}</option>
-    <option value="Faculty of Engineering (Helwan)">{t("College_Engineering_Helwan")}</option>
-    <option value="Faculty of Engineering (Mataria)">{t("College_Engineering_Mataria")}</option>
-    <option value="Faculty of Computers and Artificial Intelligence">{t("College_CAI")}</option>
-    <option value="Faculty of Industrial Education">{t("College_Industrial_Edu")}</option>
-    <option value="Faculty of Education">{t("College_Education")}</option>
-    <option value="Faculty of Applied Arts">{t("College_Applied_Arts")}</option>
-    <option value="Faculty of Fine Arts">{t("College_Fine_Arts")}</option>
-    <option value="Faculty of Physical Education (Men)">{t("College_PE_Men")}</option>
-    <option value="Faculty of Physical Education (Women)">{t("College_PE_Women")}</option>
-    <option value="Faculty of Music Education">{t("College_Music")}</option>
-    <option value="Faculty of Art Education">{t("College_Art_Edu")}</option>
-    <option value="Faculty of Social Work">{t("College_Social_Work")}</option>
-    <option value="Faculty of Tourism and Hotel Management">{t("College_Tourism")}</option>
-    <option value="Faculty of Home Economics">{t("College_Home_Eco")}</option>
-    <option value="Faculty of Nursing">{t("College_Nursing")}</option>
+    {faculties.map((f, index) => (
+      <option key={index} value={i18n.language === "ar" ? f.ar : f.en}>
+        {i18n.language === "ar" ? f.ar : f.en}
+      </option>
+    ))}
   </select>
 </label>
+
 
               <div className="modal-actions">
                 <button onClick={handleAccept}>{t("Submit")}</button>
