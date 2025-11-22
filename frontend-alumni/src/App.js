@@ -41,6 +41,7 @@ function App() {
             <Route path="/helwan-alumni-portal" element={<LandingPage />} />
             <Route path="/helwan-alumni-portal/register" element={<Register />} />
             <Route path="/helwan-alumni-portal/login" element={<Login setUser={setUser} />} />
+          
 
             {/* LinkedIn routes */}
             <Route path="/helwan-alumni-portal/auth/linkedin/signup" element={<LinkedInSignUp />} />
@@ -73,6 +74,7 @@ function App() {
               element={
                 <ProtectedRoute user={user} requiredRole="graduate">
                   <AlumniPortal setUser={setUser} />
+          
                 </ProtectedRoute>
               }
             />
