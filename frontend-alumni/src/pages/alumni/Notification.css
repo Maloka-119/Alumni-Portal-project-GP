@@ -105,6 +105,17 @@
   padding: 6px 10px;
   border: none;
   border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 500;
+  background: #2563eb;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+.accept-btn- {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
   font-weight: 500;
@@ -112,6 +123,7 @@
   color: #fff;
   transition: all 0.2s ease;
 }
+
 
 .accept-btn:hover {
   background: #1e40af;

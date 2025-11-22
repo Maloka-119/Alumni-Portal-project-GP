@@ -10,15 +10,10 @@ import {
   onNewMessage,
   onEditedMessage,
 } from "../../services/socket";
-import { Send, Paperclip, X, Edit, Trash2, Reply, Check, FileText, File } from "lucide-react";
+import { Send, Paperclip, X, Edit, Trash2, Reply, Check, File } from "lucide-react";
 import "./ChatBox.css";
 
-export default function ChatBox({
-  chatId,
-  activeChatFriend,
-  onClose,
-  updateChatList,
-}) {
+export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatList }) {
   const { t, i18n } = useTranslation();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
@@ -28,6 +23,7 @@ export default function ChatBox({
   const [editingMessageId, setEditingMessageId] = useState(null);
   const [editContent, setEditContent] = useState("");
   const messagesEndRef = useRef(null);
+  const socketRef = useRef(null);
 
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const userId = user.id;
@@ -48,10 +44,11 @@ export default function ChatBox({
   };
 
   const updateChatListLastMessage = useCallback((msg) => {
-    const lastMsgContent = msg.message_type === "image" ? "[صورة]" :
-                           msg.message_type === "pdf" ? `[ملف PDF: ${msg.file_name}]` :
-                           msg.message_type === "file" ? `[ملف: ${msg.file_name}]` :
-                           msg.content || "";
+    const lastMsgContent =
+      msg.message_type === "image" ? "[صورة]" :
+      msg.message_type === "pdf" ? `[ملف PDF: ${msg.file_name}]` :
+      msg.message_type === "file" ? `[ملف: ${msg.file_name}]` :
+      msg.content || "";
     updateChatList?.({
       chat_id: chatId,
       content: lastMsgContent,
@@ -70,6 +67,7 @@ export default function ChatBox({
     }
   };
 
+  // ------------------ Fetch messages ------------------
   useEffect(() => {
     if (!chatId || !token) return;
     let mounted = true;
@@ -82,14 +80,14 @@ export default function ChatBox({
           let replyMsg = null;
           if (msg.reply_to_message_id) {
             replyMsg = allMessages.find((m) => m.message_id === msg.reply_to_message_id) || null;
-          } else if (msg.replyTo) {
-            replyMsg = msg.replyTo;
-          }
+          } else if (msg.replyTo) replyMsg = msg.replyTo;
+
           return {
             ...msg,
             file_url: msg.attachment_url || msg.file_url || null,
             file_name: msg.attachment_name || msg.file_name || null,
             edited: msg.is_edited || false,
+            is_deleted: msg.is_deleted || false,
             reply_to: replyMsg,
             localStatus: normalizeStatus(msg.status),
             created_at: msg["created-at"] || msg.created_at || msg.createdAt || new Date().toISOString(),
@@ -116,26 +114,34 @@ export default function ChatBox({
     return () => { mounted = false; };
   }, [chatId, token, t, userId, updateChatListLastMessage]);
 
+  // ------------------ Socket ------------------
   useEffect(() => {
     if (!chatId || !token) return;
-    const socket = initSocket(token);
+
+    if (!socketRef.current) {
+      socketRef.current = initSocket(token);
+    }
 
     joinChatSocket(chatId);
     markMessagesAsReadSocket(chatId);
 
     const handleNew = (msg) => {
       if (msg.chat_id !== chatId) return;
+
       setMessages((prev) => {
         if (prev.some((m) => m.message_id === msg.message_id)) return prev;
+
         let replyMsg = null;
         if (msg.reply_to_message_id) replyMsg = prev.find((m) => m.message_id === msg.reply_to_message_id) || msg.replyTo || null;
         else if (msg.replyTo) replyMsg = msg.replyTo;
+
         const normalizedMsg = {
           ...msg,
           file_url: msg.attachment_url || msg.file_url || null,
           file_name: msg.attachment_name || msg.file_name || null,
           localStatus: normalizeStatus(msg.status),
           edited: msg.is_edited || false,
+          is_deleted: msg.is_deleted || false,
           reply_to: replyMsg,
           created_at: msg["created-at"] || msg.created_at || new Date().toISOString(),
         };
@@ -159,9 +165,13 @@ export default function ChatBox({
     const handleEdit = (updatedMsg) => {
       if (updatedMsg.chat_id !== chatId) return;
       setMessages((prev) =>
-        prev.map((msg) => msg.message_id === updatedMsg.message_id ? { ...msg, ...updatedMsg } : msg)
+        prev.map((msg) =>
+          msg.message_id === updatedMsg.message_id
+            ? { ...msg, ...updatedMsg, edited: true, is_deleted: updatedMsg.is_deleted || false }
+            : msg
+        )
       );
-      updateChatListLastMessage(updatedMsg);
+      updateChatListLastMessage({ ...updatedMsg, edited: true });
     };
 
     const handleSeen = (seenData) => {
@@ -177,11 +187,11 @@ export default function ChatBox({
 
     onNewMessage(handleNew);
     onEditedMessage(handleEdit);
-    socket.on && socket.on("message_seen", handleSeen);
+    socketRef.current.on && socketRef.current.on("message_seen", handleSeen);
 
     return () => {
       leaveChatSocket(chatId);
-      socket.off && socket.off("message_seen", handleSeen);
+      socketRef.current?.off && socketRef.current.off("message_seen");
     };
   }, [chatId, token, userId, updateChatListLastMessage]);
 
@@ -189,6 +199,7 @@ export default function ChatBox({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // ------------------ File ------------------
   const handleFileChange = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -206,6 +217,7 @@ export default function ChatBox({
     setFilePreview({ url, type, name: f.name });
   };
 
+  // ------------------ Send message ------------------
   const sendMessage = async () => {
     if (!newMessage.trim() && !file) return;
     try {
@@ -232,10 +244,15 @@ export default function ChatBox({
         reply_to: replyTo ? { message_id: replyTo.message_id, sender_id: replyTo.sender_id, content: replyTo.content } : null,
         localStatus: "sent",
         edited: data.is_edited || false,
+        is_deleted: false,
         created_at: data.created_at || new Date().toISOString(),
       };
 
-      setMessages((prev) => [...prev, newMsg]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.message_id === newMsg.message_id)) return prev;
+        return [...prev, newMsg];
+      });
+
       updateChatListLastMessage(newMsg);
       setNewMessage("");
       setFile(null);
@@ -248,16 +265,15 @@ export default function ChatBox({
     }
   };
 
+  // ------------------ Edit / Delete ------------------
   const startEditMessage = (message) => {
     setEditingMessageId(message.message_id);
     setEditContent(message.content);
   };
-
   const cancelEdit = () => {
     setEditingMessageId(null);
     setEditContent("");
   };
-
   const saveEditMessage = async (messageId) => {
     try {
       const res = await API.put(`/chat/messages/${messageId}`, { content: editContent });
@@ -267,8 +283,11 @@ export default function ChatBox({
         edited: true,
         localStatus: normalizeStatus(res.data.data.status),
         chat_id: chatId,
+        is_deleted: false,
       };
-      setMessages((prev) => prev.map((msg) => (msg.message_id === messageId ? { ...msg, ...updatedMsg } : msg)));
+      setMessages((prev) =>
+        prev.map((msg) => (msg.message_id === messageId ? { ...msg, ...updatedMsg } : msg))
+      );
       sendEditedMessageSocket(updatedMsg);
       updateChatListLastMessage(updatedMsg);
       cancelEdit();
@@ -276,12 +295,13 @@ export default function ChatBox({
       console.error(t("Edit Message Error"), err);
     }
   };
-
   const deleteMessage = async (messageId) => {
     try {
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.message_id === messageId ? { ...msg, content: `[${t("Message deleted")}]`, is_deleted: true } : msg
+          msg.message_id === messageId
+            ? { ...msg, content: `[${t("Message deleted")}]`, is_deleted: true }
+            : msg
         )
       );
       await API.delete(`/chat/messages/${messageId}`);
@@ -290,6 +310,7 @@ export default function ChatBox({
     }
   };
 
+  // ------------------ Render ------------------
   return (
     <div className="chat-overlay" dir={direction}>
       <div className="chat-header">
@@ -330,14 +351,41 @@ export default function ChatBox({
                     <button className="icon-btn" onClick={cancelEdit}><X size={16} /></button>
                   </div>
                 ) : (
-                  <>
-                    <span>{m.content}</span>
-                    <div className="message-time">{timeString}</div>
-                  </>
+                  <div className="message-content">
+                    {m.message_type === "image" && m.file_url && (
+                      <img src={m.file_url} alt={m.file_name || "image"} className="sent-image" onClick={() => window.open(m.file_url, "_blank")} />
+                    )}
+                    {m.message_type === "pdf" && m.file_url && (
+                      <iframe src={m.file_url} title={m.file_name || "PDF"} style={{ width: "100%", height: "200px" }} />
+                    )}
+                    {m.message_type === "file" && m.file_url && (
+                      <button onClick={() => window.open(m.file_url, "_blank")}>
+                        {m.file_name || "Open File"}
+                      </button>
+                    )}
+                    {m.content && <p className={m.is_deleted ? "deleted-text" : ""}>{m.content}</p>}
+
+                    <div className="message-time">
+                      {timeString}
+                      {m.edited && !m.is_deleted && <span className="edited-label">{t("edited")}</span>}
+                      {isMine && m.localStatus === "sent" && <span className="status-label">• {t("sent")}</span>}
+                      {isMine && m.localStatus === "seen" && <span className="status-label seen">• {t("seen")}</span>}
+                    </div>
+                  </div>
                 )}
+
+                <div className="message-actions">
+                  <button className="action-btn" onClick={() => setReplyTo(m)}><Reply size={16} /></button>
+                  {isMine && !m.is_deleted && (
+                    <>
+                      <button className="action-btn" onClick={() => startEditMessage(m)}><Edit size={16} /></button>
+                      <button className="action-btn delete" onClick={() => deleteMessage(m.message_id)}><Trash2 size={16} /></button>
+                    </>
+                  )}
+                </div>
               </div>
             );
-          })}
+        })}
         <div ref={messagesEndRef} />
       </div>
 
@@ -369,6 +417,7 @@ export default function ChatBox({
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") sendMessage(); }}
+          disabled={!!file}
         />
         <input type="file" style={{ display: "none" }} id="fileInput" onChange={handleFileChange} />
         <label htmlFor="fileInput" className="icon-btn"><Paperclip size={18} /></label>

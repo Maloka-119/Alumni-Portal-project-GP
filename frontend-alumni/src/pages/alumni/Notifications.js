@@ -95,7 +95,7 @@ const NotificationsPage = () => {
               </div>
               <div className="notif-actions">
                 {!n.isRead && (
-                  <button className="accept-btn" onClick={() => markAsRead(n.id)}>
+                  <button className="accept-btn-" onClick={() => markAsRead(n.id)}>
                     {t("Mark as Read")}
                   </button>
                 )}
