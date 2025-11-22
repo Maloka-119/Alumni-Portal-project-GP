@@ -16,7 +16,6 @@ const { normalizeCollegeName, getCollegeNameByCode } = require("../services/facu
 
 const getAllGraduates = async (req, res) => {
   try {
-    // جلب كل الخريجين
     const graduates = await Graduate.findAll({
       include: {
         model: User,
@@ -31,26 +30,20 @@ const getAllGraduates = async (req, res) => {
           "user-type",
         ],
       },
+      attributes: { exclude: ["faculty"] },
     });
 
-    // تحويل الكلية من الكود للاسم حسب لغة المستخدم
-    const lang = req.user?.language || "ar";
+    const lang = req.headers["accept-language"] || req.user?.language || "ar";
 
-    const graduatesWithFacultyName = graduates.map((grad) => {
-      const facultyName = grad.faculty_code
-        ? getCollegeNameByCode(grad.faculty_code, lang)
-        : null;
-
-      return {
-        ...grad.toJSON(), // بيانات الخريج كما هي
-        facultyName,       // اسم الكلية بالعربي أو الانجليزي حسب لغة المستخدم
-      };
-    });
+    const graduatesWithFaculty = graduates.map(g => ({
+      ...g.toJSON(),
+      faculty: getCollegeNameByCode(g.faculty_code, lang)
+    }));
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "All graduates fetched successfully",
-      data: graduatesWithFacultyName,
+      data: graduatesWithFaculty,
     });
   } catch (err) {
     console.error(err);
@@ -61,7 +54,6 @@ const getAllGraduates = async (req, res) => {
     });
   }
 };
-
 
 // Get active graduates (GraduatesInPortal) - Admin & Staff only
 const getGraduatesInPortal = async (req, res) => {
@@ -75,7 +67,6 @@ const getGraduatesInPortal = async (req, res) => {
       });
     }
 
-    // لو staff → تحقق من الصلاحية
     if (req.user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
@@ -92,11 +83,8 @@ const getGraduatesInPortal = async (req, res) => {
       }
     }
 
-    // اللغة الحالية للـ user أو fallback للعربي
-   const lang = req.headers["accept-language"] || req.user.language || "ar";
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
 
-
-    // جلب الخريجين المقبولين مع تجاهل الحقل القديم
     const graduates = await Graduate.findAll({
       where: { "status-to-login": "accepted" },
       include: {
@@ -112,14 +100,14 @@ const getGraduatesInPortal = async (req, res) => {
           ["user-type", "userType"],
         ],
       },
-      attributes: { exclude: ["faculty"] }, // تجاهل العمود القديم نهائيًا
+      attributes: { exclude: ["faculty"] },
     });
 
-    // تعديل اسم الكلية ديناميكي حسب faculty_code ولغة المستخدم
- const graduatesWithFaculty = graduates.map(g => ({
-  ...g.toJSON(),
-  faculty: getCollegeNameByCode(g.faculty_code, lang)
-}));
+    const graduatesWithFaculty = graduates.map(g => ({
+      ...g.toJSON(),
+      faculty: getCollegeNameByCode(g.faculty_code, lang)
+    }));
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "All graduates fetched successfully",
@@ -135,16 +123,10 @@ const getGraduatesInPortal = async (req, res) => {
   }
 };
 
-
-
-
 // Get inactive graduates (requested to join) - Admin only
 const getRequestedGraduates = async (req, res) => {
   try {
-    // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
-
-    // 2. لو مش من النوع المسموح → ارفض
     if (!allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
@@ -153,7 +135,6 @@ const getRequestedGraduates = async (req, res) => {
       });
     }
 
-    // 3. لو staff → تحقق من الصلاحيات (الصلاحيتين معاً)
     if (req.user["user-type"] === "staff") {
       const hasGraduatePermission = await checkStaffPermission(
         req.user.id,
@@ -167,7 +148,6 @@ const getRequestedGraduates = async (req, res) => {
         "view"
       );
 
-      // Staff هيقدر يشوف لو عنده أي من الصلاحيتين
       if (!hasGraduatePermission && !hasRequestsPermission) {
         return res.status(403).json({
           status: HttpStatusHelper.ERROR,
@@ -178,7 +158,8 @@ const getRequestedGraduates = async (req, res) => {
       }
     }
 
-    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
+
     const graduates = await Graduate.findAll({
       where: { "status-to-login": "pending" },
       include: {
@@ -194,12 +175,18 @@ const getRequestedGraduates = async (req, res) => {
           ["user-type", "userType"],
         ],
       },
+      attributes: { exclude: ["faculty"] },
     });
+
+    const graduatesWithFaculty = graduates.map(g => ({
+      ...g.toJSON(),
+      faculty: getCollegeNameByCode(g.faculty_code, lang)
+    }));
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "All graduates fetched successfully",
-      data: graduates,
+      data: graduatesWithFaculty,
     });
   } catch (err) {
     console.error(err);
@@ -214,10 +201,7 @@ const getRequestedGraduates = async (req, res) => {
 //reject graduate by admin
 const rejectGraduate = async (req, res) => {
   try {
-    // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
-
-    // 2. لو مش من النوع المسموح → ارفض
     if (!allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
         status: "error",
@@ -225,7 +209,6 @@ const rejectGraduate = async (req, res) => {
       });
     }
 
-    // 3. لو staff → تحقق من الصلاحية
     if (req.user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
@@ -242,11 +225,10 @@ const rejectGraduate = async (req, res) => {
       }
     }
 
-    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const graduateId = req.params.id;
-
-    // جلب الخريج من قاعدة البيانات
-    const graduate = await Graduate.findByPk(graduateId);
+    const graduate = await Graduate.findByPk(graduateId, {
+      attributes: { exclude: ["faculty"] }
+    });
 
     if (!graduate) {
       return res.status(404).json({
@@ -255,14 +237,19 @@ const rejectGraduate = async (req, res) => {
       });
     }
 
-    // تحديث الحالة إلى "rejected"
     graduate["status-to-login"] = "rejected";
     await graduate.save();
+
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
+    const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
 
     return res.status(200).json({
       status: "success",
       message: "Graduate request rejected successfully",
-      data: graduate,
+      data: {
+        ...graduate.toJSON(),
+        faculty: facultyName
+      },
     });
   } catch (error) {
     console.error(" Error rejecting graduate:", error);
@@ -277,7 +264,6 @@ const rejectGraduate = async (req, res) => {
 //get digital id
 const getDigitalID = async (req, res) => {
   try {
-    // تأكد إن req.user موجود
     if (!req.user || !req.user.id) {
       return res.status(401).json({
         status: HttpStatusHelper.FAIL,
@@ -287,11 +273,10 @@ const getDigitalID = async (req, res) => {
     }
 
     const userId = req.user.id;
-
-    // جلب بيانات الـ Graduate مع الـ User المرتبط
     const graduate = await Graduate.findOne({
       where: { graduate_id: userId },
       include: [{ model: require("../models/User") }],
+      attributes: { exclude: ["faculty"] }
     });
 
     if (!graduate) {
@@ -303,7 +288,6 @@ const getDigitalID = async (req, res) => {
     }
 
     const user = graduate.User;
-
     if (!user) {
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
@@ -312,17 +296,18 @@ const getDigitalID = async (req, res) => {
       });
     }
 
-    //  تجهيز البيانات النهائية للـ Digital ID
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
+    const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
+
     const digitalID = {
       personalPicture: graduate["profile-picture-url"] || null,
       digitalID: graduate.graduate_id,
       fullName: `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim(),
-      faculty: graduate.faculty || null,
+      faculty: facultyName,
       nationalNumber: user["national-id"] || null,
       graduationYear: graduate["graduation-year"] || null,
     };
 
-    //  إرجاع الاستجابة
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate Digital ID fetched successfully",
@@ -338,14 +323,12 @@ const getDigitalID = async (req, res) => {
   }
 };
 
-
 // Approve Graduate by admin
 const approveGraduate = async (req, res) => {
   try {
     const { id } = req.params; 
     const { faculty, graduationYear } = req.body;
 
-    // صلاحيات
     const allowedUserTypes = ["admin", "staff"];
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({ message: "Access denied." });
@@ -368,26 +351,31 @@ const approveGraduate = async (req, res) => {
       return res.status(400).json({ message: "Faculty and graduationYear are required." });
     }
 
-    // تحويل الاسم لكود
     const facultyCode = normalizeCollegeName(faculty);
     if (!facultyCode) {
       return res.status(400).json({ message: "Invalid faculty name." });
     }
 
-    const graduate = await Graduate.findOne({ where: { graduate_id: id } });
+    const graduate = await Graduate.findOne({ 
+      where: { graduate_id: id },
+      attributes: { exclude: ["faculty"] }
+    });
     if (!graduate) return res.status(404).json({ message: "Graduate not found." });
 
-    // فقط تخزين الكود و NOT faculty name
     graduate.faculty_code = facultyCode;
     graduate["graduation-year"] = graduationYear;
     graduate["status-to-login"] = "accepted";
 
     await graduate.save();
 
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
+    const facultyName = getCollegeNameByCode(facultyCode, lang);
+
     return res.status(200).json({
       message: "Graduate approved successfully.",
       graduateId: id,
       facultyCode: facultyCode,
+      facultyName: facultyName
     });
   } catch (error) {
     console.error("Error approving graduate:", error.message);
@@ -398,14 +386,12 @@ const approveGraduate = async (req, res) => {
   }
 };
 
-
-
-
 // GET Graduate Profile for admin
 const getGraduateProfile = async (req, res) => {
   try {
     const graduate = await Graduate.findByPk(req.params.id, {
       include: [{ model: User }],
+      attributes: { exclude: ["faculty"] },
     });
 
     if (!graduate) {
@@ -417,27 +403,22 @@ const getGraduateProfile = async (req, res) => {
     }
 
     const user = graduate.User;
+    const isOwner = req.user && parseInt(req.user.id) === parseInt(graduate.graduate_id);
 
-    // ✅ نتحقق هل اللي طالب البروفايل هو صاحبه
-    const isOwner =
-      req.user && parseInt(req.user.id) === parseInt(graduate.graduate_id);
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
+    const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
 
-    // ✅ نبني نفس شكل البيانات اللي بترجع من updateProfile
     const graduateProfile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${user["first-name"]} ${user["last-name"]}`,
-      faculty: graduate.faculty,
+      faculty: facultyName,
       graduationYear: graduate["graduation-year"],
       bio: graduate.bio,
       skills: graduate.skills,
       currentJob: graduate["current-job"],
-
-      // إعدادات الخصوصية
       showCV: graduate.show_cv,
       showLinkedIn: graduate.show_linkedin,
       showPhone: user.show_phone,
-
-      // ✅ نرجّع القيم دايمًا (زي updateProfile)
       CV: graduate["cv-url"],
       linkedlnLink: graduate["linkedln-link"],
       phoneNumber: user.phoneNumber,
@@ -463,6 +444,7 @@ const updateProfile = async (req, res) => {
   try {
     const graduate = await Graduate.findByPk(req.user.id, {
       include: [{ model: User }],
+      attributes: { exclude: ["faculty"] },
     });
 
     if (!graduate) {
@@ -475,7 +457,7 @@ const updateProfile = async (req, res) => {
 
     const user = graduate.User;
 
-    // 🔹 تحديث بيانات User
+    // تحديث بيانات User
     const userFields = ["firstName", "lastName", "phoneNumber"];
     userFields.forEach((field) => {
       if (req.body[field] !== undefined) {
@@ -485,12 +467,11 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    // 🔹 تحديث بيانات Graduate
+    // تحديث بيانات Graduate مع تحويل اسم الكلية إلى كود
     const graduateFields = [
       { bodyKey: "bio", dbKey: "bio" },
       { bodyKey: "skills", dbKey: "skills" },
       { bodyKey: "currentJob", dbKey: "current-job" },
-      { bodyKey: "faculty", dbKey: "faculty" },
       { bodyKey: "graduationYear", dbKey: "graduation-year" },
       { bodyKey: "linkedlnLink", dbKey: "linkedln-link" },
     ];
@@ -501,13 +482,21 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    // 🔹 تحديث إعدادات الخصوصية
+    // تحديث faculty_code إذا تم إرسال faculty
+    if (req.body.faculty !== undefined) {
+      const facultyCode = normalizeCollegeName(req.body.faculty);
+      if (facultyCode) {
+        graduate.faculty_code = facultyCode;
+      }
+    }
+
+    // تحديث إعدادات الخصوصية
     if (req.body.showCV !== undefined) graduate.show_cv = req.body.showCV;
     if (req.body.showLinkedIn !== undefined)
       graduate.show_linkedin = req.body.showLinkedIn;
     if (req.body.showPhone !== undefined) user.show_phone = req.body.showPhone;
 
-    // 🔹 رفع أو استبدال صورة البروفايل
+    // معالجة صورة البروفايل
     if (req.files?.profilePicture?.[0]) {
       const profilePic = req.files.profilePicture[0];
       graduate["profile-picture-url"] = profilePic.path || profilePic.url;
@@ -515,7 +504,6 @@ const updateProfile = async (req, res) => {
         profilePic.filename || profilePic.public_id;
     }
 
-    // 🔹 مسح صورة البروفايل لو حابة
     if (req.body.removeProfilePicture) {
       if (graduate["profile-picture-public-id"]) {
         try {
@@ -530,11 +518,9 @@ const updateProfile = async (req, res) => {
       graduate["profile-picture-public-id"] = null;
     }
 
-    // 🔹 رفع أو استبدال CV
+    // معالجة CV
     if (req.files?.cv?.[0]) {
       const cvFile = req.files.cv[0];
-
-      // حذف القديم لو موجود
       if (graduate.cv_public_id) {
         try {
           await cloudinary.uploader.destroy(graduate.cv_public_id, {
@@ -549,7 +535,6 @@ const updateProfile = async (req, res) => {
       graduate.cv_public_id = cvFile.filename || cvFile.public_id;
     }
 
-    // 🔹 مسح CV لو حابة
     if (req.body.removeCV) {
       if (graduate.cv_public_id) {
         try {
@@ -567,14 +552,13 @@ const updateProfile = async (req, res) => {
     await user.save();
     await graduate.save();
 
-    // ✅ صاحب البروفايل يشوف كل حاجة دايمًا
-    const isOwner = true;
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
+    const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
 
-    // 🔹 تجهيز البيانات للرد زي getGraduateProfile
     const graduateProfile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${user["first-name"]} ${user["last-name"]}`,
-      faculty: graduate.faculty,
+      faculty: facultyName,
       graduationYear: graduate["graduation-year"],
       bio: graduate.bio,
       skills: graduate.skills,
@@ -603,11 +587,12 @@ const updateProfile = async (req, res) => {
 };
 
 //download cv
-
 const downloadCv = async (req, res) => {
   try {
     const graduateId = req.params.id;
-    const graduate = await Graduate.findByPk(graduateId);
+    const graduate = await Graduate.findByPk(graduateId, {
+      attributes: { exclude: ["faculty"] }
+    });
 
     if (!graduate || !graduate["cv-url"]) {
       return res.status(404).json({
@@ -617,27 +602,20 @@ const downloadCv = async (req, res) => {
       });
     }
 
-    // توليد signed URL
     const signedUrl = cloudinary.url(graduate.cv_public_id, {
       resource_type: "auto",
       type: "authenticated",
       sign_url: true,
     });
 
-    // جلب الملف من Cloudinary
     const response = await axios.get(signedUrl, { responseType: "stream" });
-    console.log("Graduate found:", graduate);
-    console.log("cv_public_id:", graduate.cv_public_id);
-    console.log("cv-url:", graduate["cv-url"]);
-
-    // إعداد هيدر التحميل
+    
     res.setHeader(
       "Content-Disposition",
       `attachment; filename="${graduate["cv-url"].split("/").pop()}"`
     );
     res.setHeader("Content-Type", response.headers["content-type"]);
 
-    // إرسال الملف للفرونت إند
     response.data.pipe(res);
   } catch (err) {
     console.error("Error downloading CV:", err);
@@ -652,13 +630,10 @@ const downloadCv = async (req, res) => {
 // Activate / Inactivate Graduate
 const updateGraduateStatus = async (req, res) => {
   try {
-    const { id } = req.params; // graduate_id
-    const { status } = req.body; // "active" or "inactive"
+    const { id } = req.params;
+    const { status } = req.body;
 
-    // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
-
-    // 2. لو مش من النوع المسموح → ارفض
     if (!allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
@@ -667,7 +642,6 @@ const updateGraduateStatus = async (req, res) => {
       });
     }
 
-    // 3. لو staff → تحقق من الصلاحية
     if (req.user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
@@ -685,7 +659,6 @@ const updateGraduateStatus = async (req, res) => {
       }
     }
 
-    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     if (!["active", "inactive"].includes(status)) {
       return res.status(400).json({
         status: HttpStatusHelper.FAIL,
@@ -694,7 +667,10 @@ const updateGraduateStatus = async (req, res) => {
       });
     }
 
-    const graduate = await Graduate.findByPk(id, { include: [User] });
+    const graduate = await Graduate.findByPk(id, { 
+      include: [User],
+      attributes: { exclude: ["faculty"] }
+    });
 
     if (!graduate) {
       return res.status(404).json({
@@ -707,12 +683,16 @@ const updateGraduateStatus = async (req, res) => {
     graduate.status = status;
     await graduate.save();
 
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
+    const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
+
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: `Graduate status updated to ${status} successfully`,
       data: {
         graduateId: graduate.graduate_id,
         fullName: `${graduate.User["first-name"]} ${graduate.User["last-name"]}`,
+        faculty: facultyName,
         status: graduate.status,
       },
     });
@@ -730,8 +710,16 @@ const searchGraduates = async (req, res) => {
     const { faculty, "graduation-year": graduationYear } = req.query;
 
     const whereClause = {};
-    if (faculty) whereClause.faculty = faculty;
-    if (graduationYear) whereClause["graduation-year"] = graduationYear; // 👈 لازم بنفس الاسم اللي في المودل
+    
+    // البحث باستخدام faculty_code بدلاً من faculty
+    if (faculty) {
+      const facultyCode = normalizeCollegeName(faculty);
+      if (facultyCode) {
+        whereClause.faculty_code = facultyCode;
+      }
+    }
+    
+    if (graduationYear) whereClause["graduation-year"] = graduationYear;
 
     const graduates = await Graduate.findAll({
       where: whereClause,
@@ -741,11 +729,19 @@ const searchGraduates = async (req, res) => {
           attributes: ["id", "first-name", "last-name", "email"],
         },
       ],
+      attributes: { exclude: ["faculty"] },
     });
+
+    const lang = req.headers["accept-language"] || req.user?.language || "ar";
+    
+    const graduatesWithFaculty = graduates.map(g => ({
+      ...g.toJSON(),
+      faculty: getCollegeNameByCode(g.faculty_code, lang)
+    }));
 
     res.json({
       status: "success",
-      data: graduates,
+      data: graduatesWithFaculty,
     });
   } catch (error) {
     console.error("Error searching graduates:", error);
@@ -756,233 +752,8 @@ const searchGraduates = async (req, res) => {
     });
   }
 };
+
 // get graduate profile for user
-// const getGraduateProfileForUser = async (req, res) => {
-//   try {
-//     const { identifier } = req.params;
-//     const currentUserId = req.user.id;
-
-//     let graduate;
-
-//     // البحث عن الخريج بالإيدي
-//     if (!isNaN(identifier)) {
-//       graduate = await Graduate.findByPk(identifier, {
-//         include: [{ model: User }],
-//       });
-//     } else {
-//       // البحث بالإيميل
-//       const userByEmail = await User.findOne({
-//         where: { email: identifier },
-//         include: [{ model: Graduate }],
-//       });
-
-//       if (userByEmail) {
-//         graduate = userByEmail.Graduate;
-//       } else {
-//         // البحث بالاسم
-//         const usersByName = await User.findAll({
-//           where: {
-//             [Op.or]: [
-//               { "first-name": { [Op.like]: `%${identifier}%` } },
-//               { "last-name": { [Op.like]: `%${identifier}%` } },
-//             ],
-//           },
-//           include: [{ model: Graduate }],
-//         });
-
-//         for (let user of usersByName) {
-//           if (user.Graduate) {
-//             graduate = user.Graduate;
-//             break;
-//           }
-//         }
-//       }
-//     }
-
-//     if (!graduate || !graduate.User) {
-//       return res.status(404).json({
-//         status: HttpStatusHelper.FAIL,
-//         message: "Graduate not found",
-//         data: null,
-//       });
-//     }
-
-//     // تحديد حالة الصداقة
-//     let friendshipStatus = "no_relation";
-
-//     const existingFriendshipRequest = await Friendship.findOne({
-//       where: {
-//         [Op.or]: [
-//           { sender_id: currentUserId, receiver_id: graduate.graduate_id },
-//           { sender_id: graduate.graduate_id, receiver_id: currentUserId },
-//         ],
-//         status: "pending",
-//       },
-//     });
-
-//     if (existingFriendshipRequest) {
-//       friendshipStatus =
-//         existingFriendshipRequest.sender_id === currentUserId
-//           ? "i_sent_request"
-//           : "he_sent_request";
-//     }
-
-//     const friendship = await Friendship.findOne({
-//       where: {
-//         [Op.or]: [
-//           { sender_id: currentUserId, receiver_id: graduate.graduate_id },
-//           { sender_id: graduate.graduate_id, receiver_id: currentUserId },
-//         ],
-//         status: "accepted",
-//       },
-//     });
-
-//     if (friendship) friendshipStatus = "friends";
-
-//     // جلب بوستات الخريج
-//     const posts = await Post.findAll({
-//       where: {
-//         "author-id": graduate.graduate_id,
-//         "is-hidden": false,
-//         "group-id": null,
-//       },
-//       include: [
-//         {
-//           model: User,
-//           attributes: ["id", "first-name", "last-name"],
-//           include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
-//         },
-//         { model: PostImage, attributes: ["image-url"] },
-//         {
-//           model: Like,
-//           attributes: ["like_id", "user-id"],
-//           include: [
-//             {
-//               model: User,
-//               attributes: ["id", "first-name", "last-name"],
-//               include: [
-//                 { model: Graduate, attributes: ["profile-picture-url"] },
-//               ],
-//             },
-//           ],
-//         },
-//         {
-//           model: Comment,
-//           attributes: ["comment_id", "content", "created-at", "edited"],
-//           include: [
-//             {
-//               model: User,
-//               attributes: ["id", "first-name", "last-name"],
-//               include: [
-//                 { model: Graduate, attributes: ["profile-picture-url"] },
-//               ],
-//             },
-//           ],
-//           order: [["created-at", "ASC"]],
-//         },
-//       ],
-//       order: [["created-at", "DESC"]],
-//     });
-
-//     // تجهيز بيانات البوستات
-//     const postsData = posts.map((post) => {
-//       const authorUser = post.User;
-
-//       return {
-//         post_id: post.post_id,
-//         category: post.category,
-//         content: post.content,
-//         "created-at": post["created-at"],
-//         author: {
-//           id: authorUser?.id || "unknown",
-//           "full-name": `${authorUser?.["first-name"] || ""} ${
-//             authorUser?.["last-name"] || ""
-//           }`.trim(),
-//           image: authorUser?.Graduate
-//             ? authorUser.Graduate["profile-picture-url"]
-//             : null,
-//         },
-//         images: post.PostImages
-//           ? post.PostImages.map((img) => img["image-url"])
-//           : [],
-//         likes: post.Likes
-//           ? post.Likes.map((like) => ({
-//               like_id: like.like_id,
-//               user: like.User
-//                 ? {
-//                     id: like.User.id,
-//                     "full-name": `${like.User["first-name"] || ""} ${
-//                       like.User["last-name"] || ""
-//                     }`.trim(),
-//                     image: like.User.Graduate
-//                       ? like.User.Graduate["profile-picture-url"]
-//                       : null,
-//                   }
-//                 : null,
-//             }))
-//           : [],
-//         likes_count: post.Likes ? post.Likes.length : 0,
-//         comments: post.Comments
-//           ? post.Comments.map((comment) => ({
-//               comment_id: comment.comment_id,
-//               content: comment.content,
-//               "created-at": comment["created-at"],
-//               edited: comment.edited,
-//               author: {
-//                 id: comment.User?.id || "unknown",
-//                 "full-name":
-//                   `${comment.User?.["first-name"] || ""} ${
-//                     comment.User?.["last-name"] || ""
-//                   }`.trim() || "Unknown User",
-//                 "user-type": comment.User?.["user-type"] || "unknown",
-//                 image: comment.User?.Graduate
-//                   ? comment.User.Graduate["profile-picture-url"]
-//                   : null,
-//               },
-//             }))
-//           : [],
-//         comments_count: post.Comments ? post.Comments.length : 0,
-//       };
-//     });
-
-//     const userData = graduate.User;
-//     const isOwner = +currentUserId === +graduate.graduate_id;
-
-//     const profile = {
-//       profilePicture: graduate["profile-picture-url"],
-//       fullName: `${userData["first-name"]} ${userData["last-name"]}`,
-//       faculty: graduate.faculty,
-//       graduationYear: graduate["graduation-year"],
-//       bio: graduate.bio,
-//       skills: graduate.skills,
-//       currentJob: graduate["current-job"],
-//       showCV: graduate.show_cv,
-//       showLinkedIn: graduate.show_linkedin,
-//       showPhone: userData.show_phone,
-//       friendshipStatus: isOwner ? "owner" : friendshipStatus,
-//       posts: postsData,
-//     };
-
-//     if (graduate.show_cv) profile.CV = graduate["cv-url"];
-//     if (graduate.show_linkedin)
-//       profile.linkedlnLink = graduate["linkedln-link"];
-//     if (userData.show_phone) profile.phoneNumber = userData.phoneNumber;
-
-//     return res.json({
-//       status: HttpStatusHelper.SUCCESS,
-//       message: "Graduate Profile fetched successfully",
-//       data: profile,
-//     });
-//   } catch (err) {
-//     console.error("❌ خطأ في الفانكشن:", err);
-//     return res.status(500).json({
-//       status: HttpStatusHelper.ERROR,
-//       message: err.message,
-//       data: null,
-//     });
-//   }
-// };
-
 const getGraduateProfileForUser = async (req, res) => {
   try {
     const { identifier } = req.params;
@@ -994,6 +765,7 @@ const getGraduateProfileForUser = async (req, res) => {
     if (!isNaN(identifier)) {
       graduate = await Graduate.findByPk(identifier, {
         include: [{ model: User }],
+        attributes: { exclude: ["faculty"] },
       });
     } else {
       // البحث بالإيميل
@@ -1075,7 +847,7 @@ const getGraduateProfileForUser = async (req, res) => {
       include: [
         {
           model: User,
-          attributes: ["id", "first-name", "last-name", "user-type"], // إضافة user-type هنا
+          attributes: ["id", "first-name", "last-name", "user-type"],
           include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
         },
         { model: PostImage, attributes: ["image-url"] },
@@ -1085,7 +857,7 @@ const getGraduateProfileForUser = async (req, res) => {
           include: [
             {
               model: User,
-              attributes: ["id", "first-name", "last-name", "user-type"], // إضافة user-type هنا
+              attributes: ["id", "first-name", "last-name", "user-type"],
               include: [
                 { model: Graduate, attributes: ["profile-picture-url"] },
               ],
@@ -1098,7 +870,7 @@ const getGraduateProfileForUser = async (req, res) => {
           include: [
             {
               model: User,
-              attributes: ["id", "first-name", "last-name", "user-type"], // إضافة user-type هنا
+              attributes: ["id", "first-name", "last-name", "user-type"],
               include: [
                 { model: Graduate, attributes: ["profile-picture-url"] },
               ],
@@ -1124,7 +896,7 @@ const getGraduateProfileForUser = async (req, res) => {
           "full-name": `${authorUser?.["first-name"] || ""} ${
             authorUser?.["last-name"] || ""
           }`.trim(),
-          "user-type": authorUser?.["user-type"] || "unknown", // إضافة user-type هنا
+          "user-type": authorUser?.["user-type"] || "unknown",
           image: authorUser?.Graduate
             ? authorUser.Graduate["profile-picture-url"]
             : null,
@@ -1141,7 +913,7 @@ const getGraduateProfileForUser = async (req, res) => {
                     "full-name": `${like.User["first-name"] || ""} ${
                       like.User["last-name"] || ""
                     }`.trim(),
-                    "user-type": like.User["user-type"] || "unknown", // إضافة user-type هنا
+                    "user-type": like.User["user-type"] || "unknown",
                     image: like.User.Graduate
                       ? like.User.Graduate["profile-picture-url"]
                       : null,
@@ -1176,10 +948,13 @@ const getGraduateProfileForUser = async (req, res) => {
     const userData = graduate.User;
     const isOwner = +currentUserId === +graduate.graduate_id;
 
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
+    const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
+
     const profile = {
       profilePicture: graduate["profile-picture-url"],
       fullName: `${userData["first-name"]} ${userData["last-name"]}`,
-      faculty: graduate.faculty,
+      faculty: facultyName,
       graduationYear: graduate["graduation-year"],
       bio: graduate.bio,
       skills: graduate.skills,
