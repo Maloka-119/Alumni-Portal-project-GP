@@ -7,7 +7,8 @@ const StaffRole = require("../models/StaffRole");
 const Post = require("../models/Post");
 const User = require("../models/User");
 const checkStaffPermission = require("../utils/permissionChecker");
-const authMiddleware = require("../middleware/authMiddleware"); // ⬅️ لازم تضيف ده
+const authMiddleware = require("../middleware/authMiddleware");
+const { getCollegeNameByCode } = require("../services/facultiesService"); // ⬅️ أضف هذا الاستيراد
 
 const router = express.Router();
 
@@ -19,7 +20,7 @@ User.hasMany(Post, { foreignKey: "author-id" });
 router.get("/reports-stats", authMiddleware.protect, async (req, res) => {
   try {
     const user = req.user;
-    console.log("🔍 User in reports-stats:", user); // ⬅️ أضف ده لل debugging
+    console.log("🔍 User in reports-stats:", user);
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
@@ -91,15 +92,22 @@ router.get("/reports-stats", authMiddleware.protect, async (req, res) => {
       ],
     });
 
-    // 🏫 عدد الخريجين في كل كلية
-    const graduatesByFaculty = await Graduate.findAll({
+    // 🏫 عدد الخريجين في كل كلية - التعديل هنا
+    const graduatesByFacultyData = await Graduate.findAll({
       attributes: [
-        "faculty",
-        [Sequelize.fn("COUNT", Sequelize.col("faculty")), "count"],
+        "faculty_code",
+        [Sequelize.fn("COUNT", Sequelize.col("faculty_code")), "count"],
       ],
-      group: ["faculty"],
+      group: ["faculty_code"],
       raw: true,
     });
+
+    // تحويل faculty_code إلى اسم الكلية
+    const lang = req.headers["accept-language"] || user.language || "ar";
+    const graduatesByFaculty = graduatesByFacultyData.map(item => ({
+      faculty: getCollegeNameByCode(item.faculty_code, lang),
+      count: item.count
+    }));
 
     // 🧑‍🏫 توزيع أعضاء هيئة التدريس حسب الـ Role
     const staffRoles = await StaffRole.findAll({
