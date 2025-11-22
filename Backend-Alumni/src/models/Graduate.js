@@ -16,7 +16,11 @@ const Graduate = sequelize.define(
     bio: { type: DataTypes.STRING },
     "current-job": { type: DataTypes.STRING, allowNull: true },
     "cv-url": { type: DataTypes.STRING },
-    faculty: { type: DataTypes.STRING },
+   
+     faculty_code: {
+      type: DataTypes.STRING, // الكود الموحد
+      allowNull: true,
+    },
     "profile-picture-url": { type: DataTypes.STRING },
     "graduation-year": { type: DataTypes.INTEGER },
     skills: { type: DataTypes.STRING },
