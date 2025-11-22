@@ -41,6 +41,11 @@ const Notification = sequelize.define('Notification', {
     field: 'is-read',
     defaultValue: false
   },
+  navigation: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    defaultValue: null
+  },
   createdAt: { 
     type: DataTypes.DATE, 
     field: 'created-at',

@@ -2004,7 +2004,7 @@ const likePost = async (req, res) => {
 
     // إنشاء إشعار لصاحب البوست لو مش هو
     if (post["author-id"] !== userId) {
-      await notifyPostLiked(post["author-id"], userId);
+      await notifyPostLiked(post["author-id"], userId, postId);
     }
 
     return res.status(201).json({
@@ -2105,7 +2105,7 @@ const addComment = async (req, res) => {
 
     // Create notification for post author (if not commenting on own post)
     if (post["author-id"] !== userId) {
-      await notifyPostCommented(post["author-id"], userId);
+      await notifyPostCommented(post["author-id"], userId, postId, newComment.comment_id);
     }
 
     return res.status(201).json({
@@ -2177,7 +2177,7 @@ const editComment = async (req, res) => {
     // Get the post to notify the post author
     const post = await Post.findByPk(comment["post-id"]);
     if (post && post["author-id"] !== userId) {
-      await notifyCommentEdited(post["author-id"], userId);
+      await notifyCommentEdited(post["author-id"], userId, post.post_id, commentId);
     }
 
     // Fetch updated comment with author details
@@ -2241,13 +2241,14 @@ const deleteComment = async (req, res) => {
 
     // Get the post to notify the post author before deleting
     const post = await Post.findByPk(comment["post-id"]);
+    const postId = post ? post.post_id : null;
 
     // Delete the comment
     await comment.destroy();
 
     // Create notification for post author (if not deleting own comment on own post)
-    if (post && post["author-id"] !== userId) {
-      await notifyCommentDeleted(post["author-id"], userId);
+    if (post && post["author-id"] !== userId && postId) {
+      await notifyCommentDeleted(post["author-id"], userId, postId);
     }
 
     return res.status(200).json({
@@ -2674,7 +2675,7 @@ const addReply = async (req, res) => {
 
     // Create notification for the parent comment author (if not replying to own comment)
     if (parentComment["author-id"] !== userId) {
-      await notifyCommentReplied(parentComment["author-id"], userId);
+      await notifyCommentReplied(parentComment["author-id"], userId, parentComment["post-id"], commentId, newReply.comment_id);
     }
 
     // Fetch reply with author details

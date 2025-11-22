@@ -8,9 +8,10 @@ const User = require('../models/User');
  * @param {number|null} params.senderId - ID of the user triggering the action (null for system notifications)
  * @param {string} params.type - Type of notification
  * @param {string} params.message - Human-readable message
+ * @param {Object|null} params.navigation - Navigation data for frontend routing
  * @returns {Promise<Notification>} Created notification
  */
-const createNotification = async ({ receiverId, senderId, type, message }) => {
+const createNotification = async ({ receiverId, senderId, type, message, navigation = null }) => {
   try {
     // Don't create notification if receiver and sender are the same
     if (senderId && receiverId === senderId) {
@@ -22,6 +23,7 @@ const createNotification = async ({ receiverId, senderId, type, message }) => {
       senderId: senderId || null,
       type,
       message,
+      navigation,
       isRead: false
     });
 
@@ -59,7 +61,11 @@ const notifyUserAdded = async (receiverId, senderId) => {
     receiverId,
     senderId,
     type: 'add_user',
-    message: `${senderName} sent you a connection request`
+    message: `${senderName} sent you a connection request`,
+    navigation: {
+      screen: 'friend-requests',
+      action: 'view'
+    }
   });
 };
 
@@ -69,95 +75,142 @@ const notifyRequestAccepted = async (receiverId, senderId) => {
     receiverId,
     senderId,
     type: 'accept_request',
-    message: `${senderName} accepted your connection request`
+    message: `${senderName} accepted your connection request`,
+    navigation: {
+      screen: 'profile',
+      userId: senderId
+    }
   });
 };
 
-const notifyAddedToGroup = async (receiverId, senderId, groupName) => {
+const notifyAddedToGroup = async (receiverId, senderId, groupName, groupId = null) => {
   const senderName = await getSenderName(senderId);
   return createNotification({
     receiverId,
     senderId,
     type: 'added_to_group',
-    message: `${senderName} added you to the group "${groupName}"`
+    message: `${senderName} added you to the group "${groupName}"`,
+    navigation: groupId ? {
+      screen: 'group',
+      groupId: groupId
+    } : {
+      screen: 'groups',
+      action: 'view'
+    }
   });
 };
 
 /**
  * Create notification for post interactions
  */
-const notifyPostLiked = async (postAuthorId, likerId) => {
+const notifyPostLiked = async (postAuthorId, likerId, postId) => {
   const likerName = await getSenderName(likerId);
   return createNotification({
     receiverId: postAuthorId,
     senderId: likerId,
     type: 'like',
-    message: `${likerName} liked your post`
+    message: `${likerName} liked your post`,
+    navigation: {
+      screen: 'post',
+      postId: postId
+    }
   });
 };
 
-const notifyPostCommented = async (postAuthorId, commenterId) => {
+const notifyPostCommented = async (postAuthorId, commenterId, postId, commentId = null) => {
   const commenterName = await getSenderName(commenterId);
   return createNotification({
     receiverId: postAuthorId,
     senderId: commenterId,
     type: 'comment',
-    message: `${commenterName} commented on your post`
+    message: `${commenterName} commented on your post`,
+    navigation: {
+      screen: 'post',
+      postId: postId,
+      commentId: commentId
+    }
   });
 };
 
-const notifyCommentReplied = async (commentAuthorId, replierId) => {
+const notifyCommentReplied = async (commentAuthorId, replierId, postId, commentId, replyId = null) => {
   const replierName = await getSenderName(replierId);
   return createNotification({
     receiverId: commentAuthorId,
     senderId: replierId,
     type: 'reply',
-    message: `${replierName} replied to your comment`
+    message: `${replierName} replied to your comment`,
+    navigation: {
+      screen: 'post',
+      postId: postId,
+      commentId: commentId,
+      replyId: replyId
+    }
   });
 };
 
-const notifyCommentEdited = async (postAuthorId, editorId) => {
+const notifyCommentEdited = async (postAuthorId, editorId, postId, commentId = null) => {
   const editorName = await getSenderName(editorId);
   return createNotification({
     receiverId: postAuthorId,
     senderId: editorId,
     type: 'edit_comment',
-    message: `${editorName} edited a comment on your post`
+    message: `${editorName} edited a comment on your post`,
+    navigation: {
+      screen: 'post',
+      postId: postId,
+      commentId: commentId
+    }
   });
 };
 
-const notifyCommentDeleted = async (postAuthorId, deleterId) => {
+const notifyCommentDeleted = async (postAuthorId, deleterId, postId) => {
   const deleterName = await getSenderName(deleterId);
   return createNotification({
     receiverId: postAuthorId,
     senderId: deleterId,
     type: 'delete_comment',
-    message: `${deleterName} deleted a comment on your post`
+    message: `${deleterName} deleted a comment on your post`,
+    navigation: {
+      screen: 'post',
+      postId: postId
+    }
   });
 };
 
 /**
  * Create notification for messaging
  */
-const notifyMessageReceived = async (receiverId, senderId) => {
+const notifyMessageReceived = async (receiverId, senderId, chatId = null) => {
   const senderName = await getSenderName(senderId);
   return createNotification({
     receiverId,
     senderId,
     type: 'message',
-    message: `${senderName} sent you a message`
+    message: `${senderName} sent you a message`,
+    navigation: {
+      screen: 'chat',
+      chatId: chatId,
+      userId: senderId
+    }
   });
 };
 
 /**
  * Create notification for system/admin actions
  */
-const notifyAnnouncement = async (receiverId, announcementTitle) => {
+const notifyAnnouncement = async (receiverId, announcementTitle, announcementId = null) => {
   return createNotification({
     receiverId,
     senderId: null,
     type: 'announcement',
-    message: `New announcement: ${announcementTitle}`
+    message: `New announcement: ${announcementTitle}`,
+    navigation: announcementId ? {
+      screen: 'announcement',
+      announcementId: announcementId
+    } : {
+      screen: 'announcements',
+      action: 'view'
+    }
   });
 };
 
@@ -167,7 +220,11 @@ const notifyRoleUpdate = async (receiverId, adminId) => {
     receiverId,
     senderId: adminId,
     type: 'role_update',
-    message: `${adminName} updated your role or permissions`
+    message: `${adminName} updated your role or permissions`,
+    navigation: {
+      screen: 'profile',
+      action: 'view'
+    }
   });
 };
 
