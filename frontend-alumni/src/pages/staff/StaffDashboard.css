@@ -300,4 +300,46 @@
   }
   
   
-  
+  /* RTL Support */
+.dashboard-root.rtl {
+    direction: rtl;
+}
+
+.dashboard-root.rtl .sidebar-panel {
+    right: 0;
+    left: auto;
+    transform: translateX(100%);
+    border-left: 1px solid #e2e8f0;
+    border-right: none;
+}
+
+.dashboard-root.rtl.sidebar-visible .sidebar-panel {
+    transform: translateX(0);
+}
+
+.dashboard-root.rtl .main-section {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.dashboard-root.rtl.sidebar-visible .main-section {
+    margin-right: 256px;
+}
+
+.dashboard-root.rtl .sidebar-link {
+    text-align: right;
+}
+
+.dashboard-root.rtl .child-link {
+    padding-left: 20px;
+    padding-right: 40px;
+}
+/* Profile Dropdown RTL */
+.dashboard-root.rtl .profile-menu {
+    right: auto;
+    left: 0;
+}
+
+.dashboard-root.rtl .profile-value {
+    text-align: left; 
+}
