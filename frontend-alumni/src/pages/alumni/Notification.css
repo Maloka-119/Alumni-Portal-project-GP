@@ -5,45 +5,35 @@
   padding: 40px 20px;
   box-sizing: border-box;
 }
+.notifications-container {
+  width: 100%;
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+  background: #f1f5f9; /* خلفية الصفحة */
+}
+
+.notifications-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 1000px; /* full width تقريبًا */
+  margin: 0 auto;
+}
+
 
 /* ===== Title ===== */
 .Title {
   font-size: 28px;
   font-weight: 600;
-  text-align: center;
   color: #1e293b;
   margin-bottom: 30px;
+  text-align: center; /* دايمًا في الوسط سواء عربي أو إنجليزي */
 }
 
-/* ===== Tabs ===== */
-.tabs {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 30px;
-}
-
-.tabs button {
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  background: #2563eb;
-  color: #fff;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s ease, transform 0.1s ease;
-}
-
-.tabs button.active {
-  background: #1e40af;
-}
-
-.tabs button:hover {
-  transform: scale(1.05);
-}
 
 /* ===== Notification List ===== */
-.notification-list {
+.notifications-list {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -61,15 +51,29 @@
   padding: 14px 18px;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
   transition: all 0.2s ease;
-  margin-bottom: 6px;
 }
 
+/* Hover عام */
 .notification-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
 }
 
-/* ===== Left Side (Text) ===== */
+/* إشعارات غير مقروءة */
+.notification-item.unread {
+  background-color: #e0f2fe;
+  border-left: 4px solid #2563eb;
+  transition: all 0.3s ease;
+}
+
+/* Hover على إشعارات غير مقروءة */
+.notification-item.unread:hover {
+  background-color: #bae6fd;
+  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.2);
+  transform: translateY(-2px) scale(1.01);
+}
+
+/* ===== Left Side ===== */
 .notif-content {
   display: flex;
   flex-direction: column;
@@ -84,35 +88,29 @@
   margin-bottom: 4px;
 }
 
-/* ===== Time ===== */
 .time {
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
 }
 
-/* ===== Right Side (Actions + Delete) ===== */
+/* ===== Right Side (Actions) ===== */
 .notif-actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
-/* ===== Buttons ===== */
-.accept-btn,
-.reject-btn {
+/* زر تعليم كمقروء */
+.accept-btn {
   padding: 6px 10px;
   border: none;
   border-radius: 6px;
   font-size: 13px;
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.2s ease, transform 0.1s ease;
-}
-
-/* Accept */
-.accept-btn {
   background: #2563eb;
   color: #fff;
+  transition: all 0.2s ease;
 }
 
 .accept-btn:hover {
@@ -120,84 +118,49 @@
   transform: scale(1.05);
 }
 
-/* Reject */
-.reject-btn {
-  background: #ef4444;
-  color: #fff;
+.accept-btn:disabled {
+  background: #94a3b8;
+  cursor: default;
 }
 
-.reject-btn:hover {
+/* زر الحذف */
+.delete-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  background: #ef4444;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+
+.delete-btn:hover {
   background: #b91c1c;
   transform: scale(1.05);
 }
 
-/* ===== Invitation Status ===== */
-.status {
-  font-weight: 500;
-  font-size: 14px;
-}
-
-.status.accepted {
-  color: #2563eb;
-}
-
-.status.rejected {
-  color: #ef4444;
-}
-
-/* ===== Delete Button ===== */
-.delete-btn {
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: #ef4444;
-  cursor: pointer;
-  transition: transform 0.2s ease, color 0.2s ease;
-}
-
-.delete-btn:hover {
-  transform: scale(1.15);
-  color: #b91c1c;
-}
-
-/* ===== Empty State ===== */
+/* Empty state */
 .empty {
   text-align: center;
   color: #64748b;
-  font-size: 16px;
-  margin-top: 40px;
+  font-size: 14px;
+  padding: 16px;
 }
 
 /* ===== Responsive ===== */
 @media (max-width: 600px) {
-  .Title {
-    font-size: 24px;
-  }
-
-  .tabs button {
-    padding: 8px 14px;
+  .notif-content p {
     font-size: 14px;
   }
 
-  .notification-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .notif-actions {
-    align-self: flex-end;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    gap: 8px;
-  }
-
-  .delete-btn {
-    font-size: 16px;
+  .accept-btn, .delete-btn {
+    font-size: 12px;
+    padding: 5px 8px;
   }
 }
 
-/* ===== Dark Mode for Notifications ===== */
+/* ===== Dark Mode ===== */
 .dark .notifications-container {
   background: #111827;
   color: #f3f4f6;
@@ -205,15 +168,6 @@
 
 .dark .Title {
   color: #f3f4f6;
-}
-
-.dark .tabs button {
-  background: #2563eb;
-  color: #f3f4f6;
-}
-
-.dark .tabs button.active {
-  background: #1e40af;
 }
 
 .dark .notification-item {
@@ -230,12 +184,13 @@
   color: #9ca3af;
 }
 
-.dark .status.accepted {
-  color: #60a5fa;
+.dark .accept-btn {
+  background: #2563eb;
 }
 
-.dark .status.rejected {
-  color: #f87171;
+.dark .delete-btn {
+  background: #ef4444;
+  color: #fff;
 }
 
 .dark .empty {

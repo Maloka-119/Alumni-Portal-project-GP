@@ -1,248 +1,106 @@
-// import React, { useState } from "react";
-// import "./Notification.css";
+//NotificationsPage.jsx
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import './Notification.css'
+import { useTranslation } from "react-i18next";
 
-// function Notifications() {
-//   const [activeTab, setActiveTab] = useState("all");
+const token = localStorage.getItem("token");
 
-//   const [allNotifications, setAllNotifications] = useState([
-//     {
-//       id: 1,
-//       message: "Yara liked your post",
-//       time: "10:30 AM",
-//       type: "general",
-//     },
-//     {
-//       id: 2,
-//       sender: "Ahmed",
-//       group: "Frontend Developers",
-//       time: "11:15 AM",
-//       type: "invitation",
-//       status: "pending", // pending | accepted 
-//     },
-//     {
-//       id: 3,
-//       sender: "Mona",
-//       group: "React Learners",
-//       time: "12:40 PM",
-//       type: "invitation",
-//       status: "pending",
-//     },
-//   ]);
+const API = axios.create({
+  baseURL: "http://localhost:5005/alumni-portal",
+  headers: {
+    Authorization: `Bearer ${token}`,
+  },
+});
 
-//   // 🗑 حذف إشعار
-//   const deleteNotification = (id) => {
-//     setAllNotifications((prev) => prev.filter((n) => n.id !== id));
-//   };
+const NotificationsPage = () => {
+  const { t, i18n } = useTranslation();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-//   // ✅ قبول الدعوة
-//   const acceptInvitation = (id) => {
-//     setAllNotifications((prev) =>
-//       prev.map((n) =>
-//         n.id === id ? { ...n, status: "accepted" } : n
-//       )
-//     );
-//   };
+  // تحديث اتجاه الصفحة تلقائي حسب اللغة
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
+  }, [i18n.language]);
 
-//   // ❌ رفض الدعوة
-//   const rejectInvitation = (id) => {
-//     setAllNotifications((prev) =>
-//       prev.map((n) =>
-//         n.id === id ? { ...n, status: "rejected" } : n
-//       )
-//     );
-//   };
+  const fetchNotifications = async () => {
+    try {
+      const res = await API.get("/notifications");
+      setNotifications(res.data.data);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+      setLoading(false);
+    }
+  };
 
-//   // 🔎 فلترة حسب التبويب
-//   const filteredNotifications =
-//     activeTab === "all"
-//       ? allNotifications
-//       : allNotifications.filter((n) => n.type === "invitation");
+  const markAsRead = async (id) => {
+    try {
+      await API.put(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-//   return (
-//     <div className="notifications-container">
-//       <h1 className="Title">Notifications</h1>
+  const deleteNotification = async (id) => {
+    try {
+      await API.delete(`/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-//       {/* التبويبات */}
-//       <div className="tabs">
-//         <button
-//           className={activeTab === "all" ? "active" : ""}
-//           onClick={() => setActiveTab("all")}
-//         >
-//           All
-//         </button>
-//         <button
-//           className={activeTab === "invitation" ? "active" : ""}
-//           onClick={() => setActiveTab("invitation")}
-//         >
-//           Invitations
-//         </button>
-//       </div>
-
-//       {/* قائمة الإشعارات */}
-//       <div className="notification-list">
-//         {filteredNotifications.length === 0 ? (
-//           <p className="empty">No notifications</p>
-//         ) : (
-//           filteredNotifications.map((n) => (
-//             <div key={n.id} className="notification-item">
-//               <div className="notif-content">
-//                 {n.type === "invitation" ? (
-//                   <>
-//                     <p>
-//                       <strong>{n.sender}</strong> invited you to join{" "}
-//                       <strong>{n.group}</strong>
-//                     </p>
-//                     <small className="time">{n.time}</small>
-
-//                     {n.status === "pending" ? (
-//                       <div className="invitation-actions">
-//                         <button
-//                           className="accept-btn"
-//                           onClick={() => acceptInvitation(n.id)}
-//                         >
-//                           Accept
-//                         </button>
-//                         <button
-//                           className="reject-btn"
-//                           onClick={() => rejectInvitation(n.id)}
-//                         >
-//                           Reject
-//                         </button>
-//                       </div>
-//                     ) : (
-//                       <p
-//                         className={`status ${
-//                           n.status === "accepted" ? "accepted" : "rejected"
-//                         }`}
-//                       >
-//                         {n.status === "accepted"
-//                           ? "Invitation Accepted ✅"
-//                           : "Invitation Rejected ❌"}
-//                       </p>
-//                     )}
-//                   </>
-//                 ) : (
-//                   <>
-//                     <p>{n.message}</p>
-//                     <small className="time">{n.time}</small>
-//                   </>
-//                 )}
-//               </div>
-
-//               <button
-//                 className="delete-btn"
-//                 onClick={() => deleteNotification(n.id)}
-//               >
-//                 🗑
-//               </button>
-//             </div>
-//           ))
-//         )}
-//       </div>
-//     </div>
-//   );
-// }
-
-// export default Notifications;
-
-import React, { useState, useEffect } from "react";
-import API from "../../services/api";
-import "./Notification.css";
-
-function InvitationsPage() {
-  const [invitations, setInvitations] = useState([]);
+  const markAllAsRead = async () => {
+    try {
+      await API.put("/notifications/read-all");
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   useEffect(() => {
-    fetchInvitations();
+    fetchNotifications();
   }, []);
 
-const fetchInvitations = async () => {
-  try {
-    const res = await API.get("/invitations/received"); // لاحظي هنا نفس اللي على الباك
-    const formatted = res.data.map((inv) => ({
-      id: inv.invitationId, // بدل inv.id
-      sender: inv.senderFullName, // بدل inv.sender_name
-      group: inv.groupName, // بدل inv.group_name
-      time: new Date(inv.sent_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      status: inv.status,
-    }));
-    setInvitations(formatted);
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-
- const deleteInvitation = async (id) => {
-  try {
-    await API.delete(`/invitations/${id}`);
-    setInvitations((prev) => prev.filter((inv) => inv.id !== id));
-  } catch (err) {
-    console.error(err);
-  }
-};
-const acceptInvitation = async (id) => {
-  try {
-    // جلب البيانات اللي محتاجها الباك فقط
-    const inv = invitations.find((inv) => inv.id === id);
-    const body = {
-      id: inv.id,
-      sender_id: inv.senderId || null,    // لو موجود
-      receiver_id: inv.receiverId || null,
-      group_id: inv.groupId || null,
-    };
-
-    // لو الباك بيشتغل من غير body ممكن تكتبي: await API.post(`/invitations/${id}/accept`);
-    await API.post(`/invitations/${id}/accept`, body);
-
-    // تحديث الحالة محليًا
-    setInvitations((prev) =>
-      prev.map((inv) => (inv.id === id ? { ...inv, status: "accepted" } : inv))
-    );
-  } catch (err) {
-    console.error(err);
-  }
-};
-
-const rejectInvitation = async (id) => {
-  deleteInvitation(id); // رفض الدعوة يتم عن طريق حذفها
-};
+  if (loading) return <div className="notifications-container">{t("Loading notifications...")}</div>;
 
   return (
     <div className="notifications-container">
-      <h1 className="Title">Invitations</h1>
+      <h1 className="Title">{t("Notifications")}</h1>
+      <div className="notifications-list">
+        <button className="accept-btn" onClick={markAllAsRead}>{t("Mark All as Read")}</button>
 
-      <div className="notification-list">
-        {invitations.length === 0 ? (
-          <p className="empty">No invitations</p>
+        {notifications.length === 0 ? (
+          <div className="empty">{t("No notifications")}</div>
         ) : (
-          invitations.map((inv) => (
-            <div key={inv.id} className="notification-item">
+          notifications.map(n => (
+            <div key={n.id} className={`notification-item ${n.isRead ? "" : "unread"}`}>
               <div className="notif-content">
-                <p>
-                  <strong>{inv.sender}</strong> invited you to join <strong>{inv.group}</strong>
-                </p>
-                <small className="time">{inv.time}</small>
+                <p>{n.message}</p>
+           
+                <span className="time">
+  {new Intl.DateTimeFormat(i18n.language === "ar" ? "ar-EG" : "en-US", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date(n.createdAt))}
+</span>
+
               </div>
-
               <div className="notif-actions">
-                {inv.status === "pending" ? (
-                  <>
-                    <button className="accept-btn" onClick={() => acceptInvitation(inv.id)}>
-                      Accept
-                    </button>
-                    <button className="reject-btn" onClick={() => rejectInvitation(inv.id)}>
-                      Reject
-                    </button>
-                  </>
-                ) : (
-                  <p className={`status ${inv.status === "accepted" ? "accepted" : "rejected"}`}>
-                    {inv.status === "accepted" ? "✅ Accepted" : "❌ Rejected"}
-                  </p>
+                {!n.isRead && (
+                  <button className="accept-btn" onClick={() => markAsRead(n.id)}>
+                    {t("Mark as Read")}
+                  </button>
                 )}
-
-                <button className="delete-btn" onClick={() => deleteInvitation(inv.id)}>
-                  🗑
+                <button className="delete-btn" onClick={() => deleteNotification(n.id)}>
+                  {t("Delete")}
                 </button>
               </div>
             </div>
@@ -251,6 +109,6 @@ const rejectInvitation = async (id) => {
       </div>
     </div>
   );
-}
+};
 
-export default InvitationsPage;
+export default NotificationsPage;

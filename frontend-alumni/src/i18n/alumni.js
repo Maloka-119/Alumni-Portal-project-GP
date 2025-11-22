@@ -215,6 +215,7 @@ const alumni = {
   "seeMore": "See More",
   "close": "Close",
   "adminFeedbackPageTitle": "Graduates' Complaints & Suggestions",
+<<<<<<< Updated upstream
   "dontHaveAccount": "Don't have an account? Create a new one",
   "next": "Next",
 "tourHome": "This is your home page. You can see your main dashboard here.",
@@ -229,6 +230,14 @@ const alumni = {
   "tourConsultations": "Book or check consultations with staff.",
   "tourFAQ": "Find answers to frequently asked questions.",
   "tourFeedback": "Submit feedback or suggestions to improve the portal.",
+=======
+  "Notifications": "Notifications",
+  "Mark All as Read": "Mark All as Read",
+  "No notifications": "No notifications",
+  "Loading notifications...": "Loading notifications...",
+  "Mark as Read": "Mark as Read",
+  "Delete": "Delete"
+>>>>>>> Stashed changes
     },
   },
 
@@ -462,6 +471,13 @@ const alumni = {
   "seeMore": "عرض التفاصيل",
   "close": "إغلاق",
   "adminFeedbackPageTitle": "شكاوى واقتراحات الخريجين",
+  "Notifications": "الإشعارات",
+  "Mark All as Read": "تحديد الكل كمقروء",
+  "No notifications": "لا توجد إشعارات",
+  "Loading notifications...": "جاري تحميل الإشعارات...",
+  "Mark as Read": "تحديد كمقروء",
+  "Delete": "حذف",
+  
     },
   },
 };
