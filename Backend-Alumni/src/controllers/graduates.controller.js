@@ -14,9 +14,9 @@ const axios = require("axios");
 const { normalizeCollegeName, getCollegeNameByCode } = require("../services/facultiesService");
 
 
-//get all graduates
 const getAllGraduates = async (req, res) => {
   try {
+    // جلب كل الخريجين
     const graduates = await Graduate.findAll({
       include: {
         model: User,
@@ -33,10 +33,24 @@ const getAllGraduates = async (req, res) => {
       },
     });
 
+    // تحويل الكلية من الكود للاسم حسب لغة المستخدم
+    const lang = req.user?.language || "ar";
+
+    const graduatesWithFacultyName = graduates.map((grad) => {
+      const facultyName = grad.faculty_code
+        ? getCollegeNameByCode(grad.faculty_code, lang)
+        : null;
+
+      return {
+        ...grad.toJSON(), // بيانات الخريج كما هي
+        facultyName,       // اسم الكلية بالعربي أو الانجليزي حسب لغة المستخدم
+      };
+    });
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "All graduates fetched successfully",
-      data: graduates,
+      data: graduatesWithFacultyName,
     });
   } catch (err) {
     console.error(err);
@@ -48,13 +62,11 @@ const getAllGraduates = async (req, res) => {
   }
 };
 
-// Get active graduates (GraduatesInPortal) - Admin only
+
+// Get active graduates (GraduatesInPortal) - Admin & Staff only
 const getGraduatesInPortal = async (req, res) => {
   try {
-    // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
-
-    // 2. لو مش من النوع المسموح → ارفض
     if (!allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
@@ -63,14 +75,13 @@ const getGraduatesInPortal = async (req, res) => {
       });
     }
 
-    // 3. لو staff → تحقق من الصلاحية
+    // لو staff → تحقق من الصلاحية
     if (req.user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
         "Graduate management",
         "view"
       );
-
       if (!hasPermission) {
         return res.status(403).json({
           status: HttpStatusHelper.ERROR,
@@ -81,7 +92,11 @@ const getGraduatesInPortal = async (req, res) => {
       }
     }
 
-    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
+    // اللغة الحالية للـ user أو fallback للعربي
+   const lang = req.headers["accept-language"] || req.user.language || "ar";
+
+
+    // جلب الخريجين المقبولين مع تجاهل الحقل القديم
     const graduates = await Graduate.findAll({
       where: { "status-to-login": "accepted" },
       include: {
@@ -97,15 +112,21 @@ const getGraduatesInPortal = async (req, res) => {
           ["user-type", "userType"],
         ],
       },
+      attributes: { exclude: ["faculty"] }, // تجاهل العمود القديم نهائيًا
     });
 
+    // تعديل اسم الكلية ديناميكي حسب faculty_code ولغة المستخدم
+ const graduatesWithFaculty = graduates.map(g => ({
+  ...g.toJSON(),
+  faculty: getCollegeNameByCode(g.faculty_code, lang)
+}));
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "All graduates fetched successfully",
-      data: graduates,
+      data: graduatesWithFaculty,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Error fetching graduates:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: "Error fetching graduates",
@@ -113,6 +134,9 @@ const getGraduatesInPortal = async (req, res) => {
     });
   }
 };
+
+
+
 
 // Get inactive graduates (requested to join) - Admin only
 const getRequestedGraduates = async (req, res) => {
@@ -318,68 +342,52 @@ const getDigitalID = async (req, res) => {
 // Approve Graduate by admin
 const approveGraduate = async (req, res) => {
   try {
-    const { id } = req.params; // graduate_id من URL
-    const { faculty, graduationYear } = req.body; // من body
+    const { id } = req.params; 
+    const { faculty, graduationYear } = req.body;
 
-    // 1. تحديد اليوزر types المسموح لهم
+    // صلاحيات
     const allowedUserTypes = ["admin", "staff"];
-
-    // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
       return res.status(403).json({ message: "Access denied." });
     }
 
-    // 3. لو staff → تحقق من الصلاحية
     if (req.user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
         "Others Requests management",
         "edit"
       );
-
       if (!hasPermission) {
         return res.status(403).json({
-          message:
-            "Access denied. You don't have permission to approve graduates.",
+          message: "Access denied. You don't have permission to approve graduates.",
         });
       }
     }
 
-    // 4. تحقق إن الحقول المطلوبة موجودة
     if (!faculty || !graduationYear) {
-      return res.status(400).json({
-        message: "Faculty and graduationYear are required.",
-      });
+      return res.status(400).json({ message: "Faculty and graduationYear are required." });
     }
 
-    // 🔍 Normalize الكلية → يرجع الكود فقط
+    // تحويل الاسم لكود
     const facultyCode = normalizeCollegeName(faculty);
     if (!facultyCode) {
       return res.status(400).json({ message: "Invalid faculty name." });
     }
 
-    // 🔍 البحث عن الخريج في قاعدة البيانات
     const graduate = await Graduate.findOne({ where: { graduate_id: id } });
-    if (!graduate) {
-      return res.status(404).json({ message: "Graduate not found." });
-    }
+    if (!graduate) return res.status(404).json({ message: "Graduate not found." });
 
-    // ✅ تحديث الحالة والبيانات
-    graduate["status-to-login"] = "accepted";
+    // فقط تخزين الكود و NOT faculty name
+    graduate.faculty_code = facultyCode;
     graduate["graduation-year"] = graduationYear;
-    graduate.faculty_code = facultyCode; // نخزن الكود فقط
+    graduate["status-to-login"] = "accepted";
 
     await graduate.save();
 
-    // لو حبيت تعرض الاسم حسب لغة المستخدم
-    const facultyName = getCollegeNameByCode(facultyCode, req.user.language || "ar");
-
-    // ✅ رد النجاح
     return res.status(200).json({
       message: "Graduate approved successfully.",
       graduateId: id,
-      newStatus: graduate["status-to-login"],
-      facultyName, // الاسم يظهر حسب لغة المستخدم
+      facultyCode: facultyCode,
     });
   } catch (error) {
     console.error("Error approving graduate:", error.message);
@@ -389,6 +397,9 @@ const approveGraduate = async (req, res) => {
     });
   }
 };
+
+
+
 
 // GET Graduate Profile for admin
 const getGraduateProfile = async (req, res) => {
