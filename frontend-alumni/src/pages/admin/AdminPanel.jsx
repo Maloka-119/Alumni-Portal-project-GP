@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from "react-i18next";
 import API from '../../services/api'; 
+import FeedbackView from './FeedbackView';
 
 const AdminPanel = ({ setUser }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -150,6 +151,7 @@ const AdminPanel = ({ setUser }) => {
           <Route path="adminPosts" element={<AdminPostsPage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="usersPosts" element={<UsersPostsPage currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="faqManage" element={<FAQManage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
+          <Route path="GraduatedFeedback" element={<FeedbackView currentUser={JSON.parse(localStorage.getItem("user"))} />} />
         </Routes>
       </main>
     </div>

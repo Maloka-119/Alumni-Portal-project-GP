@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import API from "../../services/api";
@@ -22,8 +21,7 @@ export default function FeedbackPageUnique() {
       try {
         setLoading(true);
         const response = await API.get("/feedbacks/my-feedbacks");
-        console.log("Fetched feedbacks:", response.data); // للتصحيح
-        setRecords(response.data); // استخدام البيانات كما هي من الباكند
+        setRecords(response.data); 
       } catch (error) {
         console.error("Error fetching feedbacks:", error);
       } finally {
@@ -36,21 +34,16 @@ export default function FeedbackPageUnique() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const newItem = {
-      category,
-      title,
-      details,
-      phone,
-      email
-    };
+    const newItem = { category, title, details, phone, email };
 
     try {
       setLoading(true);
       const response = await API.post("/feedbacks", newItem);
-      console.log("Submitted feedback:", response.data); // للتصحيح
-      
-      // إضافة العنصر الجديد إلى القائمة
-      setRecords([response.data, ...records]);
+
+      if (response.data && response.data.data) {
+        setRecords([response.data.data, ...records]);
+      }
+
       setTitle("");
       setDetails("");
       setPhone("");
@@ -66,11 +59,9 @@ export default function FeedbackPageUnique() {
 
   const smallText = (text) => {
     if (!text) return "";
-    if (text.length <= 60) return text;
-    return text.slice(0, 60) + "...";
+    return text.length <= 60 ? text : text.slice(0, 60) + "...";
   };
 
-  // دالة مساعدة للحصول على className بناءً على category
   const getTypeClassName = (category) => {
     if (!category) return "complaint";
     return category.toLowerCase() === "suggestion" ? "suggestion" : "complaint";
@@ -155,10 +146,13 @@ export default function FeedbackPageUnique() {
         {records.map((item) => (
           <div key={item.feedback_id} className="feedback-card">
             <span className="feedback-badge">#{item.feedback_id}</span>
-            <span className={`feedback-type-badge ${getTypeClassName(item.category)}`}>
+            {/* <span className={`feedback-type-badge ${getTypeClassName(item.category)}`}>
               {item.category === "Suggestion" ? t("suggestion") : t("complaint")}
-            </span>
+            </span> */}
             <h4 className="feedback-card-title">{item.title || "No Title"}</h4>
+            {/* <h5 className="feedback-user">
+              {item.User ? `${item.User["first-name"]} ${item.User["last-name"]}` : "-"}
+            </h5> */}
             <p className="feedback-card-text">{smallText(item.details)}</p>
             <button
               className="feedback-see-more"
