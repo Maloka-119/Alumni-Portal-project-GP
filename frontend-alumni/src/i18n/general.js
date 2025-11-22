@@ -41,6 +41,13 @@ const general = {
       registrationFailed: "Registration failed",
       somethingWrong: "Something went wrong",
      
+      //staff
+      "Username": "Username",
+      "National ID": "National ID",
+      "Work ID": "Work ID",
+      "Email": "Email",
+      "Roles": "Roles",
+      "No roles assigned": "No roles assigned",
 
       
       }
@@ -87,6 +94,14 @@ const general = {
         registrationFailed: "فشل التسجيل",
         somethingWrong: "حدث خطأ ما",
         
+
+        //staff
+        "Username": "اسم المستخدم",
+        "National ID": "الرقم القومي",
+        "Work ID": "رقم العمل",
+        "Email": "البريد الإلكتروني",
+        "Roles": "الصلاحيات",
+        "No roles assigned": "لا توجد صلاحيات",
       }
     }
   };
