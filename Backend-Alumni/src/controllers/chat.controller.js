@@ -439,7 +439,7 @@ const sendMessage = asyncHandler(async (req, res) => {
   });
 
   // Create notification for the receiver
-  await notifyMessageReceived(receiverId, senderId);
+  await notifyMessageReceived(receiverId, senderId, chatId);
 
   // Emit socket event to notify both users in real-time
   if (global.chatSocket) {
@@ -1237,7 +1237,7 @@ const sendImageMessage = asyncHandler(async (req, res) => {
   });
 
   // Create notification for the receiver
-  await notifyMessageReceived(receiverId, senderId);
+  await notifyMessageReceived(receiverId, senderId, chatId);
 
   // Emit socket event to notify both users in real-time
   if (global.chatSocket) {
@@ -1382,7 +1382,7 @@ const sendFileMessage = asyncHandler(async (req, res) => {
   });
 
   // Create notification for the receiver
-  await notifyMessageReceived(receiverId, senderId);
+  await notifyMessageReceived(receiverId, senderId, chatId);
 
   // Emit socket event to notify both users in real-time
   if (global.chatSocket) {

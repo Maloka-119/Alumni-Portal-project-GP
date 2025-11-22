@@ -206,6 +206,18 @@ sequelize
       } else {
         console.log("✅ Notification table structure is correct.");
       }
+
+      // Check and add navigation column if it doesn't exist
+      if (!tableDescription["navigation"]) {
+        console.log("📝 Adding navigation column to Notification table...");
+        const { DataTypes } = require("sequelize");
+        await sequelize.getQueryInterface().addColumn("Notification", "navigation", {
+          type: DataTypes.JSON,
+          allowNull: true,
+          defaultValue: null
+        });
+        console.log("✅ Navigation column added successfully.");
+      }
     } catch (error) {
       // Table doesn't exist, create it
       console.log("📝 Creating Notification table...");

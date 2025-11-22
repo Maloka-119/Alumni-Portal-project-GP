@@ -324,7 +324,7 @@ const addUserToGroup = async (req, res) => {
     });
 
     // Create notification for the user being added
-    await notifyAddedToGroup(userId, user.id, group["group-name"]);
+    await notifyAddedToGroup(userId, user.id, group["group-name"], groupId);
 
     return res.status(201).json({
       status: "success",

@@ -46,6 +46,7 @@ const getNotifications = async (req, res) => {
       message: notification.message,
       isRead: notification.isRead,
       createdAt: notification.createdAt,
+      navigation: notification.navigation,
       sender: notification.sender ? {
         id: notification.sender.id,
         fullName: `${notification.sender['first-name']} ${notification.sender['last-name']}`,
