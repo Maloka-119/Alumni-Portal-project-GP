@@ -7,7 +7,10 @@ const generateToken = require("../utils/generateToken");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
-const { normalizeCollegeName, getCollegeNameByCode } = require("../services/facultiesService");
+const {
+  normalizeCollegeName,
+  getCollegeNameByCode,
+} = require("../services/facultiesService");
 
 // @desc    Register user automatically as graduate or staff
 // @route   POST /alumni-portal/register
@@ -21,9 +24,9 @@ function extractDOBFromEgyptianNID(nationalId) {
 
   const centuryDigit = id[0];
   let century;
-  if (centuryDigit === '2') century = 1900;
-  else if (centuryDigit === '3') century = 2000;
-  else if (centuryDigit === '4') century = 2100; // احتياطي لو احتجت
+  if (centuryDigit === "2") century = 1900;
+  else if (centuryDigit === "3") century = 2000;
+  else if (centuryDigit === "4") century = 2100; // احتياطي لو احتجت
   else throw new Error("Unsupported century digit in national ID.");
 
   const yy = parseInt(id.substr(1, 2), 10);
@@ -43,12 +46,16 @@ function extractDOBFromEgyptianNID(nationalId) {
   }
 
   // إرجاع بصيغة ISO بدون الوقت
-  return `${year.toString().padStart(4, '0')}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+  return `${year.toString().padStart(4, "0")}-${String(mm).padStart(
+    2,
+    "0"
+  )}-${String(dd).padStart(2, "0")}`;
 }
 
-// registerUser 
+// registerUser
 const registerUser = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, password, nationalId, phoneNumber } = req.body;
+  const { firstName, lastName, email, password, nationalId, phoneNumber } =
+    req.body;
 
   // استخراج تاريخ الميلاد
   let birthDateFromNid;
@@ -69,7 +76,6 @@ const registerUser = asyncHandler(async (req, res) => {
       `${process.env.STAFF_API_URL}?nationalId=${nationalId}`
     );
     externalData = staffResponse.data;
-    console.log("Staff API Response:", externalData);
 
     const departmentField =
       externalData?.department ||
@@ -124,7 +130,9 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already exists");
   }
 
-  const nationalIdExists = await User.findOne({ where: { "national-id": nationalId } });
+  const nationalIdExists = await User.findOne({
+    where: { "national-id": nationalId },
+  });
   if (nationalIdExists) {
     res.status(400);
     throw new Error("This national ID is already registered");
@@ -156,18 +164,37 @@ const registerUser = asyncHandler(async (req, res) => {
       null;
 
     // تحويل اسم الكلية إلى كود
-    const facultyCode = facultyName ? normalizeCollegeName(facultyName) : null;
+    const facultyCode = facultyName || "GENERAL";
 
-    await Graduate.create({
-      graduate_id: user.id,
-      faculty_code: facultyCode, // تخزين الكود بدلاً من الاسم
-      "graduation-year":
-        externalData?.["graduation-year"] ||
-        externalData?.graduationYear ||
-        externalData?.GraduationYear ||
-        null,
-      "status-to-login": statusToLogin,
-    });
+    try {
+      await Graduate.create({
+        graduate_id: user.id,
+        faculty_code: facultyCode,
+        "graduation-year":
+          externalData?.["graduation-year"] ||
+          externalData?.graduationYear ||
+          externalData?.GraduationYear ||
+          2023,
+        "status-to-login": statusToLogin,
+      });
+
+      // استدعاء الدعوة التلقائية
+      try {
+        const { sendAutoGroupInvitation } = require("./invitation.controller");
+        await sendAutoGroupInvitation(user.id);
+      } catch (error) {
+        console.error("Failed to send auto invitation:", error);
+      }
+    } catch (error) {
+      console.error("Graduate creation error:", error);
+      if (error.errors) {
+        console.error(
+          "Validation errors:",
+          error.errors.map((e) => e.message)
+        );
+      }
+      throw error;
+    }
   } else if (userType === "staff") {
     await Staff.create({
       staff_id: user.id,
@@ -184,8 +211,6 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 });
 
-
-
 // @desc    Login user
 // @route   POST /alumni-portal/login
 // @access  Public
@@ -196,7 +221,6 @@ const loginUser = asyncHandler(async (req, res) => {
   const user = await User.findOne({ where: { email } });
 
   if (user && (await bcrypt.compare(password, user["hashed-password"]))) {
-
     // تحقق من حالة staff
     if (user["user-type"] === "staff") {
       const staff = await Staff.findOne({ where: { staff_id: user.id } });
@@ -208,15 +232,17 @@ const loginUser = asyncHandler(async (req, res) => {
 
       if (staff["status-to-login"] !== "active") {
         res.status(403);
-        throw new Error("Your staff account is not active, Please contact the Alumni Portal team for assistance.");
+        throw new Error(
+          "Your staff account is not active, Please contact the Alumni Portal team for assistance."
+        );
       }
     }
 
     // تحقق من حالة graduate
     if (user["user-type"] === "graduate") {
-      const graduate = await Graduate.findOne({ 
+      const graduate = await Graduate.findOne({
         where: { graduate_id: user.id },
-        attributes: { exclude: ["faculty"] }
+        attributes: { exclude: ["faculty"] },
       });
 
       if (!graduate) {
@@ -226,7 +252,9 @@ const loginUser = asyncHandler(async (req, res) => {
 
       if (graduate["status-to-login"] !== "accepted") {
         res.status(403);
-        throw new Error("Your account is pending approval, Please wait for confirmation from the Alumni Portal team");
+        throw new Error(
+          "Your account is pending approval, Please wait for confirmation from the Alumni Portal team"
+        );
       }
     }
 
@@ -237,7 +265,6 @@ const loginUser = asyncHandler(async (req, res) => {
       userType: user["user-type"],
       token: generateToken(user.id),
     });
-
   } else {
     res.status(401);
     throw new Error("Invalid email or password");
@@ -258,15 +285,17 @@ const forgotPassword = asyncHandler(async (req, res) => {
   }
 
   // هيكون كود من6 ارقام
-  const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-  
+  const verificationCode = Math.floor(
+    100000 + Math.random() * 900000
+  ).toString();
+
   // 15د دقيقه وينتهي
   const expirationTime = new Date();
   expirationTime.setMinutes(expirationTime.getMinutes() + 15);
 
   // هيحفظ الكود ووقت الانتهاء في اليوزر
-  user['verification-code'] = verificationCode;
-  user['verification-code-expires'] = expirationTime;
+  user["verification-code"] = verificationCode;
+  user["verification-code-expires"] = expirationTime;
   await user.save();
 
   // Send email using nodemailer
@@ -322,17 +351,17 @@ const verifyCode = asyncHandler(async (req, res) => {
   }
 
   // هيتحقق من الكود ووقت الانتهاء
-  if (!user['verification-code'] || !user['verification-code-expires']) {
+  if (!user["verification-code"] || !user["verification-code-expires"]) {
     res.status(400);
     throw new Error("No verification code found. Please request a new one.");
   }
 
-  if (new Date() > user['verification-code-expires']) {
+  if (new Date() > user["verification-code-expires"]) {
     res.status(400);
     throw new Error("Verification code has expired. Please request a new one.");
   }
 
-  if (user['verification-code'] !== code) {
+  if (user["verification-code"] !== code) {
     res.status(400);
     throw new Error("Invalid verification code");
   }
@@ -359,17 +388,17 @@ const resetPassword = asyncHandler(async (req, res) => {
   }
 
   // Check if code exists and is not expired
-  if (!user['verification-code'] || !user['verification-code-expires']) {
+  if (!user["verification-code"] || !user["verification-code-expires"]) {
     res.status(400);
     throw new Error("No verification code found. Please request a new one.");
   }
 
-  if (new Date() > user['verification-code-expires']) {
+  if (new Date() > user["verification-code-expires"]) {
     res.status(400);
     throw new Error("Verification code has expired. Please request a new one.");
   }
 
-  if (user['verification-code'] !== code) {
+  if (user["verification-code"] !== code) {
     res.status(400);
     throw new Error("Invalid verification code");
   }
@@ -380,14 +409,12 @@ const resetPassword = asyncHandler(async (req, res) => {
 
   // Update password and clear verification code
   user["hashed-password"] = hashedPassword;
-  user['verification-code'] = null;
-  user['verification-code-expires'] = null;
+  user["verification-code"] = null;
+  user["verification-code-expires"] = null;
   await user.save();
 
   res.json({ message: "Password reset successfully" });
 });
-
-
 
 // Profile
 // @desc    Get logged-in user profile
@@ -395,7 +422,7 @@ const resetPassword = asyncHandler(async (req, res) => {
 // @access  Private
 const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findByPk(req.user.id, {
-    attributes: { exclude: ["hashed-password"] }
+    attributes: { exclude: ["hashed-password"] },
   });
 
   if (!user) {
@@ -418,7 +445,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
   if (user["user-type"] === "graduate") {
     const graduate = await Graduate.findOne({
       where: { graduate_id: user.id },
-      attributes: { exclude: ["faculty"] }
+      attributes: { exclude: ["faculty"] },
     });
 
     if (graduate) {
@@ -437,7 +464,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
           "status-to-login": graduate["status-to-login"],
           "cv-url": graduate["cv-url"],
           "linkedln-link": graduate["linkedln-link"],
-        }
+        },
       };
     }
   }
@@ -445,7 +472,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
   // إذا كان المستخدم موظفاً، نضيف بيانات الموظف
   if (user["user-type"] === "staff") {
     const staff = await Staff.findOne({
-      where: { staff_id: user.id }
+      where: { staff_id: user.id },
     });
 
     if (staff) {
@@ -453,7 +480,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
         ...profileData,
         staff: {
           "status-to-login": staff["status-to-login"],
-        }
+        },
       };
     }
   }
@@ -490,7 +517,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   if (user["user-type"] === "graduate") {
     const graduate = await Graduate.findOne({
       where: { graduate_id: user.id },
-      attributes: { exclude: ["faculty"] }
+      attributes: { exclude: ["faculty"] },
     });
 
     if (graduate) {
@@ -526,7 +553,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
   // جلب البيانات المحدثة مع اسم الكلية
   const updatedUser = await User.findByPk(req.user.id, {
-    attributes: { exclude: ["hashed-password"] }
+    attributes: { exclude: ["hashed-password"] },
   });
 
   let responseData = {
@@ -543,7 +570,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   if (updatedUser["user-type"] === "graduate") {
     const graduate = await Graduate.findOne({
       where: { graduate_id: updatedUser.id },
-      attributes: { exclude: ["faculty"] }
+      attributes: { exclude: ["faculty"] },
     });
 
     if (graduate) {
@@ -589,7 +616,6 @@ module.exports = {
   updateUserProfile,
   logoutUser,
 };
-
 
 // const asyncHandler = require("express-async-handler");
 // const axios = require("axios");
@@ -638,7 +664,7 @@ module.exports = {
 //   return `${year.toString().padStart(4, '0')}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
 // }
 
-// // registerUser 
+// // registerUser
 // const registerUser = asyncHandler(async (req, res) => {
 //   const { firstName, lastName, email, password, nationalId, phoneNumber } = req.body;
 
@@ -771,8 +797,6 @@ module.exports = {
 //   });
 // });
 
-
-
 // // @desc    Login user
 // // @route   POST /alumni-portal/login
 // // @access  Public
@@ -843,7 +867,7 @@ module.exports = {
 
 //   // هيكون كود من6 ارقام
 //   const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-  
+
 //   // 15د دقيقه وينتهي
 //   const expirationTime = new Date();
 //   expirationTime.setMinutes(expirationTime.getMinutes() + 15);
@@ -971,8 +995,6 @@ module.exports = {
 //   res.json({ message: "Password reset successfully" });
 // });
 
-
-
 // // Profile
 // // @desc    Get logged-in user profile
 // // @route   GET /alumni-portal/profile
@@ -1031,8 +1053,6 @@ module.exports = {
 //   res.status(200).json({ message: "Logged out successfully" });
 // });
 
-
-
 // module.exports = {
 //   registerUser,
 //   loginUser,
@@ -1043,4 +1063,3 @@ module.exports = {
 //   updateUserProfile,
 //   logoutUser,
 // };
-
