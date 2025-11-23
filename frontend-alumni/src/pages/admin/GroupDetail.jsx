@@ -115,25 +115,21 @@ function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
   };
   
 
-  const fetchFilters = () => {
-    setColleges([
-      "Engineering",
-      "Medicine",
-      "Pharmacy",
-      "Dentistry",
-      "Nursing",
-      "Science",
-      "Arts",
-      "Commerce",
-      "Education",
-      "Law",
-      "Physical Education",
-      "Computer Science",
-      "Media and Arts",
-      "Tourism and Hotels",
-      "Applied Arts",
-    ]);
-
+  const fetchFilters = async () => {
+    try {
+      const res = await API.get("/faculties");  
+      if (res.data.status === "success") {
+        const lang = i18n.language === "ar" ? "ar" : "en";
+        const collegesFromAPI = res.data.data.map((c) => c[lang]);
+        setColleges(collegesFromAPI);
+      } else {
+        setColleges([]);
+      }
+    } catch (err) {
+      console.error("Error fetching colleges:", err);
+      setColleges([]);
+    }
+  
     const currentYear = new Date().getFullYear();
     const yearsArr = [];
     for (let y = 2000; y <= currentYear; y++) {
@@ -141,7 +137,7 @@ function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
     }
     setYears(yearsArr);
   };
-
+  
   const fetchTypes = async () => {
     try {
       const res = await API.get("/posts/categories");
@@ -362,6 +358,9 @@ const handlePostSubmit = async (formData, postId = null) => {
     );
   };
  
+  useEffect(() => {
+    fetchFilters();
+  }, [i18n.language]);
   
 
   return (
