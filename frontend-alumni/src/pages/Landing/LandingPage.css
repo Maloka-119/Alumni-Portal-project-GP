@@ -8,6 +8,225 @@
     --text:#0b1220;
   }
   
+  /* ========== CSS المحسّن للأزرار مع تأثيرات الضوء ========== */
+
+/* الأزرار الأساسية مع تأثير الضوء المتحرك */
+.btn-primary {
+  position: relative;
+  background: linear-gradient(135deg, #c5972f 0%, #e6b84f 100%);
+  color: var(--navy);
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-weight: 700;
+  border: none;
+  font-size: 1.1rem;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  box-shadow: 0 6px 20px rgba(197, 151, 47, 0.4),
+              0 0 0 0 rgba(197, 151, 47, 0.6);
+  animation: pulse 2s infinite;
+}
+
+/* تأثير النبض المستمر */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 6px 20px rgba(197, 151, 47, 0.4),
+                0 0 0 0 rgba(197, 151, 47, 0.6);
+  }
+  70% {
+    box-shadow: 0 6px 20px rgba(197, 151, 47, 0.4),
+                0 0 0 12px rgba(197, 151, 47, 0);
+  }
+  100% {
+    box-shadow: 0 6px 20px rgba(197, 151, 47, 0.4),
+                0 0 0 0 rgba(197, 151, 47, 0);
+  }
+}
+
+/* تأثير الضوء المتحرك */
+.btn-glow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.4),
+    transparent
+  );
+  transition: left 0.7s ease;
+}
+
+.btn-primary:hover .btn-glow {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  transform: translateY(-5px) scale(1.05);
+  background: linear-gradient(135deg, #e6b84f 0%, #f5c95a 100%);
+  box-shadow: 0 10px 25px rgba(197, 151, 47, 0.6),
+              0 0 15px rgba(255, 215, 0, 0.5);
+  animation: none;
+}
+
+/* الأزرار الثانوية مع تأثيرات محسنة */
+.btn-outline {
+  position: relative;
+  background: transparent;
+  color: #fff;
+  padding: 16px 32px;
+  border-radius: 12px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  font-weight: 700;
+  font-size: 1.1rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.4s ease;
+  backdrop-filter: blur(10px);
+}
+
+.btn-outline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.7s ease;
+}
+
+.btn-outline:hover::before {
+  left: 100%;
+}
+
+.btn-outline:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: 0 8px 20px rgba(197, 151, 47, 0.3),
+              inset 0 0 15px rgba(197, 151, 47, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* تحسينات إضافية للتصميم الحالي */
+
+/* تحسين الأزرار في قسم البطل */
+.hero-btn {
+  min-width: 200px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* تحسين الأزرار في قسم CTA */
+.cta-btn {
+  min-width: 220px;
+  height: 65px;
+  font-size: 1.15rem;
+}
+
+/* تحسين التنقل في الأقسام */
+.nav-links {
+  display: flex;
+  gap: 20px;
+  margin-top: 30px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* تحسين النص داخل الأزرار */
+.btn-text {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.4;
+}
+
+/* تحسينات للاستجابة */
+@media (max-width: 768px) {
+  .btn-primary, .btn-outline {
+    padding: 14px 24px;
+    font-size: 1rem;
+  }
+  
+  .hero-btn {
+    min-width: 180px;
+    height: 55px;
+  }
+  
+  .cta-btn {
+    min-width: 200px;
+    height: 60px;
+    font-size: 1.05rem;
+  }
+  
+  .nav-links {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-primary, .btn-outline {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+  
+  .hero-btn {
+    min-width: 160px;
+    height: 50px;
+  }
+  
+  .cta-btn {
+    min-width: 180px;
+    height: 55px;
+  }
+  
+  .nav-links {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* تأثيرات إضافية للجاذبية */
+.feature-card {
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(197, 151, 47, 0.1) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.feature-card:hover::after {
+  opacity: 1;
+}
+
+.success-card, .exclusive-card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.success-card:hover, .exclusive-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
   /* Reset container */
   .landing-container{
     min-height:100vh;
