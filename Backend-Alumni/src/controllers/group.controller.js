@@ -83,7 +83,11 @@ const getGraduatesForGroup = async (req, res) => {
         {
           model: Graduate,
           where: { "status-to-login": "accepted" },
-          attributes: ["profile-picture-url", "faculty_code", "graduation-year"],
+          attributes: [
+            "profile-picture-url",
+            "faculty_code",
+            "graduation-year",
+          ],
           required: true,
         },
       ],
@@ -96,7 +100,7 @@ const getGraduatesForGroup = async (req, res) => {
     // نبني النتيجة المطلوبة
     const result = graduates.map((g) => {
       const facultyName = getCollegeNameByCode(g.Graduate?.faculty_code, lang);
-      
+
       return {
         id: g.id,
         fullName: `${g["first-name"]} ${g["last-name"]}`,
@@ -121,7 +125,6 @@ const createGroup = async (req, res) => {
     const { groupName, description } = req.body;
     const user = req.user;
 
-    // تحقق من البيانات
     if (!groupName || !description) {
       return res.status(400).json({
         status: "fail",
@@ -159,19 +162,54 @@ const createGroup = async (req, res) => {
       }
     }
 
-    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
-    // معالجة الصورة
+    // 4. استخراج faculty_code و graduation_year
+    let faculty_code = groupName;
+    let graduation_year = null;
+
+    // استخراج السنة من description
+    const yearMatch = description.match(/\b(19|20)\d{2}\b/);
+    if (yearMatch) {
+      graduation_year = parseInt(yearMatch[0]);
+    } else {
+      // إذا مفيش سنة في description، جرب نستخرج من groupName
+      const yearMatchFromName = groupName.match(/\b(19|20)\d{2}\b/);
+      if (yearMatchFromName) {
+        graduation_year = parseInt(yearMatchFromName[0]);
+      }
+    }
+
+    // 5. تحقق إذا فيه جروب موجود بنفس الكلية والسنة
+    if (faculty_code && graduation_year) {
+      const existingGroup = await Group.findOne({
+        where: {
+          faculty_code: faculty_code,
+          graduation_year: graduation_year,
+        },
+      });
+
+      if (existingGroup) {
+        return res.status(400).json({
+          status: "fail",
+          message: `Group already exists for ${faculty_code} - ${graduation_year}`,
+          data: [],
+        });
+      }
+    }
+
+    // 6. معالجة الصورة
     let imageUrl = null;
     if (req.file) {
       imageUrl = req.file.path || req.file.url || req.file.location || null;
     }
 
-    // إنشاء الجروب
+    // 7. إنشاء الجروب
     const group = await Group.create({
       "group-name": groupName,
       description,
       "created-date": new Date(),
       "group-image": imageUrl,
+      faculty_code: faculty_code,
+      graduation_year: graduation_year || new Date().getFullYear(),
     });
 
     const memberCount = await GroupMember.count({
@@ -187,6 +225,8 @@ const createGroup = async (req, res) => {
         description: group.description,
         createdDate: group["created-date"],
         groupImage: group["group-image"],
+        faculty_code: group.faculty_code,
+        graduation_year: group.graduation_year,
         memberCount,
       },
     });
@@ -200,7 +240,6 @@ const createGroup = async (req, res) => {
     });
   }
 };
-
 //as an admin & graduate ,i want to see all groups in community
 const getGroups = async (req, res) => {
   try {
@@ -397,15 +436,61 @@ const editGroup = async (req, res) => {
         .status(404)
         .json({ status: "fail", message: "Group not found" });
 
+    // 5. استخراج faculty_code و graduation_year من groupName و description
+    let faculty_code = group.faculty_code;
+    let graduation_year = group.graduation_year;
+
+    // استخراج السنة من description
+    if (description && description !== group.description) {
+      const yearMatch = description.match(/\b(19|20)\d{2}\b/);
+      if (yearMatch) {
+        graduation_year = parseInt(yearMatch[0]);
+      }
+    }
+
+    // استخراج اسم الكلية من groupName
+    if (groupName && groupName !== group["group-name"]) {
+      faculty_code = groupName;
+
+      // إذا مفيش سنة في description، جرب نستخرج من groupName
+      if (!graduation_year || graduation_year === group.graduation_year) {
+        const yearMatchFromName = groupName.match(/\b(19|20)\d{2}\b/);
+        if (yearMatchFromName) {
+          graduation_year = parseInt(yearMatchFromName[0]);
+        }
+      }
+    }
+
+    // 6. تحقق إذا كان في جروب تاني بنفس البيانات
+    if (faculty_code && graduation_year) {
+      const existingGroup = await Group.findOne({
+        where: {
+          faculty_code: faculty_code,
+          graduation_year: graduation_year,
+          id: { [Op.ne]: groupId },
+        },
+      });
+
+      if (existingGroup) {
+        return res.status(400).json({
+          status: "fail",
+          message: `Another group already exists for ${faculty_code} - ${graduation_year}`,
+        });
+      }
+    }
+
+    // 7. تحديث البيانات
     if (groupName) group["group-name"] = groupName;
     if (description) group.description = description;
+    group.faculty_code = faculty_code;
+    group.graduation_year = graduation_year;
 
-    // مسح صورة الجروب لو مطلوب
+    // 8. مسح صورة الجروب لو مطلوب
     if (removeGroupImage) {
       group["group-image"] = null;
     }
 
-    // رفع صورة جديدة
+    // 9. رفع صورة جديدة
     if (req.file) {
       const imageUrl = req.file.path || req.file.url || req.file.location;
       group["group-image"] = imageUrl;
@@ -426,6 +511,8 @@ const editGroup = async (req, res) => {
         description: group.description,
         groupImage: group["group-image"],
         createdDate: group["created-date"],
+        faculty_code: group.faculty_code,
+        graduation_year: group.graduation_year,
         membersCount,
       },
     });
@@ -436,7 +523,6 @@ const editGroup = async (req, res) => {
       .json({ status: "error", message: err.message, data: [] });
   }
 };
-
 // controllers/group.controller.js
 const deleteGroup = async (req, res) => {
   try {
@@ -811,7 +897,11 @@ const getGroupUsers = async (req, res) => {
           include: [
             {
               model: Graduate,
-              attributes: ["faculty_code", "graduation-year", "profile-picture-url"],
+              attributes: [
+                "faculty_code",
+                "graduation-year",
+                "profile-picture-url",
+              ],
             },
           ],
         },
@@ -830,8 +920,11 @@ const getGroupUsers = async (req, res) => {
 
     // هنعمل تعديل صغير عشان لو مش موجود Graduate يرجع قيم افتراضية
     const usersWithGraduateInfo = group.Users.map((user) => {
-      const facultyName = getCollegeNameByCode(user.Graduate?.faculty_code, lang);
-      
+      const facultyName = getCollegeNameByCode(
+        user.Graduate?.faculty_code,
+        lang
+      );
+
       return {
         ...user.toJSON(),
         faculty: facultyName,

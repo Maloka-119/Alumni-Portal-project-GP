@@ -1,9 +1,11 @@
-const Invitation = require('../models/Invitation');
-const GroupMember = require('../models/GroupMember');
-const Group = require('../models/Group');
+const Invitation = require("../models/Invitation");
+const GroupMember = require("../models/GroupMember");
+const Group = require("../models/Group");
 const { Op } = require("sequelize");
 const User = require("../models/User");
-const Graduate = require("../models/Graduate"); // ⬅️ أضف هذا الاستيراد
+const Graduate = require("../models/Graduate");
+const Notification = require("../models/Notification");
+const { findMatchingGroup } = require("../utils/groupUtils");
 const sequelize = require("../config/db");
 const { getCollegeNameByCode } = require("../services/facultiesService"); // ⬅️ أضف هذا الاستيراد
 
@@ -14,20 +16,28 @@ const sendInvitation = async (req, res) => {
     const { receiver_id, group_id } = req.body; // الشخص المستلم والجروب
 
     if (!receiver_id || !group_id) {
-      return res.status(400).json({ message: "receiver_id and group_id are required" });
+      return res
+        .status(400)
+        .json({ message: "receiver_id and group_id are required" });
     }
 
     //check sender is member
     const isMember = await GroupMember.findOne({
-      where: { 'group-id': group_id, 'user-id': sender_id }
+      where: { "group-id": group_id, "user-id": sender_id },
     });
 
     if (!isMember) {
-      return res.status(403).json({ message: "You are not a member of this group" });
+      return res
+        .status(403)
+        .json({ message: "You are not a member of this group" });
     }
 
     // create invitation
-    const invitation = await Invitation.create({ sender_id, receiver_id, group_id });
+    const invitation = await Invitation.create({
+      sender_id,
+      receiver_id,
+      group_id,
+    });
     res.status(201).json(invitation);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -39,13 +49,17 @@ const acceptInvitation = async (req, res) => {
   try {
     const { id } = req.params;
     const invitation = await Invitation.findByPk(id);
-    if (!invitation) return res.status(404).json({ message: 'Invitation not found' });
+    if (!invitation)
+      return res.status(404).json({ message: "Invitation not found" });
 
-    invitation.status = 'accepted';
+    invitation.status = "accepted";
     await invitation.save();
 
     // add member to group
-    await GroupMember.create({ 'group-id': invitation.group_id, 'user-id': invitation.receiver_id });
+    await GroupMember.create({
+      "group-id": invitation.group_id,
+      "user-id": invitation.receiver_id,
+    });
 
     res.json(invitation);
   } catch (err) {
@@ -58,10 +72,11 @@ const deleteInvitation = async (req, res) => {
   try {
     const { id } = req.params;
     const invitation = await Invitation.findByPk(id);
-    if (!invitation) return res.status(404).json({ message: 'Invitation not found' });
+    if (!invitation)
+      return res.status(404).json({ message: "Invitation not found" });
 
-    await invitation.destroy(); 
-    res.json({ message: 'Invitation deleted from your side' });
+    await invitation.destroy();
+    res.json({ message: "Invitation deleted from your side" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -72,10 +87,11 @@ const cancelInvitation = async (req, res) => {
   try {
     const { id } = req.params;
     const invitation = await Invitation.findByPk(id);
-    if (!invitation) return res.status(404).json({ message: 'Invitation not found' });
+    if (!invitation)
+      return res.status(404).json({ message: "Invitation not found" });
 
-    await invitation.destroy(); 
-    res.json({ message: 'Invitation cancelled successfully' });
+    await invitation.destroy();
+    res.json({ message: "Invitation cancelled successfully" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -89,7 +105,14 @@ const getReceivedInvitations = async (req, res) => {
 
     const invitations = await Invitation.findAll({
       where: { receiver_id, status: "pending" },
-      attributes: ["id", "status", "sent_date", "sender_id", "receiver_id", "group_id"],
+      attributes: [
+        "id",
+        "status",
+        "sent_date",
+        "sender_id",
+        "receiver_id",
+        "group_id",
+      ],
       include: [
         {
           model: Group,
@@ -102,7 +125,12 @@ const getReceivedInvitations = async (req, res) => {
           include: [
             {
               model: Graduate,
-              attributes: ["faculty_code", "graduation-year", "current-job", "profile-picture-url"], // ⬅️ استخدام faculty_code بدلاً من faculty
+              attributes: [
+                "faculty_code",
+                "graduation-year",
+                "current-job",
+                "profile-picture-url",
+              ], // ⬅️ استخدام faculty_code بدلاً من faculty
             },
           ],
         },
@@ -116,7 +144,10 @@ const getReceivedInvitations = async (req, res) => {
       const fullName = `${firstName} ${lastName}`.trim();
 
       // تحويل faculty_code إلى اسم الكلية
-      const facultyName = getCollegeNameByCode(inv.sender?.Graduate?.faculty_code, lang);
+      const facultyName = getCollegeNameByCode(
+        inv.sender?.Graduate?.faculty_code,
+        lang
+      );
 
       return {
         invitationId: inv.id,
@@ -130,7 +161,8 @@ const getReceivedInvitations = async (req, res) => {
         senderFaculty: facultyName, // ⬅️ اسم الكلية بدلاً من الكود
         senderGraduationYear: inv.sender?.Graduate?.["graduation-year"] || null,
         senderCurrentJob: inv.sender?.Graduate?.["current-job"] || null,
-        senderProfilePicture: inv.sender?.Graduate?.["profile-picture-url"] || null,
+        senderProfilePicture:
+          inv.sender?.Graduate?.["profile-picture-url"] || null,
       };
     });
 
@@ -149,7 +181,14 @@ const getSentInvitations = async (req, res) => {
 
     const invitations = await Invitation.findAll({
       where: { sender_id, status: "pending" },
-      attributes: ["id", "status", "sent_date", "sender_id", "receiver_id", "group_id"],
+      attributes: [
+        "id",
+        "status",
+        "sent_date",
+        "sender_id",
+        "receiver_id",
+        "group_id",
+      ],
       include: [
         {
           model: Group,
@@ -162,7 +201,11 @@ const getSentInvitations = async (req, res) => {
           include: [
             {
               model: Graduate,
-              attributes: ["faculty_code", "graduation-year", "profile-picture-url"],
+              attributes: [
+                "faculty_code",
+                "graduation-year",
+                "profile-picture-url",
+              ],
             },
           ],
         },
@@ -176,7 +219,10 @@ const getSentInvitations = async (req, res) => {
       const fullName = `${firstName} ${lastName}`.trim();
 
       // تحويل faculty_code إلى اسم الكلية
-      const facultyName = getCollegeNameByCode(inv.receiver?.Graduate?.faculty_code, lang);
+      const facultyName = getCollegeNameByCode(
+        inv.receiver?.Graduate?.faculty_code,
+        lang
+      );
 
       return {
         invitationId: inv.id,
@@ -188,8 +234,10 @@ const getSentInvitations = async (req, res) => {
         groupName: inv.Group ? inv.Group["group-name"] : null,
         receiverFullName: fullName,
         receiverFaculty: facultyName,
-        receiverGraduationYear: inv.receiver?.Graduate?.["graduation-year"] || null,
-        receiverProfilePicture: inv.receiver?.Graduate?.["profile-picture-url"] || null,
+        receiverGraduationYear:
+          inv.receiver?.Graduate?.["graduation-year"] || null,
+        receiverProfilePicture:
+          inv.receiver?.Graduate?.["profile-picture-url"] || null,
       };
     });
 
@@ -200,6 +248,63 @@ const getSentInvitations = async (req, res) => {
   }
 };
 
+// بعد كل الـ functions الموجودة، قبل module.exports
+
+// Auto-send group invitation after registration
+const sendAutoGroupInvitation = async (userId) => {
+  try {
+    // 1. نجيب بيانات الخريج
+    const graduate = await Graduate.findOne({
+      where: { graduate_id: userId },
+      include: [
+        {
+          model: User,
+          attributes: ["id", "first-name", "last-name"],
+        },
+      ],
+    });
+
+    if (!graduate) {
+      return false;
+    }
+
+    // 2. بنبحث عن الجروب المناسب باستخدام الدالة المساعدة
+    const matchingGroup = await findMatchingGroup(
+      graduate.faculty_code,
+      graduate["graduation-year"]
+    );
+
+    if (!matchingGroup) {
+      return false;
+    }
+
+    // 3. نبعت Invitation
+    const invitation = await Invitation.create({
+      sender_id: 1, // الـ Admin
+      receiver_id: userId,
+      group_id: matchingGroup.id,
+      status: "pending",
+    });
+
+    // 4. نبعت Notification
+    await Notification.create({
+      receiverId: userId,
+      type: "added_to_group",
+      message: `عزيزي الخريج، لديك دعوة للانضمام لمجموعة ${matchingGroup["group-name"]}`,
+      navigation: {
+        type: "invitation",
+        invitationId: invitation.id,
+        groupId: matchingGroup.id,
+      },
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error in sendAutoGroupInvitation:", error);
+    return false;
+  }
+};
+
 // export all at once
 module.exports = {
   sendInvitation,
@@ -207,5 +312,6 @@ module.exports = {
   deleteInvitation,
   cancelInvitation,
   getReceivedInvitations,
-  getSentInvitations // ⬅️ أضف الدالة الجديدة للتصدير
+  sendAutoGroupInvitation,
+  getSentInvitations, // ⬅️ أضف الدالة الجديدة للتصدير
 };
