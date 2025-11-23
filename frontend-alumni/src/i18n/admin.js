@@ -237,6 +237,11 @@ const admin = {
        "Send": "Send",
       "notAllowed": "Not allowed",
   "cannotModifyPermission": "You can't modify \"{{type}}\" permission for this module.",
+  "description with related year":"description with related year",
+  "selectFaculty": "select Faculty",
+  "chooseImage": "Choose image",
+  "changeImage": "Change image",
+  "noFile": "No file selected"
 
       }
     },
@@ -478,7 +483,13 @@ const admin = {
     "Write a comment...": "اكتب تعليق..." ,
       "Send": "إرسال",
        "notAllowed": "غير مسموح",
-  "cannotModifyPermission": "لا يمكنك تعديل صلاحية \"{{type}}\" لهذا الموديول."
+  "cannotModifyPermission": "لا يمكنك تعديل صلاحية \"{{type}}\" لهذا الموديول.",
+  "description with related year": "وصف مع سنه مرتبطه به",
+  "selectFaculty":"اختار كليه ",
+  "chooseImage": "اختر صورة",
+  "changeImage": "تغيير الصورة",
+  "noFile": "لا يوجد ملف",
+
       
       }
     }
