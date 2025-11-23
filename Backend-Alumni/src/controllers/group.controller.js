@@ -9,6 +9,7 @@ const GroupMember = require("../models/GroupMember");
 const Invitation = require("../models/Invitation");
 const checkStaffPermission = require("../utils/permissionChecker");
 const { notifyAddedToGroup } = require("../services/notificationService");
+const { getCollegeNameByCode } = require("../services/facultiesService"); // ⬅️ أضف هذا الاستيراد
 
 // getGraduatesForGroup اللي مسموحلهم تبعتلهم دعوه للجروب دا او معموله دعوه لسه متقبلتش
 //available to invite
@@ -82,23 +83,30 @@ const getGraduatesForGroup = async (req, res) => {
         {
           model: Graduate,
           where: { "status-to-login": "accepted" },
-          attributes: ["profile-picture-url", "faculty", "graduation-year"],
+          attributes: ["profile-picture-url", "faculty_code", "graduation-year"],
           required: true,
         },
       ],
       attributes: ["id", "first-name", "last-name"],
     });
 
+    // تحويل faculty_code إلى اسم الكلية
+    const lang = req.headers["accept-language"] || req.user?.language || "ar";
+
     // نبني النتيجة المطلوبة
-    const result = graduates.map((g) => ({
-      id: g.id,
-      fullName: `${g["first-name"]} ${g["last-name"]}`,
-      profilePicture: g.Graduate?.["profile-picture-url"] || null,
-      faculty: g.Graduate?.faculty || null,
-      graduationYear: g.Graduate?.["graduation-year"] || null,
-      invitationStatus: pendingIds.includes(g.id) ? "pending" : "not_invited",
-      invitationId: pendingMap[g.id] || null,
-    }));
+    const result = graduates.map((g) => {
+      const facultyName = getCollegeNameByCode(g.Graduate?.faculty_code, lang);
+      
+      return {
+        id: g.id,
+        fullName: `${g["first-name"]} ${g["last-name"]}`,
+        profilePicture: g.Graduate?.["profile-picture-url"] || null,
+        faculty: facultyName,
+        graduationYear: g.Graduate?.["graduation-year"] || null,
+        invitationStatus: pendingIds.includes(g.id) ? "pending" : "not_invited",
+        invitationId: pendingMap[g.id] || null,
+      };
+    });
 
     res.status(200).json(result);
   } catch (error) {
@@ -760,6 +768,7 @@ const getMyGroups = async (req, res) => {
     });
   }
 };
+
 const getGroupUsers = async (req, res) => {
   try {
     const { groupId } = req.params;
@@ -802,7 +811,7 @@ const getGroupUsers = async (req, res) => {
           include: [
             {
               model: Graduate,
-              attributes: ["faculty", "graduation-year", "profile-picture-url"],
+              attributes: ["faculty_code", "graduation-year", "profile-picture-url"],
             },
           ],
         },
@@ -816,11 +825,16 @@ const getGroupUsers = async (req, res) => {
       });
     }
 
+    // تحويل faculty_code إلى اسم الكلية
+    const lang = req.headers["accept-language"] || req.user?.language || "ar";
+
     // هنعمل تعديل صغير عشان لو مش موجود Graduate يرجع قيم افتراضية
     const usersWithGraduateInfo = group.Users.map((user) => {
+      const facultyName = getCollegeNameByCode(user.Graduate?.faculty_code, lang);
+      
       return {
         ...user.toJSON(),
-        faculty: user.Graduate ? user.Graduate.faculty : null,
+        faculty: facultyName,
         graduationYear: user.Graduate ? user.Graduate["graduation-year"] : null,
         profilePicture: user.Graduate
           ? user.Graduate["profile-picture-url"]
