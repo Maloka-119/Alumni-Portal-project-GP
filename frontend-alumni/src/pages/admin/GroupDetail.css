@@ -335,7 +335,16 @@
   .modal-window button:hover {
     background-color: #3730a3;
   }
-  
+  .modal-window select {
+    max-width: 200px; 
+    width: 100%;      
+    padding: 6px 10px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    box-sizing: border-box;
+}
+
   /* Action tag */
   .action-tag {
     display: inline-block;
