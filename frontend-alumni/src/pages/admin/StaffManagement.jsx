@@ -68,8 +68,8 @@ const StaffManagement = ({ currentUser }) => {
         icon: newStatus === "active" ? "success" : "error",
         title: newStatus === "active" ? "Account activated" : "Account deactivated",
         text: newStatus === "active"
-          ? "The staff member can now log in and manage posts."
-          : "The staff member is now prevented from logging in and creating posts.",
+          ? "The staff member can now log in ."
+          : "The staff member is now prevented from logging in .",
         showConfirmButton: false,
         timer: 1800,
         toast: true,

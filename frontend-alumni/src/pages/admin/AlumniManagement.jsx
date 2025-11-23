@@ -298,7 +298,7 @@ const AlumniManagement = ({ currentUser }) => {
           title: newStatus === "active" ? "Account activated" : "Account deactivated",
           text: newStatus === "active"
             ? "The graduate can now create posts in the Alumni Portal."
-            : "The graduate is now prevented from creating posts and cannot log in.",
+            : "The graduate is now prevented from creating posts .",
           showConfirmButton: false,
           timer: 1800,
           toast: true,
