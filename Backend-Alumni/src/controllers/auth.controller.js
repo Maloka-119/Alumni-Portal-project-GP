@@ -174,7 +174,7 @@ const registerUser = asyncHandler(async (req, res) => {
           externalData?.["graduation-year"] ||
           externalData?.graduationYear ||
           externalData?.GraduationYear ||
-          2023,
+          null,
         "status-to-login": statusToLogin,
       });
 
