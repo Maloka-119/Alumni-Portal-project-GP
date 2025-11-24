@@ -164,7 +164,7 @@ const registerUser = asyncHandler(async (req, res) => {
       null;
 
     // تحويل اسم الكلية إلى كود
-    const facultyCode = facultyName || "GENERAL";
+    const facultyCode = facultyName ? normalizeCollegeName(facultyName) : null; // ⬅️ التعديل هنا
 
     try {
       await Graduate.create({
