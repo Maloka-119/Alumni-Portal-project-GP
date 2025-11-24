@@ -24,6 +24,12 @@ router.put("/profile", protect, uploadFiles, graduateController.updateProfile);
 // Get digital ID (protected - graduates only)
 router.route("/digital-id").get(protect, graduateController.getDigitalID);
 
+// Generate QR code for Digital ID (protected - graduates only)
+router.route("/digital-id/qr").get(protect, graduateController.generateDigitalIDQR);
+
+// Verify QR token and return Digital ID (public - no auth required)
+router.route("/digital-id/verify/:token").get(graduateController.verifyDigitalIDQR);
+
 // Get graduate profile for user (protected)
 router.get(
   "/profile/:identifier",
