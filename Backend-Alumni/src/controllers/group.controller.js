@@ -10,6 +10,7 @@ const Invitation = require("../models/Invitation");
 const checkStaffPermission = require("../utils/permissionChecker");
 const { notifyAddedToGroup } = require("../services/notificationService");
 const { getCollegeNameByCode } = require("../services/facultiesService"); // ⬅️ أضف هذا الاستيراد
+const { normalizeCollegeName } = require("../services/facultiesService");
 
 // getGraduatesForGroup اللي مسموحلهم تبعتلهم دعوه للجروب دا او معموله دعوه لسه متقبلتش
 //available to invite
@@ -163,7 +164,7 @@ const createGroup = async (req, res) => {
     }
 
     // 4. استخراج faculty_code و graduation_year
-    let faculty_code = groupName;
+    let faculty_code = groupName ? normalizeCollegeName(groupName) : groupName; // ⬅️ التعديل هنا
     let graduation_year = null;
 
     // استخراج السنة من description
@@ -450,7 +451,7 @@ const editGroup = async (req, res) => {
 
     // استخراج اسم الكلية من groupName
     if (groupName && groupName !== group["group-name"]) {
-      faculty_code = groupName;
+      faculty_code = groupName ? normalizeCollegeName(groupName) : groupName; // ⬅️ التعديل هنا
 
       // إذا مفيش سنة في description، جرب نستخرج من groupName
       if (!graduation_year || graduation_year === group.graduation_year) {
