@@ -12,7 +12,8 @@ import LandingPage from "./pages/Landing/LandingPage";
 import LinkedInCallback from "./auth/LinkedInCallback";
 import LinkedInSignUp from "./auth/LinkedInSignUp";
 import Loading from "./components/Loading";
-
+import ForgotPassword from "./auth/ForgotPassword";
+import ResetPassword from "./auth/ResetPassword";
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -81,6 +82,16 @@ function App() {
 
             {/* أي مسار غير معروف يعيد للتسجيل/اللاندنج */}
             <Route path="*" element={<Navigate to="/helwan-alumni-portal" />} />
+            <Route
+  path="/helwan-alumni-portal/forgot-password"
+  element={<ForgotPassword />}
+/>
+
+<Route
+  path="/helwan-alumni-portal/reset-password"
+  element={<ResetPassword />}
+/>
+
           </Routes>
         </DarkModeProvider>
       </Router>
