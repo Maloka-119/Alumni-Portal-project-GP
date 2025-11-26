@@ -1,14 +1,14 @@
+// Dashboard.jsx
 import React, { useEffect, useState, useRef } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Home, User, FileText, Bell, IdCard,
   Users, Network, Briefcase,
-  File, MessageSquare, HelpCircle, MessageCircle,Clipboard,
+  File, MessageSquare, HelpCircle, MessageCircle, Clipboard,
   Menu, X, LogOut, Globe, Moon, Sun, ChevronDown, ChevronUp
 } from 'lucide-react';
 import './AlumniPortal.css';
 import UniLogo from '../../components/logo-white-deskt-min.png';
-import Footer from '../../components/Footer'; 
 import AlumniAdminPosts from './AlumniAdminPosts';
 import PostsAlumni from './PostsAlumni';
 import HomeAlumni from './HomeAlumni';
@@ -24,10 +24,11 @@ import ChatSidebar from './ChatSidebar.jsx';
 import FriendshipPage from './FriendShipp.js';
 import EmptyPage from '../admin/EmptyPage';
 import Accountgrad from "./Accountgrad.jsx";
-import FeedbackPage from './FeedbackPage.jsx'
+import FeedbackPage from './FeedbackPage.jsx';
 
 const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
 
+// الأقسام في sidebar
 const sidebarSections = (darkMode, t) => [
   {
     title: t("personal"),
@@ -71,12 +72,15 @@ const Dashboard = ({ setUser }) => {
   const [darkMode, setDarkMode] = useState(false);
   const [communitiesOpen, setCommunitiesOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const [chatId, setChatId] = useState(null); // ID الشات المفتوح
+  const [friendRequestUserId, setFriendRequestUserId] = useState(null); // ID طلب الصداقة المفتوح
+  const [friendshipTab, setFriendshipTab] = useState("friends"); // تحديد التبويب الافتراضي في FriendshipPage
   const footerRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
 
-  // ====== تحديث اتجاه الصفحة تلقائي حسب اللغة ======
+  // تحديث اتجاه الصفحة حسب اللغة
   useEffect(() => {
     document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
   }, [i18n.language]);
@@ -97,24 +101,29 @@ const Dashboard = ({ setUser }) => {
         navigate('/helwan-alumni-portal/login', { replace: true });
       }
     }
-    
     if(action === "language") i18n.changeLanguage(i18n.language === "en" ? "ar" : "en");
   }
 
   const handleMenuClick = (key) => {
-    if(key === "communities") {
-      setCommunitiesOpen(!communitiesOpen);
-    } else {
-      navigate(`${BASE_PATH}/${key}`);
-    }
+    if(key === "communities") setCommunitiesOpen(!communitiesOpen);
+    else navigate(`${BASE_PATH}/${key}`);
   }
 
-  const getActiveKey = () => {
-    const parts = location.pathname.split("/");
-    return parts[parts.length - 1];
-  }
-
+  const getActiveKey = () => location.pathname.split("/").pop();
   const activeKey = getActiveKey();
+
+  // فتح Chat Pop-up
+  const openChatSidebar = (id) => {
+    setChatId(id);
+    setChatOpen(true);
+  };
+
+  // فتح Friend Request Pop-up + تحديد تبويب Requests
+  const openFriendRequestSidebar = (userId) => {
+    setFriendshipTab("requests");  // يفتح تبويب Requests
+    navigate(`${BASE_PATH}/friends`);
+    setFriendRequestUserId(userId);
+  };
 
   return (
     <div className={darkMode ? "dark" : "light"}>
@@ -161,15 +170,11 @@ const Dashboard = ({ setUser }) => {
                         <li 
                           className={`alumni-sidebar-subitem ${activeKey==="all"?"active":""}`}
                           onClick={()=>navigate(`${BASE_PATH}/communities/all`)}
-                        >
-                           {t("allCommunities")}
-                        </li>
+                        >{t("allCommunities")}</li>
                         <li 
                           className={`alumni-sidebar-subitem ${activeKey==="my"?"active":""}`}
                           onClick={()=>navigate(`${BASE_PATH}/communities/my`)}
-                        >
-                          {t("myCommunities")}
-                        </li>
+                        >{t("myCommunities")}</li>
                       </ul>
                     )}
                   </React.Fragment>
@@ -180,8 +185,15 @@ const Dashboard = ({ setUser }) => {
         </aside>
 
         <main className="alumni-main-content">
-          <ChatSidebar darkMode={darkMode} chatOpen={chatOpen} setChatOpen={setChatOpen} />
+          {/* Pop-up الشات */}
+          <ChatSidebar 
+            darkMode={darkMode} 
+            chatOpen={chatOpen} 
+            setChatOpen={setChatOpen} 
+            chatId={chatId} 
+          />
 
+          {/* Routes */}
           <Routes>
             <Route index element={<HomeAlumni darkMode={darkMode}/>} />
             <Route path="home" element={<HomeAlumni darkMode={darkMode}/>} />
@@ -192,18 +204,22 @@ const Dashboard = ({ setUser }) => {
             <Route path="communities/all" element={<ExploreGroups darkMode={darkMode}/>} />
             <Route path="communities/my" element={<MyGroups darkMode={darkMode}/>} />
             <Route path="faq" element={<ViewFAQ darkMode={darkMode}/>} />
-            <Route path="notifications" element={<Notifications darkMode={darkMode}/>} />
-            <Route path="friends" element={<FriendshipPage  darkMode={darkMode}/>} />
+            <Route 
+              path="notifications" 
+              element={<Notifications 
+                darkMode={darkMode} 
+                openChat={openChatSidebar} 
+                openFriendRequest={openFriendRequestSidebar} 
+              />} 
+            />
+            <Route path="friends" element={<FriendshipPage darkMode={darkMode} tab={friendshipTab}/>} />
             <Route path="friends/:userId" element={<Accountgrad darkMode={darkMode}/>} />
             <Route path="documents" element={<EmptyPage title="Document Requests" />} />
             <Route path="Consultations" element={<EmptyPage title="Consultation Requests" />} />
             <Route path="feedback" element={<FeedbackPage darkMode={darkMode}/>} />
-
           </Routes>
         </main>
       </div>
-
-      {/* <Footer ref={footerRef}/> */}
     </div>
   );
 };
