@@ -28,33 +28,28 @@ const {
 const app = express();
 
 // ==================================================
-// 🔒 تطبيق إعدادات الحماية بالترتيب الصحيح
+//  تطبيق إعدادات الحماية بالترتيب الصحيح
 // ==================================================
 
-// ١. Helmet للحماية الأساسية
+// 1. helmet
 app.use(helmetConfig);
 
-// ٢. Rate Limiting للحماية من DOS
+// 2. rate limiter
 app.use(generalLimiter);
 
-// ٣. منع parameter pollution
+// 3. Prevent HTTP Param Pollution
 app.use(hppProtection);
 
-// ٤. الكشف عن هجمات DOS
-app.use(detectDoS);
-
-// ٥. التحقق من Content-Type
-app.use(validateContentType);
-
-// ٦. حماية XSS إضافية
+// 4. XSS protection على مستوى request
 app.use(xssProtection);
 
-// ٧. Body parser مع حدود لحجم البيانات
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+// 5. Body parser (يجب هنا)
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
-// ٨. تنظيف المدخلات (بدلاً من xss-clean)
+// 6. Sanitize HTML inputs
 app.use(sanitizeInput);
+
 
 // ==================================================
 // ⚙️ الإعدادات الأساسية للتطبيق
