@@ -2,12 +2,6 @@
 .notifications-container {
   width: 100%;
   min-height: 100vh;
-  padding: 40px 20px;
-  box-sizing: border-box;
-}
-.notifications-container {
-  width: 100%;
-  min-height: 100vh;
   padding: 20px;
   box-sizing: border-box;
   background: #f1f5f9; /* خلفية الصفحة */
@@ -17,10 +11,9 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-width: 1000px; /* full width تقريبًا */
+  max-width: 1000px;
   margin: 0 auto;
 }
-
 
 /* ===== Title ===== */
 .Title {
@@ -29,16 +22,6 @@
   color: #1e293b;
   margin-bottom: 30px;
   text-align: center; /* دايمًا في الوسط سواء عربي أو إنجليزي */
-}
-
-
-/* ===== Notification List ===== */
-.notifications-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  max-width: 800px;
-  margin: 0 auto;
 }
 
 /* ===== Notification Item ===== */
@@ -53,20 +36,17 @@
   transition: all 0.2s ease;
 }
 
-/* Hover عام */
 .notification-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
 }
 
-/* إشعارات غير مقروءة */
 .notification-item.unread {
   background-color: #e0f2fe;
   border-left: 4px solid #2563eb;
   transition: all 0.3s ease;
 }
 
-/* Hover على إشعارات غير مقروءة */
 .notification-item.unread:hover {
   background-color: #bae6fd;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.2);
@@ -100,32 +80,27 @@
   gap: 8px;
 }
 
-/* زر تعليم كمقروء */
+.accept-btn, .accept-btn- {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+
 .accept-btn {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 6px;
   font-size: 16px;
-  cursor: pointer;
-  font-weight: 500;
   background: #2563eb;
-  color: #fff;
-  transition: all 0.2s ease;
 }
+
 .accept-btn- {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 6px;
   font-size: 13px;
-  cursor: pointer;
-  font-weight: 500;
   background: #2563eb;
-  color: #fff;
-  transition: all 0.2s ease;
 }
 
-
-.accept-btn:hover {
+.accept-btn:hover, .accept-btn-:hover {
   background: #1e40af;
   transform: scale(1.05);
 }
@@ -135,7 +110,6 @@
   cursor: default;
 }
 
-/* زر الحذف */
 .delete-btn {
   padding: 6px 10px;
   border: none;
@@ -166,7 +140,7 @@
     font-size: 14px;
   }
 
-  .accept-btn, .delete-btn {
+  .accept-btn, .accept-btn-, .delete-btn {
     font-size: 12px;
     padding: 5px 8px;
   }
@@ -196,7 +170,7 @@
   color: #9ca3af;
 }
 
-.dark .accept-btn {
+.dark .accept-btn, .dark .accept-btn- {
   background: #2563eb;
 }
 

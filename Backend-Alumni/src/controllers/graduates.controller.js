@@ -12,6 +12,8 @@ const checkStaffPermission = require("../utils/permissionChecker");
 const cloudinary = require("../config/cloudinary");
 const axios = require("axios");
 const { normalizeCollegeName, getCollegeNameByCode } = require("../services/facultiesService");
+const { generateQRToken, verifyQRToken } = require("../utils/qrTokenService");
+const QRCode = require("qrcode");
 
 
 const getAllGraduates = async (req, res) => {
@@ -262,6 +264,88 @@ const rejectGraduate = async (req, res) => {
 };
 
 //get digital id
+// Helper function to fetch student data from external API and format it
+const fetchStudentDataFromExternal = async (nationalId) => {
+  try {
+    // Check if GRADUATE_API_URL is configured
+    if (!process.env.GRADUATE_API_URL) {
+      const error = new Error("GRADUATE_API_URL is not configured in environment variables");
+      error.code = 'CONFIG_ERROR';
+      throw error;
+    }
+
+    const response = await axios.get(
+      `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`,
+      { 
+        timeout: 5000, // 5 seconds timeout
+        validateStatus: function (status) {
+          return status < 500; // Don't throw error for 4xx status codes
+        }
+      }
+    );
+
+    // Check if response is successful
+    if (response.status === 200 && response.data) {
+      return { data: response.data, error: null };
+    } else if (response.status === 404) {
+      const error = new Error(`Student not found in external system for nationalId: ${nationalId}`);
+      error.code = 'NOT_FOUND';
+      error.status = 404;
+      return { data: null, error };
+    } else {
+      const error = new Error(`External API returned status ${response.status}`);
+      error.code = 'API_ERROR';
+      error.status = response.status;
+      return { data: null, error };
+    }
+  } catch (error) {
+    // More detailed error logging
+    let errorMessage = "Failed to fetch student data from external system";
+    let errorCode = 'EXTERNAL_API_ERROR';
+    
+    if (error.code === 'ECONNREFUSED') {
+      errorMessage = "External API is not running. Please start the external API service on port 5001";
+      errorCode = 'CONNECTION_REFUSED';
+      console.error("❌ External API connection refused. Is it running on port 5001?");
+    } else if (error.code === 'ETIMEDOUT') {
+      errorMessage = "External API request timed out. The service may be slow or unavailable";
+      errorCode = 'TIMEOUT';
+      console.error("❌ External API request timed out");
+    } else if (error.code === 'CONFIG_ERROR') {
+      errorMessage = error.message;
+      errorCode = 'CONFIG_ERROR';
+      console.error("❌ Configuration error:", error.message);
+    } else if (error.response) {
+      errorMessage = `External API error: ${error.response.status} - ${error.response.statusText}`;
+      errorCode = 'API_ERROR';
+      console.error(`❌ External API error: ${error.response.status} - ${error.response.statusText}`);
+    } else {
+      errorMessage = `Error fetching from external API: ${error.message}`;
+      console.error("❌ Error fetching from external API:", error.message);
+    }
+    
+    const apiError = new Error(errorMessage);
+    apiError.code = errorCode;
+    apiError.originalError = error;
+    return { data: null, error: apiError };
+  }
+};
+
+// Helper function to sanitize data - remove all IDs
+const sanitizeDigitalIDData = (data) => {
+  const sanitized = { ...data };
+  // Remove all ID fields
+  delete sanitized.nationalId;
+  delete sanitized.national_id;
+  delete sanitized.graduate_id;
+  delete sanitized.graduateId;
+  delete sanitized.student_id;
+  delete sanitized.studentId;
+  delete sanitized.id;
+  delete sanitized.digitalID;
+  return sanitized;
+};
+
 const getDigitalID = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -296,17 +380,52 @@ const getDigitalID = async (req, res) => {
       });
     }
 
-    const lang = req.headers["accept-language"] || req.user.language || "ar";
-    const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
+    // Fetch student data from external API (REQUIRED - no fallback to local DB)
+    const { data: externalData, error: externalError } = await fetchStudentDataFromExternal(user["national-id"]);
+    
+    if (externalError || !externalData) {
+      // Return detailed error message
+      const statusCode = externalError?.status || 500;
+      const errorMessage = externalError?.message || "Failed to fetch student data from external system";
+      
+      return res.status(statusCode).json({
+        status: HttpStatusHelper.ERROR,
+        message: errorMessage,
+        data: null,
+        errorCode: externalError?.code || 'EXTERNAL_API_ERROR',
+      });
+    }
 
+    const lang = req.headers["accept-language"] || req.user.language || "ar";
+    
+    // Get faculty name from external data or use local code as fallback for faculty name only
+    let facultyName;
+    if (externalData.faculty || externalData.Faculty || externalData.FACULTY || externalData.facultyName) {
+      facultyName = externalData.faculty || externalData.Faculty || externalData.FACULTY || externalData.facultyName;
+    } else {
+      facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
+    }
+
+    // Build digital ID data - profile image from local DB, rest from external API
     const digitalID = {
-      personalPicture: graduate["profile-picture-url"] || null,
-      digitalID: graduate.graduate_id,
+      personalPicture: graduate["profile-picture-url"] || null, // From local DB only
       fullName: `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim(),
       faculty: facultyName,
-      nationalNumber: user["national-id"] || null,
-      graduationYear: graduate["graduation-year"] || null,
+      graduationYear: externalData["graduation-year"] || externalData.graduationYear || externalData.GraduationYear || null,
+      status: externalData.status || externalData.Status || "active",
+      // Add any other fields from external data (excluding IDs)
+      ...sanitizeDigitalIDData(externalData),
     };
+
+    // Ensure no IDs are included
+    delete digitalID.nationalId;
+    delete digitalID.national_id;
+    delete digitalID.graduate_id;
+    delete digitalID.graduateId;
+    delete digitalID.student_id;
+    delete digitalID.studentId;
+    delete digitalID.id;
+    delete digitalID.digitalID;
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -317,6 +436,181 @@ const getDigitalID = async (req, res) => {
     console.error("getDigitalID error:", err.message);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
+      message: err.message,
+      data: null,
+    });
+  }
+};
+
+// Generate QR code for Digital ID
+const generateDigitalIDQR = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: HttpStatusHelper.FAIL,
+        message: "Not authorized or user not found",
+        data: null,
+      });
+    }
+
+    const userId = req.user.id;
+    const graduate = await Graduate.findOne({
+      where: { graduate_id: userId },
+    });
+
+    if (!graduate) {
+      return res.status(404).json({
+        status: HttpStatusHelper.FAIL,
+        message: "Graduate not found",
+        data: null,
+      });
+    }
+
+    // Generate temporary QR token
+    const qrToken = generateQRToken(userId);
+    
+    // Create verification URL
+    // For "Backend Only" implementation, default to backend API endpoint
+    // If FRONTEND_URL is set and QR_USE_FRONTEND=true, point to frontend page instead
+    const useFrontend = process.env.QR_USE_FRONTEND === "true" && process.env.FRONTEND_URL;
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:5005";
+    
+    let verificationUrl;
+    if (useFrontend) {
+      // Point to frontend page that will call backend API
+      const frontendUrl = process.env.FRONTEND_URL;
+      verificationUrl = `${frontendUrl}/digital-id/verify/${qrToken}`;
+    } else {
+      // Point directly to backend API endpoint (default for Backend Only)
+      verificationUrl = `${backendUrl}/alumni-portal/graduates/digital-id/verify/${qrToken}`;
+    }
+
+    // Generate QR code as data URL
+    const qrCodeDataURL = await QRCode.toDataURL(verificationUrl, {
+      errorCorrectionLevel: "M",
+      type: "image/png",
+      quality: 0.92,
+      margin: 1,
+      width: 300,
+    });
+
+    return res.json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "QR code generated successfully",
+      data: {
+        qrCode: qrCodeDataURL,
+        verificationUrl: verificationUrl,
+        expiresIn: 300, // 5 minutes in seconds
+      },
+    });
+  } catch (err) {
+    console.error("generateDigitalIDQR error:", err.message);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: err.message,
+      data: null,
+    });
+  }
+};
+
+// Verify QR token and return Digital ID data
+const verifyDigitalIDQR = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      return res.status(400).json({
+        status: HttpStatusHelper.FAIL,
+        message: "Token is required",
+        data: null,
+      });
+    }
+
+    // Verify token
+    const decoded = verifyQRToken(token);
+    if (!decoded || !decoded.userId) {
+      return res.status(401).json({
+        status: HttpStatusHelper.FAIL,
+        message: "Invalid or expired token",
+        data: null,
+      });
+    }
+
+    const userId = decoded.userId;
+
+    // Get graduate and user data
+    const graduate = await Graduate.findOne({
+      where: { graduate_id: userId },
+      include: [{ model: require("../models/User") }],
+      attributes: { exclude: ["faculty"] }
+    });
+
+    if (!graduate || !graduate.User) {
+      return res.status(404).json({
+        status: HttpStatusHelper.FAIL,
+        message: "Graduate not found",
+        data: null,
+      });
+    }
+
+    const user = graduate.User;
+
+    // Fetch student data from external API (REQUIRED - no fallback to local DB)
+    const { data: externalData, error: externalError } = await fetchStudentDataFromExternal(user["national-id"]);
+    
+    if (externalError || !externalData) {
+      // Return detailed error message
+      const statusCode = externalError?.status || 500;
+      const errorMessage = externalError?.message || "Failed to fetch student data from external system";
+      
+      return res.status(statusCode).json({
+        status: HttpStatusHelper.ERROR,
+        message: errorMessage,
+        data: null,
+        errorCode: externalError?.code || 'EXTERNAL_API_ERROR',
+      });
+    }
+
+    const lang = req.headers["accept-language"] || "ar";
+    
+    // Get faculty name from external data or use local code as fallback for faculty name only
+    let facultyName;
+    if (externalData.faculty || externalData.Faculty || externalData.FACULTY || externalData.facultyName) {
+      facultyName = externalData.faculty || externalData.Faculty || externalData.FACULTY || externalData.facultyName;
+    } else {
+      facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
+    }
+
+    // Build digital ID data - profile image from local DB, rest from external API
+    const digitalID = {
+      personalPicture: graduate["profile-picture-url"] || null, // From local DB only
+      fullName: `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim(),
+      faculty: facultyName,
+      graduationYear: externalData["graduation-year"] || externalData.graduationYear || externalData.GraduationYear || null,
+      status: externalData.status || externalData.Status || "active",
+      // Add any other fields from external data (excluding IDs)
+      ...sanitizeDigitalIDData(externalData),
+    };
+
+    // Ensure no IDs are included
+    delete digitalID.nationalId;
+    delete digitalID.national_id;
+    delete digitalID.graduate_id;
+    delete digitalID.graduateId;
+    delete digitalID.student_id;
+    delete digitalID.studentId;
+    delete digitalID.id;
+    delete digitalID.digitalID;
+
+    return res.json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "Digital ID verified successfully",
+      data: digitalID,
+    });
+  } catch (err) {
+    console.error("verifyDigitalIDQR error:", err.message);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
       message: err.message,
       data: null,
     });
@@ -991,6 +1285,8 @@ module.exports = {
   getGraduatesInPortal,
   getRequestedGraduates,
   getDigitalID,
+  generateDigitalIDQR,
+  verifyDigitalIDQR,
   getGraduateProfile,
   updateProfile,
   updateGraduateStatus,

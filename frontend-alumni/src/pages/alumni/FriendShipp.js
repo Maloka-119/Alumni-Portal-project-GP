@@ -6,10 +6,13 @@ import PROFILE from "./PROFILE.jpeg";
 import "./FriendShip.css";
 import { MessageCircle } from "lucide-react";
 import ChatBox from "./ChatBox";
+import { useLocation } from "react-router-dom";
 
 function FriendshipPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  
+const location = useLocation();
   const [currentTab, setCurrentTab] = useState("friends");
 
   const [friends, setFriends] = useState([]);
@@ -31,6 +34,11 @@ useEffect(() => {
   document.documentElement.setAttribute("dir", dir);
   document.documentElement.setAttribute("lang", i18n.language);
 }, [i18n.language]);
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const tab = params.get("tab");
+  if(tab) setCurrentTab(tab);
+}, [location.search]);
 
 
   // -------------------- Fetch Functions --------------------
