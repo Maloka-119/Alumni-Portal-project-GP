@@ -54,13 +54,15 @@ function Login({ setUser }) {
       } else {
         navigate("/helwan-alumni-portal/login", { replace: true });
       }
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: t("loginFailed"),
-        text: err.response?.data?.message || err.message,
-      });
-    }
+    } 
+catch (err) {
+  Swal.fire({
+    icon: "error",
+    title: t("loginFailed"),
+    text: err.response?.data?.error || err.response?.data?.message || err.message,
+  });
+}
+
   };
 
   // -----------------------

@@ -2,12 +2,26 @@ const { FAQ, User } = require("../models");
 const asyncHandler = require("express-async-handler");
 const { Op } = require("sequelize");
 const checkStaffPermission = require("../utils/permissionChecker");
+const { logger, securityLogger } = require("../utils/logger");
+
+// دالة مساعدة لقطع النص إذا كان طويلاً جداً
+const truncateText = (text, maxLength = 500) => {
+  if (!text || text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + '...';
+};
 
 // @desc    Get all FAQs (public access - only active)
 // @route   GET /alumni-portal/faqs
 // @access  Public
 const getAllFAQs = asyncHandler(async (req, res) => {
   const { category, search, sort = "order", lang = "en" } = req.query;
+
+  logger.info("Getting all FAQs (public)", { 
+    category, 
+    search: !!search, 
+    sort, 
+    lang 
+  });
 
   let whereClause = { is_active: true };
   let orderClause = [
@@ -76,6 +90,12 @@ const getAllFAQs = asyncHandler(async (req, res) => {
     creator: faq.creator
   }));
 
+  logger.info("FAQs retrieved successfully (public)", { 
+    count: formattedFAQs.length,
+    category: category || 'all',
+    lang 
+  });
+
   res.status(200).json({
     success: true,
     count: formattedFAQs.length,
@@ -91,11 +111,25 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
     const user = req.user;
     const { category, search, is_active, sort = "order", lang = "en" } = req.query;
 
+    logger.info("Getting all FAQs (admin)", { 
+      userId: user?.id,
+      userType: user?.["user-type"],
+      category, 
+      search: !!search, 
+      is_active, 
+      sort, 
+      lang 
+    });
+
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      logger.warn("Unauthorized access to admin FAQs", { 
+        userId: user?.id, 
+        userType: user?.["user-type"] 
+      });
       return res.status(403).json({
         success: false,
         message: "Access denied.",
@@ -111,6 +145,10 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("Staff permission denied for FAQ view", { 
+          userId: user.id,
+          requiredPermission: "FAQ management"
+        });
         return res.status(403).json({
           success: false,
           message: "Access denied. You don't have permission to view FAQs.",
@@ -184,12 +222,26 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
       answer: lang === "ar" ? faq.answer_ar : faq.answer_en,
     }));
 
+    logger.info("FAQs retrieved successfully (admin)", { 
+      userId: user.id,
+      count: formattedFAQs.length,
+      category: category || 'all',
+      is_active: is_active || 'all',
+      lang 
+    });
+
     res.status(200).json({
       success: true,
       count: formattedFAQs.length,
       data: formattedFAQs,
     });
   } catch (error) {
+    logger.error("Error in getAllFAQsAdmin", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       success: false,
       message: error.message,
@@ -202,10 +254,13 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
 // @access  Public
 const getFAQ = asyncHandler(async (req, res) => {
   const { lang = "en" } = req.query;
+  const { id } = req.params;
+
+  logger.info("Getting single FAQ", { faqId: id, lang });
 
   const faq = await FAQ.findOne({
     where: {
-      faq_id: req.params.id,
+      faq_id: id,
       is_active: true,
     },
     include: [
@@ -218,6 +273,7 @@ const getFAQ = asyncHandler(async (req, res) => {
   });
 
   if (!faq) {
+    logger.warn("FAQ not found", { faqId: id });
     return res.status(404).json({
       success: false,
       message: "FAQ not found",
@@ -230,6 +286,8 @@ const getFAQ = asyncHandler(async (req, res) => {
     question: lang === "ar" ? faq.question_ar : faq.question_en,
     answer: lang === "ar" ? faq.answer_ar : faq.answer_en,
   };
+
+  logger.info("FAQ retrieved successfully", { faqId: id, lang });
 
   res.status(200).json({
     success: true,
@@ -245,11 +303,25 @@ const createFAQ = asyncHandler(async (req, res) => {
     const user = req.user;
     const { question_ar, question_en, answer_ar, answer_en, order, category, is_active } = req.body;
 
+    logger.info("Creating new FAQ", { 
+      userId: user?.id,
+      userType: user?.["user-type"],
+      category,
+      hasQuestionAr: !!question_ar,
+      hasQuestionEn: !!question_en,
+      hasAnswerAr: !!answer_ar,
+      hasAnswerEn: !!answer_en
+    });
+
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      logger.warn("Unauthorized FAQ creation attempt", { 
+        userId: user?.id, 
+        userType: user?.["user-type"] 
+      });
       return res.status(403).json({
         success: false,
         message: "Access denied.",
@@ -265,6 +337,10 @@ const createFAQ = asyncHandler(async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("Staff permission denied for FAQ creation", { 
+          userId: user.id,
+          requiredPermission: "FAQ management"
+        });
         return res.status(403).json({
           success: false,
           message: "Access denied. You don't have permission to create FAQs.",
@@ -275,6 +351,15 @@ const createFAQ = asyncHandler(async (req, res) => {
     // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     // Validate required fields for both languages
     if (!question_ar || !question_en || !answer_ar || !answer_en) {
+      logger.warn("Missing required fields for FAQ creation", { 
+        userId: user.id,
+        missingFields: {
+          question_ar: !question_ar,
+          question_en: !question_en,
+          answer_ar: !answer_ar,
+          answer_en: !answer_en
+        }
+      });
       return res.status(400).json({
         success: false,
         message: "Question and answer in both Arabic and English are required",
@@ -314,11 +399,37 @@ const createFAQ = asyncHandler(async (req, res) => {
       ],
     });
 
+    // تسجيل إنشاء الـ FAQ مع المحتوى الكامل
+    logger.info("FAQ created successfully", {
+      faqId: createdFAQ.faq_id,
+      userId: user.id,
+      userType: user["user-type"],
+      category: createdFAQ.category,
+      order: createdFAQ.order,
+      is_active: createdFAQ.is_active,
+      question_ar: truncateText(createdFAQ.question_ar),
+      question_en: truncateText(createdFAQ.question_en),
+      answer_ar: truncateText(createdFAQ.answer_ar),
+      answer_en: truncateText(createdFAQ.answer_en),
+      full_content: {
+        question_ar: createdFAQ.question_ar,
+        question_en: createdFAQ.question_en,
+        answer_ar: createdFAQ.answer_ar,
+        answer_en: createdFAQ.answer_en
+      }
+    });
+
     res.status(201).json({
       success: true,
       data: createdFAQ,
     });
   } catch (error) {
+    logger.error("Error in createFAQ", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       success: false,
       message: error.message,
@@ -332,13 +443,33 @@ const createFAQ = asyncHandler(async (req, res) => {
 const updateFAQ = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
+    const { id } = req.params;
     const { question_ar, question_en, answer_ar, answer_en, order, category, is_active } = req.body;
+
+    logger.info("Updating FAQ", { 
+      userId: user?.id,
+      userType: user?.["user-type"],
+      faqId: id,
+      fieldsToUpdate: {
+        question_ar: !!question_ar,
+        question_en: !!question_en,
+        answer_ar: !!answer_ar,
+        answer_en: !!answer_en,
+        order: order !== undefined,
+        category: !!category,
+        is_active: is_active !== undefined
+      }
+    });
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      logger.warn("Unauthorized FAQ update attempt", { 
+        userId: user?.id, 
+        userType: user?.["user-type"] 
+      });
       return res.status(403).json({
         success: false,
         message: "Access denied.",
@@ -354,6 +485,10 @@ const updateFAQ = asyncHandler(async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("Staff permission denied for FAQ update", { 
+          userId: user.id,
+          requiredPermission: "FAQ management"
+        });
         return res.status(403).json({
           success: false,
           message: "Access denied. You don't have permission to update FAQs.",
@@ -362,14 +497,26 @@ const updateFAQ = asyncHandler(async (req, res) => {
     }
 
     // 4. لو admin أو staff مع صلاحية → اتركه يكمل
-    const faq = await FAQ.findByPk(req.params.id);
+    const faq = await FAQ.findByPk(id);
 
     if (!faq) {
+      logger.warn("FAQ not found for update", { faqId: id });
       return res.status(404).json({
         success: false,
         message: "FAQ not found",
       });
     }
+
+    // حفظ النسخة القديمة قبل التحديث
+    const oldVersion = {
+      question_ar: faq.question_ar,
+      question_en: faq.question_en,
+      answer_ar: faq.answer_ar,
+      answer_en: faq.answer_en,
+      order: faq.order,
+      category: faq.category,
+      is_active: faq.is_active
+    };
 
     // Update fields
     const updateData = {
@@ -403,11 +550,77 @@ const updateFAQ = asyncHandler(async (req, res) => {
       ],
     });
 
+    // حفظ النسخة الجديدة
+    const newVersion = {
+      question_ar: updatedFAQ.question_ar,
+      question_en: updatedFAQ.question_en,
+      answer_ar: updatedFAQ.answer_ar,
+      answer_en: updatedFAQ.answer_en,
+      order: updatedFAQ.order,
+      category: updatedFAQ.category,
+      is_active: updatedFAQ.is_active
+    };
+
+    // تسجيل التعديل مع المحتوى الكامل للنسخ القديمة والجديدة
+    logger.info("FAQ updated successfully", {
+      faqId: updatedFAQ.faq_id,
+      userId: user.id,
+      userType: user["user-type"],
+      changes: {
+        question_ar: oldVersion.question_ar !== newVersion.question_ar,
+        question_en: oldVersion.question_en !== newVersion.question_en,
+        answer_ar: oldVersion.answer_ar !== newVersion.answer_ar,
+        answer_en: oldVersion.answer_en !== newVersion.answer_en,
+        order: oldVersion.order !== newVersion.order,
+        category: oldVersion.category !== newVersion.category,
+        is_active: oldVersion.is_active !== newVersion.is_active
+      },
+      old_version: {
+        question_ar: truncateText(oldVersion.question_ar),
+        question_en: truncateText(oldVersion.question_en),
+        answer_ar: truncateText(oldVersion.answer_ar),
+        answer_en: truncateText(oldVersion.answer_en),
+        order: oldVersion.order,
+        category: oldVersion.category,
+        is_active: oldVersion.is_active
+      },
+      new_version: {
+        question_ar: truncateText(newVersion.question_ar),
+        question_en: truncateText(newVersion.question_en),
+        answer_ar: truncateText(newVersion.answer_ar),
+        answer_en: truncateText(newVersion.answer_en),
+        order: newVersion.order,
+        category: newVersion.category,
+        is_active: newVersion.is_active
+      },
+      full_content_changes: {
+        old_content: {
+          question_ar: oldVersion.question_ar,
+          question_en: oldVersion.question_en,
+          answer_ar: oldVersion.answer_ar,
+          answer_en: oldVersion.answer_en
+        },
+        new_content: {
+          question_ar: newVersion.question_ar,
+          question_en: newVersion.question_en,
+          answer_ar: newVersion.answer_ar,
+          answer_en: newVersion.answer_en
+        }
+      }
+    });
+
     res.status(200).json({
       success: true,
       data: updatedFAQ,
     });
   } catch (error) {
+    logger.error("Error in updateFAQ", {
+      userId: req.user?.id,
+      faqId: req.params.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       success: false,
       message: error.message,
@@ -421,12 +634,23 @@ const updateFAQ = asyncHandler(async (req, res) => {
 const deleteFAQ = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
+    const { id } = req.params;
+
+    logger.info("Soft deleting FAQ", { 
+      userId: user?.id,
+      userType: user?.["user-type"],
+      faqId: id 
+    });
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      logger.warn("Unauthorized FAQ soft delete attempt", { 
+        userId: user?.id, 
+        userType: user?.["user-type"] 
+      });
       return res.status(403).json({
         success: false,
         message: "Access denied.",
@@ -442,6 +666,10 @@ const deleteFAQ = asyncHandler(async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("Staff permission denied for FAQ soft delete", { 
+          userId: user.id,
+          requiredPermission: "FAQ management"
+        });
         return res.status(403).json({
           success: false,
           message: "Access denied. You don't have permission to delete FAQs.",
@@ -450,14 +678,26 @@ const deleteFAQ = asyncHandler(async (req, res) => {
     }
 
     // 4. لو admin أو staff مع صلاحية → اتركه يكمل
-    const faq = await FAQ.findByPk(req.params.id);
+    const faq = await FAQ.findByPk(id);
 
     if (!faq) {
+      logger.warn("FAQ not found for soft delete", { faqId: id });
       return res.status(404).json({
         success: false,
         message: "FAQ not found",
       });
     }
+
+    // حفظ النسخة القديمة قبل الحذف
+    const oldVersion = {
+      question_ar: faq.question_ar,
+      question_en: faq.question_en,
+      answer_ar: faq.answer_ar,
+      answer_en: faq.answer_en,
+      order: faq.order,
+      category: faq.category,
+      is_active: faq.is_active
+    };
 
     // Soft delete - mark as inactive
     await faq.update({
@@ -466,11 +706,39 @@ const deleteFAQ = asyncHandler(async (req, res) => {
       "updated-at": new Date(),
     });
 
+    // تسجيل الحذف الناعم مع المحتوى الكامل
+    logger.info("FAQ soft deleted successfully", {
+      faqId: id,
+      userId: user.id,
+      userType: user["user-type"],
+      old_version: {
+        question_ar: truncateText(oldVersion.question_ar),
+        question_en: truncateText(oldVersion.question_en),
+        answer_ar: truncateText(oldVersion.answer_ar),
+        answer_en: truncateText(oldVersion.answer_en),
+        order: oldVersion.order,
+        category: oldVersion.category
+      },
+      full_content: {
+        question_ar: oldVersion.question_ar,
+        question_en: oldVersion.question_en,
+        answer_ar: oldVersion.answer_ar,
+        answer_en: oldVersion.answer_en
+      }
+    });
+
     res.status(200).json({
       success: true,
       message: "FAQ deleted successfully (marked as inactive)",
     });
   } catch (error) {
+    logger.error("Error in deleteFAQ", {
+      userId: req.user?.id,
+      faqId: req.params.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       success: false,
       message: error.message,
@@ -484,12 +752,23 @@ const deleteFAQ = asyncHandler(async (req, res) => {
 const hardDeleteFAQ = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
+    const { id } = req.params;
+
+    logger.info("Hard deleting FAQ", { 
+      userId: user?.id,
+      userType: user?.["user-type"],
+      faqId: id 
+    });
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      logger.warn("Unauthorized FAQ hard delete attempt", { 
+        userId: user?.id, 
+        userType: user?.["user-type"] 
+      });
       return res.status(403).json({
         success: false,
         message: "Access denied.",
@@ -505,6 +784,10 @@ const hardDeleteFAQ = asyncHandler(async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("Staff permission denied for FAQ hard delete", { 
+          userId: user.id,
+          requiredPermission: "FAQ management"
+        });
         return res.status(403).json({
           success: false,
           message: "Access denied. You don't have permission to delete FAQs.",
@@ -513,22 +796,67 @@ const hardDeleteFAQ = asyncHandler(async (req, res) => {
     }
 
     // 4. لو admin أو staff مع صلاحية → اتركه يكمل
-    const faq = await FAQ.findByPk(req.params.id);
+    const faq = await FAQ.findByPk(id);
 
     if (!faq) {
+      logger.warn("FAQ not found for hard delete", { faqId: id });
       return res.status(404).json({
         success: false,
         message: "FAQ not found",
       });
     }
 
+    // حفظ البيانات قبل الحذف الدائم
+    const deletedData = {
+      faq_id: faq.faq_id,
+      question_ar: faq.question_ar,
+      question_en: faq.question_en,
+      answer_ar: faq.answer_ar,
+      answer_en: faq.answer_en,
+      order: faq.order,
+      category: faq.category,
+      is_active: faq.is_active,
+      created_by: faq.created_by,
+      created_at: faq["created-at"]
+    };
+
     await faq.destroy();
+
+    // تسجيل الحذف الدائم مع المحتوى الكامل
+    logger.info("FAQ hard deleted permanently", {
+      faqId: id,
+      userId: user.id,
+      userType: user["user-type"],
+      deleted_data: {
+        question_ar: truncateText(deletedData.question_ar),
+        question_en: truncateText(deletedData.question_en),
+        answer_ar: truncateText(deletedData.answer_ar),
+        answer_en: truncateText(deletedData.answer_en),
+        order: deletedData.order,
+        category: deletedData.category,
+        created_by: deletedData.created_by,
+        created_at: deletedData.created_at
+      },
+      full_content: {
+        question_ar: deletedData.question_ar,
+        question_en: deletedData.question_en,
+        answer_ar: deletedData.answer_ar,
+        answer_en: deletedData.answer_en
+      }
+    });
 
     res.status(200).json({
       success: true,
       message: "FAQ permanently deleted",
     });
-  } catch ( error) {
+  } catch (error) {
+    logger.error("Error in hardDeleteFAQ", {
+      userId: req.user?.id,
+      faqId: req.params.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       success: false,
       message: error.message,
@@ -540,6 +868,8 @@ const hardDeleteFAQ = asyncHandler(async (req, res) => {
 // @route   GET /alumni-portal/faqs/categories
 // @access  Public
 const getFAQCategories = asyncHandler(async (req, res) => {
+  logger.info("Getting FAQ categories");
+
   const categories = await FAQ.findAll({
     where: { is_active: true },
     attributes: ["category"],
@@ -548,6 +878,10 @@ const getFAQCategories = asyncHandler(async (req, res) => {
   });
 
   const categoryList = categories.map((faq) => faq.category);
+
+  logger.info("FAQ categories retrieved successfully", { 
+    count: categoryList.length 
+  });
 
   res.status(200).json({
     success: true,
@@ -563,11 +897,21 @@ const reorderFAQs = asyncHandler(async (req, res) => {
     const user = req.user;
     const { faq_orders } = req.body; // Array of { faq_id, order }
 
+    logger.info("Reordering FAQs", { 
+      userId: user?.id,
+      userType: user?.["user-type"],
+      faqCount: faq_orders?.length || 0 
+    });
+
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      logger.warn("Unauthorized FAQ reorder attempt", { 
+        userId: user?.id, 
+        userType: user?.["user-type"] 
+      });
       return res.status(403).json({
         success: false,
         message: "Access denied.",
@@ -583,6 +927,10 @@ const reorderFAQs = asyncHandler(async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("Staff permission denied for FAQ reorder", { 
+          userId: user.id,
+          requiredPermission: "FAQ management"
+        });
         return res.status(403).json({
           success: false,
           message: "Access denied. You don't have permission to reorder FAQs.",
@@ -592,11 +940,31 @@ const reorderFAQs = asyncHandler(async (req, res) => {
 
     // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     if (!Array.isArray(faq_orders)) {
+      logger.warn("Invalid faq_orders format", { 
+        userId: user.id,
+        faq_orders_type: typeof faq_orders 
+      });
       return res.status(400).json({
         success: false,
         message: "faq_orders must be an array",
       });
     }
+
+    // حفظ الترتيب القديم قبل التحديث
+    const faqIds = faq_orders.map(order => order.faq_id);
+    const oldOrders = await FAQ.findAll({
+      where: { faq_id: { [Op.in]: faqIds } },
+      attributes: ['faq_id', 'order', 'question_en', 'question_ar']
+    });
+
+    const oldOrderMap = {};
+    oldOrders.forEach(faq => {
+      oldOrderMap[faq.faq_id] = {
+        order: faq.order,
+        question_en: faq.question_en,
+        question_ar: faq.question_ar
+      };
+    });
 
     // Update orders in transaction
     const transaction = await FAQ.sequelize.transaction();
@@ -618,15 +986,45 @@ const reorderFAQs = asyncHandler(async (req, res) => {
 
       await transaction.commit();
 
+      // تسجيل إعادة الترتيب مع المحتوى الكامل
+      const reorderLog = faq_orders.map(({ faq_id, order }) => ({
+        faq_id,
+        old_order: oldOrderMap[faq_id]?.order || 'unknown',
+        new_order: order,
+        question_en: truncateText(oldOrderMap[faq_id]?.question_en || 'unknown'),
+        question_ar: truncateText(oldOrderMap[faq_id]?.question_ar || 'unknown'),
+        full_content: {
+          question_en: oldOrderMap[faq_id]?.question_en,
+          question_ar: oldOrderMap[faq_id]?.question_ar
+        }
+      }));
+
+      logger.info("FAQs reordered successfully", {
+        userId: user.id,
+        userType: user["user-type"],
+        reordered_count: faq_orders.length,
+        changes: reorderLog
+      });
+
       res.status(200).json({
         success: true,
         message: "FAQs reordered successfully",
       });
     } catch (error) {
       await transaction.rollback();
+      logger.error("Transaction error in reorderFAQs", {
+        userId: user.id,
+        error: error.message
+      });
       throw error;
     }
   } catch (error) {
+    logger.error("Error in reorderFAQs", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       success: false,
       message: error.message,
