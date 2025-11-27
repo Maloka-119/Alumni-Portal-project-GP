@@ -11,12 +11,18 @@ const sanitizeHtml = require("sanitize-html");
 
 // Limits login attempts to prevent brute force attacks
 const authLimiter = rateLimit({
-  // windowMs: 15 * 60 * 1000, // Time window: 15 minutes
-  // max: 5, // Max number of login attempts
-  // message: { error: "Too many login attempts, please try again later." },
-  // standardHeaders: true, // Include rate limit info in response headers
-  // legacyHeaders: false // Disable deprecated headers
+  windowMs: 5 * 60 * 1000, // 5 minutes
+  max: 5, // Allow maximum 5 failed login attempts
+  message: { error: "Too many login attempts, please try again after 5 minutes." },
+  standardHeaders: true, // Return rate limit info in headers
+  legacyHeaders: false, // Disable legacy headers
+  keyGenerator: (req) => {
+    // Use email or IP as the key to track attempts
+    return req.body.email || req.ip;
+  },
+  skipSuccessfulRequests: true, // Only count failed requests
 });
+
 
 // Limits general API requests from same IP
 const generalLimiter = rateLimit({
