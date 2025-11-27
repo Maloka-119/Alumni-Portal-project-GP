@@ -66,24 +66,25 @@ function extractDOBFromEgyptianNID(nationalId) {
   )}-${String(dd).padStart(2, "0")}`;
 }
 
-// registerUser (Improved Version with Decryption Check)
+// registerUser (Final Version with Input Limitations)
 const registerUser = asyncHandler(async (req, res) => {
-  // Sanitize all inputs
+
+  // Sanitize inputs
+ 
   sanitizeInput(req, res, () => {});
 
   const { firstName, lastName, email, password, nationalId, phoneNumber } = req.body;
 
-  // -------------------------
+
   // Validate required fields
-  // -------------------------
+
   if (!firstName || !lastName || !email || !password || !nationalId) {
     res.status(400);
     throw new Error("All fields are required");
   }
 
-  // -------------------------
+
   // Validate formats
-  // -------------------------
   if (!validateEmail(email)) {
     res.status(400);
     throw new Error("Invalid email format");
@@ -106,9 +107,37 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid phone number");
   }
 
-  // -------------------------
+
+  // Input length limitations
+
+  if (firstName.length > 50) {
+    res.status(400);
+    throw new Error("First name cannot exceed 50 characters");
+  }
+
+  if (lastName.length > 50) {
+    res.status(400);
+    throw new Error("Last name cannot exceed 50 characters");
+  }
+
+  if (password.length > 128) {
+    res.status(400);
+    throw new Error("Password cannot exceed 128 characters");
+  }
+
+  if (phoneNumber && phoneNumber.length > 15) {
+    res.status(400);
+    throw new Error("Phone number cannot exceed 15 digits");
+  }
+
+  if (email.length > 255) {
+    res.status(400);
+    throw new Error("Email cannot exceed 255 characters");
+  }
+
+
   // Extract birth date from NID
-  // -------------------------
+
   let birthDateFromNid;
   try {
     birthDateFromNid = extractDOBFromEgyptianNID(nationalId);
@@ -118,14 +147,14 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid national ID");
   }
 
-  // -------------------------
+  
   // Encrypt National ID
-  // -------------------------
+
   const encryptedNationalId = aes.encryptNationalId(nationalId);
 
-  // -------------------------
+  
   // Check for duplicate National ID by decrypting existing records
-  // -------------------------
+  
   const allUsers = await User.findAll({ attributes: ["id", "national-id", "email"] });
 
   for (const u of allUsers) {
@@ -137,9 +166,9 @@ const registerUser = asyncHandler(async (req, res) => {
     }
   }
 
-  // -------------------------
+  
   // Check for duplicate email
-  // -------------------------
+  
   const userExists = await User.findOne({ where: { email } });
   if (userExists) {
     securityLogger.failedLogin(req.ip, email, "User already exists");
@@ -147,9 +176,9 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already exists with this email");
   }
 
-  // -------------------------
+
   // Detect user type from external APIs
-  // -------------------------
+ 
   let externalData = null;
   let userType = null;
   let statusToLogin = "accepted";
@@ -203,15 +232,14 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("National ID not recognized in records");
   }
 
-  // -------------------------
   // Hash password
-  // -------------------------
+
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // -------------------------
+ 
   // Create User Record
-  // -------------------------
+  
   const user = await User.create({
     "first-name": validator.escape(firstName),
     "last-name": validator.escape(lastName),
@@ -223,9 +251,9 @@ const registerUser = asyncHandler(async (req, res) => {
     "national-id": encryptedNationalId,
   });
 
-  // -------------------------
+
   // Create Graduate or Staff Record
-  // -------------------------
+ 
   if (userType === "graduate") {
     const facultyName =
       externalData?.faculty ||
@@ -247,7 +275,6 @@ const registerUser = asyncHandler(async (req, res) => {
       "status-to-login": statusToLogin,
     });
 
-    // Auto-group invitation
     try {
       const { sendAutoGroupInvitation } = require("./invitation.controller");
       await sendAutoGroupInvitation(user.id);
@@ -265,9 +292,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
   securityLogger.registration(req.ip, email, userType, statusToLogin);
 
-  // -------------------------
   // Send response with token
-  // -------------------------
+
   res.status(201).json({
     id: user.id,
     email: user.email,
