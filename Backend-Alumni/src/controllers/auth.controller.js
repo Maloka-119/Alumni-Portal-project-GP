@@ -5,6 +5,7 @@ const Graduate = require("../models/Graduate");
 const Staff = require("../models/Staff");
 const generateToken = require("../utils/generateToken");
 const bcrypt = require("bcryptjs");
+const { Op } = require("sequelize");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
 const {
@@ -65,20 +66,24 @@ function extractDOBFromEgyptianNID(nationalId) {
   )}-${String(dd).padStart(2, "0")}`;
 }
 
-// registerUser
+// registerUser (Improved Version with Decryption Check)
 const registerUser = asyncHandler(async (req, res) => {
-  // تنظيف المدخلات
+  // Sanitize all inputs
   sanitizeInput(req, res, () => {});
 
   const { firstName, lastName, email, password, nationalId, phoneNumber } = req.body;
 
-  // التحقق من صحة المدخلات
+  // -------------------------
+  // Validate required fields
+  // -------------------------
   if (!firstName || !lastName || !email || !password || !nationalId) {
     res.status(400);
     throw new Error("All fields are required");
   }
 
-  // التحقق من صحة البيانات
+  // -------------------------
+  // Validate formats
+  // -------------------------
   if (!validateEmail(email)) {
     res.status(400);
     throw new Error("Invalid email format");
@@ -86,7 +91,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (!validatePassword(password)) {
     res.status(400);
-    throw new Error("Password must be at least 8 characters with uppercase, lowercase, number and symbol");
+    throw new Error(
+      "Password must be at least 8 characters with uppercase, lowercase, number and symbol"
+    );
   }
 
   if (!validateNationalId(nationalId)) {
@@ -99,7 +106,9 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid phone number");
   }
 
-  // استخراج تاريخ الميلاد من الـ NID
+  // -------------------------
+  // Extract birth date from NID
+  // -------------------------
   let birthDateFromNid;
   try {
     birthDateFromNid = extractDOBFromEgyptianNID(nationalId);
@@ -109,27 +118,52 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("Invalid national ID");
   }
 
-  // تشفير الـ NID
+  // -------------------------
+  // Encrypt National ID
+  // -------------------------
   const encryptedNationalId = aes.encryptNationalId(nationalId);
 
-  let externalData;
-  let userType;
+  // -------------------------
+  // Check for duplicate National ID by decrypting existing records
+  // -------------------------
+  const allUsers = await User.findAll({ attributes: ["id", "national-id", "email"] });
+
+  for (const u of allUsers) {
+    const decryptedNID = aes.decryptNationalId(u["national-id"]);
+    if (decryptedNID === nationalId) {
+      securityLogger.failedLogin(req.ip, email, "National ID already registered");
+      res.status(400);
+      throw new Error("This national ID is already registered");
+    }
+  }
+
+  // -------------------------
+  // Check for duplicate email
+  // -------------------------
+  const userExists = await User.findOne({ where: { email } });
+  if (userExists) {
+    securityLogger.failedLogin(req.ip, email, "User already exists");
+    res.status(400);
+    throw new Error("User already exists with this email");
+  }
+
+  // -------------------------
+  // Detect user type from external APIs
+  // -------------------------
+  let externalData = null;
+  let userType = null;
   let statusToLogin = "accepted";
 
-  // Staff API
+  // STAFF API
   try {
-    const staffResponse = await axios.get(
+    const { data } = await axios.get(
       `${process.env.STAFF_API_URL}?nationalId=${encodeURIComponent(nationalId)}`,
-      { timeout: 10000 } // timeout بعد 10 ثواني
+      { timeout: 10000 }
     );
-    externalData = staffResponse.data;
+    const departmentField = data?.department || data?.Department || data?.DEPARTMENT;
 
-    const departmentField =
-      externalData?.department ||
-      externalData?.Department ||
-      externalData?.DEPARTMENT;
-
-    if (externalData && departmentField) {
+    if (departmentField) {
+      externalData = data;
       userType = "staff";
       statusToLogin = "inactive";
     }
@@ -137,25 +171,22 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log("Staff API error:", err.message);
   }
 
-  // Graduate API
+  // GRADUATE API
   if (!userType) {
     try {
-      const gradResponse = await axios.get(
+      const { data } = await axios.get(
         `${process.env.GRADUATE_API_URL}?nationalId=${encodeURIComponent(nationalId)}`,
         { timeout: 10000 }
       );
-      externalData = gradResponse.data;
+      externalData = data;
 
       const facultyField =
-        externalData?.faculty ||
-        externalData?.Faculty ||
-        externalData?.FACULTY ||
-        externalData?.facultyName;
+        data?.faculty || data?.Faculty || data?.FACULTY || data?.facultyName;
 
-      if (externalData && facultyField) {
+      if (facultyField) {
         userType = "graduate";
         statusToLogin = "accepted";
-      } else if (externalData) {
+      } else {
         userType = "graduate";
         statusToLogin = "pending";
       }
@@ -172,29 +203,15 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("National ID not recognized in records");
   }
 
-  // تحقق من البريد
-  const userExists = await User.findOne({ where: { email } });
-  if (userExists) {
-    securityLogger.failedLogin(req.ip, email, "User already exists");
-    res.status(400);
-    throw new Error("User already exists");
-  }
-
-  // تحقق من الـ NID المشفر
-  const nationalIdExists = await User.findOne({
-    where: { "national-id": encryptedNationalId },
-  });
-  if (nationalIdExists) {
-    securityLogger.failedLogin(req.ip, email, "National ID already registered");
-    res.status(400);
-    throw new Error("This national ID is already registered");
-  }
-
-  // تشفير الباسورد
+  // -------------------------
+  // Hash password
+  // -------------------------
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
 
-  // إنشاء المستخدم
+  // -------------------------
+  // Create User Record
+  // -------------------------
   const user = await User.create({
     "first-name": validator.escape(firstName),
     "last-name": validator.escape(lastName),
@@ -206,7 +223,9 @@ const registerUser = asyncHandler(async (req, res) => {
     "national-id": encryptedNationalId,
   });
 
-  // إنشاء سجلات إضافية
+  // -------------------------
+  // Create Graduate or Staff Record
+  // -------------------------
   if (userType === "graduate") {
     const facultyName =
       externalData?.faculty ||
@@ -217,35 +236,27 @@ const registerUser = asyncHandler(async (req, res) => {
 
     const facultyCode = facultyName ? normalizeCollegeName(facultyName) : null;
 
-    try {
-      await Graduate.create({
-        graduate_id: user.id,
-        faculty_code: facultyCode,
-        "graduation-year":
-          externalData?.["graduation-year"] ||
-          externalData?.graduationYear ||
-          externalData?.GraduationYear ||
-          null,
-        "status-to-login": statusToLogin,
-      });
+    await Graduate.create({
+      graduate_id: user.id,
+      faculty_code: facultyCode,
+      "graduation-year":
+        externalData?.["graduation-year"] ||
+        externalData?.graduationYear ||
+        externalData?.GraduationYear ||
+        null,
+      "status-to-login": statusToLogin,
+    });
 
-      try {
-        const { sendAutoGroupInvitation } = require("./invitation.controller");
-        await sendAutoGroupInvitation(user.id);
-      } catch (error) {
-        console.error("Failed to send auto invitation:", error);
-      }
+    // Auto-group invitation
+    try {
+      const { sendAutoGroupInvitation } = require("./invitation.controller");
+      await sendAutoGroupInvitation(user.id);
     } catch (error) {
-      console.error("Graduate creation error:", error);
-      if (error.errors) {
-        console.error(
-          "Validation errors:",
-          error.errors.map((e) => e.message)
-        );
-      }
-      throw error;
+      console.error("Auto invitation failed:", error);
     }
-  } else if (userType === "staff") {
+  }
+
+  if (userType === "staff") {
     await Staff.create({
       staff_id: user.id,
       "status-to-login": statusToLogin,
@@ -254,6 +265,9 @@ const registerUser = asyncHandler(async (req, res) => {
 
   securityLogger.registration(req.ip, email, userType, statusToLogin);
 
+  // -------------------------
+  // Send response with token
+  // -------------------------
   res.status(201).json({
     id: user.id,
     email: user.email,
