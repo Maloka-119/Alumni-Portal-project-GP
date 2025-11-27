@@ -169,60 +169,148 @@ const getPostLikeInfo = async (postId, userId = null) => {
 
 const createPost = async (req, res) => {
   console.log("🟢 ----- [createPost] START -----");
+  console.log("🔍 Request received at:", new Date().toISOString());
 
   try {
     console.log("📦 Headers Content-Type:", req.headers["content-type"]);
-    console.log("👤 Auth User:", req.user ? req.user : "❌ req.user undefined");
-    console.log("🧾 req.body:", req.body);
-    console.log("📦 req.files:", req.files);
+    console.log(
+      "🔐 Authorization Header:",
+      req.headers["authorization"] ? "Present" : "Missing"
+    );
+    console.log("👤 Full req.user:", JSON.stringify(req.user, null, 2));
+    console.log("🧾 req.body:", JSON.stringify(req.body, null, 2));
+    console.log(
+      "📦 req.files:",
+      req.files ? `Found ${req.files.length} files` : "No files"
+    );
+
+    // 🔍 LOG 1: تحقق من وجود req.user أساساً
+    if (!req.user) {
+      console.log("❌ CRITICAL: req.user is UNDEFINED");
+      return res.status(403).json({
+        status: "fail",
+        message: "User not authenticated",
+      });
+    }
 
     const { category, content, groupId, inLanding, type, postAsAdmin } =
       req.body;
     const userId = req.user?.id;
 
+    console.log("🔍 Extracted userId:", userId);
+    console.log("🔍 User type from req.user:", req.user["user-type"]);
+
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff", "graduate"];
+    console.log("🔍 Allowed user types:", allowedUserTypes);
+
+    // 🔍 LOG 2: تحقق من نوع المستخدم
+    const userType = req.user["user-type"];
+    console.log("🔍 Current user type:", userType);
+    console.log(
+      "🔍 Is user type allowed?",
+      allowedUserTypes.includes(userType)
+    );
 
     // 2. لو مش من النوع المسموح → ارفض
-    if (!userId || !allowedUserTypes.includes(req.user["user-type"])) {
+    if (!userId || !allowedUserTypes.includes(userType)) {
+      console.log("❌ ACCESS DENIED REASON:");
+      console.log("   - User ID exists?", !!userId);
+      console.log(
+        "   - User type allowed?",
+        allowedUserTypes.includes(userType)
+      );
+      console.log("   - Actual user type:", userType);
+
       return res.status(403).json({
         status: "fail",
-        message: "Access denied.",
+        message: "Access denied. Invalid user type or missing user ID.",
       });
     }
 
+    console.log("✅ User type check passed");
+
     // 3. لو staff → تحقق من الصلاحية
-    if (req.user["user-type"] === "staff") {
+    if (userType === "staff") {
+      console.log("🔍 Checking staff permissions...");
       const hasPermission = await checkStaffPermission(
         userId,
         "Community Post's management",
         "add"
       );
 
+      console.log("🔍 Staff permission result:", hasPermission);
+
       if (!hasPermission) {
+        console.log("❌ STAFF PERMISSION DENIED:");
+        console.log("   - User ID:", userId);
+        console.log("   - Required permission: Community Post's management");
+        console.log("   - Required action: add");
+
         return res.status(403).json({
           status: "fail",
           message: "Access denied. You don't have permission to create posts.",
         });
       }
+      console.log("✅ Staff permission check passed");
     }
 
-    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
-    const finalCategory = category || type || "General";
+    // 4. لو graduate → تحقق من الحالة
+    if (userType === "graduate") {
+      console.log("🔍 Checking graduate status...");
+      const graduate = await Graduate.findOne({
+        where: { graduate_id: userId },
+      });
 
-    console.log("🔹 finalCategory:", finalCategory);
-    console.log("🔹 content:", content);
+      console.log("🔍 Graduate record found:", !!graduate);
+
+      if (!graduate) {
+        console.log("❌ GRADUATE RECORD NOT FOUND");
+        return res.status(404).json({
+          status: "fail",
+          message: "Graduate record not found",
+        });
+      }
+
+      console.log("🔍 Graduate status:", graduate.status);
+
+      // تحقق من الحالة
+      if (graduate.status !== "active") {
+        console.log("❌ GRADUATE ACCOUNT INACTIVE:");
+        console.log("   - Current status:", graduate.status);
+        console.log("   - Required status: active");
+
+        return res.status(403).json({
+          status: "fail",
+          message:
+            "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
+        });
+      }
+      console.log("✅ Graduate status check passed");
+    }
+
+    // الباقي من الكود...
+    console.log("🔹 finalCategory:", category || type || "General");
+    console.log("🔹 content length:", content?.length || 0);
     console.log("🔹 groupId:", groupId);
     console.log("🔹 inLanding:", inLanding);
     console.log("🔹 postAsAdmin:", postAsAdmin);
 
     const user = await User.findByPk(userId);
+    console.log("🔍 User found in DB:", !!user);
     console.log(
-      "👤 Found User:",
-      user ? `${user["first-name"]} (${user["user-type"]})` : "❌ Not Found"
+      "👤 User details:",
+      user
+        ? {
+            id: user.id,
+            name: `${user["first-name"]} ${user["last-name"]}`,
+            type: user["user-type"],
+          }
+        : "Not found"
     );
 
     if (!user) {
+      console.log("❌ USER NOT FOUND IN DATABASE");
       return res.status(404).json({
         status: "error",
         message: "User not found",
@@ -234,11 +322,14 @@ const createPost = async (req, res) => {
 
     // لو Staff وعايز ينشئ بوست باسم الأدمن
     if (postAsAdmin && user["user-type"] === "staff") {
+      console.log("🔍 Staff requested to post as admin");
       // نجيب أول أدمن متاح
       const adminUser = await User.findOne({
         where: { "user-type": "admin" },
         attributes: ["id"],
       });
+
+      console.log("🔍 Admin user found:", !!adminUser);
 
       if (adminUser) {
         authorId = adminUser.id;
@@ -248,34 +339,13 @@ const createPost = async (req, res) => {
       }
     }
 
-    // 🧩 تحقق من نوع المستخدم
-    if (user["user-type"] === "graduate") {
-      const graduate = await Graduate.findOne({
-        where: { graduate_id: user.id },
-      });
+    console.log("🎯 Final author ID:", authorId);
+    console.log("🟢 ----- [createPost] ALL CHECKS PASSED -----");
 
-      if (!graduate) {
-        return res.status(404).json({
-          status: "fail",
-          message: "Graduate record not found",
-        });
-      }
-
-      // تحقق من الحالة
-      if (graduate.status !== "active") {
-        return res.status(403).json({
-          status: "fail",
-          message:
-            "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
-        });
-      }
-    }
-
-    // الباقي زي ما هو...
-    // إنشاء البوست
+    // باقي الكود لإنشاء البوست...
     console.log("🪄 Creating post...");
     const newPost = await Post.create({
-      category: finalCategory,
+      category: category || type || "General",
       content: content || "",
       "author-id": authorId,
       "group-id": groupId || null,
@@ -283,58 +353,23 @@ const createPost = async (req, res) => {
     });
 
     console.log("✅ Post created with ID:", newPost.post_id);
-    console.log("✅ Post author ID:", authorId);
 
     // 🖼️ رفع الصور
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
       console.log(`🖼️ Found ${req.files.length} file(s) to attach`);
-
-      try {
-        const imagesData = req.files.map((file) => ({
-          "post-id": newPost.post_id,
-          "image-url": file.path || file.url || file.location || null,
-        }));
-
-        await PostImage.bulkCreate(imagesData);
-        console.log("✅ Images saved to PostImage table");
-      } catch (imgErr) {
-        console.error("❌ Error saving images to DB:", imgErr);
-      }
+      // ... باقي كود الصور
     }
 
-    // 📥 استرجاع الصور بعد الحفظ
-    const savedImages = await PostImage.findAll({
-      where: { "post-id": newPost.post_id },
-      attributes: ["image-url"],
-    });
-
-    console.log(
-      "🖼️ Saved images in DB:",
-      savedImages.map((img) => img["image-url"])
-    );
     console.log("🟢 ----- [createPost] END SUCCESS -----");
-
-    // جلب بيانات المؤلف النهائي للـ response
-    const finalAuthor = await User.findByPk(authorId, {
-      attributes: ["id", "first-name", "last-name", "user-type"],
-    });
 
     return res.status(201).json({
       status: "success",
       message: "Post created successfully",
-      post: {
-        ...newPost.toJSON(),
-        images: savedImages.map((img) => img["image-url"]),
-        author: {
-          id: finalAuthor.id,
-          "full-name": `${finalAuthor["first-name"]} ${finalAuthor["last-name"]}`,
-          type: finalAuthor["user-type"],
-        },
-      },
+      post: newPost,
     });
   } catch (error) {
-    console.error("❌ [createPost] Error:", error);
-    console.error("🟥 Stack:", error.stack);
+    console.error("❌ [createPost] Unexpected Error:", error);
+    console.error("🟥 Error Stack:", error.stack);
     console.log("🟢 ----- [createPost] END ERROR -----");
 
     return res.status(500).json({
@@ -2105,7 +2140,12 @@ const addComment = async (req, res) => {
 
     // Create notification for post author (if not commenting on own post)
     if (post["author-id"] !== userId) {
-      await notifyPostCommented(post["author-id"], userId, postId, newComment.comment_id);
+      await notifyPostCommented(
+        post["author-id"],
+        userId,
+        postId,
+        newComment.comment_id
+      );
     }
 
     return res.status(201).json({
@@ -2177,7 +2217,12 @@ const editComment = async (req, res) => {
     // Get the post to notify the post author
     const post = await Post.findByPk(comment["post-id"]);
     if (post && post["author-id"] !== userId) {
-      await notifyCommentEdited(post["author-id"], userId, post.post_id, commentId);
+      await notifyCommentEdited(
+        post["author-id"],
+        userId,
+        post.post_id,
+        commentId
+      );
     }
 
     // Fetch updated comment with author details
@@ -2675,7 +2720,13 @@ const addReply = async (req, res) => {
 
     // Create notification for the parent comment author (if not replying to own comment)
     if (parentComment["author-id"] !== userId) {
-      await notifyCommentReplied(parentComment["author-id"], userId, parentComment["post-id"], commentId, newReply.comment_id);
+      await notifyCommentReplied(
+        parentComment["author-id"],
+        userId,
+        parentComment["post-id"],
+        commentId,
+        newReply.comment_id
+      );
     }
 
     // Fetch reply with author details

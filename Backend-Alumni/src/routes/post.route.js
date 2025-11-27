@@ -90,13 +90,15 @@ router.post(
   (req, res, next) => {
     if (
       req.user &&
-      (req.user["user-type"] === "admin" || req.user["user-type"] === "staff")
+      (req.user["user-type"] === "admin" ||
+        req.user["user-type"] === "staff" ||
+        req.user["user-type"] === "graduate") // ⭐ أضف هذا السطر
     ) {
       next();
     } else {
       return res
         .status(403)
-        .json({ message: "Access denied. Admins or staff only." });
+        .json({ message: "Access denied. Admins, staff or graduates only." });
     }
   },
   upload.array("images", 5),
