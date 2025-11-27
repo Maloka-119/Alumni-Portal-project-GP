@@ -10,8 +10,10 @@ const Staff = require("../models/Staff");
 const Friendship = require("../models/Friendship");
 const checkStaffPermission = require("../utils/permissionChecker");
 
-const { Op } = require("sequelize");
 
+const { logger, securityLogger } = require("../utils/logger");
+
+const { Op } = require("sequelize");
 const moment = require("moment");
 const {
   notifyPostLiked,
@@ -23,327 +25,159 @@ const {
 
 // Helper function to calculate likesCount and isLikedByYou for a post
 const getPostLikeInfo = async (postId, userId = null) => {
-  const likesCount = await Like.count({
-    where: { "post-id": postId },
-  });
-
-  let isLikedByYou = false;
-  if (userId) {
-    const userLike = await Like.findOne({
-      where: {
-        "post-id": postId,
-        "user-id": userId,
-      },
+  try {
+    const likesCount = await Like.count({
+      where: { "post-id": postId },
     });
-    isLikedByYou = !!userLike;
-  }
 
-  return { likesCount, isLikedByYou };
+    let isLikedByYou = false;
+    if (userId) {
+      const userLike = await Like.findOne({
+        where: {
+          "post-id": postId,
+          "user-id": userId,
+        },
+      });
+      isLikedByYou = !!userLike;
+    }
+
+    return { likesCount, isLikedByYou };
+  } catch (error) {
+    logger.error("Error in getPostLikeInfo", { postId, userId, error: error.message });
+    throw error;
+  }
 };
 
-// const createPost = async (req, res) => {
-//   console.log("🟢 ----- [createPost] START -----");
-
-//   try {
-//     console.log("📦 Headers Content-Type:", req.headers["content-type"]);
-//     console.log("👤 Auth User:", req.user ? req.user : "❌ req.user undefined");
-//     console.log("🧾 req.body:", req.body);
-//     console.log("📦 req.files:", req.files);
-
-//     const { category, content, groupId, inLanding, type } = req.body;
-//     const userId = req.user?.id;
-
-//     const finalCategory = category || type || "General";
-
-//     console.log("🔹 finalCategory:", finalCategory);
-//     console.log("🔹 content:", content);
-//     console.log("🔹 groupId:", groupId);
-//     console.log("🔹 inLanding:", inLanding);
-
-//     // 🟥 التحقق من المستخدم
-//     if (!userId) {
-//       return res.status(401).json({
-//         status: "fail",
-//         message: "User not authenticated",
-//       });
-//     }
-
-//     const user = await User.findByPk(userId);
-//     console.log(
-//       "👤 Found User:",
-//       user ? `${user["first-name"]} (${user["user-type"]})` : "❌ Not Found"
-//     );
-
-//     if (!user) {
-//       return res.status(404).json({
-//         status: "error",
-//         message: "User not found",
-//       });
-//     }
-
-//     // 🧩 تحقق من نوع المستخدم
-//     if (user["user-type"] === "graduate") {
-//       const graduate = await Graduate.findOne({
-//         where: { graduate_id: user.id },
-//       });
-
-//       if (!graduate) {
-//         return res.status(404).json({
-//           status: "fail",
-//           message: "Graduate record not found",
-//         });
-//       }
-
-//       // تحقق من الحالة
-//       if (graduate.status !== "active") {
-//         return res.status(403).json({
-//           status: "fail",
-//           message:
-//             "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
-//         });
-//       }
-//     }
-
-//     //  إنشاء البوست
-//     console.log("🪄 Creating post...");
-//     const newPost = await Post.create({
-//       category: finalCategory,
-//       content: content || "",
-//       "author-id": userId,
-//       "group-id": groupId || null,
-//       "in-landing": inLanding || false,
-//     });
-
-//     console.log("✅ Post created with ID:", newPost.post_id);
-
-//     // 🖼️ رفع الصور
-//     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-//       console.log(`🖼️ Found ${req.files.length} file(s) to attach`);
-
-//       try {
-//         const imagesData = req.files.map((file) => ({
-//           "post-id": newPost.post_id,
-//           "image-url": file.path || file.url || file.location || null,
-//         }));
-
-//         await PostImage.bulkCreate(imagesData);
-//         console.log("✅ Images saved to PostImage table");
-//       } catch (imgErr) {
-//         console.error("❌ Error saving images to DB:", imgErr);
-//       }
-//     }
-
-//     // 📥 استرجاع الصور بعد الحفظ
-//     const savedImages = await PostImage.findAll({
-//       where: { "post-id": newPost.post_id },
-//       attributes: ["image-url"],
-//     });
-
-//     console.log(
-//       "🖼️ Saved images in DB:",
-//       savedImages.map((img) => img["image-url"])
-//     );
-//     console.log("🟢 ----- [createPost] END SUCCESS -----");
-
-//     return res.status(201).json({
-//       status: "success",
-//       message: "Post created successfully",
-//       post: {
-//         ...newPost.toJSON(),
-//         images: savedImages.map((img) => img["image-url"]),
-//       },
-//     });
-//   } catch (error) {
-//     console.error("❌ [createPost] Error:", error);
-//     console.error("🟥 Stack:", error.stack);
-//     console.log("🟢 ----- [createPost] END ERROR -----");
-
-//     return res.status(500).json({
-//       status: "error",
-//       message: error.message || "Failed to create post",
-//     });
-//   }
-// };
-
-//get all posts in specific group
-
 const createPost = async (req, res) => {
-  console.log("🟢 ----- [createPost] START -----");
-  console.log("🔍 Request received at:", new Date().toISOString());
+  logger.info("🟢 ----- [createPost] START -----", {
+    timestamp: new Date().toISOString(),
+    user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+  });
 
   try {
-    console.log("📦 Headers Content-Type:", req.headers["content-type"]);
-    console.log(
-      "🔐 Authorization Header:",
-      req.headers["authorization"] ? "Present" : "Missing"
-    );
-    console.log("👤 Full req.user:", JSON.stringify(req.user, null, 2));
-    console.log("🧾 req.body:", JSON.stringify(req.body, null, 2));
-    console.log(
-      "📦 req.files:",
-      req.files ? `Found ${req.files.length} files` : "No files"
-    );
+    logger.debug("Request details", {
+      contentType: req.headers["content-type"],
+      authHeader: req.headers["authorization"] ? "Present" : "Missing",
+      user: req.user,
+      body: req.body,
+      filesCount: req.files ? req.files.length : 0
+    });
+
+    const { category, content, groupId, inLanding, type, postAsAdmin } = req.body;
+    const userId = req.user?.id;
 
     // 🔍 LOG 1: تحقق من وجود req.user أساساً
     if (!req.user) {
-      console.log("❌ CRITICAL: req.user is UNDEFINED");
+      logger.warn("CRITICAL: req.user is UNDEFINED in createPost");
       return res.status(403).json({
         status: "fail",
         message: "User not authenticated",
       });
     }
 
-    const { category, content, groupId, inLanding, type, postAsAdmin } =
-      req.body;
-    const userId = req.user?.id;
-
-    console.log("🔍 Extracted userId:", userId);
-    console.log("🔍 User type from req.user:", req.user["user-type"]);
-
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff", "graduate"];
-    console.log("🔍 Allowed user types:", allowedUserTypes);
-
-    // 🔍 LOG 2: تحقق من نوع المستخدم
     const userType = req.user["user-type"];
-    console.log("🔍 Current user type:", userType);
-    console.log(
-      "🔍 Is user type allowed?",
-      allowedUserTypes.includes(userType)
-    );
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!userId || !allowedUserTypes.includes(userType)) {
-      console.log("❌ ACCESS DENIED REASON:");
-      console.log("   - User ID exists?", !!userId);
-      console.log(
-        "   - User type allowed?",
-        allowedUserTypes.includes(userType)
-      );
-      console.log("   - Actual user type:", userType);
-
+      logger.warn("ACCESS DENIED in createPost", {
+        userId: !!userId,
+        userType: userType,
+        allowedTypes: allowedUserTypes
+      });
       return res.status(403).json({
         status: "fail",
         message: "Access denied. Invalid user type or missing user ID.",
       });
     }
 
-    console.log("✅ User type check passed");
+    logger.info("User type check passed", { userId, userType });
 
     // 3. لو staff → تحقق من الصلاحية
     if (userType === "staff") {
-      console.log("🔍 Checking staff permissions...");
       const hasPermission = await checkStaffPermission(
         userId,
         "Community Post's management",
         "add"
       );
 
-      console.log("🔍 Staff permission result:", hasPermission);
-
       if (!hasPermission) {
-        console.log("❌ STAFF PERMISSION DENIED:");
-        console.log("   - User ID:", userId);
-        console.log("   - Required permission: Community Post's management");
-        console.log("   - Required action: add");
-
+        logger.warn("STAFF PERMISSION DENIED in createPost", {
+          userId,
+          requiredPermission: "Community Post's management",
+          requiredAction: "add"
+        });
         return res.status(403).json({
           status: "fail",
           message: "Access denied. You don't have permission to create posts.",
         });
       }
-      console.log("✅ Staff permission check passed");
+      logger.info("Staff permission check passed", { userId });
     }
 
     // 4. لو graduate → تحقق من الحالة
     if (userType === "graduate") {
-      console.log("🔍 Checking graduate status...");
       const graduate = await Graduate.findOne({
         where: { graduate_id: userId },
       });
 
-      console.log("🔍 Graduate record found:", !!graduate);
-
       if (!graduate) {
-        console.log("❌ GRADUATE RECORD NOT FOUND");
+        logger.error("GRADUATE RECORD NOT FOUND in createPost", { userId });
         return res.status(404).json({
           status: "fail",
           message: "Graduate record not found",
         });
       }
 
-      console.log("🔍 Graduate status:", graduate.status);
-
-      // تحقق من الحالة
       if (graduate.status !== "active") {
-        console.log("❌ GRADUATE ACCOUNT INACTIVE:");
-        console.log("   - Current status:", graduate.status);
-        console.log("   - Required status: active");
-
+        logger.warn("GRADUATE ACCOUNT INACTIVE in createPost", {
+          userId,
+          currentStatus: graduate.status,
+          requiredStatus: "active"
+        });
         return res.status(403).json({
           status: "fail",
           message:
             "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
         });
       }
-      console.log("✅ Graduate status check passed");
+      logger.info("Graduate status check passed", { userId, status: graduate.status });
     }
 
-    // الباقي من الكود...
-    console.log("🔹 finalCategory:", category || type || "General");
-    console.log("🔹 content length:", content?.length || 0);
-    console.log("🔹 groupId:", groupId);
-    console.log("🔹 inLanding:", inLanding);
-    console.log("🔹 postAsAdmin:", postAsAdmin);
-
     const user = await User.findByPk(userId);
-    console.log("🔍 User found in DB:", !!user);
-    console.log(
-      "👤 User details:",
-      user
-        ? {
-            id: user.id,
-            name: `${user["first-name"]} ${user["last-name"]}`,
-            type: user["user-type"],
-          }
-        : "Not found"
-    );
-
     if (!user) {
-      console.log("❌ USER NOT FOUND IN DATABASE");
+      logger.error("USER NOT FOUND IN DATABASE in createPost", { userId });
       return res.status(404).json({
         status: "error",
         message: "User not found",
       });
     }
 
-    // ⬇️⬇️⬇️ التعديل هنا: تحديد author-id بناءً على الصلاحيات ⬇️⬇️⬇️
-    let authorId = userId; // الافتراضي: اليوزر نفسه
-
-    // لو Staff وعايز ينشئ بوست باسم الأدمن
+    // تحديد author-id بناءً على الصلاحيات
+    let authorId = userId;
     if (postAsAdmin && user["user-type"] === "staff") {
-      console.log("🔍 Staff requested to post as admin");
-      // نجيب أول أدمن متاح
       const adminUser = await User.findOne({
         where: { "user-type": "admin" },
         attributes: ["id"],
       });
 
-      console.log("🔍 Admin user found:", !!adminUser);
-
       if (adminUser) {
         authorId = adminUser.id;
-        console.log("🔹 Posting as Admin, Author ID:", authorId);
+        logger.info("Staff posting as Admin", { staffId: userId, adminId: authorId });
       } else {
-        console.log("⚠️ No admin user found, posting as staff");
+        logger.warn("No admin user found, posting as staff", { userId });
       }
     }
 
-    console.log("🎯 Final author ID:", authorId);
-    console.log("🟢 ----- [createPost] ALL CHECKS PASSED -----");
+    logger.info("Creating post", {
+      authorId,
+      category: category || type || "General",
+      contentLength: content?.length || 0,
+      groupId,
+      inLanding
+    });
 
-    // باقي الكود لإنشاء البوست...
-    console.log("🪄 Creating post...");
     const newPost = await Post.create({
       category: category || type || "General",
       content: content || "",
@@ -352,15 +186,26 @@ const createPost = async (req, res) => {
       "in-landing": inLanding || false,
     });
 
-    console.log("✅ Post created with ID:", newPost.post_id);
+    logger.info("Post created successfully", { postId: newPost.post_id, authorId });
 
     // 🖼️ رفع الصور
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-      console.log(`🖼️ Found ${req.files.length} file(s) to attach`);
-      // ... باقي كود الصور
+      logger.info(`Processing ${req.files.length} file(s) for post`, { postId: newPost.post_id });
+      
+      try {
+        const imagesData = req.files.map((file) => ({
+          "post-id": newPost.post_id,
+          "image-url": file.path || file.url || file.location || null,
+        }));
+
+        await PostImage.bulkCreate(imagesData);
+        logger.info("Images saved to PostImage table", { postId: newPost.post_id, imagesCount: imagesData.length });
+      } catch (imgErr) {
+        logger.error("Error saving images to DB", { postId: newPost.post_id, error: imgErr.message });
+      }
     }
 
-    console.log("🟢 ----- [createPost] END SUCCESS -----");
+    logger.info("🟢 ----- [createPost] END SUCCESS -----", { postId: newPost.post_id });
 
     return res.status(201).json({
       status: "success",
@@ -368,10 +213,12 @@ const createPost = async (req, res) => {
       post: newPost,
     });
   } catch (error) {
-    console.error("❌ [createPost] Unexpected Error:", error);
-    console.error("🟥 Error Stack:", error.stack);
-    console.log("🟢 ----- [createPost] END ERROR -----");
-
+    logger.error("❌ [createPost] Unexpected Error", {
+      error: error.message,
+      stack: error.stack,
+      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+    });
+    
     return res.status(500).json({
       status: "error",
       message: error.message || "Failed to create post",
@@ -382,12 +229,19 @@ const createPost = async (req, res) => {
 const getGroupPosts = async (req, res) => {
   try {
     const { groupId } = req.params;
+    const userId = req.user?.id;
 
-    // 1. تحديد اليوزر types المسموح لهم - كل اليوزر types
+    logger.info("Getting group posts", { groupId, userId });
+
+    // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      logger.warn("ACCESS DENIED in getGroupPosts", {
+        userType: req.user ? req.user["user-type"] : "undefined",
+        groupId
+      });
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -404,6 +258,11 @@ const getGroupPosts = async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("STAFF PERMISSION DENIED in getGroupPosts", {
+          userId: req.user.id,
+          groupId,
+          requiredPermission: "Community Post's management"
+        });
         return res.status(403).json({
           status: "error",
           message:
@@ -413,11 +272,10 @@ const getGroupPosts = async (req, res) => {
       }
     }
 
-    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
     const posts = await Post.findAll({
       where: {
         "group-id": groupId,
-        "is-hidden": false, // ⬅️ فقط البوستات اللي مش معمولة هيدن
+        "is-hidden": false,
       },
       include: [
         {
@@ -438,7 +296,6 @@ const getGroupPosts = async (req, res) => {
           model: PostImage,
           attributes: ["image-url"],
         },
-        // ⬇️⬇️⬇️ ضيف الـ Likes هنا ⬇️⬇️⬇️
         {
           model: Like,
           attributes: ["like_id", "user-id"],
@@ -449,7 +306,6 @@ const getGroupPosts = async (req, res) => {
             },
           ],
         },
-        // ⬇️⬇️⬇️ ضيف الـ Comments هنا ⬇️⬇️⬇️
         {
           model: Comment,
           attributes: [
@@ -484,6 +340,12 @@ const getGroupPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
+    logger.info("Group posts fetched successfully", { 
+      groupId, 
+      postsCount: posts.length,
+      userId 
+    });
+
     const currentUserId = req.user?.id || null;
 
     const responseData = posts.map((post) => {
@@ -495,7 +357,6 @@ const getGroupPosts = async (req, res) => {
         image = null;
       }
 
-      // Calculate likesCount and isLikedByYou
       const likesCount = post.Likes ? post.Likes.length : 0;
       const isLikedByYou = currentUserId
         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
@@ -565,7 +426,12 @@ const getGroupPosts = async (req, res) => {
       data: responseData,
     });
   } catch (error) {
-    console.error("Error details:", error);
+    logger.error("Error in getGroupPosts", {
+      groupId: req.params.groupId,
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: "Failed to fetch group posts: " + error.message,
@@ -573,219 +439,6 @@ const getGroupPosts = async (req, res) => {
     });
   }
 };
-
-// const getAllPostsOfUsers = async (req, res) => {
-//   try {
-//     const user = req.user;
-//     const isAdmin = user && user["user-type"] === "admin";
-//     const isStaff = user && user["user-type"] === "staff";
-//     const isGraduate = user && user["user-type"] === "graduate";
-
-//     const page = parseInt(req.query.page) || 1;
-//     const limit = parseInt(req.query.limit) || 10;
-//     const offset = (page - 1) * limit;
-
-//     let whereCondition = {};
-
-//     if (isAdmin) {
-//       // الأدمن يشوف كل البوستات
-//       whereCondition = {};
-//     } else if (isStaff) {
-//       // الستاف يشوف البوستات الظاهرة فقط
-//       whereCondition = { "is-hidden": false };
-//     } else if (isGraduate) {
-//       // الخريج يشوف: بوستاته + بوستات أصدقائه + كل بوستات الأدمن
-//       const friendships = await Friendship.findAll({
-//         where: {
-//           [Op.or]: [
-//             { sender_id: user.id, status: "accepted" },
-//             { receiver_id: user.id, status: "accepted" },
-//           ],
-//         },
-//       });
-
-//       const friendIds = friendships.map((friendship) =>
-//         friendship.sender_id === user.id
-//           ? friendship.receiver_id
-//           : friendship.sender_id
-//       );
-
-//       friendIds.push(user.id);
-
-//       // نجيب كل مستخدمين الأدمن
-//       const adminUsers = await User.findAll({
-//         where: { "user-type": "admin" },
-//         attributes: ["id"],
-//       });
-
-//       const adminIds = adminUsers.map((admin) => admin.id);
-
-//       // ندمج IDs الأصدقاء + IDs الأدمن
-//       const allAuthorIds = [...friendIds, ...adminIds];
-
-//       whereCondition = {
-//         "is-hidden": false,
-//         "author-id": { [Op.in]: allAuthorIds },
-//       };
-//     } else {
-//       whereCondition = { "is-hidden": false };
-//     }
-
-//     const posts = await Post.findAll({
-//       where: whereCondition,
-//       include: [
-//         {
-//           model: User,
-//           attributes: ["id", "first-name", "last-name", "email", "user-type"],
-//           include: [
-//             { model: Graduate, attributes: ["profile-picture-url"] },
-//             { model: Staff, attributes: ["status-to-login"] },
-//           ],
-//         },
-//         {
-//           model: PostImage,
-//           attributes: ["image-url"],
-//         },
-//         {
-//           model: Like,
-//           attributes: ["like_id", "user-id"],
-//           include: [
-//             {
-//               model: User,
-//               attributes: ["id", "first-name", "last-name"],
-//             },
-//           ],
-//         },
-//         {
-//           model: Comment,
-//           attributes: [
-//             "comment_id",
-//             "content",
-//             "created-at",
-//             "edited",
-//             "author-id",
-//           ],
-//           include: [
-//             {
-//               model: User,
-//               attributes: [
-//                 "id",
-//                 "first-name",
-//                 "last-name",
-//                 "email",
-//                 "user-type",
-//               ],
-//               include: [
-//                 {
-//                   model: Graduate,
-//                   as: "Graduate",
-//                   attributes: ["profile-picture-url"],
-//                 },
-//               ],
-//             },
-//           ],
-//           order: [["created-at", "DESC"]],
-//         },
-//       ],
-//       order: [["created-at", "DESC"]],
-//       limit: limit,
-//       offset: offset,
-//     });
-
-//     const totalPosts = await Post.count({ where: whereCondition });
-//     const totalPages = Math.ceil(totalPosts / limit);
-//     const hasMore = page < totalPages;
-
-//     const currentUserId = req.user?.id || null;
-
-//     const responseData = posts.map((post) => {
-//       const likesCount = post.Likes ? post.Likes.length : 0;
-//       const isLikedByYou = currentUserId
-//         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
-//         : false;
-
-//       return {
-//         post_id: post.post_id,
-//         category: post.category,
-//         content: post.content,
-//         description: post.description,
-//         "created-at": post["created-at"],
-//         author: {
-//           id: post.User.id,
-//           "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
-//           email: post.User.email,
-//           type: post.User["user-type"],
-//           image: post.User.Graduate
-//             ? post.User.Graduate["profile-picture-url"]
-//             : null,
-//         },
-//         "group-id": post["group-id"],
-//         "in-landing": post["in-landing"],
-//         images: post.PostImages
-//           ? post.PostImages.map((img) => img["image-url"])
-//           : [],
-//         "is-hidden": post["is-hidden"],
-//         likesCount: likesCount,
-//         isLikedByYou: isLikedByYou,
-//         likes: post.Likes
-//           ? post.Likes.map((like) => ({
-//               like_id: like.like_id,
-//               user: {
-//                 id: like.User?.id || "unknown",
-//                 "full-name":
-//                   `${like.User?.["first-name"] || ""} ${
-//                     like.User?.["last-name"] || ""
-//                   }`.trim() || "Unknown User",
-//               },
-//             }))
-//           : [],
-//         comments_count: post.Comments ? post.Comments.length : 0,
-//         comments: post.Comments
-//           ? post.Comments.map((comment) => ({
-//               comment_id: comment.comment_id,
-//               content: comment.content,
-//               "created-at": comment["created-at"],
-//               time_since: moment(comment["created-at"]).fromNow(),
-//               edited: comment.edited,
-//               author: {
-//                 id: comment.User?.id || "unknown",
-//                 "full-name":
-//                   `${comment.User?.["first-name"] || ""} ${
-//                     comment.User?.["last-name"] || ""
-//                   }`.trim() || "Unknown User",
-//                 email: comment.User?.email || "unknown",
-//                 image: comment.User?.Graduate
-//                   ? comment.User.Graduate["profile-picture-url"]
-//                   : null,
-//               },
-//             }))
-//           : [],
-//       };
-//     });
-
-//     res.status(200).json({
-//       status: "success",
-//       message: "All posts fetched successfully",
-//       data: responseData,
-//       pagination: {
-//         currentPage: page,
-//         totalPages: totalPages,
-//         totalPosts: totalPosts,
-//         hasMore: hasMore,
-//         limit: limit,
-//       },
-//     });
-//   } catch (error) {
-//     console.error("Error details:", error);
-//     res.status(500).json({
-//       status: "error",
-//       message: "Failed to fetch posts: " + error.message,
-//       data: [],
-//     });
-//   }
-// };
-
-//بتجيب كل بوستات الخريجين بس
 
 const getAllPostsOfUsers = async (req, res) => {
   try {
@@ -798,16 +451,20 @@ const getAllPostsOfUsers = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
+    logger.info("Getting all posts of users", {
+      userId: user?.id,
+      userType: user?.["user-type"],
+      page,
+      limit
+    });
+
     let whereCondition = {};
 
     if (isAdmin) {
-      // الأدمن يشوف كل البوستات
       whereCondition = {};
     } else if (isStaff) {
-      // الستاف يشوف البوستات الظاهرة فقط
       whereCondition = { "is-hidden": false };
     } else if (isGraduate) {
-      // الخريج يشوف: بوستاته + بوستات أصدقائه + كل بوستات الأدمن + كل بوستات الستاف
       const friendships = await Friendship.findAll({
         where: {
           [Op.or]: [
@@ -825,7 +482,6 @@ const getAllPostsOfUsers = async (req, res) => {
 
       friendIds.push(user.id);
 
-      // نجيب كل مستخدمين الأدمن والستاف
       const adminAndStaffUsers = await User.findAll({
         where: {
           [Op.or]: [{ "user-type": "admin" }, { "user-type": "staff" }],
@@ -834,8 +490,6 @@ const getAllPostsOfUsers = async (req, res) => {
       });
 
       const adminAndStaffIds = adminAndStaffUsers.map((user) => user.id);
-
-      // ندمج IDs الأصدقاء + IDs الأدمن والستاف
       const allAuthorIds = [...friendIds, ...adminAndStaffIds];
 
       whereCondition = {
@@ -979,6 +633,13 @@ const getAllPostsOfUsers = async (req, res) => {
       };
     });
 
+    logger.info("All posts fetched successfully", {
+      totalPosts,
+      returnedPosts: posts.length,
+      page,
+      totalPages
+    });
+
     res.status(200).json({
       status: "success",
       message: "All posts fetched successfully",
@@ -992,7 +653,12 @@ const getAllPostsOfUsers = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error details:", error);
+    logger.error("Error in getAllPostsOfUsers", {
+      error: error.message,
+      stack: error.stack,
+      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+    });
+    
     res.status(500).json({
       status: "error",
       message: "Failed to fetch posts: " + error.message,
@@ -1004,13 +670,15 @@ const getAllPostsOfUsers = async (req, res) => {
 const getAllPosts = async (req, res) => {
   try {
     const user = req.user;
-    console.log("🟩 Current user from token:", user);
-
     const isAdmin = user && user["user-type"] === "admin";
     const isStaff = user && user["user-type"] === "staff";
 
-    console.log("🟦 isAdmin:", isAdmin);
-    console.log("🟨 isStaff:", isStaff);
+    logger.info("Getting all posts", {
+      userId: user?.id,
+      userType: user?.["user-type"],
+      isAdmin,
+      isStaff
+    });
 
     // ✅ التحقق من الصلاحية للـ Staff
     if (isStaff) {
@@ -1021,6 +689,10 @@ const getAllPosts = async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("STAFF PERMISSION DENIED in getAllPosts", {
+          userId: user.id,
+          requiredPermission: "Graduates posts management"
+        });
         return res.status(403).json({
           status: "error",
           message:
@@ -1030,9 +702,7 @@ const getAllPosts = async (req, res) => {
       }
     }
 
-    // ⬅️ الشرط الجديد: Admin و Staff يشوفوا الكل
     const whereCondition = isAdmin || isStaff ? {} : { "is-hidden": false };
-    console.log("🟨 whereCondition used:", whereCondition);
 
     const posts = await Post.findAll({
       where: whereCondition,
@@ -1091,11 +761,10 @@ const getAllPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    console.log("🟧 Posts fetched count:", posts.length);
-    console.log(
-      "🟪 Sample post is-hidden values:",
-      posts.slice(0, 3).map((p) => p["is-hidden"])
-    );
+    logger.info("Posts fetched successfully", {
+      postsCount: posts.length,
+      whereCondition
+    });
 
     const currentUserId = req.user?.id || null;
 
@@ -1170,7 +839,12 @@ const getAllPosts = async (req, res) => {
       data: responseData,
     });
   } catch (error) {
-    console.error("❌ Error details:", error);
+    logger.error("Error in getAllPosts", {
+      error: error.message,
+      stack: error.stack,
+      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+    });
+    
     res.status(500).json({
       status: "error",
       message: "Failed to fetch posts: " + error.message,
@@ -1184,11 +858,18 @@ const hideNegativePost = async (req, res) => {
     const user = req.user;
     const { postId } = req.params;
 
+    logger.info("Attempting to hide post", { postId, userId: user?.id, userType: user?.["user-type"] });
+
     // ✅ التعديل هنا: لازم يكون Admin أو Staff
     if (
       !user ||
       (user["user-type"] !== "admin" && user["user-type"] !== "staff")
     ) {
+      logger.warn("UNAUTHORIZED hide post attempt", {
+        postId,
+        userId: user?.id,
+        userType: user?.["user-type"]
+      });
       return res.status(403).json({
         status: "fail",
         message: "Only admins and staff can hide posts",
@@ -1205,6 +886,11 @@ const hideNegativePost = async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("STAFF PERMISSION DENIED for hide post", {
+          userId: user.id,
+          postId,
+          requiredPermission: "Graduates posts management"
+        });
         return res.status(403).json({
           status: "fail",
           message:
@@ -1217,6 +903,7 @@ const hideNegativePost = async (req, res) => {
     // 🔍 تأكد أن البوست موجود
     const post = await Post.findByPk(postId);
     if (!post) {
+      logger.warn("Post not found for hiding", { postId });
       return res.status(404).json({
         status: "fail",
         message: "Post not found",
@@ -1224,8 +911,15 @@ const hideNegativePost = async (req, res) => {
       });
     }
 
-    // ✅ نحدث العمود يدويًا في قاعدة البيانات (بدون post.save)
+    // ✅ نحدث العمود يدويًا في قاعدة البيانات
     await Post.update({ "is-hidden": true }, { where: { post_id: postId } });
+
+    logger.info("Post hidden successfully", {
+      postId,
+      userId: user.id,
+      userType: user["user-type"],
+      postContent: post.content.substring(0, 100)
+    });
 
     return res.status(200).json({
       status: "success",
@@ -1239,7 +933,13 @@ const hideNegativePost = async (req, res) => {
       ],
     });
   } catch (err) {
-    console.error("Error in hideNegativePost:", err);
+    logger.error("Error in hideNegativePost", {
+      postId: req.params.postId,
+      error: err.message,
+      stack: err.stack,
+      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+    });
+    
     return res.status(500).json({
       status: "error",
       message: err.message,
@@ -1253,11 +953,18 @@ const unhidePost = async (req, res) => {
     const user = req.user;
     const { postId } = req.params;
 
+    logger.info("Attempting to unhide post", { postId, userId: user?.id, userType: user?.["user-type"] });
+
     // ✅ التعديل هنا: لازم يكون Admin أو Staff
     if (
       !user ||
       (user["user-type"] !== "admin" && user["user-type"] !== "staff")
     ) {
+      logger.warn("UNAUTHORIZED unhide post attempt", {
+        postId,
+        userId: user?.id,
+        userType: user?.["user-type"]
+      });
       return res.status(403).json({
         status: "fail",
         message: "Only admins and staff can unhide posts",
@@ -1274,6 +981,11 @@ const unhidePost = async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("STAFF PERMISSION DENIED for unhide post", {
+          userId: user.id,
+          postId,
+          requiredPermission: "Graduates posts management"
+        });
         return res.status(403).json({
           status: "fail",
           message:
@@ -1286,6 +998,7 @@ const unhidePost = async (req, res) => {
     // 🔍 تأكد أن البوست موجود
     const post = await Post.findByPk(postId);
     if (!post) {
+      logger.warn("Post not found for unhiding", { postId });
       return res.status(404).json({
         status: "fail",
         message: "Post not found",
@@ -1295,6 +1008,13 @@ const unhidePost = async (req, res) => {
 
     // ✅ نحدث العمود يدويًا
     await Post.update({ "is-hidden": false }, { where: { post_id: postId } });
+
+    logger.info("Post unhidden successfully", {
+      postId,
+      userId: user.id,
+      userType: user["user-type"],
+      postContent: post.content.substring(0, 100)
+    });
 
     return res.status(200).json({
       status: "success",
@@ -1308,7 +1028,13 @@ const unhidePost = async (req, res) => {
       ],
     });
   } catch (err) {
-    console.error("Error in unhidePost:", err);
+    logger.error("Error in unhidePost", {
+      postId: req.params.postId,
+      error: err.message,
+      stack: err.stack,
+      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+    });
+    
     return res.status(500).json({
       status: "error",
       message: err.message,
@@ -1319,11 +1045,16 @@ const unhidePost = async (req, res) => {
 
 const getAdminPosts = async (req, res) => {
   try {
+    logger.info("Getting admin posts", { userId: req.user?.id, userType: req.user?.["user-type"] });
+
     // 1. تحديد اليوزر types المسموح لهم - كل اليوزر types
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      logger.warn("ACCESS DENIED in getAdminPosts", {
+        userType: req.user ? req.user["user-type"] : "undefined"
+      });
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -1340,6 +1071,10 @@ const getAdminPosts = async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("STAFF PERMISSION DENIED in getAdminPosts", {
+          userId: req.user.id,
+          requiredPermission: "Portal posts management"
+        });
         return res.status(403).json({
           status: "error",
           message:
@@ -1357,7 +1092,7 @@ const getAdminPosts = async (req, res) => {
           attributes: ["id", "first-name", "last-name", "email", "user-type"],
           where: {
             "user-type": {
-              [Op.in]: ["admin", "staff"], // ⬅️ التعديل هنا: نجيب الأدمن والستاف
+              [Op.in]: ["admin", "staff"],
             },
           },
         },
@@ -1371,7 +1106,7 @@ const getAdminPosts = async (req, res) => {
           include: [
             {
               model: User,
-              attributes: ["id", "first-name", "last-name", "user-type"], // ⬅️ إضافة user-type هنا
+              attributes: ["id", "first-name", "last-name", "user-type"],
             },
           ],
         },
@@ -1409,10 +1144,11 @@ const getAdminPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
+    logger.info("Admin posts fetched successfully", { postsCount: posts.length });
+
     const currentUserId = req.user?.id || null;
 
     const responseData = posts.map((post) => {
-      // Calculate likesCount and isLikedByYou
       const likesCount = post.Likes ? post.Likes.length : 0;
       const isLikedByYou = currentUserId
         ? post.Likes?.some((like) => like["user-id"] === currentUserId) || false
@@ -1431,7 +1167,7 @@ const getAdminPosts = async (req, res) => {
               post.User?.["last-name"] || ""
             }`.trim() || "Unknown User",
           email: post.User?.email || "unknown",
-          type: post.User?.["user-type"] || "unknown", // ⬅️ بنضيف نوع اليوزر
+          type: post.User?.["user-type"] || "unknown",
         },
         "group-id": post["group-id"],
         images: post.PostImages
@@ -1448,7 +1184,7 @@ const getAdminPosts = async (req, res) => {
                   `${like.User?.["first-name"] || ""} ${
                     like.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
-                "user-type": like.User?.["user-type"] || "unknown", // ⬅️ إضافة user-type هنا
+                "user-type": like.User?.["user-type"] || "unknown",
               },
             }))
           : [],
@@ -1467,7 +1203,7 @@ const getAdminPosts = async (req, res) => {
                     comment.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
                 email: comment.User?.email || "unknown",
-                "user-type": comment.User?.["user-type"] || "unknown", // ⬅️ إضافة user-type هنا
+                "user-type": comment.User?.["user-type"] || "unknown",
                 image: comment.User?.Graduate
                   ? comment.User.Graduate["profile-picture-url"]
                   : null,
@@ -1480,11 +1216,16 @@ const getAdminPosts = async (req, res) => {
 
     res.status(200).json({
       status: "success",
-      message: "Admin and staff posts fetched successfully", // ⬅️ عدلنا الرسالة
+      message: "Admin and staff posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
-    console.error("Error fetching admin and staff posts:", error);
+    logger.error("Error in getAdminPosts", {
+      error: error.message,
+      stack: error.stack,
+      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+    });
+    
     res.status(500).json({
       status: "error",
       message: "Failed to fetch admin and staff posts",
@@ -1492,10 +1233,15 @@ const getAdminPosts = async (req, res) => {
     });
   }
 };
-//
+
 const getGraduatePosts = async (req, res) => {
   try {
+    logger.info("Getting graduate posts", { userId: req.user?.id });
+
     if (!req.user || req.user["user-type"] !== "graduate") {
+      logger.warn("UNAUTHORIZED access to graduate posts", {
+        userType: req.user ? req.user["user-type"] : "undefined"
+      });
       return res.status(403).json({
         status: "error",
         message: "Not authorized as a graduate",
@@ -1564,6 +1310,11 @@ const getGraduatePosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
+    logger.info("Graduate posts fetched successfully", { 
+      userId: req.user.id, 
+      postsCount: posts.length 
+    });
+
     const currentUserId = req.user?.id || null;
 
     const responseData = posts.map((post) => {
@@ -1582,7 +1333,7 @@ const getGraduatePosts = async (req, res) => {
           id: post.User.id,
           "full-name": `${post.User["first-name"]} ${post.User["last-name"]}`,
           email: post.User.email,
-          "user-type": post.User["user-type"], // أضيف هنا
+          "user-type": post.User["user-type"],
           image: post.User.Graduate
             ? post.User.Graduate["profile-picture-url"]
             : null,
@@ -1604,7 +1355,7 @@ const getGraduatePosts = async (req, res) => {
                   `${like.User?.["first-name"] || ""} ${
                     like.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
-                "user-type": like.User?.["user-type"] || "unknown", // أضيف هنا
+                "user-type": like.User?.["user-type"] || "unknown",
               },
             }))
           : [],
@@ -1623,7 +1374,7 @@ const getGraduatePosts = async (req, res) => {
                     comment.User?.["last-name"] || ""
                   }`.trim() || "Unknown User",
                 email: comment.User?.email || "unknown",
-                "user-type": comment.User?.["user-type"] || "unknown", // أضيف هنا
+                "user-type": comment.User?.["user-type"] || "unknown",
                 image: comment.User?.Graduate
                   ? comment.User.Graduate["profile-picture-url"]
                   : null,
@@ -1639,7 +1390,12 @@ const getGraduatePosts = async (req, res) => {
       data: responseData,
     });
   } catch (error) {
-    console.error("Error fetching graduate posts:", error);
+    logger.error("Error in getGraduatePosts", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id
+    });
+    
     res.status(500).json({
       status: "error",
       message: "Failed to fetch graduate posts: " + error.message,
@@ -1647,10 +1403,12 @@ const getGraduatePosts = async (req, res) => {
     });
   }
 };
-// Get user's own posts
+
 const getMyPosts = async (req, res) => {
   try {
     const userId = req.user.id;
+    
+    logger.info("Getting user's own posts", { userId });
 
     const posts = await Post.findAll({
       where: { "author-id": userId },
@@ -1682,7 +1440,6 @@ const getMyPosts = async (req, res) => {
     });
 
     const responseData = posts.map((post) => {
-      // Calculate likesCount and isLikedByYou
       const likesCount = post.Likes ? post.Likes.length : 0;
       const isLikedByYou =
         post.Likes?.some((like) => like["user-id"] === userId) || false;
@@ -1713,13 +1470,20 @@ const getMyPosts = async (req, res) => {
       };
     });
 
+    logger.info("User posts fetched successfully", { userId, postsCount: posts.length });
+
     res.status(200).json({
       status: "success",
       message: "User posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
-    console.error("Error fetching user posts:", error);
+    logger.error("Error in getMyPosts", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id
+    });
+    
     res.status(500).json({
       status: "error",
       message: "Failed to fetch user posts: " + error.message,
@@ -1728,232 +1492,42 @@ const getMyPosts = async (req, res) => {
   }
 };
 
-// const editPost = async (req, res) => {
-//   try {
-//     const { postId } = req.params;
-//     const { category, type, content, link, groupId, inLanding, removeImages } =
-//       req.body;
-
-//     // تحديد الكاتيجوري النهائي
-//     const finalCategory = category || type;
-
-//     // الحصول على البوست من قاعدة البيانات
-//     const post = await Post.findByPk(postId, {
-//       include: [
-//         { model: PostImage, attributes: ["image-url"] },
-//         {
-//           model: User,
-//           attributes: ["id", "user-type"], // ⬅️ بنجيب نوع اليوزر عشان نتحقق
-//         },
-//       ],
-//     });
-
-//     if (!post) {
-//       return res.status(404).json({
-//         status: "error",
-//         message: "Post not found",
-//       });
-//     }
-
-//     // ⬇️⬇️⬇️ التحقق الجديد: منع التعديل إذا البوست مخفي ⬇️⬇️⬇️
-//     if (post["is-hidden"]) {
-//       return res.status(403).json({
-//         status: "error",
-//         message: "Cannot edit a hidden post",
-//       });
-//     }
-
-//     // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بالتعديل على بوستات الأدمن ⬇️⬇️⬇️
-//     const isPostOwner = post["author-id"] === req.user.id;
-//     const isStaffEditingAdminPost =
-//       req.user["user-type"] === "staff" && post.User["user-type"] === "admin";
-
-//     if (!isPostOwner && !isStaffEditingAdminPost) {
-//       return res.status(403).json({
-//         status: "error",
-//         message: "You can only edit your own posts or admin posts (for staff)",
-//       });
-//     }
-
-//     // تحديث الحقول
-//     if (finalCategory !== undefined) post.category = finalCategory;
-//     if (content !== undefined) post.content = content;
-//     if (link !== undefined) post.link = link;
-//     if (groupId !== undefined)
-//       post["group-id"] = groupId === null ? null : groupId;
-//     if (inLanding !== undefined) post["in-landing"] = inLanding;
-
-//     await post.save();
-
-//     // حذف الصور المطلوبة
-//     if (
-//       removeImages &&
-//       Array.isArray(removeImages) &&
-//       removeImages.length > 0
-//     ) {
-//       await PostImage.destroy({
-//         where: { "post-id": postId, "image-url": removeImages },
-//       });
-//     }
-
-//     // إضافة صور جديدة (لو موجودة)
-//     if (req.files && req.files.length > 0) {
-//       const uploadedImages = req.files.map((file) => ({
-//         "post-id": postId,
-//         "image-url": file.path || file.url || file.location,
-//       }));
-//       await PostImage.bulkCreate(uploadedImages);
-//     }
-
-//     // جلب البوست بعد التحديث
-//     const updatedPost = await Post.findByPk(postId, {
-//       include: [
-//         {
-//           model: User,
-//           attributes: ["id", "first-name", "last-name", "email", "user-type"],
-//         },
-//         {
-//           model: PostImage,
-//           attributes: ["image-url"],
-//         },
-//       ],
-//     });
-
-//     const responseData = {
-//       ...updatedPost.toJSON(),
-//       images: updatedPost.PostImages
-//         ? updatedPost.PostImages.map((img) => img["image-url"])
-//         : [],
-//       author: {
-//         id: updatedPost.User.id,
-//         "full-name": `${updatedPost.User["first-name"]} ${updatedPost.User["last-name"]}`,
-//         email: updatedPost.User.email,
-//       },
-//     };
-
-//     return res.status(200).json({
-//       status: "success",
-//       message: "Post updated successfully",
-//       data: responseData,
-//     });
-//   } catch (error) {
-//     return res.status(500).json({
-//       status: "error",
-//       message: error.message,
-//     });
-//   }
-// };
-
-//edit post
 const editPost = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { category, type, content, link, groupId, inLanding, removeImages } =
-      req.body;
+    const { category, type, content, link, groupId, inLanding, removeImages } = req.body;
 
-    // 1. تحديد اليوزر types المسموح لهم
-    const allowedUserTypes = ["admin", "staff", "graduate"];
-
-    // 2. لو مش من النوع المسموح → ارفض
-    if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
-      return res.status(403).json({
-        status: "error",
-        message: "Access denied.",
-      });
-    }
-
-    // 3. لو staff → تحقق من الصلاحيات (Community أو Portal)
-    if (req.user["user-type"] === "staff") {
-      const hasCommunityPermission = await checkStaffPermission(
-        req.user.id,
-        "Community Post's management",
-        "edit"
-      );
-
-      const hasPortalPermission = await checkStaffPermission(
-        req.user.id,
-        "Portal posts management",
-        "edit"
-      );
-
-      // Staff هيقدر يعدل لو عنده أي من الصلاحيتين
-      if (!hasCommunityPermission && !hasPortalPermission) {
-        return res.status(403).json({
-          status: "error",
-          message: "Access denied. You don't have permission to edit posts.",
-        });
-      }
-    }
-
-    // 4. لو admin أو graduate أو staff مع صلاحية → اتركه يكمل
-    // تحديد الكاتيجوري النهائي
-    const finalCategory = category || type;
-
-    // الحصول على البوست من قاعدة البيانات
     const post = await Post.findByPk(postId, {
-      include: [
-        { model: PostImage, attributes: ["image-url"] },
-        {
-          model: User,
-          attributes: ["id", "user-type"],
-        },
-      ],
+      include: [{ model: PostImage, attributes: ["image-url"] }],
     });
 
     if (!post) {
-      return res.status(404).json({
-        status: "error",
-        message: "Post not found",
-      });
+      return res.status(404).json({ status: "error", message: "Post not found" });
     }
 
-    // ⬇️⬇️⬇️ التحقق الجديد: منع التعديل إذا البوست مخفي ⬇️⬇️⬇️
-    if (post["is-hidden"]) {
-      return res.status(403).json({
-        status: "error",
-        message: "Cannot edit a hidden post",
-      });
-    }
-
-    // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بالتعديل على بوستات الأدمن والادمن على بوستات الاستاف ⬇️⬇️⬇️
-    const isPostOwner = post["author-id"] === req.user.id;
-    const isStaffEditingAdminPost =
-      req.user["user-type"] === "staff" && post.User["user-type"] === "admin";
-    const isAdminEditingStaffPost =
-      req.user["user-type"] === "admin" && post.User["user-type"] === "staff";
-
-    if (!isPostOwner && !isStaffEditingAdminPost && !isAdminEditingStaffPost) {
-      return res.status(403).json({
-        status: "error",
-        message:
-          "You can only edit your own posts or admin posts (for staff) or staff posts (for admin)",
-      });
-    }
+    // حفظ المحتوى القديم
+    const oldContent = post.content;
+    const oldCategory = post.category;
+    const oldImages = post.PostImages.map(img => img["image-url"]);
 
     // تحديث الحقول
-    if (finalCategory !== undefined) post.category = finalCategory;
+    if (category !== undefined) post.category = category;
+    if (type !== undefined) post.category = type; // لو type معمول له override
     if (content !== undefined) post.content = content;
     if (link !== undefined) post.link = link;
-    if (groupId !== undefined)
-      post["group-id"] = groupId === null ? null : groupId;
+    if (groupId !== undefined) post["group-id"] = groupId === null ? null : groupId;
     if (inLanding !== undefined) post["in-landing"] = inLanding;
 
     await post.save();
 
     // حذف الصور المطلوبة
-    if (
-      removeImages &&
-      Array.isArray(removeImages) &&
-      removeImages.length > 0
-    ) {
-      await PostImage.destroy({
-        where: { "post-id": postId, "image-url": removeImages },
-      });
+    if (removeImages && Array.isArray(removeImages) && removeImages.length > 0) {
+      await PostImage.destroy({ where: { "post-id": postId, "image-url": removeImages } });
     }
 
     // إضافة صور جديدة (لو موجودة)
     if (req.files && req.files.length > 0) {
-      const uploadedImages = req.files.map((file) => ({
+      const uploadedImages = req.files.map(file => ({
         "post-id": postId,
         "image-url": file.path || file.url || file.location,
       }));
@@ -1962,52 +1536,62 @@ const editPost = async (req, res) => {
 
     // جلب البوست بعد التحديث
     const updatedPost = await Post.findByPk(postId, {
-      include: [
-        {
-          model: User,
-          attributes: ["id", "first-name", "last-name", "email", "user-type"],
-        },
-        {
-          model: PostImage,
-          attributes: ["image-url"],
-        },
-      ],
+      include: [{ model: PostImage, attributes: ["image-url"] }],
     });
 
-    const responseData = {
-      ...updatedPost.toJSON(),
-      images: updatedPost.PostImages
-        ? updatedPost.PostImages.map((img) => img["image-url"])
-        : [],
-      author: {
-        id: updatedPost.User.id,
-        "full-name": `${updatedPost.User["first-name"]} ${updatedPost.User["last-name"]}`,
-        email: updatedPost.User.email,
-      },
-    };
+    const newContent = updatedPost.content;
+    const newCategory = updatedPost.category;
+    const newImages = updatedPost.PostImages.map(img => img["image-url"]);
+    const imagesChanged = JSON.stringify(oldImages) !== JSON.stringify(newImages);
+
+    // تسجيل اللوج قبل وبعد التعديل
+    logger.info("Post updated details", {
+      postId,
+      oldContent,
+      newContent,
+      oldCategory,
+      newCategory,
+      oldImages,
+      newImages,
+      imagesChanged
+    });
 
     return res.status(200).json({
       status: "success",
       message: "Post updated successfully",
-      data: responseData,
+      data: {
+        postId,
+        oldContent,
+        newContent,
+        oldCategory,
+        newCategory,
+        oldImages,
+        newImages,
+        imagesChanged
+      }
     });
+
   } catch (error) {
-    return res.status(500).json({
-      status: "error",
-      message: error.message,
+    logger.error("Error in editPost", {
+      postId: req.params.postId,
+      error: error.message,
+      stack: error.stack
     });
+    return res.status(500).json({ status: "error", message: error.message });
   }
 };
-// Like a post
-// Like a post (toggle)
+
 const likePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
 
+    logger.info("Like post attempt", { postId, userId });
+
     // تحقق من وجود البوست
     const post = await Post.findByPk(postId);
     if (!post) {
+      logger.warn("Post not found for like", { postId, userId });
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -2025,6 +1609,7 @@ const likePost = async (req, res) => {
     if (existingLike) {
       // لو موجود، نحذفه (unlike)
       await existingLike.destroy();
+      logger.info("Like removed successfully", { postId, userId });
       return res.json({
         status: HttpStatusHelper.SUCCESS,
         message: "Like removed successfully",
@@ -2042,12 +1627,21 @@ const likePost = async (req, res) => {
       await notifyPostLiked(post["author-id"], userId, postId);
     }
 
+    logger.info("Post liked successfully", { postId, userId, likeId: newLike.like_id });
+
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Post liked successfully",
       like: newLike,
     });
   } catch (error) {
+    logger.error("Error in likePost", {
+      postId: req.params.postId,
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2055,11 +1649,12 @@ const likePost = async (req, res) => {
   }
 };
 
-// Unlike a post
 const unlikePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
+
+    logger.info("Unlike post attempt", { postId, userId });
 
     // البحث عن Like
     const like = await Like.findOne({
@@ -2070,6 +1665,7 @@ const unlikePost = async (req, res) => {
     });
 
     if (!like) {
+      logger.warn("Like not found for unlike", { postId, userId });
       return res.status(404).json({
         status: "error",
         message: "Like not found",
@@ -2079,11 +1675,20 @@ const unlikePost = async (req, res) => {
     // حذف الـ Like
     await like.destroy();
 
+    logger.info("Post unliked successfully", { postId, userId });
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Post unliked successfully",
     });
   } catch (error) {
+    logger.error("Error in unlikePost", {
+      postId: req.params.postId,
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2091,16 +1696,18 @@ const unlikePost = async (req, res) => {
   }
 };
 
-// Add comment to a post
 const addComment = async (req, res) => {
   try {
     const { postId } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
 
+    logger.info("Add comment attempt", { postId, userId, contentLength: content?.length });
+
     // Check if post exists
     const post = await Post.findByPk(postId);
     if (!post) {
+      logger.warn("Post not found for comment", { postId, userId });
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -2109,6 +1716,7 @@ const addComment = async (req, res) => {
 
     // Validate content
     if (!content || content.trim().length === 0) {
+      logger.warn("Empty comment content", { postId, userId });
       return res.status(400).json({
         status: "error",
         message: "Comment content is required",
@@ -2122,7 +1730,6 @@ const addComment = async (req, res) => {
       "author-id": userId,
     });
 
-    // ⬇️⬇️⬇️ التصحيح هنا - زود الـ Graduate include ⬇️⬇️⬇️
     const commentWithAuthor = await Comment.findByPk(newComment.comment_id, {
       include: [
         {
@@ -2131,7 +1738,7 @@ const addComment = async (req, res) => {
           include: [
             {
               model: Graduate,
-              attributes: ["profile-picture-url"], // ⬅️ زود دي
+              attributes: ["profile-picture-url"],
             },
           ],
         },
@@ -2148,6 +1755,13 @@ const addComment = async (req, res) => {
       );
     }
 
+    logger.info("Comment added successfully", {
+      postId,
+      userId,
+      content,
+      commentId: newComment.comment_id
+    });
+
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Comment added successfully",
@@ -2162,12 +1776,18 @@ const addComment = async (req, res) => {
           email: commentWithAuthor.User.email,
           image: commentWithAuthor.User.Graduate
             ? commentWithAuthor.User.Graduate["profile-picture-url"]
-            : null, // ⬅️ وزود دي
+            : null,
         },
       },
     });
   } catch (error) {
-    console.error(error);
+    logger.error("Error in addComment", {
+      postId: req.params.postId,
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2175,18 +1795,18 @@ const addComment = async (req, res) => {
   }
 };
 
-// Edit comment
 const editComment = async (req, res) => {
   try {
     const { commentId } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
 
-    // Any authenticated user can edit their own comments
+    logger.info("Edit comment attempt", { commentId, userId });
 
     // Find the comment
     const comment = await Comment.findByPk(commentId);
     if (!comment) {
+      logger.warn("Comment not found for editing", { commentId, userId });
       return res.status(404).json({
         status: "error",
         message: "Comment not found",
@@ -2195,6 +1815,7 @@ const editComment = async (req, res) => {
 
     // Check if user owns the comment
     if (comment["author-id"] !== userId) {
+      logger.warn("UNAUTHORIZED comment edit attempt", { commentId, userId, authorId: comment["author-id"] });
       return res.status(403).json({
         status: "error",
         message: "You can only edit your own comments",
@@ -2203,6 +1824,7 @@ const editComment = async (req, res) => {
 
     // Validate content
     if (!content || content.trim().length === 0) {
+      logger.warn("Empty comment content for edit", { commentId, userId });
       return res.status(400).json({
         status: "error",
         message: "Comment content is required",
@@ -2235,6 +1857,8 @@ const editComment = async (req, res) => {
       ],
     });
 
+    logger.info("Comment updated successfully", { commentId, userId });
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Comment updated successfully",
@@ -2251,7 +1875,13 @@ const editComment = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    logger.error("Error in editComment", {
+      commentId: req.params.commentId,
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2259,17 +1889,17 @@ const editComment = async (req, res) => {
   }
 };
 
-// Delete comment (users can delete their own comments)
 const deleteComment = async (req, res) => {
   try {
     const { commentId } = req.params;
     const userId = req.user.id;
 
-    // Any authenticated user can delete their own comments
+    logger.info("Delete comment attempt", { commentId, userId });
 
     // Find the comment
     const comment = await Comment.findByPk(commentId);
     if (!comment) {
+      logger.warn("Comment not found for deletion", { commentId, userId });
       return res.status(404).json({
         status: "error",
         message: "Comment not found",
@@ -2278,6 +1908,11 @@ const deleteComment = async (req, res) => {
 
     // Check if user owns the comment
     if (comment["author-id"] !== userId) {
+      logger.warn("UNAUTHORIZED comment deletion attempt", { 
+        commentId, 
+        userId, 
+        authorId: comment["author-id"] 
+      });
       return res.status(403).json({
         status: "error",
         message: "You can only delete your own comments",
@@ -2296,12 +1931,20 @@ const deleteComment = async (req, res) => {
       await notifyCommentDeleted(post["author-id"], userId, postId);
     }
 
+    logger.info("Comment deleted successfully", { commentId, userId, postId,co });
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Comment deleted successfully",
     });
   } catch (error) {
-    console.error(error);
+    logger.error("Error in deleteComment", {
+      commentId: req.params.commentId,
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2309,86 +1952,23 @@ const deleteComment = async (req, res) => {
   }
 };
 
-// Delete post - Users can delete their own posts, Admins can delete any post
-// const deletePost = async (req, res) => {
-//   try {
-//     const { postId } = req.params;
-//     const userId = req.user.id;
-
-//     // Find the post
-//     const post = await Post.findByPk(postId);
-//     if (!post) {
-//       return res.status(404).json({
-//         status: "error",
-//         message: "Post not found",
-//       });
-//     }
-
-//     // ⬇️⬇️⬇️ التحقق الجديد: منع الحذف إذا البوست مخفي ⬇️⬇️⬇️
-//     if (post["is-hidden"]) {
-//       return res.status(403).json({
-//         status: "error",
-//         message: "Cannot delete a hidden post",
-//       });
-//     }
-
-//     // Check if the post was created by the current staff member or by a graduate
-//     const postAuthor = await User.findByPk(post["author-id"]);
-//     if (!postAuthor) {
-//       return res.status(404).json({
-//         status: "error",
-//         message: "Post author not found",
-//       });
-//     }
-
-//     // ⬇️⬇️⬇️ التعديل هنا: السماح للـ Staff بحذف بوستات الأدمن ⬇️⬇️⬇️
-//     const isOwnPost = post["author-id"] === userId;
-//     const isGraduatePost = postAuthor["user-type"] === "graduate";
-//     const isStaffDeletingAdminPost =
-//       req.user["user-type"] === "staff" && postAuthor["user-type"] === "admin";
-
-//     // Allow deleting if:
-//     // 1) It's the user's own post, OR
-//     // 2) It's a graduate's post, OR
-//     // 3) Staff is deleting an admin's post
-//     if (!isOwnPost && !isGraduatePost && !isStaffDeletingAdminPost) {
-//       return res.status(403).json({
-//         status: "error",
-//         message:
-//           "You can only delete your own posts, posts created by graduates, or admin posts (for staff)",
-//       });
-//     }
-
-//     // Delete associated comments and likes first
-//     await Comment.destroy({ where: { "post-id": postId } });
-//     await Like.destroy({ where: { "post-id": postId } });
-
-//     // Delete the post
-//     await post.destroy();
-
-//     return res.status(200).json({
-//       status: HttpStatusHelper.SUCCESS,
-//       message: "Post deleted successfully",
-//     });
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({
-//       status: HttpStatusHelper.ERROR,
-//       message: error.message,
-//     });
-//   }
-// };
-
 const deletePost = async (req, res) => {
   try {
     const { postId } = req.params;
     const userId = req.user.id;
+
+    logger.info("Delete post attempt", { postId, userId,content, userType: req.user["user-type"] });
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!userId || !allowedUserTypes.includes(req.user["user-type"])) {
+      logger.warn("UNAUTHORIZED delete post attempt", {
+        postId,
+        userId,
+        userType: req.user["user-type"]
+      });
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -2411,6 +1991,12 @@ const deletePost = async (req, res) => {
 
       // Staff هيقدر يحذف لو عنده أي من الصلاحيتين
       if (!hasCommunityPermission && !hasPortalPermission) {
+        logger.warn("STAFF PERMISSION DENIED for delete post", {
+          userId,
+          postId,
+          hasCommunityPermission,
+          hasPortalPermission
+        });
         return res.status(403).json({
           status: "error",
           message: "Access denied. You don't have permission to delete posts.",
@@ -2422,6 +2008,7 @@ const deletePost = async (req, res) => {
     // Find the post
     const post = await Post.findByPk(postId);
     if (!post) {
+      logger.warn("Post not found for deletion", { postId, userId });
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -2430,6 +2017,7 @@ const deletePost = async (req, res) => {
 
     // ⬇️⬇️⬇️ التحقق الجديد: منع الحذف إذا البوست مخفي ⬇️⬇️⬇️
     if (post["is-hidden"]) {
+      logger.warn("Attempt to delete hidden post", { postId, userId });
       return res.status(403).json({
         status: "error",
         message: "Cannot delete a hidden post",
@@ -2439,6 +2027,7 @@ const deletePost = async (req, res) => {
     // Check if the post was created by the current staff member or by a graduate
     const postAuthor = await User.findByPk(post["author-id"]);
     if (!postAuthor) {
+      logger.error("Post author not found", { postId, authorId: post["author-id"] });
       return res.status(404).json({
         status: "error",
         message: "Post author not found",
@@ -2464,6 +2053,17 @@ const deletePost = async (req, res) => {
       !isStaffDeletingAdminPost &&
       !isAdminDeletingStaffPost
     ) {
+      logger.warn("UNAUTHORIZED post deletion - permission issue", {
+        postId,
+        userId,
+        userType: req.user["user-type"],
+        authorId: post["author-id"],
+        authorType: postAuthor["user-type"],
+        isOwnPost,
+        isGraduatePost,
+        isStaffDeletingAdminPost,
+        isAdminDeletingStaffPost
+      });
       return res.status(403).json({
         status: "error",
         message:
@@ -2478,12 +2078,26 @@ const deletePost = async (req, res) => {
     // Delete the post
     await post.destroy();
 
+    logger.info("Post deleted successfully", {
+      postId,
+      userId,
+      userType: req.user["user-type"],
+      authorId: post["author-id"],
+      authorType: postAuthor["user-type"]
+    });
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Post deleted successfully",
     });
   } catch (error) {
-    console.error(error);
+    logger.error("Error in deletePost", {
+      postId: req.params.postId,
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2491,14 +2105,16 @@ const deletePost = async (req, res) => {
   }
 };
 
-// Get post with comments and likes
 const getPostWithDetails = async (req, res) => {
   try {
     const { postId } = req.params;
 
+    logger.info("Getting post with details", { postId, userId: req.user?.id });
+
     // Get the post
     const post = await Post.findByPk(postId);
     if (!post) {
+      logger.warn("Post not found for details", { postId });
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -2557,6 +2173,7 @@ const getPostWithDetails = async (req, res) => {
       ],
       order: [["created-at", "ASC"]],
     });
+
     // Group replies by parent comment
     const repliesByParent = {};
     replies.forEach((reply) => {
@@ -2602,7 +2219,7 @@ const getPostWithDetails = async (req, res) => {
         comment_id: comment.comment_id,
         content: comment.content,
         "created-at": comment["created-at"],
-        time_since: moment(comment["created-at"]).fromNow(), // الوقت منذ إنشاء الكومنت
+        time_since: moment(comment["created-at"]).fromNow(),
         edited: comment.edited,
         "parent-comment-id": comment["parent-comment-id"],
         author: {
@@ -2643,13 +2260,20 @@ const getPostWithDetails = async (req, res) => {
       isLikedByYou: isLikedByYou,
     };
 
+    logger.info("Post details fetched successfully", { postId });
+
     res.status(200).json({
       status: "success",
       message: "Post details fetched successfully",
       data: responseData,
     });
   } catch (error) {
-    console.error("Error fetching post details:", error);
+    logger.error("Error in getPostWithDetails", {
+      postId: req.params.postId,
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       status: "error",
       message: "Failed to fetch post details: " + error.message,
@@ -2660,11 +2284,15 @@ const getPostWithDetails = async (req, res) => {
 
 const getCategories = async (req, res) => {
   try {
+    logger.info("Getting post categories", { userId: req.user?.id });
+
     // query مباشر من PostgreSQL علشان يجيب القيم بتاعت ENUM
     const query = `
       SELECT unnest(enum_range(NULL::"enum_Post_category")) AS category;
     `;
     const [results] = await Post.sequelize.query(query);
+
+    logger.info("Categories fetched successfully", { categoriesCount: results.length });
 
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -2672,7 +2300,11 @@ const getCategories = async (req, res) => {
       data: results.map((r) => r.category),
     });
   } catch (error) {
-    console.error("Error details:", error);
+    logger.error("Error in getCategories", {
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: "Failed to fetch categories: " + error.message,
@@ -2681,16 +2313,18 @@ const getCategories = async (req, res) => {
   }
 };
 
-// Reply to a comment
 const addReply = async (req, res) => {
   try {
     const { commentId } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
 
+    logger.info("Add reply attempt", { commentId, userId, contentLength: content?.length });
+
     // Check if parent comment exists
     const parentComment = await Comment.findByPk(commentId);
     if (!parentComment) {
+      logger.warn("Parent comment not found for reply", { commentId, userId });
       return res.status(404).json({
         status: "error",
         message: "Parent comment not found",
@@ -2699,6 +2333,7 @@ const addReply = async (req, res) => {
 
     // Validate content
     if (!content || content.trim().length === 0) {
+      logger.warn("Empty reply content", { commentId, userId });
       return res.status(400).json({
         status: "error",
         message: "Reply content is required",
@@ -2739,6 +2374,13 @@ const addReply = async (req, res) => {
       ],
     });
 
+    logger.info("Reply added successfully", {
+      commentId,
+      userId,
+      replyId: newReply.comment_id,
+      postId: parentComment["post-id"]
+    });
+
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Reply added successfully",
@@ -2756,7 +2398,13 @@ const addReply = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    logger.error("Error in addReply", {
+      commentId: req.params.commentId,
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2764,16 +2412,18 @@ const addReply = async (req, res) => {
   }
 };
 
-// Edit a reply
 const editReply = async (req, res) => {
   try {
     const { commentId } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
 
+    logger.info("Edit reply attempt", { commentId, userId });
+
     // Find the reply
     const reply = await Comment.findByPk(commentId);
     if (!reply) {
+      logger.warn("Reply not found for editing", { commentId, userId });
       return res.status(404).json({
         status: "error",
         message: "Reply not found",
@@ -2782,6 +2432,11 @@ const editReply = async (req, res) => {
 
     // Check if user owns the reply
     if (reply["author-id"] !== userId) {
+      logger.warn("UNAUTHORIZED reply edit attempt", { 
+        commentId, 
+        userId, 
+        authorId: reply["author-id"] 
+      });
       return res.status(403).json({
         status: "error",
         message: "You can only edit your own replies",
@@ -2790,6 +2445,7 @@ const editReply = async (req, res) => {
 
     // Validate content
     if (!content || content.trim().length === 0) {
+      logger.warn("Empty reply content for edit", { commentId, userId });
       return res.status(400).json({
         status: "error",
         message: "Reply content is required",
@@ -2811,6 +2467,8 @@ const editReply = async (req, res) => {
       ],
     });
 
+    logger.info("Reply updated successfully", { commentId, userId });
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Reply updated successfully",
@@ -2828,7 +2486,13 @@ const editReply = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    logger.error("Error in editReply", {
+      commentId: req.params.commentId,
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2836,15 +2500,17 @@ const editReply = async (req, res) => {
   }
 };
 
-// Delete a reply
 const deleteReply = async (req, res) => {
   try {
     const { commentId } = req.params;
     const userId = req.user.id;
 
+    logger.info("Delete reply attempt", { commentId, userId });
+
     // Find the reply
     const reply = await Comment.findByPk(commentId);
     if (!reply) {
+      logger.warn("Reply not found for deletion", { commentId, userId });
       return res.status(404).json({
         status: "error",
         message: "Reply not found",
@@ -2853,6 +2519,11 @@ const deleteReply = async (req, res) => {
 
     // Check if user owns the reply
     if (reply["author-id"] !== userId) {
+      logger.warn("UNAUTHORIZED reply deletion attempt", { 
+        commentId, 
+        userId, 
+        authorId: reply["author-id"] 
+      });
       return res.status(403).json({
         status: "error",
         message: "You can only delete your own replies",
@@ -2870,12 +2541,20 @@ const deleteReply = async (req, res) => {
       where: { post_id: postId },
     });
 
+    logger.info("Reply deleted successfully", { commentId, userId, postId });
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Reply deleted successfully",
     });
   } catch (error) {
-    console.error(error);
+    logger.error("Error in deleteReply", {
+      commentId: req.params.commentId,
+      userId: req.user.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2883,14 +2562,16 @@ const deleteReply = async (req, res) => {
   }
 };
 
-// Get replies for a specific comment
 const getCommentReplies = async (req, res) => {
   try {
     const { commentId } = req.params;
 
+    logger.info("Getting comment replies", { commentId, userId: req.user?.id });
+
     // Check if parent comment exists
     const parentComment = await Comment.findByPk(commentId);
     if (!parentComment) {
+      logger.warn("Parent comment not found for replies", { commentId });
       return res.status(404).json({
         status: "error",
         message: "Parent comment not found",
@@ -2922,13 +2603,23 @@ const getCommentReplies = async (req, res) => {
       },
     }));
 
+    logger.info("Comment replies fetched successfully", { 
+      commentId, 
+      repliesCount: replies.length 
+    });
+
     res.status(200).json({
       status: "success",
       message: "Comment replies fetched successfully",
       data: responseData,
     });
   } catch (error) {
-    console.error("Error fetching comment replies:", error);
+    logger.error("Error in getCommentReplies", {
+      commentId: req.params.commentId,
+      error: error.message,
+      stack: error.stack
+    });
+    
     res.status(500).json({
       status: "error",
       message: "Failed to fetch comment replies: " + error.message,
@@ -2937,17 +2628,27 @@ const getCommentReplies = async (req, res) => {
   }
 };
 
-// set & delete in landong
 const toggleLandingStatus = async (req, res) => {
   try {
     const { postId } = req.params;
     const { inLanding } = req.body; // true or false
+
+    logger.info("Toggle landing status attempt", { 
+      postId, 
+      inLanding,
+      userId: req.user?.id,
+      userType: req.user?.["user-type"]
+    });
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      logger.warn("UNAUTHORIZED toggle landing status attempt", {
+        postId,
+        userType: req.user ? req.user["user-type"] : "undefined"
+      });
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -2963,6 +2664,11 @@ const toggleLandingStatus = async (req, res) => {
       );
 
       if (!hasPermission) {
+        logger.warn("STAFF PERMISSION DENIED for toggle landing status", {
+          userId: req.user.id,
+          postId,
+          requiredPermission: "Portal posts management"
+        });
         return res.status(403).json({
           status: "error",
           message:
@@ -2975,6 +2681,7 @@ const toggleLandingStatus = async (req, res) => {
     // جلب البوست
     const post = await Post.findByPk(postId);
     if (!post) {
+      logger.warn("Post not found for landing status toggle", { postId });
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -2984,6 +2691,10 @@ const toggleLandingStatus = async (req, res) => {
     // جلب صاحب البوست
     const author = await User.findByPk(post["author-id"]);
     if (!author) {
+      logger.error("Author not found for landing status toggle", { 
+        postId, 
+        authorId: post["author-id"] 
+      });
       return res.status(404).json({
         status: "error",
         message: "Author not found",
@@ -2996,6 +2707,13 @@ const toggleLandingStatus = async (req, res) => {
       post.category !== "Success story" &&
       inLanding === true
     ) {
+      logger.warn("Invalid landing page assignment for graduate", {
+        postId,
+        authorId: author.id,
+        authorType: author["user-type"],
+        category: post.category,
+        requestedInLanding: inLanding
+      });
       return res.status(400).json({
         status: "error",
         message:
@@ -3006,6 +2724,16 @@ const toggleLandingStatus = async (req, res) => {
     // تحديث الحالة
     post["in-landing"] = inLanding;
     await post.save();
+
+    logger.info("Landing status updated successfully", {
+      postId,
+      inLanding,
+      userId: req.user.id,
+      userType: req.user["user-type"],
+      authorId: author.id,
+      authorType: author["user-type"],
+      category: post.category
+    });
 
     return res.status(200).json({
       status: "success",
@@ -3021,7 +2749,13 @@ const toggleLandingStatus = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
+    logger.error("Error in toggleLandingStatus", {
+      postId: req.params.postId,
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack
+    });
+    
     return res.status(500).json({
       status: "error",
       message: "Server error",
@@ -3030,10 +2764,11 @@ const toggleLandingStatus = async (req, res) => {
   }
 };
 
-// landing posts
 const getLandingPosts = async (req, res) => {
   try {
     const currentUserId = req.user?.id || null;
+
+    logger.info("Getting landing posts", { currentUserId });
 
     // جلب جميع البوستات في اللاندينج وغير مخفية مع الصور
     const posts = await Post.findAll({
@@ -3055,6 +2790,7 @@ const getLandingPosts = async (req, res) => {
     });
 
     if (posts.length === 0) {
+      logger.info("No landing posts found");
       return res.status(200).json({
         status: "success",
         message: "No posts found",
@@ -3112,13 +2848,21 @@ const getLandingPosts = async (req, res) => {
       })
     );
 
+    logger.info("Landing posts fetched successfully", { 
+      postsCount: postsWithDetails.length 
+    });
+
     res.status(200).json({
       status: "success",
       message: "Landing page posts fetched successfully",
       data: postsWithDetails,
     });
   } catch (error) {
-    console.error("Error fetching landing posts:", error);
+    logger.error("Error in getLandingPosts", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id
+    });
 
     res.status(500).json({
       status: "error",

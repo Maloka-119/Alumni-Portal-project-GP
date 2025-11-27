@@ -14,7 +14,7 @@ const axios = require("axios");
 const { normalizeCollegeName, getCollegeNameByCode } = require("../services/facultiesService");
 const { generateQRToken, verifyQRToken } = require("../utils/qrTokenService");
 const QRCode = require("qrcode");
-
+const aes =require("../utils/aes");
 
 const getAllGraduates = async (req, res) => {
   try {
@@ -105,10 +105,20 @@ const getGraduatesInPortal = async (req, res) => {
       attributes: { exclude: ["faculty"] },
     });
 
-    const graduatesWithFaculty = graduates.map(g => ({
-      ...g.toJSON(),
-      faculty: getCollegeNameByCode(g.faculty_code, lang)
-    }));
+const graduatesWithFaculty = graduates.map(g => {
+  const obj = g.toJSON();
+
+// ديكريبشن للـ National ID
+  if (obj.User?.nationalId) {
+    obj.User.nationalId = aes.decryptNationalId(obj.User.nationalId);
+  }
+
+  return {
+    ...obj,
+    faculty: getCollegeNameByCode(g.faculty_code, lang),
+  };
+});
+
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -124,6 +134,7 @@ const getGraduatesInPortal = async (req, res) => {
     });
   }
 };
+
 
 // Get inactive graduates (requested to join) - Admin only
 const getRequestedGraduates = async (req, res) => {
@@ -180,10 +191,19 @@ const getRequestedGraduates = async (req, res) => {
       attributes: { exclude: ["faculty"] },
     });
 
-    const graduatesWithFaculty = graduates.map(g => ({
-      ...g.toJSON(),
-      faculty: getCollegeNameByCode(g.faculty_code, lang)
-    }));
+   const graduatesWithFaculty = graduates.map(g => {
+  const obj = g.toJSON();
+
+// ديكريبشن للـ National ID
+  if (obj.User?.nationalId) {
+    obj.User.nationalId = aes.decryptNationalId(obj.User.nationalId);
+  }
+
+  return {
+    ...obj,
+    faculty: getCollegeNameByCode(g.faculty_code, lang),
+  };
+});
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -199,6 +219,9 @@ const getRequestedGraduates = async (req, res) => {
     });
   }
 };
+
+
+
 
 //reject graduate by admin
 const rejectGraduate = async (req, res) => {

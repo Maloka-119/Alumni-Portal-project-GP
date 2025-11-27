@@ -13,6 +13,9 @@ const fs = require('fs');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../config/cloudinary');
 
+// استيراد الـ logger
+const { logger, securityLogger } = require('../utils/logger');
+
 // Rate limiting for message sending
 const messageRateLimit = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
@@ -76,7 +79,6 @@ const chatUpload = multer({
   }
 });
 
-
 // @desc    Get or create chat between two users
 // @route   POST /alumni-portal/chat/conversation
 // @access  Private
@@ -84,7 +86,13 @@ const getOrCreateChat = asyncHandler(async (req, res) => {
   const { otherUserId } = req.body;
   const currentUserId = req.user.id;
 
+  logger.info("Get or create chat attempt", { 
+    currentUserId, 
+    otherUserId 
+  });
+
   if (currentUserId === otherUserId) {
+    logger.warn("User attempted to create chat with themselves", { currentUserId });
     return res.status(400).json({
       status: 'error',
       message: 'Cannot create chat with yourself'
@@ -94,6 +102,7 @@ const getOrCreateChat = asyncHandler(async (req, res) => {
   // Check if users exist
   const otherUser = await User.findByPk(otherUserId);
   if (!otherUser) {
+    logger.warn("User not found for chat creation", { otherUserId });
     return res.status(404).json({
       status: 'error',
       message: 'User not found'
@@ -111,6 +120,10 @@ const getOrCreateChat = asyncHandler(async (req, res) => {
   });
 
   if (isBlocked) {
+    logger.warn("Chat creation blocked due to user block", { 
+      currentUserId, 
+      otherUserId 
+    });
     return res.status(403).json({
       status: 'error',
       message: 'Cannot start conversation with this user'
@@ -151,6 +164,7 @@ const getOrCreateChat = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
+    logger.info("Creating new chat", { currentUserId, otherUserId });
     chat = await Chat.create({
       user1_id: currentUserId,
       user2_id: otherUserId
@@ -171,6 +185,9 @@ const getOrCreateChat = asyncHandler(async (req, res) => {
         }
       ]
     });
+    logger.info("New chat created successfully", { chatId: chat.chat_id });
+  } else {
+    logger.info("Existing chat found", { chatId: chat.chat_id });
   }
 
   res.status(200).json({
@@ -184,6 +201,8 @@ const getOrCreateChat = asyncHandler(async (req, res) => {
 // @access  Private
 const getChatList = asyncHandler(async (req, res) => {
   const userId = req.user.id;
+
+  logger.info("Getting chat list", { userId });
 
   const chats = await Chat.findAll({
     where: {
@@ -239,6 +258,11 @@ const getChatList = asyncHandler(async (req, res) => {
     };
   });
 
+  logger.info("Chat list retrieved successfully", { 
+    userId, 
+    chatCount: formattedChats.length 
+  });
+
   res.status(200).json({
     status: 'success',
     data: formattedChats
@@ -253,6 +277,14 @@ const getChatMessages = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { page = 1, limit = 50, search } = req.query;
 
+  logger.info("Getting chat messages", { 
+    chatId, 
+    userId, 
+    page, 
+    limit, 
+    hasSearch: !!search 
+  });
+
   // Verify user has access to this chat
   const chat = await Chat.findOne({
     where: {
@@ -265,6 +297,7 @@ const getChatMessages = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
+    logger.warn("Chat access denied or not found", { chatId, userId });
     return res.status(404).json({
       status: 'error',
       message: 'Chat not found or access denied'
@@ -329,7 +362,18 @@ const getChatMessages = asyncHandler(async (req, res) => {
         }
       }
     );
+    logger.debug("Messages marked as delivered", { 
+      chatId, 
+      userId, 
+      updatedCount: messages.rows.length 
+    });
   }
+
+  logger.info("Chat messages retrieved successfully", { 
+    chatId, 
+    messageCount: messages.count,
+    returnedCount: messages.rows.length 
+  });
 
   res.status(200).json({
     status: 'success',
@@ -356,6 +400,13 @@ const sendMessage = asyncHandler(async (req, res) => {
   const replyToMessageId = reply_to_message_id || reply_to_id || null;
   const senderId = req.user.id;
 
+  logger.info("Sending text message", { 
+    chatId, 
+    senderId, 
+    contentLength: content?.length,
+    replyToMessageId 
+  });
+
   // Verify user has access to this chat
   const chat = await Chat.findOne({
     where: {
@@ -368,6 +419,7 @@ const sendMessage = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
+    logger.warn("Chat access denied for message sending", { chatId, senderId });
     return res.status(404).json({
       status: 'error',
       message: 'Chat not found or access denied'
@@ -386,6 +438,10 @@ const sendMessage = asyncHandler(async (req, res) => {
   });
 
   if (isBlocked) {
+    logger.warn("Message blocked due to user block", { 
+      senderId, 
+      receiverId 
+    });
     return res.status(403).json({
       status: 'error',
       message: 'Cannot send message to this user'
@@ -474,6 +530,13 @@ const sendMessage = asyncHandler(async (req, res) => {
     }
   }
 
+  logger.info("Text message sent successfully", { 
+    messageId: message.message_id, 
+    chatId, 
+    senderId, 
+    receiverId 
+  });
+
   res.status(201).json({
     status: 'success',
     data: messageWithDetails
@@ -487,6 +550,8 @@ const markAsRead = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
   const userId = req.user.id;
 
+  logger.info("Marking messages as read", { chatId, userId });
+
   // Verify user has access to this chat
   const chat = await Chat.findOne({
     where: {
@@ -499,6 +564,7 @@ const markAsRead = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
+    logger.warn("Chat access denied for marking as read", { chatId, userId });
     return res.status(404).json({
       status: 'error',
       message: 'Chat not found or access denied'
@@ -506,7 +572,7 @@ const markAsRead = asyncHandler(async (req, res) => {
   }
 
   // Mark messages as read
-  await Message.update(
+  const updateResult = await Message.update(
     { status: 'read' },
     {
       where: {
@@ -523,6 +589,12 @@ const markAsRead = asyncHandler(async (req, res) => {
     [unreadField]: 0
   });
 
+  logger.info("Messages marked as read successfully", { 
+    chatId, 
+    userId, 
+    updatedCount: updateResult[0] 
+  });
+
   res.status(200).json({
     status: 'success',
     message: 'Messages marked as read'
@@ -536,6 +608,8 @@ const editMessage = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
   const { content } = req.body;
   const userId = req.user.id;
+
+  logger.info("Editing message", { messageId, userId });
 
   const message = await Message.findByPk(messageId, {
     include: [
@@ -552,6 +626,7 @@ const editMessage = asyncHandler(async (req, res) => {
   });
 
   if (!message) {
+    logger.warn("Message not found or access denied for editing", { messageId, userId });
     return res.status(404).json({
       status: 'error',
       message: 'Message not found or access denied'
@@ -559,6 +634,11 @@ const editMessage = asyncHandler(async (req, res) => {
   }
 
   if (message.sender_id !== userId) {
+    logger.warn("Unauthorized message edit attempt", { 
+      messageId, 
+      userId, 
+      senderId: message.sender_id 
+    });
     return res.status(403).json({
       status: 'error',
       message: 'You can only edit your own messages'
@@ -617,6 +697,8 @@ const editMessage = asyncHandler(async (req, res) => {
     }
   }
 
+  logger.info("Message edited successfully", { messageId, userId });
+
   res.status(200).json({
     status: 'success',
     data: updatedMessage
@@ -629,6 +711,8 @@ const editMessage = asyncHandler(async (req, res) => {
 const deleteMessage = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
   const userId = req.user.id;
+
+  logger.info("Deleting message", { messageId, userId });
 
   const message = await Message.findByPk(messageId, {
     include: [
@@ -645,6 +729,7 @@ const deleteMessage = asyncHandler(async (req, res) => {
   });
 
   if (!message) {
+    logger.warn("Message not found or access denied for deletion", { messageId, userId });
     return res.status(404).json({
       status: 'error',
       message: 'Message not found or access denied'
@@ -652,6 +737,11 @@ const deleteMessage = asyncHandler(async (req, res) => {
   }
 
   if (message.sender_id !== userId) {
+    logger.warn("Unauthorized message deletion attempt", { 
+      messageId, 
+      userId, 
+      senderId: message.sender_id 
+    });
     return res.status(403).json({
       status: 'error',
       message: 'You can only delete your own messages'
@@ -664,6 +754,8 @@ const deleteMessage = asyncHandler(async (req, res) => {
     deleted_at: new Date(),
     content: '[Message deleted]'
   });
+
+  logger.info("Message deleted successfully", { messageId, userId });
 
   res.status(200).json({
     status: 'success',
@@ -678,7 +770,10 @@ const blockUser = asyncHandler(async (req, res) => {
   const { userId: blockedUserId, reason } = req.body;
   const blockerId = req.user.id;
 
+  logger.info("Blocking user", { blockerId, blockedUserId, reason });
+
   if (blockerId === blockedUserId) {
+    logger.warn("User attempted to block themselves", { blockerId });
     return res.status(400).json({
       status: 'error',
       message: 'Cannot block yourself'
@@ -688,6 +783,7 @@ const blockUser = asyncHandler(async (req, res) => {
   // Check if user exists
   const blockedUser = await User.findByPk(blockedUserId);
   if (!blockedUser) {
+    logger.warn("User not found for blocking", { blockedUserId });
     return res.status(404).json({
       status: 'error',
       message: 'User not found'
@@ -703,6 +799,7 @@ const blockUser = asyncHandler(async (req, res) => {
   });
 
   if (existingBlock) {
+    logger.warn("User already blocked", { blockerId, blockedUserId });
     return res.status(400).json({
       status: 'error',
       message: 'User is already blocked'
@@ -717,7 +814,7 @@ const blockUser = asyncHandler(async (req, res) => {
   });
 
   // Deactivate any existing chat
-  await Chat.update(
+  const deactivatedChats = await Chat.update(
     { is_active: false },
     {
       where: {
@@ -728,6 +825,13 @@ const blockUser = asyncHandler(async (req, res) => {
       }
     }
   );
+
+  logger.info("User blocked successfully", { 
+    blockerId, 
+    blockedUserId, 
+    blockId: block.block_id,
+    deactivatedChats: deactivatedChats[0] 
+  });
 
   res.status(201).json({
     status: 'success',
@@ -743,6 +847,8 @@ const unblockUser = asyncHandler(async (req, res) => {
   const { userId: blockedUserId } = req.params;
   const blockerId = req.user.id;
 
+  logger.info("Unblocking user", { blockerId, blockedUserId });
+
   const block = await UserBlock.findOne({
     where: {
       blocker_id: blockerId,
@@ -751,6 +857,7 @@ const unblockUser = asyncHandler(async (req, res) => {
   });
 
   if (!block) {
+    logger.warn("User not found for unblocking", { blockerId, blockedUserId });
     return res.status(404).json({
       status: 'error',
       message: 'User is not blocked'
@@ -758,6 +865,8 @@ const unblockUser = asyncHandler(async (req, res) => {
   }
 
   await block.destroy();
+
+  logger.info("User unblocked successfully", { blockerId, blockedUserId });
 
   res.status(200).json({
     status: 'success',
@@ -772,7 +881,16 @@ const reportUser = asyncHandler(async (req, res) => {
   const { reportedUserId, chatId, messageId, reason, description } = req.body;
   const reporterId = req.user.id;
 
+  logger.info("Reporting user or message", { 
+    reporterId, 
+    reportedUserId, 
+    chatId, 
+    messageId, 
+    reason 
+  });
+
   if (reporterId === reportedUserId) {
+    logger.warn("User attempted to report themselves", { reporterId });
     return res.status(400).json({
       status: 'error',
       message: 'Cannot report yourself'
@@ -782,6 +900,7 @@ const reportUser = asyncHandler(async (req, res) => {
   // Check if user exists
   const reportedUser = await User.findByPk(reportedUserId);
   if (!reportedUser) {
+    logger.warn("Reported user not found", { reportedUserId });
     return res.status(404).json({
       status: 'error',
       message: 'User not found'
@@ -798,6 +917,12 @@ const reportUser = asyncHandler(async (req, res) => {
     description: description
   });
 
+  logger.info("User/message reported successfully", { 
+    reportId: report.report_id, 
+    reporterId, 
+    reportedUserId 
+  });
+
   res.status(201).json({
     status: 'success',
     message: 'Report submitted successfully',
@@ -811,6 +936,8 @@ const reportUser = asyncHandler(async (req, res) => {
 const getBlockedUsers = asyncHandler(async (req, res) => {
   const userId = req.user.id;
 
+  logger.info("Getting blocked users list", { userId });
+
   const blockedUsers = await UserBlock.findAll({
     where: { blocker_id: userId },
     include: [
@@ -820,6 +947,11 @@ const getBlockedUsers = asyncHandler(async (req, res) => {
         attributes: ['id', 'first-name', 'last-name', 'email', 'user-type']
       }
     ]
+  });
+
+  logger.info("Blocked users list retrieved", { 
+    userId, 
+    count: blockedUsers.length 
   });
 
   res.status(200).json({
@@ -835,6 +967,8 @@ const getUserPresence = asyncHandler(async (req, res) => {
   const { userId } = req.params;
   const currentUserId = req.user.id;
 
+  logger.info("Getting user presence", { currentUserId, targetUserId: userId });
+
   // Check if users have a chat (to prevent stalking)
   const chat = await Chat.findOne({
     where: {
@@ -846,6 +980,10 @@ const getUserPresence = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
+    logger.warn("Presence access denied - no chat history", { 
+      currentUserId, 
+      targetUserId: userId 
+    });
     return res.status(403).json({
       status: 'error',
       message: 'Cannot view presence of users you have not chatted with'
@@ -863,11 +1001,14 @@ const getUserPresence = asyncHandler(async (req, res) => {
   });
 
   if (!presence) {
+    logger.warn("User presence not found", { userId });
     return res.status(404).json({
       status: 'error',
       message: 'User presence not found'
     });
   }
+
+  logger.info("User presence retrieved", { userId, status: presence.status });
 
   res.status(200).json({
     status: 'success',
@@ -879,6 +1020,10 @@ const getUserPresence = asyncHandler(async (req, res) => {
 // @route   GET /alumni-portal/chat/online-users
 // @access  Private
 const getOnlineUsers = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  logger.info("Getting online users", { userId });
+
   const onlineUsers = await UserPresence.findAll({
     where: { status: 'online' },
     include: [
@@ -888,6 +1033,11 @@ const getOnlineUsers = asyncHandler(async (req, res) => {
       }
     ],
     order: [['last_seen', 'DESC']]
+  });
+
+  logger.info("Online users retrieved", { 
+    userId, 
+    count: onlineUsers.length 
   });
 
   res.status(200).json({
@@ -901,6 +1051,8 @@ const getOnlineUsers = asyncHandler(async (req, res) => {
 // @access  Private
 const getUnreadCounts = asyncHandler(async (req, res) => {
   const userId = req.user.id;
+
+  logger.info("Getting unread counts", { userId });
 
   const chats = await Chat.findAll({
     where: {
@@ -921,6 +1073,12 @@ const getUnreadCounts = asyncHandler(async (req, res) => {
     totalUnread += unreadCount;
   }
 
+  logger.info("Unread counts retrieved", { 
+    userId, 
+    totalUnread, 
+    chatCount: Object.keys(unreadCounts).length 
+  });
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -938,7 +1096,16 @@ const searchMessages = asyncHandler(async (req, res) => {
   const { q, page = 1, limit = 20 } = req.query;
   const userId = req.user.id;
 
+  logger.info("Searching messages", { 
+    chatId, 
+    userId, 
+    query: q, 
+    page, 
+    limit 
+  });
+
   if (!q || q.trim().length < 2) {
+    logger.warn("Invalid search query", { query: q });
     return res.status(400).json({
       status: 'error',
       message: 'Search query must be at least 2 characters long'
@@ -957,6 +1124,7 @@ const searchMessages = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
+    logger.warn("Chat access denied for search", { chatId, userId });
     return res.status(404).json({
       status: 'error',
       message: 'Chat not found or access denied'
@@ -990,6 +1158,12 @@ const searchMessages = asyncHandler(async (req, res) => {
     offset: offset
   });
 
+  logger.info("Message search completed", { 
+    chatId, 
+    query: q, 
+    resultCount: messages.count 
+  });
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -1011,6 +1185,8 @@ const searchMessages = asyncHandler(async (req, res) => {
 // @access  Private
 const getMessageStats = asyncHandler(async (req, res) => {
   const userId = req.user.id;
+
+  logger.info("Getting message statistics", { userId });
 
   const stats = await Message.findAll({
     where: {
@@ -1039,6 +1215,11 @@ const getMessageStats = asyncHandler(async (req, res) => {
     result.total += parseInt(stat.count);
   });
 
+  logger.info("Message statistics retrieved", { 
+    userId, 
+    stats: result 
+  });
+
   res.status(200).json({
     status: 'success',
     data: result
@@ -1049,7 +1230,15 @@ const getMessageStats = asyncHandler(async (req, res) => {
 // @route   GET /alumni-portal/chat/moderation/dashboard
 // @access  Admin
 const getModerationDashboard = asyncHandler(async (req, res) => {
+  const userId = req.user.id;
+
+  logger.info("Accessing moderation dashboard", { userId });
+
   if (req.user['user-type'] !== 'admin') {
+    logger.warn("Unauthorized access to moderation dashboard", { 
+      userId, 
+      userType: req.user['user-type'] 
+    });
     return res.status(403).json({
       status: 'error',
       message: 'Admin access required'
@@ -1085,6 +1274,14 @@ const getModerationDashboard = asyncHandler(async (req, res) => {
     })
   ]);
 
+  logger.info("Moderation dashboard data retrieved", { 
+    adminId: userId,
+    totalReports,
+    pendingReports,
+    resolvedReports,
+    totalBlocks
+  });
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -1103,18 +1300,30 @@ const getModerationDashboard = asyncHandler(async (req, res) => {
 // @route   PUT /alumni-portal/chat/moderation/reports/:reportId
 // @access  Admin
 const updateReportStatus = asyncHandler(async (req, res) => {
+  const { reportId } = req.params;
+  const { status, adminNotes } = req.body;
+  const userId = req.user.id;
+
+  logger.info("Updating report status", { 
+    reportId, 
+    adminId: userId, 
+    newStatus: status 
+  });
+
   if (req.user['user-type'] !== 'admin') {
+    logger.warn("Unauthorized report status update attempt", { 
+      userId, 
+      userType: req.user['user-type'] 
+    });
     return res.status(403).json({
       status: 'error',
       message: 'Admin access required'
     });
   }
 
-  const { reportId } = req.params;
-  const { status, adminNotes } = req.body;
-
   const report = await ChatReport.findByPk(reportId);
   if (!report) {
+    logger.warn("Report not found for status update", { reportId });
     return res.status(404).json({
       status: 'error',
       message: 'Report not found'
@@ -1124,6 +1333,11 @@ const updateReportStatus = asyncHandler(async (req, res) => {
   await report.update({
     status: status,
     admin_notes: adminNotes
+  });
+
+  logger.info("Report status updated successfully", { 
+    reportId, 
+    newStatus: status 
   });
 
   res.status(200).json({
@@ -1143,7 +1357,19 @@ const sendImageMessage = asyncHandler(async (req, res) => {
   const replyToMessageId = reply_to_message_id || reply_to_id || null;
   const senderId = req.user.id;
 
+  logger.info("Sending image message", { 
+    chatId, 
+    senderId, 
+    replyToMessageId,
+    file: req.file ? {
+      originalname: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    } : 'No file'
+  });
+
   if (!req.file) {
+    logger.warn("No image file provided for image message", { chatId, senderId });
     return res.status(400).json({
       status: 'error',
       message: 'No image file provided'
@@ -1162,6 +1388,7 @@ const sendImageMessage = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
+    logger.warn("Chat access denied for image message", { chatId, senderId });
     return res.status(404).json({
       status: 'error',
       message: 'Chat not found or access denied'
@@ -1180,6 +1407,10 @@ const sendImageMessage = asyncHandler(async (req, res) => {
   });
 
   if (isBlocked) {
+    logger.warn("Image message blocked due to user block", { 
+      senderId, 
+      receiverId 
+    });
     return res.status(403).json({
       status: 'error',
       message: 'Cannot send message to this user'
@@ -1272,6 +1503,14 @@ const sendImageMessage = asyncHandler(async (req, res) => {
     }
   }
 
+  logger.info("Image message sent successfully", { 
+    messageId: message.message_id, 
+    chatId, 
+    senderId, 
+    receiverId,
+    fileSize: req.file.size
+  });
+
   res.status(201).json({
     status: 'success',
     data: messageWithDetails
@@ -1288,7 +1527,19 @@ const sendFileMessage = asyncHandler(async (req, res) => {
   const replyToMessageId = reply_to_message_id || reply_to_id || null;
   const senderId = req.user.id;
 
+  logger.info("Sending file message", { 
+    chatId, 
+    senderId, 
+    replyToMessageId,
+    file: req.file ? {
+      originalname: req.file.originalname,
+      size: req.file.size,
+      mimetype: req.file.mimetype
+    } : 'No file'
+  });
+
   if (!req.file) {
+    logger.warn("No file provided for file message", { chatId, senderId });
     return res.status(400).json({
       status: 'error',
       message: 'No file provided'
@@ -1307,6 +1558,7 @@ const sendFileMessage = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
+    logger.warn("Chat access denied for file message", { chatId, senderId });
     return res.status(404).json({
       status: 'error',
       message: 'Chat not found or access denied'
@@ -1325,6 +1577,10 @@ const sendFileMessage = asyncHandler(async (req, res) => {
   });
 
   if (isBlocked) {
+    logger.warn("File message blocked due to user block", { 
+      senderId, 
+      receiverId 
+    });
     return res.status(403).json({
       status: 'error',
       message: 'Cannot send message to this user'
@@ -1417,6 +1673,15 @@ const sendFileMessage = asyncHandler(async (req, res) => {
     }
   }
 
+  logger.info("File message sent successfully", { 
+    messageId: message.message_id, 
+    chatId, 
+    senderId, 
+    receiverId,
+    fileSize: req.file.size,
+    fileType: req.file.mimetype
+  });
+
   res.status(201).json({
     status: 'success',
     data: messageWithDetails
@@ -1431,6 +1696,14 @@ const getChatAttachments = asyncHandler(async (req, res) => {
   const userId = req.user.id;
   const { type, page = 1, limit = 20 } = req.query;
 
+  logger.info("Getting chat attachments", { 
+    chatId, 
+    userId, 
+    type, 
+    page, 
+    limit 
+  });
+
   // Verify user has access to this chat
   const chat = await Chat.findOne({
     where: {
@@ -1443,6 +1716,7 @@ const getChatAttachments = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
+    logger.warn("Chat access denied for attachments", { chatId, userId });
     return res.status(404).json({
       status: 'error',
       message: 'Chat not found or access denied'
@@ -1476,6 +1750,12 @@ const getChatAttachments = asyncHandler(async (req, res) => {
     offset: offset
   });
 
+  logger.info("Chat attachments retrieved", { 
+    chatId, 
+    attachmentCount: attachments.count,
+    type: type || 'all'
+  });
+
   res.status(200).json({
     status: 'success',
     data: {
@@ -1498,6 +1778,8 @@ const downloadAttachment = asyncHandler(async (req, res) => {
   const { messageId } = req.params;
   const userId = req.user.id;
 
+  logger.info("Downloading attachment", { messageId, userId });
+
   const message = await Message.findByPk(messageId, {
     include: [
       {
@@ -1513,6 +1795,7 @@ const downloadAttachment = asyncHandler(async (req, res) => {
   });
 
   if (!message) {
+    logger.warn("Message not found or access denied for download", { messageId, userId });
     return res.status(404).json({
       status: 'error',
       message: 'Message not found or access denied'
@@ -1520,6 +1803,7 @@ const downloadAttachment = asyncHandler(async (req, res) => {
   }
 
   if (!message.attachment_url) {
+    logger.warn("No attachment found for message", { messageId });
     return res.status(404).json({
       status: 'error',
       message: 'No attachment found for this message'
@@ -1528,6 +1812,10 @@ const downloadAttachment = asyncHandler(async (req, res) => {
 
   // For Cloudinary URLs, redirect to the URL
   if (message.attachment_url.includes('cloudinary.com')) {
+    logger.info("Redirecting to Cloudinary URL", { 
+      messageId, 
+      attachmentUrl: message.attachment_url 
+    });
     return res.redirect(message.attachment_url);
   }
 
@@ -1535,15 +1823,23 @@ const downloadAttachment = asyncHandler(async (req, res) => {
   const filePath = path.join(__dirname, '..', '..', message.attachment_url);
   
   if (!fs.existsSync(filePath)) {
+    logger.error("Local file not found", { 
+      messageId, 
+      filePath 
+    });
     return res.status(404).json({
       status: 'error',
       message: 'File not found'
     });
   }
 
+  logger.info("Serving local file download", { 
+    messageId, 
+    fileName: message.attachment_name 
+  });
+
   res.download(filePath, message.attachment_name);
 });
-
 
 module.exports = {
   getOrCreateChat,
@@ -1569,6 +1865,6 @@ module.exports = {
   getChatAttachments,
   downloadAttachment,
   messageRateLimit,
-uploadRateLimit,
- chatUpload
+  uploadRateLimit,
+  chatUpload
 };
