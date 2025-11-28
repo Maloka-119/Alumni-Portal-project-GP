@@ -271,7 +271,7 @@
 
 // export default PostCard;
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Heart, MessageCircle, Trash2, Edit, Send } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import API from "../services/api";
@@ -281,7 +281,7 @@ import Swal from "sweetalert2";
 import ReactDOM from "react-dom";
 import AdminPostsImg from '../pages/alumni/AdminPosts.jpeg';
 
-const PostCard = ({ post, onEdit, onDelete }) => {
+const PostCard = ({ post, onEdit, onDelete, highlightCommentId }) => {
   const { t, i18n } = useTranslation();
   const [openDropdown, setOpenDropdown] = useState(false);
   const [liked, setLiked] = useState(post.isLikedByYou || false);
@@ -289,10 +289,32 @@ const PostCard = ({ post, onEdit, onDelete }) => {
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState(post.comments || []);
   const [newComment, setNewComment] = useState("");
-  const [zoomedImage, setZoomedImage] = useState(null); 
+  const [zoomedImage, setZoomedImage] = useState(null);
 
   const token = localStorage.getItem("token");
-  const currentUser = JSON.parse(localStorage.getItem("user")); 
+  const currentUser = JSON.parse(localStorage.getItem("user"));
+
+  // =====================
+  // فتح الكومنتات تلقائي لو فيه highlightCommentId
+  // =====================
+  useEffect(() => {
+    if (highlightCommentId) setShowComments(true);
+  }, [highlightCommentId]);
+
+  // =====================
+  // scroll + highlight للكومنت
+  // =====================
+  useEffect(() => {
+    if (showComments && highlightCommentId) {
+      const commentEl = document.getElementById(`comment-${highlightCommentId}`);
+      if (commentEl) {
+        commentEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        commentEl.style.transition = "background 0.5s";
+        commentEl.style.background = "rgba(255, 255, 0, 0.3)";
+        setTimeout(() => { commentEl.style.background = "transparent"; }, 2000);
+      }
+    }
+  }, [showComments, highlightCommentId]);
 
   const handleLikeToggle = async () => {
     if (!token) return;
@@ -315,7 +337,7 @@ const PostCard = ({ post, onEdit, onDelete }) => {
     if (!token || !newComment.trim()) return;
     try {
       const res = await API.post(`/posts/${post.id}/comments`, { content: newComment }, { headers: { Authorization: `Bearer ${token}` } });
-      setComments((prev) => [...prev, res.data.comment]);
+      setComments(prev => [...prev, res.data.comment]);
       setNewComment("");
     } catch (err) {
       console.error("Error adding comment:", err.response?.data || err);
@@ -325,7 +347,7 @@ const PostCard = ({ post, onEdit, onDelete }) => {
   const handleDeleteComment = async (commentId) => {
     try {
       await API.delete(`/posts/comments/${commentId}`, { headers: { Authorization: `Bearer ${token}` } });
-      setComments((prev) => prev.filter((c) => c.comment_id !== commentId));
+      setComments(prev => prev.filter(c => c.comment_id !== commentId));
       Swal.fire({ icon: "success", title: t("commentDeleted"), timer: 1500, showConfirmButton: false });
     } catch (err) {
       console.error("Error deleting comment:", err.response?.data || err);
@@ -345,7 +367,7 @@ const PostCard = ({ post, onEdit, onDelete }) => {
 
     try {
       const res = await API.put(`/posts/comments/${commentId}`, { content: newContent }, { headers: { Authorization: `Bearer ${token}` } });
-      setComments((prev) => prev.map((c) => c.comment_id === commentId ? { ...c, content: res.data.comment.content } : c));
+      setComments(prev => prev.map(c => c.comment_id === commentId ? { ...c, content: res.data.comment.content } : c));
       Swal.fire({ icon: "success", title: t("commentUpdated"), timer: 1500, showConfirmButton: false });
     } catch (err) {
       console.error("Error editing comment:", err.response?.data || err);
@@ -412,7 +434,7 @@ const PostCard = ({ post, onEdit, onDelete }) => {
         <div className="uni-comments-section">
           <div className="comments-list">
             {comments.map((c) => (
-              <div key={c.comment_id} className="comment-item">
+              <div key={c.comment_id} id={`comment-${c.comment_id}`} className="comment-item">
                 <div className="comment-left">
                   <img src={c.author?.["user-type"] === "admin" || c.author?.["user-type"] === "staff" ? AdminPostsImg : c.author?.image || PROFILE} alt="avatar" className="comment-avatar" />
                   <div className="comment-text">
@@ -457,4 +479,3 @@ const PostCard = ({ post, onEdit, onDelete }) => {
 };
 
 export default PostCard;
-
