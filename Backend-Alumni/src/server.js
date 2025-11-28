@@ -49,7 +49,28 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
 // 6. Sanitize HTML inputs
 app.use(sanitizeInput);
+// إضافة endpoints للتحقق من صحة النظام
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    database: db.authenticate() ? 'connected' : 'disconnected'
+  });
+});
 
+app.get('/health/detailed', async (req, res) => {
+  const dbStatus = await checkDatabaseHealth();
+  const redisStatus = await checkRedisHealth();
+  
+  res.json({
+    status: dbStatus && redisStatus ? 'healthy' : 'unhealthy',
+    database: dbStatus,
+    cache: redisStatus,
+    memory: process.memoryUsage(),
+    load: os.loadavg()
+  });
+});
 
 // ==================================================
 // ⚙️ الإعدادات الأساسية للتطبيق
