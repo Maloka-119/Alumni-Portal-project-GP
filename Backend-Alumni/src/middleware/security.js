@@ -4,10 +4,11 @@ const helmet = require("helmet");
 const hpp = require("hpp");
 const validator = require("validator");
 const sanitizeHtml = require("sanitize-html");
+const { ipKeyGenerator } = require('express-rate-limit');
 
-// ======================================================
+
 // Rate Limiting
-// ======================================================
+
 
 // Limits login attempts to prevent brute force attacks
 const authLimiter = rateLimit({
@@ -17,9 +18,10 @@ const authLimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in headers
   legacyHeaders: false, // Disable legacy headers
   keyGenerator: (req) => {
-    // Use email or IP as the key to track attempts
-    return req.body.email || req.ip;
-  },
+  return ipKeyGenerator(req);
+}
+
+,
   skipSuccessfulRequests: true, // Only count failed requests
 });
 
@@ -33,9 +35,9 @@ const generalLimiter = rateLimit({
   }
 });
 
-// ======================================================
+
 // Helmet Security Headers
-// ======================================================
+
 
 // Adds security-related HTTP headers to prevent common attacks
 const helmetConfig = helmet({
@@ -57,9 +59,9 @@ const helmetConfig = helmet({
   crossOriginResourcePolicy: { policy: "same-site" } // Restrict resource loading to same site
 });
 
-// ======================================================
+
 // Full Sanitization Against XSS
-// ======================================================
+
 
 // Cleans all input fields to remove harmful scripts (XSS)
 const sanitizeInput = (req, res, next) => {
@@ -99,9 +101,9 @@ const sanitizeInput = (req, res, next) => {
   next(); // Pass control to next middleware
 };
 
-// ======================================================
+
 // Basic XSS Protection Headers
-// ======================================================
+
 
 // Adds headers that block reflected XSS attacks
 const xssProtection = (req, res, next) => {
@@ -110,9 +112,9 @@ const xssProtection = (req, res, next) => {
   next();
 };
 
-// ======================================================
+
 // DoS Attack Detection (Logging only)
-// ======================================================
+
 
 // Logs IP and route for monitoring suspicious traffic
 const detectDoS = (req, res, next) => {
@@ -120,9 +122,9 @@ const detectDoS = (req, res, next) => {
   next();
 };
 
-// ======================================================
+
 // Data Validators
-// ======================================================
+
 
 // Validates email format and length
 const validateEmail = (email) => {
@@ -150,9 +152,9 @@ const validatePhoneNumber = (phoneNumber) => {
   return validator.isMobilePhone(phoneNumber, "any");
 };
 
-// ======================================================
+
 // Allowed Content Types
-// ======================================================
+
 
 // Rejects requests with unsupported Content-Type headers
 const validateContentType = (req, res, next) => {
@@ -169,9 +171,6 @@ const validateContentType = (req, res, next) => {
   next(); // Continue processing
 };
 
-// ======================================================
-// Export all security utilities
-// ======================================================
 
 module.exports = {
   authLimiter,
