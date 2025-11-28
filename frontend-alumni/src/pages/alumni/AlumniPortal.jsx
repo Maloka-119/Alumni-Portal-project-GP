@@ -25,6 +25,7 @@ import FriendshipPage from './FriendShipp.js';
 import EmptyPage from '../admin/EmptyPage';
 import Accountgrad from "./Accountgrad.jsx";
 import FeedbackPage from './FeedbackPage.jsx';
+import PostSingle from './PostSingle.jsx';
 
 const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
 
@@ -217,6 +218,11 @@ const Dashboard = ({ setUser }) => {
             <Route path="documents" element={<EmptyPage title="Document Requests" />} />
             <Route path="Consultations" element={<EmptyPage title="Consultation Requests" />} />
             <Route path="feedback" element={<FeedbackPage darkMode={darkMode}/>} />
+
+
+  <Route path="posts/:postId" element={<PostSingle />} />
+
+
           </Routes>
         </main>
       </div>

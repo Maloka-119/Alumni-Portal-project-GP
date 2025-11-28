@@ -271,18 +271,25 @@
 
 // export default PostsAlumni;
 
+// PostsAlumni.jsx
+// PostsAlumni.jsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Image, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import './AlumniAdminPosts.css';
+import { useLocation } from 'react-router-dom';
 import API from "../../services/api";
+import PostCard from '../../components/PostCard';
 import PROFILE from './PROFILE.jpeg';
-import PostCard from '../../components/PostCard'; 
-import Swal from 'sweetalert2';
 import AdminPostsImg from './AdminPosts.jpeg';
+import Swal from 'sweetalert2';
+import { Image, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
 
 const PostsAlumni = () => {
   const { t } = useTranslation();
+  const location = useLocation();
+  const highlightPostId = location.state?.highlightPostId || null; // للـ highlighted post
+
   const [showForm, setShowForm] = useState(false);
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -292,9 +299,9 @@ const PostsAlumni = () => {
   const [editingPostId, setEditingPostId] = useState(null);
   const [isEditingMode, setIsEditingMode] = useState(false);
 
-  const [newPostImages, setNewPostImages] = useState([]); // ملفات جديدة قبل الحفظ
-  const [existingImages, setExistingImages] = useState([]); // الصور الموجودة من الباك
-  const [removedImages, setRemovedImages] = useState([]); // لتسجيل الصور المحذوفة
+  const [newPostImages, setNewPostImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [removedImages, setRemovedImages] = useState([]);
 
   const formRef = useRef(null);
   const postRefs = useRef({});
@@ -310,8 +317,6 @@ const PostsAlumni = () => {
       return () => clearTimeout(timer);
     }
   }, [successMsg, error]);
-
-  
 
   const formatPosts = (data) => {
     return data
@@ -346,8 +351,6 @@ const PostsAlumni = () => {
         }
       }));
   };
-  
-  
 
   const fetchPosts = async () => {
     if (!token) return;
@@ -356,7 +359,6 @@ const PostsAlumni = () => {
       const res = await API.get('/posts/my-graduate-posts', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      console.log(" posts API response:", res.data);
       setPosts(formatPosts(res.data.data));
     } catch (err) {
       setError(err.response?.data?.message || err.message);
@@ -373,26 +375,24 @@ const PostsAlumni = () => {
     e.preventDefault();
     setError(null);
     setSuccessMsg(null);
-  
+
     if (!token) {
       setError("Login first");
       return;
     }
-  
+
     if (!newPost.content && newPostImages.length === 0 && existingImages.length === 0) {
       setError(t('emptyPostError'));
       return;
     }
-  
-    // ملفات جديدة فقط
+
     const formData = new FormData();
     formData.append('content', newPost.content);
     formData.append('type', newPost.category);
     newPostImages.forEach(img => formData.append('images', img));
-  
+
     try {
       if (isEditingMode && editingPostId) {
-        // أرسل الحذف أولاً كـ JSON
         if (removedImages.length > 0) {
           await API.put(`/posts/${editingPostId}/edit`, {
             removeImages: removedImages
@@ -400,27 +400,22 @@ const PostsAlumni = () => {
             headers: { 'Authorization': `Bearer ${token}` }
           });
         }
-  
-        // بعدين رفع الملفات الجديدة مع المحتوى
         await API.put(`/posts/${editingPostId}/edit`, formData, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
-  
-        setSuccessMsg(t("postUpdated")); // بدل "Post updated"
-
+        setSuccessMsg(t("postUpdated"));
         await fetchPosts();
       } else {
         await API.post('/posts/create-post', formData, {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'multipart/form-data' }
         });
-        setSuccessMsg(t("postCreated")); // بدل "Post created"
-
+        setSuccessMsg(t("postCreated"));
         await fetchPosts();
       }
     } catch (err) {
       setError(err.response?.data?.message || "Failed to save post");
     }
-  
+
     setShowForm(false);
     setIsEditingMode(false);
     setEditingPostId(null);
@@ -429,7 +424,6 @@ const PostsAlumni = () => {
     setExistingImages([]);
     setRemovedImages([]);
   };
-  
 
   const handleEditPostClick = (post) => {
     setShowForm(true);
@@ -479,6 +473,19 @@ const PostsAlumni = () => {
 
   return (
     <div className="uni-feed">
+      {/* CSS مباشرة جوه JSX */}
+      <style>{`
+        .highlighted-post {
+          border-left: 4px solid #007bff;
+          background-color: #f0f8ff;
+          padding: 8px;
+          transition: background 0.3s;
+        }
+        .highlighted-post:hover {
+          background-color: #e0f0ff;
+        }
+      `}</style>
+
       {!user && <div>{t('pleaseLogin')}</div>}
 
       {user && (
@@ -515,24 +522,24 @@ const PostsAlumni = () => {
               <div className="uni-category-select">
                 <label>{t('category')}:</label>
                 <select
-  value={newPost.category}
-  onChange={(e) => {
-    const selected = e.target.value;
-    setNewPost({ ...newPost, category: selected });
-    if (selected === "Success story") {
-      Swal.fire({
-        icon: "info",
-        title: t('successStoryInfoTitle'),
-        html: t('successStoryInfoText'),
-        confirmButtonText: "OK"
-      });
-    }
-  }}
->
-  <option value="General">{t('categoryGeneral')}</option>
-  <option value="Internship">{t('categoryInternship')}</option>
-  <option value="Success story">{t('categorySuccessStory')}</option>
-</select>
+                  value={newPost.category}
+                  onChange={(e) => {
+                    const selected = e.target.value;
+                    setNewPost({ ...newPost, category: selected });
+                    if (selected === "Success story") {
+                      Swal.fire({
+                        icon: "info",
+                        title: t('successStoryInfoTitle'),
+                        html: t('successStoryInfoText'),
+                        confirmButtonText: "OK"
+                      });
+                    }
+                  }}
+                >
+                  <option value="General">{t('categoryGeneral')}</option>
+                  <option value="Internship">{t('categoryInternship')}</option>
+                  <option value="Success story">{t('categorySuccessStory')}</option>
+                </select>
               </div>
 
               <div className="uni-optional-icons">
@@ -553,7 +560,6 @@ const PostsAlumni = () => {
                     <Trash2 size={16} className="delete-icon" onClick={() => handleRemoveExistingImage(url)} />
                   </div>
                 ))}
-
                 {newPostImages.map(file => (
                   <div key={file.name} className="image-wrapper">
                     <span className="file-name">{file.name}</span>
@@ -576,15 +582,23 @@ const PostsAlumni = () => {
             </form>
           )}
 
-          {!loading && posts.map(post => (
-            <div key={post.id} ref={el => postRefs.current[post.id] = el}>
-              <PostCard
-                post={post}
-                onEdit={() => handleEditPostClick(post)}
-                onDelete={() => handleDeletePost(post.id)}
-              />
-            </div>
-          ))}
+{!loading && posts.map(post => (
+  <div
+    key={post.id}
+    ref={el => postRefs.current[post.id] = el}
+    className={post.id === highlightPostId ? "highlighted-post" : ""}
+  >
+    <PostCard
+      post={post}
+      onEdit={() => handleEditPostClick(post)}
+      onDelete={() => handleDeletePost(post.id)}
+    />
+
+
+
+  </div>
+))}
+
         </>
       )}
     </div>
