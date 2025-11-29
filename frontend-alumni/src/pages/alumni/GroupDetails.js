@@ -77,7 +77,7 @@ const filteredGraduates = availableGraduates.filter((f) =>
   const fetchAvailableGraduates = async () => {
     try {
       const res = await API.get(`/groups/${group.id}/available-graduates`);
-      console.log(res.data);
+      // console.log(res.data);
       setAvailableGraduates(res.data || []); 
     } catch (err) {
       console.error(err);
@@ -101,49 +101,20 @@ const filteredGraduates = availableGraduates.filter((f) =>
   };
   
 
-const handleToggleInvitation = async (friend) => {
-  console.log("Clicked friend:", friend);
-
-  try {
-    if (friend.invitationStatus === "pending") {
-      console.log("Cancelling invitation for:", friend.id);
-
-      const res = await API.post(`/invitations/${friend.invitationId}/cancel`);
-      console.log("Cancel response:", res.data);
-
-      setAvailableGraduates(prev =>
-        prev.map(f =>
-          f.id === friend.id
-            ? { ...f, invitationStatus: "not_invited", invitationId: null }
-            : f
-        )
-      );
-
-    } else if (friend.invitationStatus === "not_invited") {
-      console.log("Sending invitation to:", friend.id);
-
-      const res = await API.post("/invitations/send", {
-        receiver_id: friend.id,
-        group_id: group.id
-      });
-      console.log("Send invitation response:", res.data);
-
-      const newInvitationId = res.data.invitationId || res.data.id;
-      console.log("New invitation ID:", newInvitationId);
-
-      setAvailableGraduates(prev =>
-        prev.map(f =>
-          f.id === friend.id
-            ? { ...f, invitationStatus: "pending", invitationId: newInvitationId }
-            : f
-        )
-      );
+  const handleToggleInvitation = async (friend) => {
+    try {
+      if (friend.invitationStatus === "pending") {
+        await API.post(`/invitations/${friend.invitationId}/cancel`);
+        setAvailableGraduates(prev => prev.map(f => f.id === friend.id ? { ...f, invitationStatus: "not_invited", invitationId: null } : f));
+      } else if (friend.invitationStatus === "not_invited") {
+        const res = await API.post("/invitations/send", { receiver_id: friend.id, group_id: group.id });
+        const newInvitationId = res.data.invitationId || res.data.id;
+        setAvailableGraduates(prev => prev.map(f => f.id === friend.id ? { ...f, invitationStatus: "pending", invitationId: newInvitationId } : f));
+      }
+    } catch (err) {
+      console.error(err);
     }
-  } catch (err) {
-    console.error("Error in handleToggleInvitation:", err);
-  }
-};
-
+  };
 
   const handleAddOrEditPost = async (e) => {
     e.preventDefault();
