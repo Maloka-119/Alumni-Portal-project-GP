@@ -25,11 +25,11 @@ import FriendshipPage from './FriendShipp.js';
 import EmptyPage from '../admin/EmptyPage';
 import Accountgrad from "./Accountgrad.jsx";
 import FeedbackPage from './FeedbackPage.jsx';
-import PostSingle from './PostSingle.jsx';
+import PostSingle  from './PostSingle.jsx'
+import ChatBox from './ChatBox.jsx';
 
 const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
 
-// الأقسام في sidebar
 const sidebarSections = (darkMode, t) => [
   {
     title: t("personal"),
@@ -73,15 +73,13 @@ const Dashboard = ({ setUser }) => {
   const [darkMode, setDarkMode] = useState(false);
   const [communitiesOpen, setCommunitiesOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
-  const [chatId, setChatId] = useState(null); // ID الشات المفتوح
-  const [friendRequestUserId, setFriendRequestUserId] = useState(null); // ID طلب الصداقة المفتوح
-  const [friendshipTab, setFriendshipTab] = useState("friends"); // تحديد التبويب الافتراضي في FriendshipPage
-  const footerRef = useRef(null);
+  const [chatId, setChatId] = useState(null);
+  const [friendRequestUserId, setFriendRequestUserId] = useState(null);
+  const [friendshipTab, setFriendshipTab] = useState("friends");
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
 
-  // تحديث اتجاه الصفحة حسب اللغة
   useEffect(() => {
     document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
   }, [i18n.language]);
@@ -91,12 +89,9 @@ const Dashboard = ({ setUser }) => {
     if(action === "logout") {
       try {
         const token = localStorage.getItem("token");
-        if(token) {
-          await API.get("/logout", { headers: { Authorization: `Bearer ${token}` } });
-        }
-      } catch(err) {
-        console.error("Logout failed:", err);
-      } finally {
+        if(token) await API.get("/logout", { headers: { Authorization: `Bearer ${token}` } });
+      } catch(err) { console.error("Logout failed:", err); }
+      finally {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
         navigate('/helwan-alumni-portal/login', { replace: true });
@@ -113,17 +108,19 @@ const Dashboard = ({ setUser }) => {
   const getActiveKey = () => location.pathname.split("/").pop();
   const activeKey = getActiveKey();
 
-  // فتح Chat Pop-up
-  const openChatSidebar = (id) => {
+  // ===========================
+  // فتح الشات من notification
+  // ===========================
+  const openChatSidebarHandler = (id) => {
     setChatId(id);
     setChatOpen(true);
   };
 
-  // فتح Friend Request Pop-up + تحديد تبويب Requests
-  const openFriendRequestSidebar = (userId) => {
-    setFriendshipTab("requests");  // يفتح تبويب Requests
-    navigate(`${BASE_PATH}/friends`);
+  // فتح Friend Request من notification
+  const openFriendRequestSidebarHandler = (userId) => {
+    setFriendshipTab("requests");
     setFriendRequestUserId(userId);
+    navigate(`${BASE_PATH}/friends`);
   };
 
   return (
@@ -186,13 +183,15 @@ const Dashboard = ({ setUser }) => {
         </aside>
 
         <main className="alumni-main-content">
-          {/* Pop-up الشات */}
+          {/* Chat Sidebar */}
+
           <ChatSidebar 
-            darkMode={darkMode} 
-            chatOpen={chatOpen} 
-            setChatOpen={setChatOpen} 
-            chatId={chatId} 
-          />
+  darkMode={darkMode} 
+  chatOpen={chatOpen} 
+  setChatOpen={setChatOpen} 
+  chatId={chatId} 
+/>
+
 
           {/* Routes */}
           <Routes>
@@ -205,25 +204,22 @@ const Dashboard = ({ setUser }) => {
             <Route path="communities/all" element={<ExploreGroups darkMode={darkMode}/>} />
             <Route path="communities/my" element={<MyGroups darkMode={darkMode}/>} />
             <Route path="faq" element={<ViewFAQ darkMode={darkMode}/>} />
-            <Route 
-              path="notifications" 
-              element={<Notifications 
+            <Route path="notifications" element={
+              <Notifications 
                 darkMode={darkMode} 
-                openChat={openChatSidebar} 
-                openFriendRequest={openFriendRequestSidebar} 
+                openChat={openChatSidebarHandler} 
+                openFriendRequest={openFriendRequestSidebarHandler} 
               />} 
             />
-            <Route path="friends" element={<FriendshipPage darkMode={darkMode} tab={friendshipTab}/>} />
+            <Route path="friends" element={<FriendshipPage darkMode={darkMode} tab={friendshipTab} userId={friendRequestUserId}/>} />
             <Route path="friends/:userId" element={<Accountgrad darkMode={darkMode}/>} />
+            <Route path="posts/:postId" element={<PostSingle />} />
             <Route path="documents" element={<EmptyPage title="Document Requests" />} />
             <Route path="Consultations" element={<EmptyPage title="Consultation Requests" />} />
             <Route path="feedback" element={<FeedbackPage darkMode={darkMode}/>} />
-
-
-  <Route path="posts/:postId" element={<PostSingle />} />
-
-
+            <Route path="chat/:chatId" element={<ChatBox darkMode={darkMode} />} />
           </Routes>
+
         </main>
       </div>
     </div>

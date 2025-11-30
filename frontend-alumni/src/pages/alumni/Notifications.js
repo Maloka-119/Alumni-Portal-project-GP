@@ -61,16 +61,20 @@ const NotificationsPage = ({ openChat, openFriendRequest }) => {
     }
   };
 
-  const handleNotificationClick = (notification) => {
+  const handleNotificationClick = async (notification) => {
     if (!notification.isRead) markAsRead(notification.id);
 
     const nav = notification.navigation;
     if (!nav) return;
 
     switch (nav.screen) {
-      case "chat":
-        if (nav.chatId && openChat) openChat(nav.chatId);
-        break;
+case "chat":
+  if (nav.chatId) {
+    const friendData = nav.friend || { name: "Unknown" }; // بيانات الصديق موجودة في notification
+    openChat(nav.chatId, friendData);
+  }
+  break;
+
 
       case "friend-requests":
         navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=requests");
@@ -82,11 +86,7 @@ const NotificationsPage = ({ openChat, openFriendRequest }) => {
         break;
 
       case "user":
-        if (
-          nav.userId &&
-          notification.type === "friend_request" &&
-          openFriendRequest
-        ) {
+        if (nav.userId && notification.type === "friend_request" && openFriendRequest) {
           openFriendRequest(nav.userId);
         }
         break;
@@ -116,9 +116,6 @@ const NotificationsPage = ({ openChat, openFriendRequest }) => {
       </div>
     );
 
-  // ================================
-  //  فلترة إشعارات حذف الكومنت
-  // ================================
   const filteredNotifications = notifications.filter(
     (n) => n.type !== "delete_comment"
   );
@@ -185,8 +182,6 @@ const NotificationsPage = ({ openChat, openFriendRequest }) => {
 };
 
 export default NotificationsPage;
-
-
 
 /*// NotificationsPage.jsx
 import React, { useEffect, useState } from "react";
