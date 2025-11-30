@@ -1,76 +1,157 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./Notification.css";
 
-function Notifications() {
-  const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState("all");
+const token = localStorage.getItem("token");
+const API = axios.create({
+  baseURL: "http://localhost:5005/alumni-portal",
+  headers: { Authorization: `Bearer ${token}` },
+});
 
-  const [allNotifications, setAllNotifications] = useState([
-    {
-      id: 1,
-      message: "Yara likes your post",
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      type: "general",
-    },
-    {
-      id: 2,
-      message: "Ahmed invited you to join group",
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      type: "invitation",
-    },
-  ]);
+const NotificationsPage = ({ openChat, openFriendRequest }) => {
+  const { t, i18n } = useTranslation();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  const deleteNotification = (id) => {
-    setAllNotifications((prev) => prev.filter((n) => n.id !== id));
+  useEffect(() => {
+    document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
+  }, [i18n.language]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await API.get("/notifications");
+      setNotifications(res.data.data);
+    } catch (err) {
+      console.error("Error fetching notifications:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredNotifications =
-    activeTab === "all"
-      ? allNotifications
-      : allNotifications.filter((n) => n.type === "invitation");
+  const markAsRead = async (id) => {
+    try {
+      await API.put(`/notifications/${id}/read`);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteNotification = async (id) => {
+    try {
+      await API.delete(`/notifications/${id}`);
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await API.put("/notifications/read-all");
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleNotificationClick = (notification) => {
+    if (!notification.isRead) markAsRead(notification.id);
+
+    const nav = notification.navigation;
+    if (!nav) return;
+
+    switch (nav.screen) {
+      case "chat":
+        if (nav.chatId && openChat) openChat(nav.chatId);
+        break;
+      case "friend-requests":
+        navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=requests");
+        break;
+      case "profile":
+      case "accept":
+        navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=friends");
+        break;
+      case "user":
+        if (
+          nav.userId &&
+          notification.type === "friend_request" &&
+          openFriendRequest
+        ) {
+          openFriendRequest(nav.userId);
+        }
+        break;
+      case "post":
+        if (nav.postId) {
+          const path = nav.commentId
+            ? `/helwan-alumni-portal/graduate/dashboard/post/${nav.postId}?comment=${nav.commentId}`
+            : `/helwan-alumni-portal/graduate/dashboard/post/${nav.postId}`;
+          navigate(path);
+        }
+        break;
+      default:
+        console.warn("Unknown notification screen:", nav.screen);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  if (loading)
+    return (
+      <div className="notifications-container">
+        {t("Loading notifications...")}
+      </div>
+    );
 
   return (
     <div className="notifications-container">
-      <h1 className="uni-header">{t("Notifications")}</h1>
+      <h1 className="Title">{t("Notifications")}</h1>
+      <button className="accept-btn" onClick={markAllAsRead}>
+        {t("Mark All as Read")}
+      </button>
 
-      <div className="tabs">
-        <button
-          className={activeTab === "all" ? "active" : ""}
-          onClick={() => setActiveTab("all")}
-        >
-          {t("All")}
-        </button>
-        <button
-          className={activeTab === "invitation" ? "active" : ""}
-          onClick={() => setActiveTab("invitation")}
-        >
-          {t("invitations")}
-        </button>
-      </div>
-
-      <div className="notification-list">
-        {filteredNotifications.length === 0 ? (
-          <p className="empty">{t("noNotifications")}</p>
+      <div className="notifications-list">
+        {notifications.length === 0 ? (
+          <div className="empty">{t("No notifications")}</div>
         ) : (
-          filteredNotifications.map((n) => (
-            <div key={n.id} className="notification-item">
+          notifications.map((n) => (
+            <div
+              key={n.id}
+              className={`notification-item ${n.isRead ? "" : "unread"}`}
+              onClick={() => handleNotificationClick(n)}
+            >
               <div className="notif-content">
                 <p>{n.message}</p>
+                <span className="time">
+                  {new Intl.DateTimeFormat(
+                    i18n.language === "ar" ? "ar-EG" : "en-US",
+                    {
+                      weekday: "long",
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    }
+                  ).format(new Date(n.createdAt))}
+                </span>
               </div>
-              <div className="notif-actions">
-                <small className="time">{n.time}</small>
-                <button
-                  className="delete-btn"
-                  onClick={() => deleteNotification(n.id)}
-                >
-                  🗑
+
+              <div className="notif-actions" onClick={(e) => e.stopPropagation()}>
+                {!n.isRead && (
+                  <button className="accept-btn-" onClick={() => markAsRead(n.id)}>
+                    {t("Mark as Read")}
+                  </button>
+                )}
+                <button className="delete-btn" onClick={() => deleteNotification(n.id)}>
+                  {t("Delete")}
                 </button>
               </div>
             </div>
@@ -79,6 +160,6 @@ function Notifications() {
       </div>
     </div>
   );
-}
+};
 
-export default Notifications;
+export default NotificationsPage;
