@@ -492,11 +492,6 @@ const PostsAlumni = () => {
         <>
           <h2 className="uni-header">{t('myPosts')}</h2>
 
-          {successMsg && <div style={{ color: 'green' }}>{successMsg}</div>}
-          {error && <div style={{ color: 'red' }}>{error}</div>}
-          {loading && <div>{t('loadingPosts')}</div>}
-          {!loading && posts.length === 0 && <div>{t('noPosts')}</div>}
-
           <div className="am-create-bar" onClick={() => {
             setShowForm(true);
             setIsEditingMode(false);
@@ -581,6 +576,11 @@ const PostsAlumni = () => {
               </div>
             </form>
           )}
+
+{successMsg && <div style={{ color: 'green' }}>{successMsg}</div>}
+          {error && <div style={{ color: 'red' }}>{error}</div>}
+          {loading && <div>{t('loadingPosts')}</div>}
+          {!loading && posts.length === 0 && <div>{t('noPosts')}</div>}
 
 {!loading && posts.map(post => (
   <div
