@@ -11,7 +11,8 @@ const API = axios.create({
   headers: { Authorization: `Bearer ${token}` },
 });
 
-const NotificationsPage = ({ openChat, openFriendRequest }) => {
+const NotificationsPage = ({ openChat }) => {
+
   const { t, i18n } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -61,6 +62,9 @@ const NotificationsPage = ({ openChat, openFriendRequest }) => {
     }
   };
 
+  // -------------------------------------------------------
+  //                HANDLE CLICK ON NOTIFICATION
+  // -------------------------------------------------------
   const handleNotificationClick = async (notification) => {
     if (!notification.isRead) markAsRead(notification.id);
 
@@ -68,29 +72,49 @@ const NotificationsPage = ({ openChat, openFriendRequest }) => {
     if (!nav) return;
 
     switch (nav.screen) {
-case "chat":
-  if (nav.chatId) {
-    const friendData = nav.friend || { name: "Unknown" }; // بيانات الصديق موجودة في notification
-    openChat(nav.chatId, friendData);
-  }
-  break;
+      // ---------------------------------------------------
+      //                    OPEN CHAT
+      // ---------------------------------------------------
+      case "chat":
+        if (nav.chatId && openChat) {
+          // تأكد من وجود sender قبل تمريره
+          const sender = notification.sender || { id: null, fullName: "Unknown", email: "" };
+          openChat(nav.chatId, {
+            id: sender.id,
+            fullName: sender.fullName || "Unknown",
+            email: sender.email || "",
+          });
+        }
+        break;
+      
+      
+      
 
-
+      // ---------------------------------------------------
       case "friend-requests":
-        navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=requests");
+        navigate(
+          "/helwan-alumni-portal/graduate/dashboard/friends?tab=requests"
+        );
         break;
 
       case "profile":
       case "accept":
-        navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=friends");
+        navigate(
+          "/helwan-alumni-portal/graduate/dashboard/friends?tab=friends"
+        );
         break;
 
       case "user":
-        if (nav.userId && notification.type === "friend_request" && openFriendRequest) {
-          openFriendRequest(nav.userId);
+        if (nav.userId) {
+          navigate(
+            `/helwan-alumni-portal/graduate/dashboard/profile/${nav.userId}`
+          );
         }
         break;
 
+      // ---------------------------------------------------
+      //                    POSTS
+      // ---------------------------------------------------
       case "post":
         if (nav.postId) {
           const path = nav.commentId

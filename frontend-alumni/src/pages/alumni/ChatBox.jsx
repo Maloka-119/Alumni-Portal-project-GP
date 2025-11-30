@@ -314,7 +314,10 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
   return (
     <div className="chat-overlay" dir={direction}>
       <div className="chat-header">
-        <span>{activeChatFriend?.name || activeChatFriend?.userName || "Unknown"}</span>
+      <span>{activeChatFriend?.fullName || "Unknown"}</span>
+
+
+
         <button onClick={onClose}><X size={18} /></button>
       </div>
 

@@ -1,14 +1,17 @@
 // Dashboard.jsx
-import React, { useEffect, useState, useRef } from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Routes, Route, useNavigate, useLocation, useParams } from 'react-router-dom';
 import { 
   Home, User, FileText, Bell, IdCard,
   Users, Network, Briefcase,
-  File, MessageSquare, HelpCircle, MessageCircle, Clipboard,
-  Menu, X, LogOut, Globe, Moon, Sun, ChevronDown, ChevronUp
+  File, MessageSquare, HelpCircle, Clipboard,
+  Menu, X, LogOut, Globe, Moon, Sun, ChevronDown, ChevronUp,
+  MessageCircle
 } from 'lucide-react';
+
 import './AlumniPortal.css';
 import UniLogo from '../../components/logo-white-deskt-min.png';
+
 import AlumniAdminPosts from './AlumniAdminPosts';
 import PostsAlumni from './PostsAlumni';
 import HomeAlumni from './HomeAlumni';
@@ -25,7 +28,7 @@ import FriendshipPage from './FriendShipp.js';
 import EmptyPage from '../admin/EmptyPage';
 import Accountgrad from "./Accountgrad.jsx";
 import FeedbackPage from './FeedbackPage.jsx';
-import PostSingle  from './PostSingle.jsx'
+import PostSingle from './PostSingle.jsx';
 import ChatBox from './ChatBox.jsx';
 
 const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
@@ -65,10 +68,11 @@ const sidebarSections = (darkMode, t) => [
       { name: t("language"), icon: <Globe size={18}/>, action: "language" },
       { name: t("logout"), icon: <LogOut size={18}/>, action: "logout" }
     ]
-  },
+  }
 ];
 
 const Dashboard = ({ setUser }) => {
+
   const [isOpen, setIsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [communitiesOpen, setCommunitiesOpen] = useState(false);
@@ -76,6 +80,7 @@ const Dashboard = ({ setUser }) => {
   const [chatId, setChatId] = useState(null);
   const [friendRequestUserId, setFriendRequestUserId] = useState(null);
   const [friendshipTab, setFriendshipTab] = useState("friends");
+
   const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
@@ -84,47 +89,50 @@ const Dashboard = ({ setUser }) => {
     document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
   }, [i18n.language]);
 
-  const handleSidebarAction = async (action) => {
-    if(action === "toggleDark") setDarkMode(!darkMode);
-    if(action === "logout") {
-      try {
-        const token = localStorage.getItem("token");
-        if(token) await API.get("/logout", { headers: { Authorization: `Bearer ${token}` } });
-      } catch(err) { console.error("Logout failed:", err); }
-      finally {
-        localStorage.removeItem("user");
-        localStorage.removeItem("token");
-        navigate('/helwan-alumni-portal/login', { replace: true });
-      }
-    }
-    if(action === "language") i18n.changeLanguage(i18n.language === "en" ? "ar" : "en");
-  }
-
-  const handleMenuClick = (key) => {
-    if(key === "communities") setCommunitiesOpen(!communitiesOpen);
-    else navigate(`${BASE_PATH}/${key}`);
-  }
-
-  const getActiveKey = () => location.pathname.split("/").pop();
-  const activeKey = getActiveKey();
-
-  // ===========================
-  // فتح الشات من notification
-  // ===========================
-  const openChatSidebarHandler = (id) => {
-    setChatId(id);
-    setChatOpen(true);
+  // فتح الشات من النوتيفيكيشن → يفتح صفحة الشات مباشرة
+  const openChatFromNotification = (chatId, friendData) => {
+    navigate(`${BASE_PATH}/chat/${chatId}`, {
+      state: { friend: friendData }
+    });
   };
 
-  // فتح Friend Request من notification
+  // فتح طلبات الصداقة من النوتيفيكيشن
   const openFriendRequestSidebarHandler = (userId) => {
     setFriendshipTab("requests");
     setFriendRequestUserId(userId);
     navigate(`${BASE_PATH}/friends`);
   };
 
+  // Actions
+  const handleSidebarAction = async (action) => {
+    if(action === "toggleDark") return setDarkMode(!darkMode);
+    if(action === "language") return i18n.changeLanguage(i18n.language === "en" ? "ar" : "en");
+
+    if(action === "logout") {
+      try {
+        const token = localStorage.getItem("token");
+        if(token) 
+          await API.get("/logout", { headers: { Authorization: `Bearer ${token}` } });
+      } catch(err) {
+        console.error("Logout failed:", err);
+      } finally {
+        localStorage.removeItem("user");
+        localStorage.removeItem("token");
+        navigate('/helwan-alumni-portal/login', { replace: true });
+      }
+    }
+  };
+
+  const handleMenuClick = (key) => {
+    if(key === "communities") return setCommunitiesOpen(!communitiesOpen);
+    navigate(`${BASE_PATH}/${key}`);
+  };
+
+  const activeKey = location.pathname.split("/").pop();
+
   return (
     <div className={darkMode ? "dark" : "light"}>
+
       {/* Header */}
       <header className={`page-header ${darkMode ? "header-dark" : ""}`}>
         <div className="header-left">
@@ -134,21 +142,24 @@ const Dashboard = ({ setUser }) => {
           <img src={UniLogo} alt="University Logo" className="logoo-placeholder" />
           <h1 className="portal-name">Helwan Alumni Portal</h1>
         </div>
+
         <div className="alumni-header-right">
           <button className="header-btn" onClick={() => navigate(`${BASE_PATH}/notifications`)}>
-            <Bell size={18}/> 
+            <Bell size={18}/>
           </button>
           <button className="header-btn" onClick={() => setChatOpen(!chatOpen)}>
-            <MessageCircle size={18}/> 
+            <MessageCircle size={18}/>
           </button>
           <button className="header-btn" onClick={() => navigate(`${BASE_PATH}/profile`)}>
-            <User size={18}/> 
+            <User size={18}/>
           </button>
         </div>
       </header>
 
       {/* Layout */}
       <div className="alumni-layout">
+
+        {/* Sidebar */}
         <aside className={`alumni-sidebar ${isOpen ? "open" : "closed"}`}>
           {sidebarSections(darkMode, t).map((section, index) => (
             <div className="alumni-sidebar-section" key={index}>
@@ -157,22 +168,27 @@ const Dashboard = ({ setUser }) => {
                 {section.items.map((item, i) => (
                   <React.Fragment key={i}>
                     <li 
-                      className={`alumni-sidebar-item ${activeKey===item.key?"active":""}`}
+                      className={`alumni-sidebar-item ${activeKey === item.key ? "active" : ""}`}
                       onClick={() => item.action ? handleSidebarAction(item.action) : handleMenuClick(item.key)}
                     >
-                      {item.icon} {item.name} 
+                      {item.icon} {item.name}
                       {item.isDropdown && (communitiesOpen ? <ChevronUp size={16}/> : <ChevronDown size={16}/>)}
                     </li>
+
                     {item.isDropdown && communitiesOpen && (
                       <ul className="alumni-sidebar-submenu">
                         <li 
                           className={`alumni-sidebar-subitem ${activeKey==="all"?"active":""}`}
-                          onClick={()=>navigate(`${BASE_PATH}/communities/all`)}
-                        >{t("allCommunities")}</li>
+                          onClick={() => navigate(`${BASE_PATH}/communities/all`)}
+                        >
+                          {t("allCommunities")}
+                        </li>
                         <li 
                           className={`alumni-sidebar-subitem ${activeKey==="my"?"active":""}`}
-                          onClick={()=>navigate(`${BASE_PATH}/communities/my`)}
-                        >{t("myCommunities")}</li>
+                          onClick={() => navigate(`${BASE_PATH}/communities/my`)}
+                        >
+                          {t("myCommunities")}
+                        </li>
                       </ul>
                     )}
                   </React.Fragment>
@@ -182,16 +198,16 @@ const Dashboard = ({ setUser }) => {
           ))}
         </aside>
 
+        {/* Main Content */}
         <main className="alumni-main-content">
+
           {/* Chat Sidebar */}
-
           <ChatSidebar 
-  darkMode={darkMode} 
-  chatOpen={chatOpen} 
-  setChatOpen={setChatOpen} 
-  chatId={chatId} 
-/>
-
+            darkMode={darkMode} 
+            chatOpen={chatOpen} 
+            setChatOpen={setChatOpen} 
+            chatId={chatId} 
+          />
 
           {/* Routes */}
           <Routes>
@@ -204,29 +220,54 @@ const Dashboard = ({ setUser }) => {
             <Route path="communities/all" element={<ExploreGroups darkMode={darkMode}/>} />
             <Route path="communities/my" element={<MyGroups darkMode={darkMode}/>} />
             <Route path="faq" element={<ViewFAQ darkMode={darkMode}/>} />
-            <Route path="notifications" element={
-              <Notifications 
-                darkMode={darkMode} 
-                openChat={openChatSidebarHandler} 
-                openFriendRequest={openFriendRequestSidebarHandler} 
-              />} 
+
+            {/* Notifications Route */}
+            <Route 
+              path="notifications" 
+              element={
+                <Notifications 
+                  darkMode={darkMode}
+                  openChat={openChatFromNotification}
+                  openFriendRequest={openFriendRequestSidebarHandler}
+                />
+              }
             />
+
             <Route path="friends" element={<FriendshipPage darkMode={darkMode} tab={friendshipTab} userId={friendRequestUserId}/>} />
             <Route path="friends/:userId" element={<Accountgrad darkMode={darkMode}/>} />
             <Route path="posts/:postId" element={<PostSingle />} />
             <Route path="documents" element={<EmptyPage title="Document Requests" />} />
-            <Route path="Consultations" element={<EmptyPage title="Consultation Requests" />} />
+            <Route path="consultations" element={<EmptyPage title="Consultation Requests" />} />
             <Route path="feedback" element={<FeedbackPage darkMode={darkMode}/>} />
-            <Route path="chat/:chatId" element={<ChatBox darkMode={darkMode} />} />
-          </Routes>
 
+            {/* Chat Page Wrapper */}
+            <Route path="chat/:chatId" element={<ChatPageWrapper darkMode={darkMode} />} />
+
+          </Routes>
         </main>
       </div>
     </div>
   );
 };
 
+// ================= ChatPageWrapper =================
+function ChatPageWrapper({ darkMode }) {
+  const { chatId } = useParams();
+  const location = useLocation();
+  const friendData = location.state?.friend || { fullName: "Unknown" };
+
+  return (
+    <ChatBox
+      chatId={chatId}
+      activeChatFriend={friendData}
+      darkMode={darkMode}
+      onClose={() => window.history.back()}
+    />
+  );
+}
+
 export default Dashboard;
+
 
 // import React, { useState, useEffect, useRef } from 'react';
 // import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
