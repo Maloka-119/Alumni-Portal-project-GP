@@ -371,15 +371,22 @@ const sanitizeDigitalIDData = (data) => {
 
 const getDigitalID = async (req, res) => {
   try {
+    console.log("🔍 [getDigitalID] Request received");
+    console.log("🔍 [getDigitalID] User:", req.user ? { id: req.user.id, type: req.user["user-type"] } : "null");
+    
     if (!req.user || !req.user.id) {
+      console.error("❌ [getDigitalID] Unauthorized - no user or user.id");
       return res.status(401).json({
         status: HttpStatusHelper.FAIL,
         message: "Not authorized or user not found",
         data: null,
+        error: "Missing user authentication",
       });
     }
 
     const userId = req.user.id;
+    console.log("🔍 [getDigitalID] Fetching graduate for userId:", userId);
+    
     const graduate = await Graduate.findOne({
       where: { graduate_id: userId },
       include: [{ model: require("../models/User") }],
@@ -387,21 +394,27 @@ const getDigitalID = async (req, res) => {
     });
 
     if (!graduate) {
+      console.error("❌ [getDigitalID] Graduate not found for userId:", userId);
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
         data: null,
+        error: `No graduate record found for user ID: ${userId}`,
       });
     }
 
     const user = graduate.User;
     if (!user) {
+      console.error("❌ [getDigitalID] User not found for graduate:", graduate.graduate_id);
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "User details not found for this graduate",
         data: null,
+        error: `User record not found for graduate ID: ${graduate.graduate_id}`,
       });
     }
+    
+    console.log("✅ [getDigitalID] Graduate and User found");
 
     // Decrypt national ID before using it
     let nationalIdToUse = null;
@@ -507,17 +520,27 @@ const getDigitalID = async (req, res) => {
     delete digitalID.id;
     delete digitalID.digitalID;
 
+    console.log("✅ [getDigitalID] Digital ID data prepared successfully");
     return res.json({
       status: HttpStatusHelper.SUCCESS,
       message: "Graduate Digital ID fetched successfully",
       data: digitalID,
     });
   } catch (err) {
-    console.error("getDigitalID error:", err.message);
+    console.error("❌ [getDigitalID] Unexpected error:", {
+      message: err.message,
+      stack: err.stack,
+      userId: req.user?.id,
+    });
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
-      message: err.message,
+      message: err.message || "Internal server error",
       data: null,
+      error: "An unexpected error occurred while fetching digital ID",
+      details: process.env.NODE_ENV === 'development' ? {
+        stack: err.stack,
+        name: err.name,
+      } : undefined,
     });
   }
 };
