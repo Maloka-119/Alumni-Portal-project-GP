@@ -14,6 +14,8 @@ import LinkedInSignUp from "./auth/LinkedInSignUp";
 import Loading from "./components/Loading";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
+import PublicGraduateProfile from './pages/alumni/PublicGraduateProfile.jsx'
+
 function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -42,6 +44,11 @@ function App() {
             <Route path="/helwan-alumni-portal" element={<LandingPage />} />
             <Route path="/helwan-alumni-portal/register" element={<Register />} />
             <Route path="/helwan-alumni-portal/login" element={<Login setUser={setUser} />} />
+
+            <Route
+  path="/helwan-alumni-portal/public-graduate/:graduationId"
+  element={<PublicGraduateProfile />}
+/>
           
 
             {/* LinkedIn routes */}
