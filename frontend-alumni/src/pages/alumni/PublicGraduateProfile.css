@@ -1,0 +1,177 @@
+.pgp-container {
+    max-width: 500px;
+    width: 90%;
+    margin: 50px auto;
+    padding: 30px 20px;
+    text-align: center; 
+    border-radius: 16px;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+    background-color: #fefefe;
+    font-family: Arial, sans-serif;
+  }
+  
+  .pgp-image-section {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 25px;
+  }
+  
+  .pgp-image {
+    width: 130px;
+    height: 130px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #1089b9;
+  }
+  
+  .pgp-placeholder {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background-color: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-size: 14px;
+  }
+  
+  .pgp-name-section {
+    margin-bottom: 25px;
+  }
+  
+  .pgp-label {
+    display: block;
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .pgp-name-eng {
+    font-weight: 700;
+    font-size: 22px;
+    margin: 0 0 12px 0;
+    color: #1a1a1a;
+  }
+  
+  .pgp-name-ar {
+    font-weight: 400;
+    font-size: 17px;
+    margin: 0 0 12px 0;
+    color: #555;
+  }
+  
+  .pgp-id-number {
+    font-size: 14px;
+    color: #2a3b5f;
+    margin-bottom: 20px;
+    font-weight: 500;
+  }
+  
+  .pgp-details {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #333;
+  }
+  
+  .pgp-detail-item {
+    margin-bottom: 12px; 
+  }
+  
+  
+  @media (max-width: 480px) {
+    .pgp-container {
+      padding: 35px 15px;
+    }
+  
+    .pgp-image {
+      width: 120px;
+      height: 120px;
+    }
+  
+    .pgp-name-eng {
+      font-size: 20px;
+    }
+  
+    .pgp-name-ar {
+      font-size: 16px;
+    }
+  
+    .pgp-id-number {
+      font-size: 14px;
+    }
+  
+    .pgp-details {
+      font-size: 14px;
+    }
+  
+    .pgp-detail-item {
+      margin-bottom: 16px; 
+    }
+  
+    
+  }
+  
+  @media (max-width: 360px) {
+    .pgp-image {
+      width: 100px;
+      height: 100px;
+    }
+  
+    .pgp-name-eng {
+      font-size: 18px;
+    }
+  
+    .pgp-name-ar {
+      font-size: 15px;
+    }
+  
+    .pgp-id-number {
+      font-size: 13px;
+    }
+  
+    .pgp-details {
+      font-size: 13px;
+    }
+  
+    .pgp-detail-item {
+      margin-bottom: 18px; 
+    }
+  
+    
+  }
+
+  .pgp-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    background-image: 
+        linear-gradient(rgba(255,255,255,0.6), rgba(255,255,255,0.6)),
+        url('./helwan-img.jpg'); 
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+  
+  .pgp-intro {
+    text-align: center;
+    /* margin-bottom: 40px; */
+  }
+  
+  .pgp-intro h1 {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #1089b9;
+  }
+  
+  .pgp-intro p {
+    font-size: 16px;
+    color: #555;
+    margin: 4px 0;
+  }
+  
