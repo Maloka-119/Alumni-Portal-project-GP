@@ -11,6 +11,9 @@ router.route("/").get(graduateController.getAllGraduates);
 // Get graduate profile by ID (public)
 router.route("/:id/profile").get(graduateController.getGraduateProfile);
 
+// Get public graduate profile (new endpoint - public)
+router.route("/:id/public-profile").get(graduateController.getPublicGraduateProfile);
+
 // GET CV (public)
 router.get("/:id/cv", graduateController.downloadCv);
 
