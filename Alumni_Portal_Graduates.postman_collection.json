@@ -1,0 +1,301 @@
+{
+	"info": {
+		"_postman_id": "alumni-graduates-2024",
+		"name": "Alumni Portal - Graduates Endpoints",
+		"description": "Collection for testing Graduate endpoints including new public profile and modified digital ID endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.token) {",
+									"        pm.environment.set(\"token\", jsonData.token);",
+									"        console.log(\"Token saved to environment\");",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"yourpassword\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/alumni-portal/login",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni-portal",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Public Profile (New Endpoint)",
+			"item": [
+				{
+					"name": "Get Public Graduate Profile",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept-Language",
+								"value": "ar"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni-portal/graduates/{{graduate_id}}/public-profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni-portal",
+								"graduates",
+								"{{graduate_id}}",
+								"public-profile"
+							]
+						},
+						"description": "Get public graduate profile. Returns: fullName, faculty, department, graduationYear, image"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Public Profile - Invalid ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept-Language",
+								"value": "ar"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni-portal/graduates/99999/public-profile",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni-portal",
+								"graduates",
+								"99999",
+								"public-profile"
+							]
+						},
+						"description": "Test with invalid graduate ID"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Digital ID (Modified Endpoint)",
+			"item": [
+				{
+					"name": "Get Digital ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Accept-Language",
+								"value": "ar"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni-portal/graduates/digital-id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni-portal",
+								"graduates",
+								"digital-id"
+							]
+						},
+						"description": "Get digital ID with nationalId, graduationId, and QR code. Requires authentication."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Digital ID - Without Auth",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept-Language",
+								"value": "ar"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni-portal/graduates/digital-id",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni-portal",
+								"graduates",
+								"digital-id"
+							]
+						},
+						"description": "Test without authentication token"
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "QR Code",
+			"item": [
+				{
+					"name": "Generate QR Code",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    if (jsonData.data && jsonData.data.verificationUrl) {",
+									"        var url = jsonData.data.verificationUrl;",
+									"        var token = url.split('/').pop();",
+									"        pm.environment.set(\"qr_token\", token);",
+									"        console.log(\"QR token saved: \" + token);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni-portal/graduates/digital-id/qr",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni-portal",
+								"graduates",
+								"digital-id",
+								"qr"
+							]
+						},
+						"description": "Generate QR code for digital ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify QR Token",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept-Language",
+								"value": "ar"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/alumni-portal/graduates/digital-id/verify/{{qr_token}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni-portal",
+								"graduates",
+								"digital-id",
+								"verify",
+								"{{qr_token}}"
+							]
+						},
+						"description": "Verify QR token and get digital ID data with nationalId, graduationId, and QR"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify QR Token - Invalid",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/alumni-portal/graduates/digital-id/verify/invalid_token_12345",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"alumni-portal",
+								"graduates",
+								"digital-id",
+								"verify",
+								"invalid_token_12345"
+							]
+						},
+						"description": "Test with invalid QR token"
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:5005",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "graduate_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "qr_token",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

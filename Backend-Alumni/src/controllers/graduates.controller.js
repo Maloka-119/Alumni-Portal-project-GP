@@ -403,8 +403,31 @@ const getDigitalID = async (req, res) => {
       });
     }
 
+    // Decrypt national ID before using it
+    let nationalIdToUse = null;
+    if (user["national-id"]) {
+      const decrypted = aes.decryptNationalId(user["national-id"]);
+      if (decrypted) {
+        nationalIdToUse = decrypted;
+      } else {
+        // If decryption fails, try using the value as-is (might be unencrypted)
+        const nationalIdStr = String(user["national-id"]).trim();
+        if (/^\d{14}$/.test(nationalIdStr)) {
+          nationalIdToUse = nationalIdStr;
+        }
+      }
+    }
+
+    if (!nationalIdToUse) {
+      return res.status(400).json({
+        status: HttpStatusHelper.ERROR,
+        message: "National ID not found or could not be decrypted",
+        data: null,
+      });
+    }
+
     // Fetch student data from external API (REQUIRED - no fallback to local DB)
-    const { data: externalData, error: externalError } = await fetchStudentDataFromExternal(user["national-id"]);
+    const { data: externalData, error: externalError } = await fetchStudentDataFromExternal(nationalIdToUse);
     
     if (externalError || !externalData) {
       // Return detailed error message
@@ -429,21 +452,55 @@ const getDigitalID = async (req, res) => {
       facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
     }
 
+    // Get full name from external data if available, otherwise from User model
+    let fullName;
+    if (externalData.fullName || externalData["full-name"] || (externalData["first-name"] && externalData["last-name"])) {
+      fullName = externalData.fullName || externalData["full-name"] || 
+                 `${externalData["first-name"] || ""} ${externalData["last-name"] || ""}`.trim();
+    } else {
+      fullName = `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim();
+    }
+
+    // Generate QR code
+    const qrToken = generateQRToken(userId);
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:5005";
+    const verificationUrl = `${backendUrl}/alumni-portal/graduates/digital-id/verify/${qrToken}`;
+    
+    let qrCodeDataURL;
+    try {
+      qrCodeDataURL = await QRCode.toDataURL(verificationUrl, {
+        errorCorrectionLevel: "M",
+        type: "image/png",
+        quality: 0.92,
+        margin: 1,
+        width: 300,
+      });
+    } catch (qrError) {
+      console.error("Error generating QR code:", qrError);
+      qrCodeDataURL = null;
+    }
+
+    // Decrypt national ID for response
+    let decryptedNationalId = nationalIdToUse; // Already decrypted above
+
     // Build digital ID data - profile image from local DB, rest from external API
     const digitalID = {
       personalPicture: graduate["profile-picture-url"] || null, // From local DB only
-      fullName: `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim(),
+      fullName: fullName,
       faculty: facultyName,
+      department: externalData.department || externalData.Department || externalData.DEPARTMENT || null,
       graduationYear: externalData["graduation-year"] || externalData.graduationYear || externalData.GraduationYear || null,
       status: externalData.status || externalData.Status || "active",
+      // Additional fields (as requested)
+      nationalId: decryptedNationalId,
+      graduationId: graduate.graduate_id,
+      qr: qrCodeDataURL,
       // Add any other fields from external data (excluding IDs)
       ...sanitizeDigitalIDData(externalData),
     };
 
-    // Ensure no IDs are included
-    delete digitalID.nationalId;
+    // Ensure no duplicate IDs are included (but keep the ones we explicitly added)
     delete digitalID.national_id;
-    delete digitalID.graduate_id;
     delete digitalID.graduateId;
     delete digitalID.student_id;
     delete digitalID.studentId;
@@ -578,8 +635,31 @@ const verifyDigitalIDQR = async (req, res) => {
 
     const user = graduate.User;
 
+    // Decrypt national ID before using it
+    let nationalIdToUse = null;
+    if (user["national-id"]) {
+      const decrypted = aes.decryptNationalId(user["national-id"]);
+      if (decrypted) {
+        nationalIdToUse = decrypted;
+      } else {
+        // If decryption fails, try using the value as-is (might be unencrypted)
+        const nationalIdStr = String(user["national-id"]).trim();
+        if (/^\d{14}$/.test(nationalIdStr)) {
+          nationalIdToUse = nationalIdStr;
+        }
+      }
+    }
+
+    if (!nationalIdToUse) {
+      return res.status(400).json({
+        status: HttpStatusHelper.ERROR,
+        message: "National ID not found or could not be decrypted",
+        data: null,
+      });
+    }
+
     // Fetch student data from external API (REQUIRED - no fallback to local DB)
-    const { data: externalData, error: externalError } = await fetchStudentDataFromExternal(user["national-id"]);
+    const { data: externalData, error: externalError } = await fetchStudentDataFromExternal(nationalIdToUse);
     
     if (externalError || !externalData) {
       // Return detailed error message
@@ -604,21 +684,55 @@ const verifyDigitalIDQR = async (req, res) => {
       facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
     }
 
+    // Get full name from external data if available, otherwise from User model
+    let fullName;
+    if (externalData.fullName || externalData["full-name"] || (externalData["first-name"] && externalData["last-name"])) {
+      fullName = externalData.fullName || externalData["full-name"] || 
+                 `${externalData["first-name"] || ""} ${externalData["last-name"] || ""}`.trim();
+    } else {
+      fullName = `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim();
+    }
+
+    // Generate QR code
+    const qrToken = generateQRToken(userId);
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:5005";
+    const verificationUrl = `${backendUrl}/alumni-portal/graduates/digital-id/verify/${qrToken}`;
+    
+    let qrCodeDataURL;
+    try {
+      qrCodeDataURL = await QRCode.toDataURL(verificationUrl, {
+        errorCorrectionLevel: "M",
+        type: "image/png",
+        quality: 0.92,
+        margin: 1,
+        width: 300,
+      });
+    } catch (qrError) {
+      console.error("Error generating QR code:", qrError);
+      qrCodeDataURL = null;
+    }
+
+    // Decrypt national ID for response
+    let decryptedNationalId = nationalIdToUse; // Already decrypted above
+
     // Build digital ID data - profile image from local DB, rest from external API
     const digitalID = {
       personalPicture: graduate["profile-picture-url"] || null, // From local DB only
-      fullName: `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim(),
+      fullName: fullName,
       faculty: facultyName,
+      department: externalData.department || externalData.Department || externalData.DEPARTMENT || null,
       graduationYear: externalData["graduation-year"] || externalData.graduationYear || externalData.GraduationYear || null,
       status: externalData.status || externalData.Status || "active",
+      // Additional fields (as requested)
+      nationalId: decryptedNationalId,
+      graduationId: graduate.graduate_id,
+      qr: qrCodeDataURL,
       // Add any other fields from external data (excluding IDs)
       ...sanitizeDigitalIDData(externalData),
     };
 
-    // Ensure no IDs are included
-    delete digitalID.nationalId;
+    // Ensure no duplicate IDs are included (but keep the ones we explicitly added)
     delete digitalID.national_id;
-    delete digitalID.graduate_id;
     delete digitalID.graduateId;
     delete digitalID.student_id;
     delete digitalID.studentId;
@@ -1070,6 +1184,122 @@ const searchGraduates = async (req, res) => {
   }
 };
 
+// Get public graduate profile (new endpoint)
+// Returns: Full name, Faculty, Department, Graduation year, Image
+const getPublicGraduateProfile = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const graduate = await Graduate.findByPk(id, {
+      include: [{ model: User }],
+      attributes: { exclude: ["faculty"] },
+    });
+
+    if (!graduate || !graduate.User) {
+      return res.status(404).json({
+        status: HttpStatusHelper.FAIL,
+        message: "Graduate not found",
+        data: null,
+      });
+    }
+
+    const user = graduate.User;
+
+    // Try to decrypt national ID, if it fails, try using it as-is (might be unencrypted)
+    let nationalIdToUse = null;
+    if (user["national-id"]) {
+      // Try to decrypt first
+      const decrypted = aes.decryptNationalId(user["national-id"]);
+      if (decrypted) {
+        nationalIdToUse = decrypted;
+      } else {
+        // If decryption fails, try using the value as-is (might be unencrypted)
+        // Check if it looks like a valid national ID (14 digits)
+        const nationalIdStr = String(user["national-id"]).trim();
+        if (/^\d{14}$/.test(nationalIdStr)) {
+          nationalIdToUse = nationalIdStr;
+        }
+      }
+    }
+
+    // If still no valid national ID, use local data as fallback
+    if (!nationalIdToUse) {
+      const lang = req.headers["accept-language"] || "ar";
+      const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
+      
+      const publicProfile = {
+        fullName: `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim(),
+        faculty: facultyName,
+        department: null, // Not available from local DB
+        graduationYear: graduate["graduation-year"] || null,
+        image: graduate["profile-picture-url"] || null,
+      };
+
+      return res.json({
+        status: HttpStatusHelper.SUCCESS,
+        message: "Public graduate profile fetched successfully (using local data)",
+        data: publicProfile,
+      });
+    }
+
+    // Fetch student data from external API
+    const { data: externalData, error: externalError } = await fetchStudentDataFromExternal(nationalIdToUse);
+    
+    if (externalError || !externalData) {
+      const statusCode = externalError?.status || 500;
+      const errorMessage = externalError?.message || "Failed to fetch student data from external system";
+      
+      return res.status(statusCode).json({
+        status: HttpStatusHelper.ERROR,
+        message: errorMessage,
+        data: null,
+        errorCode: externalError?.code || 'EXTERNAL_API_ERROR',
+      });
+    }
+
+    const lang = req.headers["accept-language"] || "ar";
+    
+    // Get faculty name from external data
+    let facultyName;
+    if (externalData.faculty || externalData.Faculty || externalData.FACULTY || externalData.facultyName) {
+      facultyName = externalData.faculty || externalData.Faculty || externalData.FACULTY || externalData.facultyName;
+    } else {
+      facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
+    }
+
+    // Get full name from external data if available, otherwise from User model
+    let fullName;
+    if (externalData.fullName || externalData["full-name"] || (externalData["first-name"] && externalData["last-name"])) {
+      fullName = externalData.fullName || externalData["full-name"] || 
+                 `${externalData["first-name"] || ""} ${externalData["last-name"] || ""}`.trim();
+    } else {
+      fullName = `${user["first-name"] || ""} ${user["last-name"] || ""}`.trim();
+    }
+
+    // Build public profile data
+    const publicProfile = {
+      fullName: fullName,
+      faculty: facultyName,
+      department: externalData.department || externalData.Department || externalData.DEPARTMENT || null,
+      graduationYear: externalData["graduation-year"] || externalData.graduationYear || externalData.GraduationYear || null,
+      image: graduate["profile-picture-url"] || null, // From portal
+    };
+
+    return res.json({
+      status: HttpStatusHelper.SUCCESS,
+      message: "Public graduate profile fetched successfully",
+      data: publicProfile,
+    });
+  } catch (err) {
+    console.error("getPublicGraduateProfile error:", err.message);
+    return res.status(500).json({
+      status: HttpStatusHelper.ERROR,
+      message: err.message,
+      data: null,
+    });
+  }
+};
+
 // get graduate profile for user
 const getGraduateProfileForUser = async (req, res) => {
   try {
@@ -1311,6 +1541,7 @@ module.exports = {
   generateDigitalIDQR,
   verifyDigitalIDQR,
   getGraduateProfile,
+  getPublicGraduateProfile,
   updateProfile,
   updateGraduateStatus,
   searchGraduates,
