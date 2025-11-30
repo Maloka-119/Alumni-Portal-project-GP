@@ -1,9 +1,17 @@
 const crypto = require("crypto");
 
 const ENC_ALGO = "aes-256-cbc";
+
+// Get encryption key from environment variable or use a default (for development only)
+const NID_ENC_KEY = process.env.NID_ENC_KEY || "default-encryption-key-change-in-production";
+
+if (!process.env.NID_ENC_KEY) {
+  console.warn("⚠️  WARNING: NID_ENC_KEY environment variable is not set. Using default key (NOT SECURE FOR PRODUCTION)");
+}
+
 const ENC_KEY = crypto
   .createHash("sha256")
-  .update(process.env.NID_ENC_KEY)
+  .update(NID_ENC_KEY)
   .digest();
 
 function decryptNationalId(encryptedString) {
