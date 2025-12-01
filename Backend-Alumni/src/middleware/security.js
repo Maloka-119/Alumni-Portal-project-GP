@@ -4,40 +4,36 @@ const helmet = require("helmet");
 const hpp = require("hpp");
 const validator = require("validator");
 const sanitizeHtml = require("sanitize-html");
-const { ipKeyGenerator } = require('express-rate-limit');
-
+const { ipKeyGenerator } = require("express-rate-limit");
 
 // Rate Limiting
-
 
 // Limits login attempts to prevent brute force attacks
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 5, // Allow maximum 5 failed login attempts
-  message: { error: "Too many login attempts, please try again after 5 minutes." },
+  message: {
+    error: "Too many login attempts, please try again after 5 minutes.",
+  },
   standardHeaders: true, // Return rate limit info in headers
   legacyHeaders: false, // Disable legacy headers
   keyGenerator: (req) => {
-  return ipKeyGenerator(req);
-}
+    return ipKeyGenerator(req);
+  },
 
-,
   skipSuccessfulRequests: true, // Only count failed requests
 });
-
 
 // Limits general API requests from same IP
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // Time window: 15 minutes
-  max: 100, // Max number of total requests per window per IP
+  max: 1000, // Max number of total requests per window per IP
   message: {
-    error: "Too many requests from this IP, please try again later."
-  }
+    error: "Too many requests from this IP, please try again later.",
+  },
 });
 
-
 // Helmet Security Headers
-
 
 // Adds security-related HTTP headers to prevent common attacks
 const helmetConfig = helmet({
@@ -51,17 +47,15 @@ const helmetConfig = helmet({
       fontSrc: ["'self'", "https://fonts.gstatic.com"], // Allow fonts from self and Google
       connectSrc: ["'self'", "http://localhost:3000"], // Allow API calls to backend only
       objectSrc: ["'none'"], // Block embedding objects
-      frameSrc: ["'none'"] // Block iframes
-    }
+      frameSrc: ["'none'"], // Block iframes
+    },
   },
   crossOriginEmbedderPolicy: false, // Disable COEP for compatibility
   crossOriginOpenerPolicy: true, // Enable COOP for isolation
-  crossOriginResourcePolicy: { policy: "same-site" } // Restrict resource loading to same site
+  crossOriginResourcePolicy: { policy: "same-site" }, // Restrict resource loading to same site
 });
 
-
 // Full Sanitization Against XSS
-
 
 // Cleans all input fields to remove harmful scripts (XSS)
 const sanitizeInput = (req, res, next) => {
@@ -73,7 +67,7 @@ const sanitizeInput = (req, res, next) => {
       // Remove any HTML tags or attributes (strong XSS protection)
       return sanitizeHtml(trimmed, {
         allowedTags: [],
-        allowedAttributes: {}
+        allowedAttributes: {},
       });
     }
 
@@ -101,9 +95,7 @@ const sanitizeInput = (req, res, next) => {
   next(); // Pass control to next middleware
 };
 
-
 // Basic XSS Protection Headers
-
 
 // Adds headers that block reflected XSS attacks
 const xssProtection = (req, res, next) => {
@@ -112,9 +104,7 @@ const xssProtection = (req, res, next) => {
   next();
 };
 
-
 // DoS Attack Detection (Logging only)
-
 
 // Logs IP and route for monitoring suspicious traffic
 const detectDoS = (req, res, next) => {
@@ -122,9 +112,7 @@ const detectDoS = (req, res, next) => {
   next();
 };
 
-
 // Data Validators
-
 
 // Validates email format and length
 const validateEmail = (email) => {
@@ -138,13 +126,16 @@ const validatePassword = (password) => {
     minLowercase: 1, // At least one lowercase letter
     minUppercase: 1, // At least one uppercase letter
     minNumbers: 1, // At least one number
-    minSymbols: 1 // At least one special character
+    minSymbols: 1, // At least one special character
   });
 };
 
 // Validates Egyptian National ID (14 digits)
 const validateNationalId = (nationalId) => {
-  return validator.isNumeric(nationalId) && validator.isLength(nationalId, { min: 14, max: 14 });
+  return (
+    validator.isNumeric(nationalId) &&
+    validator.isLength(nationalId, { min: 14, max: 14 })
+  );
 };
 
 // Validates phone number for any country
@@ -152,13 +143,15 @@ const validatePhoneNumber = (phoneNumber) => {
   return validator.isMobilePhone(phoneNumber, "any");
 };
 
-
 // Allowed Content Types
-
 
 // Rejects requests with unsupported Content-Type headers
 const validateContentType = (req, res, next) => {
-  const allowed = ["application/json", "application/x-www-form-urlencoded", "multipart/form-data"];
+  const allowed = [
+    "application/json",
+    "application/x-www-form-urlencoded",
+    "multipart/form-data",
+  ];
 
   // Enforce for POST and PUT methods only
   if (["POST", "PUT"].includes(req.method)) {
@@ -170,7 +163,6 @@ const validateContentType = (req, res, next) => {
 
   next(); // Continue processing
 };
-
 
 module.exports = {
   authLimiter,
@@ -184,5 +176,5 @@ module.exports = {
   validatePhoneNumber,
   xssProtection,
   detectDoS,
-  validateContentType
+  validateContentType,
 };
