@@ -4,7 +4,7 @@
   min-height: 100vh;
   padding: 20px;
   box-sizing: border-box;
-  background: #f1f5f9; /* خلفية الصفحة */
+  background: transparent; /* خلفية الصفحة */
 }
 
 .notifications-list {
@@ -182,4 +182,38 @@
 
 .dark .empty {
   color: #9ca3af;
+}
+
+
+.allread{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px; 
+  background-color: #e6f0fa; 
+  color: #2563eb;
+  border: 1px solid #2563eb;
+  border-radius: 8px; 
+  padding: 8px 16px; 
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  margin-bottom: 30px;
+}
+.allread:hover {
+  /* background-color: #2563eb; */
+  /* color: #fff;  */
+  border-color: #10b981;
+}
+
+.dark .allread {
+  background-color: #1f2937; 
+  color: #93c5fd; 
+  border: 1px solid #3b82f6; 
+}
+
+.dark .allread:hover {
+  /* background-color: #3b82f6;  */
+  /* color: #fff;  */
+  border-color: #10b981;
 }

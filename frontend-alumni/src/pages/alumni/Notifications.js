@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Notification.css";
+import { Check, X } from "lucide-react";
 
 const token = localStorage.getItem("token");
 
@@ -147,8 +148,8 @@ const NotificationsPage = ({ openChat }) => {
   return (
     <div className="notifications-container">
       <h1 className="Title">{t("Notifications")}</h1>
-      <button className="accept-btn" onClick={markAllAsRead}>
-        {t("Mark All as Read")}
+      <button className="allread" onClick={markAllAsRead}>
+      <Check size={24} color="#1089b9" /> {t("Mark All as Read")}
       </button>
 
       <div className="notifications-list">
@@ -184,17 +185,19 @@ const NotificationsPage = ({ openChat }) => {
               >
                 {!n.isRead && (
                   <button
-                    className="accept-btn-"
+                    className="delete-btn"
                     onClick={() => markAsRead(n.id)}
+                  style={{backgroundColor:"transparent"}}
                   >
-                    {t("Mark as Read")}
+                    <Check size={20} color="#1089b9" />
                   </button>
                 )}
                 <button
                   className="delete-btn"
                   onClick={() => deleteNotification(n.id)}
+                  style={{backgroundColor:"transparent"}}
                 >
-                  {t("Delete")}
+                  <X size={20} color="#ff4d4f" />
                 </button>
               </div>
             </div>
