@@ -81,7 +81,7 @@ function GroupDetails({ group, goBack }) {
 
   const fetchAvailableGraduates = async () => {
     try {
-      console.log("Token:", localStorage.getItem("token"));
+      // console.log("Token:", localStorage.getItem("token"));
 
       const token = localStorage.getItem("token");
       if (!token) {
