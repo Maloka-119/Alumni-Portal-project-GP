@@ -343,3 +343,9 @@
 .dashboard-root.rtl .profile-value {
     text-align: left; 
 }
+.sidebar-icon {
+    margin-right: 8px;
+    display: inline-flex;
+    vertical-align: middle;
+  }
+  

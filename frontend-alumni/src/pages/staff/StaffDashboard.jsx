@@ -61,38 +61,40 @@ const toggleLanguage = () => {
 
   const activePath = location.pathname.split("/").pop();
 
-const renderSidebar = () => {
-  return modulesConfig.map(module => {
-    const modulePerm = getPermission(module.permKey, currentUser, module.children || []);
-    if (!modulePerm.canView) return null;
-
-    return (
-      <div key={module.path} className="sidebar-module">
-        <button
-          className={`sidebar-link ${activePath === module.path ? "active" : ""}`}
-          onClick={() => navigate(`/helwan-alumni-portal/staff/dashboard/${module.path}`, { replace: true })}
-        >
-          {module.name}
-        </button>
-
-        {module.children && module.children.map(child => {
-          const childPerm = getPermission(child.permKey, currentUser);
-          if (!childPerm.canView) return null;
-          return (
-            <button
-              key={child.path}
-              className={`sidebar-link child-link ${activePath === child.path ? "active" : ""}`}
-              onClick={() => navigate(`/helwan-alumni-portal/staff/dashboard/${module.path}/${child.path}`, { replace: true })}
-            >
-              {child.name}
-            </button>
-          );
-        })}
-      </div>
-    );
-  });
-};
-
+  const renderSidebar = () => {
+    return modulesConfig.map(module => {
+      const modulePerm = getPermission(module.permKey, currentUser, module.children || []);
+      if (!modulePerm.canView) return null;
+  
+      return (
+        <div key={module.path} className="sidebar-module">
+          <button
+            className={`sidebar-link ${activePath === module.path ? "active" : ""}`}
+            onClick={() => navigate(`/helwan-alumni-portal/staff/dashboard/${module.path}`, { replace: true })}
+          >
+            {module.icon && <span className="sidebar-icon">{module.icon}</span>}
+            <span>{module.name}</span>
+          </button>
+  
+          {module.children && module.children.map(child => {
+            const childPerm = getPermission(child.permKey, currentUser);
+            if (!childPerm.canView) return null;
+            return (
+              <button
+                key={child.path}
+                className={`sidebar-link child-link ${activePath === child.path ? "active" : ""}`}
+                onClick={() => navigate(`/helwan-alumni-portal/staff/dashboard/${module.path}/${child.path}`, { replace: true })}
+              >
+                {child.icon && <span className="sidebar-icon">{child.icon}</span>}
+                <span>{child.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      );
+    });
+  };
+  
   const renderRoutes = () => {
     return modulesConfig.map((module) => {
       const ModuleComponent = module.component || EmptyPage;
