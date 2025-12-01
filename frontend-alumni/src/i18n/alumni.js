@@ -51,6 +51,8 @@ const alumni = {
       "save": "Save",
       "cancel": "Cancel",
       "loading": "Loading...",
+      "noSkills":"No Skills",
+      "noJob": "No Job",
 
       // ===== My Posts =====
       "createNewPost": "Create new post...",
@@ -92,14 +94,14 @@ const alumni = {
       "digitalId_loading": "Loading your Digital ID...",
 
       // ===== Groups =====
-      "myGroups": "My Groups",
+      "myGroups": "My Communities",
       "join": "Join",
       "joined": "Joined",
-      "leaveGroup": "Leave Group",
-      "leftGroupSuccess": "You left the group successfully!",
-      "goToGroup": "Go to Group",
-      "searchGroups": "Search groups...",
-      "groupPosts": "Group Posts",
+      "leaveGroup": "Leave Community",
+      "leftGroupSuccess": "You left the Community successfully!",
+      "goToGroup": "Go to Community",
+      "searchGroups": "Search Communitys...",
+      "groupPosts": "Community Posts",
       "like": "Like",
       "alreadyLiked": "You already liked this post!",
 
@@ -135,7 +137,7 @@ const alumni = {
       "Invite": "Invite",
       "Hide Invites": "Hide Invites",
       "Cancel Invitation": "Cancel Invitation",
-      "Invite to Group": "Invite to Group",
+      "Invite to Group": "Invite to Community",
       "createNewPost": "Create New Post",
       "writePost": "Write your post...",
       "category": "Category",
@@ -149,7 +151,7 @@ const alumni = {
       "General": "General",
       "Internship": "Internship",
       "Success story": "Success story",
-      "Invite Friends": "Invite Friends",
+      "Invite Friends": "Invite People",
       "Type a message": "Type a message",
       "Seen": "Seen",
        "Edited": "Edited",
@@ -310,6 +312,8 @@ const alumni = {
       "save": "حفظ",
       "cancel": "إلغاء",
       "loading": "جارٍ التحميل...",
+      "noSkills": "لا توجد مهارات",
+      "noJob": "لا يوجد وظيفة",
 
       // ===== My Posts =====
       "createNewPost": "أنشئ منشورًا جديدًا...",
@@ -351,14 +355,14 @@ const alumni = {
       "digitalId_loading": "جاري تحميل البطاقة الرقمية...",
 
       // ===== Groups =====
-      "myGroups": "مجموعاتي",
+      "myGroups": "مجمتعاتي",
       "join": "انضم",
       "joined": "تم الانضمام",
-      "leaveGroup": "غادر المجموعة",
-      "leftGroupSuccess": "لقد غادرت المجموعة بنجاح!",
-      "goToGroup": "اذهب إلى المجموعة",
-      "searchGroups": "ابحث في المجموعات...",
-      "groupPosts": "منشورات المجموعة",
+      "leaveGroup": "غادر المجتمع",
+      "leftGroupSuccess": "لقد غادرت المجتمع بنجاح!",
+      "goToGroup": "اذهب إلى المجتمع",
+      "searchGroups": "ابحث في المجتمعات...",
+      "groupPosts": "منشورات المجتمع",
       "like": "إعجاب",
       "alreadyLiked": "لقد أعجبت بهذا المنشور بالفعل!",
 
@@ -392,7 +396,7 @@ const alumni = {
       "Invite": "دعوة",
       "Hide Invites": "إخفاء الدعوات",
       "Cancel Invitation": "إلغاء الدعوة",
-      "Invite to Group": "دعوة للمجموعة",
+      "Invite to Group": "دعوة لالمجتمع",
       "createNewPost": "إنشاء منشور جديد",
       "writePost": "اكتب منشورك...",
       "category": "الفئة",
