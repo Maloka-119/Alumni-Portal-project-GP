@@ -5,7 +5,7 @@ import API from "../../services/api";
 import PostCard from "../../components/PostCard";
 import PROFILE from "./PROFILE.jpeg";
 import "./GroupDetails.css";
-import communityCover from "./defualtCommunityCover.jpg"
+import communityCover from "./defualtCommunityCover.jpg";
 import AdminPostsImg from './AdminPosts.jpeg';
 
 function GroupDetails({ group, goBack }) {
@@ -18,15 +18,13 @@ function GroupDetails({ group, goBack }) {
   const [isEditingMode, setIsEditingMode] = useState(false);
   const [newPost, setNewPost] = useState({ content: '', image: null, link: '', category: 'General' });
 
-const storedUser = localStorage.getItem("user");
-const currentUserId = storedUser ? JSON.parse(storedUser).id : null;
+  const storedUser = localStorage.getItem("user");
+  const currentUserId = storedUser ? JSON.parse(storedUser).id : null;
 
-const [searchTerm, setSearchTerm] = useState("");
-
-const filteredGraduates = availableGraduates.filter((f) =>
-  f.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
-);
-
+  const [searchTerm, setSearchTerm] = useState("");
+  const filteredGraduates = availableGraduates.filter((f) =>
+    f.fullName?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   useEffect(() => {
     if (!group?.id) return;
@@ -36,35 +34,43 @@ const filteredGraduates = availableGraduates.filter((f) =>
   }, [group.id]);
 
   const formatPosts = (data) => {
-    return data.map((post) => {
-  
-      return {
-        ...post,
-        id: post.post_id,
-        likes: post.likes_count || 0,
-        liked: false,
-        images: post.images || [],
-        showComments: false, 
-        author: {
-          id: post.author?.id,
-          name:
-            post.author?.type === "admin" || post.author?.type === "staff"
-              ? "Alumni Portal - Helwan University"
-              : post.author?.["full-name"] || "Unknown",
-          photo:
-            post.author?.type === "admin" || post.author?.type === "staff"
-              ? AdminPostsImg 
-              : post.author?.image || PROFILE,
-        },
-        date: post["created-at"],
-        
-      };
-    });
+    return data.map((post) => ({
+      ...post,
+      id: post.post_id,
+      likes: post.likes_count || 0,
+      liked: false,
+      images: post.images || [],
+      showComments: false,
+      author: {
+        id: post.author?.id,
+        name:
+          post.author?.type === "admin" || post.author?.type === "staff"
+            ? "Alumni Portal - Helwan University"
+            : post.author?.["full-name"] || "Unknown",
+        photo:
+          post.author?.type === "admin" || post.author?.type === "staff"
+            ? AdminPostsImg 
+            : post.author?.image || PROFILE,
+      },
+      date: post["created-at"],
+    }));
   };
-  
+
   const fetchPosts = async () => {
     try {
-      const res = await API.get(`/posts/group/${group.id}`);
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token not found");
+        return;
+      }
+
+      const res = await API.get(`/posts/group/${group.id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Accept-Language": "en",
+        },
+      });
+
       if (res.data.status === "success") {
         setPosts(formatPosts(res.data.data));
       }
@@ -72,42 +78,71 @@ const filteredGraduates = availableGraduates.filter((f) =>
       console.error("Error fetching posts:", err);
     }
   };
-  
 
   const fetchAvailableGraduates = async () => {
     try {
-      const res = await API.get(`/groups/${group.id}/available-graduates`);
-      // console.log(res.data);
-      setAvailableGraduates(res.data || []); 
+      console.log("Token:", localStorage.getItem("token"));
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token not found");
+        return;
+      }
+
+
+      const res = await API.get(`/groups/${group.id}/available-graduates`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Accept-Language": "en",
+        },
+      });
+
+      setAvailableGraduates(res.data || []);
     } catch (err) {
-      console.error(err);
+      console.error("Error fetching available graduates:", err);
     }
   };
 
   const fetchInvitations = async () => {
     try {
-      const receivedRes = await API.get("/invitations/received");
-  
-      const receivedInvites = (receivedRes?.data?.data) || [];
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token not found");
+        return;
+      }
 
-      const allInvites = [...receivedInvites]; 
-  
-      setInvitations(allInvites.filter(inv => inv.group_id === group.id));
-  
+      const receivedRes = await API.get("/invitations/received", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Accept-Language": "en",
+        },
+      });
+
+      const receivedInvites = receivedRes?.data?.data || [];
+      setInvitations(receivedInvites.filter(inv => inv.group_id === group.id));
     } catch (err) {
       console.error("خطأ أثناء جلب الدعوات:", err);
-      setInvitations([]); 
+      setInvitations([]);
     }
   };
-  
 
   const handleToggleInvitation = async (friend) => {
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token not found");
+        return;
+      }
+
       if (friend.invitationStatus === "pending") {
-        await API.post(`/invitations/${friend.invitationId}/cancel`);
+        await API.post(`/invitations/${friend.invitationId}/cancel`, null, {
+          headers: { Authorization: `Bearer ${token}`, "Accept-Language": "en" },
+        });
         setAvailableGraduates(prev => prev.map(f => f.id === friend.id ? { ...f, invitationStatus: "not_invited", invitationId: null } : f));
       } else if (friend.invitationStatus === "not_invited") {
-        const res = await API.post("/invitations/send", { receiver_id: friend.id, group_id: group.id });
+        const res = await API.post("/invitations/send", { receiver_id: friend.id, group_id: group.id }, {
+          headers: { Authorization: `Bearer ${token}`, "Accept-Language": "en" },
+        });
         const newInvitationId = res.data.invitationId || res.data.id;
         setAvailableGraduates(prev => prev.map(f => f.id === friend.id ? { ...f, invitationStatus: "pending", invitationId: newInvitationId } : f));
       }
@@ -119,7 +154,14 @@ const filteredGraduates = availableGraduates.filter((f) =>
   const handleAddOrEditPost = async (e) => {
     e.preventDefault();
     if (!newPost.content.trim()) return;
+
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token not found");
+        return;
+      }
+
       const formData = new FormData();
       formData.append("content", newPost.content);
       formData.append("category", newPost.category);
@@ -127,7 +169,9 @@ const filteredGraduates = availableGraduates.filter((f) =>
       if (newPost.image) formData.append("image", newPost.image);
 
       if (!isEditingMode) {
-        await API.post("/posts/create-post", formData);
+        await API.post("/posts/create-post", formData, {
+          headers: { Authorization: `Bearer ${token}`, "Accept-Language": "en" },
+        });
       }
 
       setShowForm(false);
@@ -148,16 +192,23 @@ const filteredGraduates = availableGraduates.filter((f) =>
       postId: post.id || post.post_id, 
     });
   };
-  
+
   const handleDeletePost = async (postId) => {
     try {
-      await API.delete(`/posts/${postId}`);
-      setPosts((prev) => prev.filter(p => p.id !== postId));
+      const token = localStorage.getItem("token");
+      if (!token) {
+        console.error("Token not found");
+        return;
+      }
+
+      await API.delete(`/posts/${postId}`, {
+        headers: { Authorization: `Bearer ${token}`, "Accept-Language": "en" },
+      });
+      setPosts(prev => prev.filter(p => p.id !== postId));
     } catch (err) {
       console.error(err);
     }
   };
-  
 
   return (
     <div className="group-details">
@@ -173,11 +224,11 @@ const filteredGraduates = availableGraduates.filter((f) =>
           </div>
         </div>
 
-<img
-  src={group.groupImage || group.cover || communityCover}
-  alt={group.groupName || group.name}
-  className="cover-img"
-/>
+        <img
+          src={group.groupImage || group.cover || communityCover}
+          alt={group.groupName || group.name}
+          className="cover-img"
+        />
 
         <h1>{group.groupName || group.name}</h1>
         <p className="group-description">{group.description}</p>
@@ -188,46 +239,41 @@ const filteredGraduates = availableGraduates.filter((f) =>
       </div>
 
       {showInviteSection && (
-  <div className="invite-section">
-    <h3>{t("Invite Friends")}</h3>
+        <div className="invite-section">
+          <h3>{t("Invite Friends")}</h3>
 
-    {/* search bar */}
-    <input
-      type="text"
-      placeholder={t("Search by name")}
-      value={searchTerm}
-      onChange={(e) => setSearchTerm(e.target.value)}
-      className="invite-search"
-    />
+          <input
+            type="text"
+            placeholder={t("Search by name")}
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="invite-search"
+          />
 
-    {filteredGraduates.length === 0 ? (
-      <p>{t("No graduates available to invite.")}</p>
-    ) : (
-      <ul className="invite-list">
-        {filteredGraduates.map((f) => (
-          <li key={f.id}>
-            <div className="friend-info">
-              <img src={f.profilePicture || PROFILE} alt="Profile" />
-              <span>{f.fullName}</span>
-            </div>
-            <button
-              className={`invite-action ${
-                f.invitationStatus === "pending" ? "cancel" : "invite"
-              }`}
-              onClick={() => handleToggleInvitation(f)}
-            >
-              {f.invitationStatus === "pending"
-                ? t("Cancel Invitation")
-                : t("Invite to Group")}
-            </button>
-          </li>
-        ))}
-      </ul>
-    )}
-  </div>
-)}
-
-
+          {filteredGraduates.length === 0 ? (
+            <p>{t("No graduates available to invite.")}</p>
+          ) : (
+            <ul className="invite-list">
+              {filteredGraduates.map((f) => (
+                <li key={f.id}>
+                  <div className="friend-info">
+                    <img src={f.profilePicture || PROFILE} alt="Profile" />
+                    <span>{f.fullName}</span>
+                  </div>
+                  <button
+                    className={`invite-action ${f.invitationStatus === "pending" ? "cancel" : "invite"}`}
+                    onClick={() => handleToggleInvitation(f)}
+                  >
+                    {f.invitationStatus === "pending"
+                      ? t("Cancel Invitation")
+                      : t("Invite to Group")}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       <div className="am-create-bar" onClick={() => {
         setShowForm(true);
@@ -279,8 +325,7 @@ const filteredGraduates = availableGraduates.filter((f) =>
 
       <div className="posts-list">
         {posts.map(post => (
-          <PostCard key={post.id || post.post_id} post={post} 
-          currentUserId={currentUserId} />
+          <PostCard key={post.id || post.post_id} post={post} currentUserId={currentUserId} />
         ))}
       </div>
     </div>
@@ -288,4 +333,3 @@ const filteredGraduates = availableGraduates.filter((f) =>
 }
 
 export default GroupDetails;
-

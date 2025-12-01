@@ -228,21 +228,21 @@ const ensurePermissionsSeeded = async () => {
         "can-add": false,
       });
 
-      console.log(`✅ Added permission: ${permName}`);
+      console.log(` Added permission: ${permName}`);
     }
 
-    console.log("🎯 Permissions reset and seeded successfully!");
+    console.log(" Permissions reset and seeded successfully!");
   } catch (error) {
-    console.error("❌ Error during permission seeding:", error);
+    console.error(" Error during permission seeding:", error);
   }
 };
 
 // ==================================================
-// ✅ Sync Database and Seed Default Admin + Permissions
+//  Sync Database and Seed Default Admin + Permissions
 // ==================================================
 
 // ==================================================
-// ✅ Connect Database and Seed Default Admin + Permissions
+// ✅Connect Database and Seed Default Admin + Permissions
 // ==================================================
 
 sequelize
