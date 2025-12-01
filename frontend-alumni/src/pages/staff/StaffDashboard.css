@@ -328,11 +328,25 @@
 
 .dashboard-root.rtl .sidebar-link {
     text-align: right;
+    border-left: none;     
+    
 }
 
 .dashboard-root.rtl .child-link {
     padding-left: 20px;
     padding-right: 40px;
+    border-right: none; 
+}
+.dashboard-root.rtl .sidebar-link.active {
+    border-left: none;
+    border-right: 4px solid #1f3a85; 
+    text-align: right;      
+}
+
+.dashboard-root.rtl .child-link.active {
+    border-left: none;      
+    border-right: none; 
+    text-align: right;     
 }
 /* Profile Dropdown RTL */
 .dashboard-root.rtl .profile-menu {
@@ -344,8 +358,14 @@
     text-align: left; 
 }
 .sidebar-icon {
-    margin-right: 8px;
     display: inline-flex;
     vertical-align: middle;
+    margin-right: 8px; 
   }
   
+ 
+  .rtl .sidebar-icon {
+    margin-right: 0;
+    margin-left: 8px;
+  }
+

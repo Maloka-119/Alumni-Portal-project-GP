@@ -57,9 +57,10 @@ const toggleLanguage = () => {
     navigate("/helwan-alumni-portal/login");
   };
 
-  if (loading) return <div className="dashboard-root"><p>Loading profile...</p></div>;
+  if (loading) return <div className="dashboard-root"><p>{t("loadingProfile")}</p></div>;
 
   const activePath = location.pathname.split("/").pop();
+
 
   const renderSidebar = () => {
     return modulesConfig.map(module => {
@@ -73,7 +74,7 @@ const toggleLanguage = () => {
             onClick={() => navigate(`/helwan-alumni-portal/staff/dashboard/${module.path}`, { replace: true })}
           >
             {module.icon && <span className="sidebar-icon">{module.icon}</span>}
-            <span>{module.name}</span>
+            <span>{t(module.nameKey)}</span>
           </button>
   
           {module.children && module.children.map(child => {
@@ -86,7 +87,7 @@ const toggleLanguage = () => {
                 onClick={() => navigate(`/helwan-alumni-portal/staff/dashboard/${module.path}/${child.path}`, { replace: true })}
               >
                 {child.icon && <span className="sidebar-icon">{child.icon}</span>}
-                <span>{child.name}</span>
+                <span>{t(child.nameKey)}</span>
               </button>
             );
           })}
@@ -156,7 +157,7 @@ const toggleLanguage = () => {
           <button className="menu-toggle-btn" onClick={toggleSidebar}>
             {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <h1 className="header-title-text">Staff Control Panel</h1>
+          <h1 className="header-title-text">{t("staffControlPanel")}</h1>
         </div>
         <div className="header-section-right">
         <button className="icon-action-btn" onClick={toggleLanguage}><Globe size={20} /></button>
