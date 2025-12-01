@@ -5,15 +5,7 @@ import axios from "axios";
 import "./Notification.css";
 import { Check, X } from "lucide-react";
 
-const token = localStorage.getItem("token");
-
-const API = axios.create({
-  baseURL: "http://localhost:5005/alumni-portal",
-  headers: { Authorization: `Bearer ${token}` },
-});
-
 const NotificationsPage = ({ openChat }) => {
-
   const { t, i18n } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,9 +15,16 @@ const NotificationsPage = ({ openChat }) => {
     document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
   }, [i18n.language]);
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem("token");
+    return { Authorization: `Bearer ${token}` };
+  };
+
   const fetchNotifications = async () => {
     try {
-      const res = await API.get("/notifications");
+      const res = await axios.get("http://localhost:5005/alumni-portal/notifications", {
+        headers: getAuthHeaders(),
+      });
       setNotifications(res.data.data);
     } catch (err) {
       console.error("Error fetching notifications:", err);
@@ -36,7 +35,11 @@ const NotificationsPage = ({ openChat }) => {
 
   const markAsRead = async (id) => {
     try {
-      await API.put(`/notifications/${id}/read`);
+      await axios.put(
+        `http://localhost:5005/alumni-portal/notifications/${id}/read`,
+        {},
+        { headers: getAuthHeaders() }
+      );
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
@@ -47,7 +50,10 @@ const NotificationsPage = ({ openChat }) => {
 
   const deleteNotification = async (id) => {
     try {
-      await API.delete(`/notifications/${id}`);
+      await axios.delete(
+        `http://localhost:5005/alumni-portal/notifications/${id}`,
+        { headers: getAuthHeaders() }
+      );
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     } catch (err) {
       console.error(err);
@@ -56,16 +62,17 @@ const NotificationsPage = ({ openChat }) => {
 
   const markAllAsRead = async () => {
     try {
-      await API.put("/notifications/read-all");
+      await axios.put(
+        "http://localhost:5005/alumni-portal/notifications/read-all",
+        {},
+        { headers: getAuthHeaders() }
+      );
       setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     } catch (err) {
       console.error(err);
     }
   };
 
-  // -------------------------------------------------------
-  //                HANDLE CLICK ON NOTIFICATION
-  // -------------------------------------------------------
   const handleNotificationClick = async (notification) => {
     if (!notification.isRead) markAsRead(notification.id);
 
@@ -73,49 +80,30 @@ const NotificationsPage = ({ openChat }) => {
     if (!nav) return;
 
     switch (nav.screen) {
-      // ---------------------------------------------------
-      //                    OPEN CHAT
-      // ---------------------------------------------------
       case "chat":
         if (nav.chatId && openChat) {
-          // تأكد من وجود sender قبل تمريره
           const sender = notification.sender || { id: null, fullName: "Unknown", email: "" };
           openChat(nav.chatId, {
             id: sender.id,
-            fullName: sender.fullName || "Unknown",
-            email: sender.email || "",
+            fullName: sender.fullName,
+            email: sender.email,
           });
         }
         break;
-      
-      
-      
 
-      // ---------------------------------------------------
       case "friend-requests":
-        navigate(
-          "/helwan-alumni-portal/graduate/dashboard/friends?tab=requests"
-        );
+        navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=requests");
         break;
 
       case "profile":
       case "accept":
-        navigate(
-          "/helwan-alumni-portal/graduate/dashboard/friends?tab=friends"
-        );
+        navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=friends");
         break;
 
       case "user":
-        if (nav.userId) {
-          navigate(
-            `/helwan-alumni-portal/graduate/dashboard/profile/${nav.userId}`
-          );
-        }
+        if (nav.userId) navigate(`/helwan-alumni-portal/graduate/dashboard/profile/${nav.userId}`);
         break;
 
-      // ---------------------------------------------------
-      //                    POSTS
-      // ---------------------------------------------------
       case "post":
         if (nav.postId) {
           const path = nav.commentId
@@ -135,21 +123,16 @@ const NotificationsPage = ({ openChat }) => {
   }, []);
 
   if (loading)
-    return (
-      <div className="notifications-container">
-        {t("Loading notifications...")}
-      </div>
-    );
+    return <div className="notifications-container">{t("Loading notifications...")}</div>;
 
-  const filteredNotifications = notifications.filter(
-    (n) => n.type !== "delete_comment"
-  );
+  const filteredNotifications = notifications.filter((n) => n.type !== "delete_comment");
 
   return (
     <div className="notifications-container">
       <h1 className="Title">{t("Notifications")}</h1>
+
       <button className="allread" onClick={markAllAsRead}>
-      <Check size={24} color="#1089b9" /> {t("Mark All as Read")}
+        <Check size={24} color="#1089b9" /> {t("Mark All as Read")}
       </button>
 
       <div className="notifications-list">
@@ -179,15 +162,12 @@ const NotificationsPage = ({ openChat }) => {
                 </span>
               </div>
 
-              <div
-                className="notif-actions"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="notif-actions" onClick={(e) => e.stopPropagation()}>
                 {!n.isRead && (
                   <button
                     className="delete-btn"
                     onClick={() => markAsRead(n.id)}
-                  style={{backgroundColor:"transparent"}}
+                    style={{ backgroundColor: "transparent" }}
                   >
                     <Check size={20} color="#1089b9" />
                   </button>
@@ -195,7 +175,7 @@ const NotificationsPage = ({ openChat }) => {
                 <button
                   className="delete-btn"
                   onClick={() => deleteNotification(n.id)}
-                  style={{backgroundColor:"transparent"}}
+                  style={{ backgroundColor: "transparent" }}
                 >
                   <X size={20} color="#ff4d4f" />
                 </button>
@@ -209,6 +189,7 @@ const NotificationsPage = ({ openChat }) => {
 };
 
 export default NotificationsPage;
+
 
 /*// NotificationsPage.jsx
 import React, { useEffect, useState } from "react";
