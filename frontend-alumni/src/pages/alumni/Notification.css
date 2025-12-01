@@ -96,9 +96,19 @@
   background: #2563eb;
 }
 
-.accept-btn- {
+.accept-invv {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
   font-size: 13px;
-  background: #2563eb;
+  cursor: pointer;
+  background: #4caf50;
+  color: #fff;
+  transition: all 0.2s ease;
+}
+.accept-invv:hover {
+  background: #45a049;
+  transform: scale(1.05);
 }
 
 .accept-btn:hover, .accept-btn-:hover {
@@ -217,3 +227,4 @@
   /* color: #fff;  */
   border-color: #10b981;
 }
+
