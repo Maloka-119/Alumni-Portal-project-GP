@@ -6,41 +6,30 @@ const Role = require("../models/Role");
 const Permission = require("../models/Permission");
 const RolePermission = require("../models/RolePermission");
 const checkStaffPermission = require("../utils/permissionChecker");
+const aes = require("../utils/aes"); 
 
-// 🔴 START OF LOGGER IMPORT - ADDED THIS
 const { logger, securityLogger } = require("../utils/logger");
-// 🔴 END OF LOGGER IMPORT
+
 
 // get all staff with roles
 const getAllStaff = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
   logger.info("🟢 ----- [getAllStaff] START -----", {
     timestamp: new Date().toISOString(),
-    user: req.user
-      ? { id: req.user.id, type: req.user["user-type"] }
-      : "undefined",
+    user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Getting all staff request", {
       userType: req.user?.["user-type"],
       userId: req.user?.id,
     });
-    // 🔴 END OF LOGGING
 
-    // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
-
-    // 2. لو مش من النوع المسموح → ارفض
     if (!allowedUserTypes.includes(req.user["user-type"])) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("ACCESS DENIED in getAllStaff", {
         userType: req.user["user-type"],
         allowedUserTypes,
       });
-      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -48,7 +37,6 @@ const getAllStaff = async (req, res) => {
       });
     }
 
-    // 3. لو staff → تحقق من الصلاحية
     if (req.user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
@@ -57,24 +45,19 @@ const getAllStaff = async (req, res) => {
       );
 
       if (!hasPermission) {
-        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED in getAllStaff", {
           userId: req.user.id,
           requiredPermission: "Staff management",
         });
-        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
           message: "Access denied. You don't have permission to view staff.",
           data: [],
         });
       }
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.info("Staff permission check passed", { userId: req.user.id });
-      // 🔴 END OF LOGGING
     }
 
-    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const staff = await Staff.findAll({
       include: [
         {
@@ -98,34 +81,36 @@ const getAllStaff = async (req, res) => {
       ],
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // فك تشفير الرقم القومي لكل staff
+    const staffWithDecryptedId = staff.map((s) => {
+      const obj = s.toJSON();
+
+      if (obj.User?.["national-id"]) {
+        obj.User["national-id"] = aes.decryptNationalId(obj.User["national-id"]);
+      }
+
+      return obj;
+    });
+
     logger.info("Staff list fetched successfully", {
       staffCount: staff.length,
       userType: req.user["user-type"],
     });
-    // 🔴 END OF LOGGING
-
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("🟢 ----- [getAllStaff] END SUCCESS -----", {
       staffCount: staff.length,
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
       message: "All staff fetched successfully with roles",
-      data: staff,
+      data: staffWithDecryptedId,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.error("❌ [getAllStaff] Unexpected Error", {
       error: err.message,
       stack: err.stack.substring(0, 200),
-      user: req.user
-        ? { id: req.user.id, type: req.user["user-type"] }
-        : "undefined",
+      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined",
     });
-    // 🔴 END OF LOGGING
 
     console.error(err);
     return res.status(500).json({
