@@ -162,7 +162,16 @@ function normalizeCollegeName(input) {
   const cleaned = input.trim().toLowerCase();
 
   for (const col of faculties) {
-    if (col.ar.toLowerCase() === cleaned || col.en.toLowerCase() === cleaned) return col.code;
+    // 1. تحقق من الكود أولاً (case-insensitive)
+    if (col.code.toLowerCase() === cleaned) return col.code;
+    
+    // 2. تحقق من الاسم العربي
+    if (col.ar.toLowerCase() === cleaned) return col.code;
+    
+    // 3. تحقق من الاسم الإنجليزي
+    if (col.en.toLowerCase() === cleaned) return col.code;
+    
+    // 4. تحقق من المرادفات
     if (col.synonyms.some(s => s.toLowerCase() === cleaned)) return col.code;
   }
 

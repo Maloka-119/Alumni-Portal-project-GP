@@ -159,13 +159,12 @@ const { t , i18n } = useTranslation();
               <label>{t("Graduation Year")}:
                 <input type="text" value={graduationYear} onChange={(e) => setGraduationYear(e.target.value)} />
               </label>
-              <label>
+<label>
   {t("College")}
   <select value={college} onChange={(e) => setCollege(e.target.value)}>
     <option value="">{t("Select College")}</option>
-
-    {faculties.map((f, index) => (
-      <option key={index} value={i18n.language === "ar" ? f.ar : f.en}>
+    {faculties.map((f) => (
+      <option key={f.code} value={f.code}>
         {i18n.language === "ar" ? f.ar : f.en}
       </option>
     ))}
