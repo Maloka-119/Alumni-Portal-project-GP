@@ -20,10 +20,10 @@ const {
   generalLimiter,
   helmetConfig,
   hppProtection,
-  sanitizeInput, 
+  sanitizeInput,
   xssProtection,
   detectDoS,
-  validateContentType
+  validateContentType,
 } = require("./middleware/security");
 const app = express();
 
@@ -50,25 +50,25 @@ app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 // 6. Sanitize HTML inputs
 app.use(sanitizeInput);
 // إضافة endpoints للتحقق من صحة النظام
-app.get('/health', (req, res) => {
+app.get("/health", (req, res) => {
   res.json({
-    status: 'OK',
+    status: "OK",
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    database: db.authenticate() ? 'connected' : 'disconnected'
+    database: db.authenticate() ? "connected" : "disconnected",
   });
 });
 
-app.get('/health/detailed', async (req, res) => {
+app.get("/health/detailed", async (req, res) => {
   const dbStatus = await checkDatabaseHealth();
   const redisStatus = await checkRedisHealth();
-  
+
   res.json({
-    status: dbStatus && redisStatus ? 'healthy' : 'unhealthy',
+    status: dbStatus && redisStatus ? "healthy" : "unhealthy",
     database: dbStatus,
     cache: redisStatus,
     memory: process.memoryUsage(),
-    load: os.loadavg()
+    load: os.loadavg(),
   });
 });
 
@@ -241,34 +241,55 @@ const ensurePermissionsSeeded = async () => {
 // ✅ Sync Database and Seed Default Admin + Permissions
 // ==================================================
 
+// ==================================================
+// ✅ Connect Database and Seed Default Admin + Permissions
+// ==================================================
+
 sequelize
-  .sync({ alter: false })
+  .authenticate()
   .then(async () => {
-    console.log("Database synced successfully.");
+    console.log("Database connected successfully.");
 
     // Ensure Notification table has correct structure
     const Notification = require("./models/Notification");
     try {
-      const tableDescription = await sequelize
-        .getQueryInterface()
-        .describeTable("Notification");
+      // Check if navigation column exists without sync
+      const tableExists = await sequelize.query(`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_name = 'Notification'
+        )
+      `);
 
-      if (!tableDescription["navigation"]) {
-        console.log("📝 Adding navigation column to Notification table...");
-        const { DataTypes } = require("sequelize");
-        await sequelize.getQueryInterface().addColumn("Notification", "navigation", {
-          type: DataTypes.JSON,
-          allowNull: true,
-          defaultValue: null
-        });
-        console.log("✅ Navigation column added successfully.");
+      if (tableExists[0][0].exists) {
+        // Table exists, check for navigation column
+        const columnExists = await sequelize.query(`
+          SELECT EXISTS (
+            SELECT FROM information_schema.columns 
+            WHERE table_name = 'Notification' 
+              AND column_name = 'navigation'
+          )
+        `);
+
+        if (!columnExists[0][0].exists) {
+          console.log("📝 Adding navigation column to Notification table...");
+          await sequelize.query(`
+            ALTER TABLE "Notification" 
+            ADD COLUMN navigation JSON
+          `);
+          console.log("✅ Navigation column added successfully.");
+        }
+      } else {
+        // Table doesn't exist - create it
+        console.log("📝 Creating Notification table...");
+        await Notification.sync({ force: false, alter: false });
+        console.log("✅ Notification table created successfully.");
       }
     } catch (error) {
-      console.log("📝 Creating Notification table...");
-      await Notification.sync({ force: false, alter: true });
-      console.log("✅ Notification table created successfully.");
+      console.error("❌ Error checking Notification table:", error);
     }
 
+    // Check and create admin user if needed
     const existingAdmin = await User.findByPk(1);
     if (!existingAdmin) {
       const hashedPassword = await bcrypt.hash("admin123", 10);
@@ -284,34 +305,14 @@ sequelize
       await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
     }
 
+    // Seed permissions
     await ensurePermissionsSeeded();
+
+    console.log("✅ Database initialization completed successfully.");
   })
   .catch(async (err) => {
-    if (err.name === "SequelizeUniqueConstraintError" && 
-        (err.message && err.message.includes("enum_User_auth_provider"))) {
-      console.log("⚠️  ENUM type already exists, continuing with seeding...");
-      try {
-        const existingAdmin = await User.findByPk(1);
-        if (!existingAdmin) {
-          const hashedPassword = await bcrypt.hash("admin123", 10);
-          await User.create({
-            id: 1,
-            email: "alumniportalhelwan@gmail.com",
-            "hashed-password": hashedPassword,
-            "user-type": "admin",
-            "first-name": "Alumni Portal -",
-            "last-name": " Helwan University",
-          });
-          await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
-        }
-        await ensurePermissionsSeeded();
-      } catch (seedErr) {
-        console.error("❌ Error during seeding:", seedErr);
-      }
-    } else {
-      console.error("❌ Error syncing database:", err);
-      process.exit(1);
-    }
+    console.error("❌ Error connecting to database:", err);
+    process.exit(1);
   });
 
 // ==================================================
