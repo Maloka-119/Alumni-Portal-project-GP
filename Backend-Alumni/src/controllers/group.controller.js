@@ -12,6 +12,10 @@ const { notifyAddedToGroup } = require("../services/notificationService");
 const { getCollegeNameByCode } = require("../services/facultiesService"); // ⬅️ أضف هذا الاستيراد
 const { normalizeCollegeName } = require("../services/facultiesService");
 
+// 🔴 START OF LOGGER IMPORT - ADDED THIS
+const { logger, securityLogger } = require("../utils/logger");
+// 🔴 END OF LOGGER IMPORT
+
 // getGraduatesForGroup اللي مسموحلهم تبعتلهم دعوه للجروب دا او معموله دعوه لسه متقبلتش
 //available to invite
 const getGraduatesForGroup = async (req, res) => {
@@ -20,6 +24,16 @@ const getGraduatesForGroup = async (req, res) => {
     const currentUserId = req.user.id;
     const currentUserType = req.user["user-type"];
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Get graduates for group invitation request initiated", {
+      userId: currentUserId,
+      userType: currentUserType,
+      groupId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // تحقق إن المستخدم Admin أو Staff أو Graduate
     const isAllowedUser =
       currentUserType === "admin" ||
@@ -27,6 +41,15 @@ const getGraduatesForGroup = async (req, res) => {
       currentUserType === "graduate";
 
     if (!isAllowedUser) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Unauthorized user type for group invitations", {
+        userId: currentUserId,
+        userType: currentUserType,
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         error: "Only admins, staff and graduates can invite others to groups.",
       });
@@ -42,6 +65,14 @@ const getGraduatesForGroup = async (req, res) => {
       });
 
       if (!isGroupMember) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.warn("Graduate not a member of group for invitations", {
+          userId: currentUserId,
+          groupId,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           error: "You must be a member of the group to invite others.",
         });
@@ -113,8 +144,29 @@ const getGraduatesForGroup = async (req, res) => {
       };
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Graduates for group invitation retrieved successfully", {
+      userId: currentUserId,
+      groupId,
+      availableGraduatesCount: result.length,
+      pendingInvitationsCount: pendingIds.length,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json(result);
   } catch (error) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error getting graduates for group invitation", {
+      userId: req.user?.id,
+      groupId: req.params.groupId,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error("Error in getGraduatesForGroup:", error);
     res.status(500).json({ error: "Something went wrong" });
   }
@@ -126,7 +178,28 @@ const createGroup = async (req, res) => {
     const { groupName, description } = req.body;
     const user = req.user;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Create group request initiated", {
+      userId: user?.id,
+      userType: user?.["user-type"],
+      groupName,
+      hasDescription: !!description,
+      hasFile: !!req.file,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     if (!groupName || !description) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Missing required fields for group creation", {
+        userId: user?.id,
+        hasGroupName: !!groupName,
+        hasDescription: !!description,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "fail",
         message: "Group name and description are required",
@@ -139,6 +212,14 @@ const createGroup = async (req, res) => {
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Unauthorized access to create group", {
+        userId: user?.id,
+        userType: user?.["user-type"],
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "fail",
         message: "Access denied.",
@@ -155,6 +236,14 @@ const createGroup = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.warn("Staff permission denied for creating group", {
+          userId: user.id,
+          permission: "Communities management",
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "fail",
           message: "Access denied. You don't have permission to create groups.",
@@ -189,6 +278,15 @@ const createGroup = async (req, res) => {
       });
 
       if (existingGroup) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.warn("Group already exists with same faculty and year", {
+          userId: user.id,
+          faculty_code,
+          graduation_year,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
         return res.status(400).json({
           status: "fail",
           message: `Group already exists for ${faculty_code} - ${graduation_year}`,
@@ -201,6 +299,14 @@ const createGroup = async (req, res) => {
     let imageUrl = null;
     if (req.file) {
       imageUrl = req.file.path || req.file.url || req.file.location || null;
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("Group image uploaded", {
+        userId: user.id,
+        hasImage: !!imageUrl,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
     }
 
     // 7. إنشاء الجروب
@@ -217,6 +323,20 @@ const createGroup = async (req, res) => {
       where: { "group-id": group.id },
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Group created successfully", {
+      userId: user.id,
+      userType: user["user-type"],
+      groupId: group.id,
+      groupName: group["group-name"],
+      faculty_code,
+      graduation_year,
+      memberCount,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     return res.status(201).json({
       status: "success",
       message: "Group created successfully",
@@ -232,6 +352,16 @@ const createGroup = async (req, res) => {
       },
     });
   } catch (err) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error creating group", {
+      userId: req.user?.id,
+      groupName: req.body.groupName,
+      error: err.message,
+      stack: err.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error("Error in createGroup:", err);
     return res.status(500).json({
       status: "error",
@@ -241,14 +371,32 @@ const createGroup = async (req, res) => {
     });
   }
 };
+
 //as an admin & graduate ,i want to see all groups in community
 const getGroups = async (req, res) => {
   try {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Get all groups request initiated", {
+      userId: req.user?.id,
+      userType: req.user?.["user-type"],
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // 1. تحديد اليوزر types المسموح لهم - كل اليوزر types
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Unauthorized access to view groups", {
+        userId: req.user?.id,
+        userType: req.user?.["user-type"],
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -281,12 +429,31 @@ const getGroups = async (req, res) => {
       })
     );
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("All groups retrieved successfully", {
+      userId: req.user.id,
+      userType: req.user["user-type"],
+      groupsCount: groupsWithCount.length,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     return res.status(200).json({
       status: "success",
       message: "Groups fetched successfully",
       data: groupsWithCount,
     });
   } catch (err) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error getting all groups", {
+      userId: req.user?.id,
+      error: err.message,
+      stack: err.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error(err);
     return res.status(500).json({
       status: "error",
@@ -302,11 +469,30 @@ const addUserToGroup = async (req, res) => {
     const { groupId, userId } = req.body;
     const user = req.user;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Add user to group request initiated", {
+      adminUserId: user?.id,
+      adminUserType: user?.["user-type"],
+      targetUserId: userId,
+      groupId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Unauthorized access to add user to group", {
+        userId: user?.id,
+        userType: user?.["user-type"],
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "fail",
         message: "Access denied.",
@@ -323,6 +509,14 @@ const addUserToGroup = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.warn("Staff permission denied for adding user to group", {
+          userId: user.id,
+          permission: "Community Members management",
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "fail",
           message:
@@ -336,6 +530,14 @@ const addUserToGroup = async (req, res) => {
     // تأكد إن الجروب موجود
     const group = await Group.findByPk(groupId);
     if (!group) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Group not found for adding user", {
+        groupId,
+        adminUserId: user.id,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "fail",
         message: "Group not found",
@@ -346,6 +548,15 @@ const addUserToGroup = async (req, res) => {
     // تأكد إن اليوزر موجود
     const member = await User.findByPk(userId);
     if (!member) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("User not found for adding to group", {
+        targetUserId: userId,
+        adminUserId: user.id,
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "fail",
         message: "User not found",
@@ -358,6 +569,15 @@ const addUserToGroup = async (req, res) => {
       where: { "group-id": groupId, "user-id": userId },
     });
     if (existingMember) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("User already member of group", {
+        targetUserId: userId,
+        groupId,
+        adminUserId: user.id,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "fail",
         message: "User already in this group",
@@ -374,6 +594,19 @@ const addUserToGroup = async (req, res) => {
     // Create notification for the user being added
     await notifyAddedToGroup(userId, user.id, group["group-name"], groupId);
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("User added to group successfully", {
+      adminUserId: user.id,
+      adminUserType: user["user-type"],
+      targetUserId: userId,
+      targetUserName: `${member["first-name"]} ${member["last-name"]}`,
+      groupId,
+      groupName: group["group-name"],
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     return res.status(201).json({
       status: "success",
       message: "User added to group successfully",
@@ -387,6 +620,17 @@ const addUserToGroup = async (req, res) => {
       ],
     });
   } catch (err) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error adding user to group", {
+      userId: req.user?.id,
+      targetUserId: req.body.userId,
+      groupId: req.body.groupId,
+      error: err.message,
+      stack: err.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error(err);
     return res.status(500).json({
       status: "error",
@@ -403,11 +647,34 @@ const editGroup = async (req, res) => {
     const { groupId } = req.params;
     const { groupName, description, removeGroupImage } = req.body;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Edit group request initiated", {
+      userId: user?.id,
+      userType: user?.["user-type"],
+      groupId,
+      hasGroupName: !!groupName,
+      hasDescription: !!description,
+      removeGroupImage: !!removeGroupImage,
+      hasFile: !!req.file,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Unauthorized access to edit group", {
+        userId: user?.id,
+        userType: user?.["user-type"],
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "fail",
         message: "Access denied.",
@@ -423,6 +690,15 @@ const editGroup = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.warn("Staff permission denied for editing group", {
+          userId: user.id,
+          permission: "Communities management",
+          groupId,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "fail",
           message: "Access denied. You don't have permission to edit groups.",
@@ -432,10 +708,19 @@ const editGroup = async (req, res) => {
 
     // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const group = await Group.findByPk(groupId);
-    if (!group)
+    if (!group) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Group not found for editing", {
+        groupId,
+        userId: user.id,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res
         .status(404)
         .json({ status: "fail", message: "Group not found" });
+    }
 
     // 5. استخراج faculty_code و graduation_year من groupName و description
     let faculty_code = group.faculty_code;
@@ -473,6 +758,16 @@ const editGroup = async (req, res) => {
       });
 
       if (existingGroup) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.warn("Duplicate group found during edit", {
+          groupId,
+          faculty_code,
+          graduation_year,
+          existingGroupId: existingGroup.id,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
         return res.status(400).json({
           status: "fail",
           message: `Another group already exists for ${faculty_code} - ${graduation_year}`,
@@ -481,6 +776,9 @@ const editGroup = async (req, res) => {
     }
 
     // 7. تحديث البيانات
+    const oldGroupName = group["group-name"];
+    const oldDescription = group.description;
+
     if (groupName) group["group-name"] = groupName;
     if (description) group.description = description;
     group.faculty_code = faculty_code;
@@ -488,6 +786,13 @@ const editGroup = async (req, res) => {
 
     // 8. مسح صورة الجروب لو مطلوب
     if (removeGroupImage) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("Removing group image as requested", {
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       group["group-image"] = null;
     }
 
@@ -495,6 +800,14 @@ const editGroup = async (req, res) => {
     if (req.file) {
       const imageUrl = req.file.path || req.file.url || req.file.location;
       group["group-image"] = imageUrl;
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("New group image uploaded", {
+        groupId,
+        hasNewImage: !!imageUrl,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
     }
 
     await group.save();
@@ -502,6 +815,25 @@ const editGroup = async (req, res) => {
     const membersCount = await GroupMember.count({
       where: { "group-id": group.id },
     });
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Group updated successfully", {
+      userId: user.id,
+      userType: user["user-type"],
+      groupId,
+      changes: {
+        groupName: oldGroupName !== group["group-name"],
+        description: oldDescription !== group.description,
+        faculty_code: faculty_code !== group.faculty_code,
+        graduation_year: graduation_year !== group.graduation_year,
+      },
+      newFacultyCode: faculty_code,
+      newGraduationYear: graduation_year,
+      membersCount,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -518,23 +850,53 @@ const editGroup = async (req, res) => {
       },
     });
   } catch (err) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error editing group", {
+      userId: req.user?.id,
+      groupId: req.params.groupId,
+      error: err.message,
+      stack: err.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error(err);
     return res
       .status(500)
       .json({ status: "error", message: err.message, data: [] });
   }
 };
+
 // controllers/group.controller.js
 const deleteGroup = async (req, res) => {
   try {
     const user = req.user;
     const { groupId } = req.params;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Delete group request initiated", {
+      userId: user?.id,
+      userType: user?.["user-type"],
+      groupId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Unauthorized access to delete group", {
+        userId: user?.id,
+        userType: user?.["user-type"],
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "fail",
         message: "Access denied.",
@@ -551,6 +913,15 @@ const deleteGroup = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.warn("Staff permission denied for deleting group", {
+          userId: user.id,
+          permission: "Communities management",
+          groupId,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "fail",
           message: "Access denied. You don't have permission to delete groups.",
@@ -562,12 +933,34 @@ const deleteGroup = async (req, res) => {
     // 4. لو admin أو staff مع صلاحية → اتركه يكمل
     const group = await Group.findByPk(groupId);
     if (!group) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Group not found for deletion", {
+        groupId,
+        userId: user.id,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "fail",
         message: "Group not found",
         data: [],
       });
     }
+
+    // حفظ معلومات الجروب قبل الحذف
+    const groupInfo = {
+      id: group.id,
+      name: group["group-name"],
+      faculty_code: group.faculty_code,
+      graduation_year: group.graduation_year,
+    };
+
+    // احسب عدد البوستات والأعضاء قبل الحذف
+    const postsCount = await Post.count({ where: { "group-id": groupId } });
+    const membersCount = await GroupMember.count({
+      where: { "group-id": groupId },
+    });
 
     // امسح البوستات المرتبطة بالجروب
     await Post.destroy({ where: { "group-id": groupId } });
@@ -578,12 +971,37 @@ const deleteGroup = async (req, res) => {
     // امسح الجروب
     await group.destroy();
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Group deleted successfully", {
+      userId: user.id,
+      userType: user["user-type"],
+      groupId,
+      groupName: groupInfo.name,
+      facultyCode: groupInfo.faculty_code,
+      graduationYear: groupInfo.graduation_year,
+      deletedPostsCount: postsCount,
+      deletedMembersCount: membersCount,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     return res.status(200).json({
       status: "success",
       message: "Group, members, and posts deleted successfully",
       data: [],
     });
   } catch (err) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error deleting group", {
+      userId: req.user?.id,
+      groupId: req.params.groupId,
+      error: err.message,
+      stack: err.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error("Error deleting group:", err);
     return res.status(500).json({
       status: "error",
@@ -599,11 +1017,30 @@ const getGroupMembersCount = async (req, res) => {
     const user = req.user;
     const { groupId } = req.params;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Get group members count request initiated", {
+      userId: user?.id,
+      userType: user?.["user-type"],
+      groupId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Unauthorized access to view group members count", {
+        userId: user?.id,
+        userType: user?.["user-type"],
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "fail",
         message: "Access denied.",
@@ -620,6 +1057,15 @@ const getGroupMembersCount = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.warn("Staff permission denied for viewing members count", {
+          userId: user.id,
+          permission: "Communities management",
+          groupId,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "fail",
           message:
@@ -633,6 +1079,14 @@ const getGroupMembersCount = async (req, res) => {
     // اتأكد إن الجروب موجود
     const group = await Group.findByPk(groupId);
     if (!group) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Group not found for members count", {
+        groupId,
+        userId: user.id,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "fail",
         message: "Group not found",
@@ -644,6 +1098,18 @@ const getGroupMembersCount = async (req, res) => {
     const membersCount = await GroupMember.count({
       where: { "group-id": groupId },
     });
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Group members count retrieved successfully", {
+      userId: user.id,
+      userType: user["user-type"],
+      groupId,
+      groupName: group["group-name"],
+      membersCount,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -657,6 +1123,16 @@ const getGroupMembersCount = async (req, res) => {
       ],
     });
   } catch (err) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error getting group members count", {
+      userId: req.user?.id,
+      groupId: req.params.groupId,
+      error: err.message,
+      stack: err.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error(err);
     return res.status(500).json({
       status: "error",
@@ -672,9 +1148,26 @@ const joinGroup = async (req, res) => {
     const userId = req.user.id; // جاي من الـ middleware
     const { groupId } = req.body;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Join group request initiated", {
+      userId,
+      groupId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // هات بيانات اليوزر
     const user = await User.findByPk(userId);
     if (!user) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("User not found for joining group", {
+        userId,
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "User not found",
@@ -683,6 +1176,15 @@ const joinGroup = async (req, res) => {
 
     // لازم يكون Graduate علشان يعمل join
     if (user["user-type"] !== "graduate") {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Non-graduate user attempted to join group", {
+        userId,
+        userType: user["user-type"],
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: HttpStatusHelper.FAIL,
         message: "Only graduates can join groups",
@@ -692,6 +1194,14 @@ const joinGroup = async (req, res) => {
     // هات بيانات الجروب
     const group = await Group.findByPk(groupId);
     if (!group) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Group not found for joining", {
+        userId,
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Group not found",
@@ -704,6 +1214,14 @@ const joinGroup = async (req, res) => {
     });
 
     if (existingMember) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("User already member of group", {
+        userId,
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: HttpStatusHelper.FAIL,
         message: "You are already a member of this group",
@@ -724,6 +1242,18 @@ const joinGroup = async (req, res) => {
       where: { "group-id": groupId },
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("User joined group successfully", {
+      userId,
+      userName: `${user["first-name"]} ${user["last-name"]}`,
+      groupId,
+      groupName: group["group-name"],
+      memberCount,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Joined group successfully",
@@ -734,6 +1264,16 @@ const joinGroup = async (req, res) => {
       },
     });
   } catch (error) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error joining group", {
+      userId: req.user?.id,
+      groupId: req.body.groupId,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error(error);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
@@ -748,9 +1288,26 @@ const leaveGroup = async (req, res) => {
     const userId = req.user.id; // جاي من الـ middleware
     const { groupId } = req.params; // بنجيب الـ groupId من الـ URL
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Leave group request initiated", {
+      userId,
+      groupId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     //find group
     const group = await Group.findByPk(groupId);
     if (!group) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Group not found for leaving", {
+        userId,
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.ERROR,
         message: "Group not found",
@@ -766,6 +1323,15 @@ const leaveGroup = async (req, res) => {
     });
 
     if (!membership) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("User not a member of group for leaving", {
+        userId,
+        groupId,
+        groupName: group["group-name"],
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: HttpStatusHelper.ERROR,
         message: "You are not a member of this group",
@@ -780,11 +1346,32 @@ const leaveGroup = async (req, res) => {
       },
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("User left group successfully", {
+      userId,
+      userName: `${req.user?.["first-name"]} ${req.user?.["last-name"]}`,
+      groupId,
+      groupName: group["group-name"],
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "You have left the group successfully",
     });
   } catch (error) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error leaving group", {
+      userId: req.user?.id,
+      groupId: req.params.groupId,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error("Error in leaveGroup:", error);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
@@ -797,6 +1384,14 @@ const leaveGroup = async (req, res) => {
 const getMyGroups = async (req, res) => {
   try {
     const userId = req.user.id;
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Get my groups request initiated", {
+      userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
 
     //get groups user is memeber in
     const groups = await Group.findAll({
@@ -818,6 +1413,13 @@ const getMyGroups = async (req, res) => {
     });
 
     if (!groups || groups.length === 0) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.info("User has no groups", {
+        userId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(200).json({
         status: HttpStatusHelper.FAIL,
         message: "You are not a member of any group",
@@ -842,12 +1444,30 @@ const getMyGroups = async (req, res) => {
       })
     );
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("User groups retrieved successfully", {
+      userId,
+      groupsCount: formattedGroups.length,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "These are your groups",
       data: formattedGroups,
     });
   } catch (err) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error getting user groups", {
+      userId: req.user?.id,
+      error: err.message,
+      stack: err.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error("Error in getMyGroups:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
@@ -860,11 +1480,30 @@ const getGroupUsers = async (req, res) => {
   try {
     const { groupId } = req.params;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Get group users request initiated", {
+      userId: req.user?.id,
+      userType: req.user?.["user-type"],
+      groupId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Unauthorized access to view group users", {
+        userId: req.user?.id,
+        userType: req.user?.["user-type"],
+        groupId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -880,6 +1519,15 @@ const getGroupUsers = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.warn("Staff permission denied for viewing group users", {
+          userId: req.user.id,
+          permission: "Community Members management",
+          groupId,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
           message:
@@ -910,6 +1558,14 @@ const getGroupUsers = async (req, res) => {
     });
 
     if (!group) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Group not found for users list", {
+        groupId,
+        userId: req.user?.id,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Group not found",
@@ -936,12 +1592,33 @@ const getGroupUsers = async (req, res) => {
       };
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Group users retrieved successfully", {
+      groupId,
+      groupName: group["group-name"],
+      usersCount: usersWithGraduateInfo.length,
+      userId: req.user.id,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     res.json({
       status: "success",
       count: group.Users.length,
       data: usersWithGraduateInfo,
     });
   } catch (error) {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error fetching group users", {
+      userId: req.user?.id,
+      groupId: req.params.groupId,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
     console.error("Error fetching group users:", error);
     res.status(500).json({
       status: "error",

@@ -10,8 +10,9 @@ const Staff = require("../models/Staff");
 const Friendship = require("../models/Friendship");
 const checkStaffPermission = require("../utils/permissionChecker");
 
-
+// 🔴 START OF LOGGER IMPORT - ADDED THIS
 const { logger, securityLogger } = require("../utils/logger");
+// 🔴 END OF LOGGER IMPORT
 
 const { Op } = require("sequelize");
 const moment = require("moment");
@@ -26,6 +27,10 @@ const {
 // Helper function to calculate likesCount and isLikedByYou for a post
 const getPostLikeInfo = async (postId, userId = null) => {
   try {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.debug("Calculating post like info", { postId, userId });
+    // 🔴 END OF LOGGING
+
     const likesCount = await Like.count({
       where: { "post-id": postId },
     });
@@ -41,34 +46,59 @@ const getPostLikeInfo = async (postId, userId = null) => {
       isLikedByYou = !!userLike;
     }
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.debug("Post like info calculated", {
+      postId,
+      userId,
+      likesCount,
+      isLikedByYou,
+    });
+    // 🔴 END OF LOGGING
+
     return { likesCount, isLikedByYou };
   } catch (error) {
-    logger.error("Error in getPostLikeInfo", { postId, userId, error: error.message });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error in getPostLikeInfo", {
+      postId,
+      userId,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+    });
+    // 🔴 END OF LOGGING
     throw error;
   }
 };
 
 const createPost = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
   logger.info("🟢 ----- [createPost] START -----", {
     timestamp: new Date().toISOString(),
-    user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+    user: req.user
+      ? { id: req.user.id, type: req.user["user-type"] }
+      : "undefined",
   });
+  // 🔴 END OF LOGGING
 
   try {
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Request details", {
       contentType: req.headers["content-type"],
       authHeader: req.headers["authorization"] ? "Present" : "Missing",
       user: req.user,
       body: req.body,
-      filesCount: req.files ? req.files.length : 0
+      filesCount: req.files ? req.files.length : 0,
     });
+    // 🔴 END OF LOGGING
 
-    const { category, content, groupId, inLanding, type, postAsAdmin } = req.body;
+    const { category, content, groupId, inLanding, type, postAsAdmin } =
+      req.body;
     const userId = req.user?.id;
 
     // 🔍 LOG 1: تحقق من وجود req.user أساساً
     if (!req.user) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("CRITICAL: req.user is UNDEFINED in createPost");
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "fail",
         message: "User not authenticated",
@@ -81,18 +111,22 @@ const createPost = async (req, res) => {
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!userId || !allowedUserTypes.includes(userType)) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("ACCESS DENIED in createPost", {
         userId: !!userId,
         userType: userType,
-        allowedTypes: allowedUserTypes
+        allowedTypes: allowedUserTypes,
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "fail",
         message: "Access denied. Invalid user type or missing user ID.",
       });
     }
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("User type check passed", { userId, userType });
+    // 🔴 END OF LOGGING
 
     // 3. لو staff → تحقق من الصلاحية
     if (userType === "staff") {
@@ -103,17 +137,21 @@ const createPost = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED in createPost", {
           userId,
           requiredPermission: "Community Post's management",
-          requiredAction: "add"
+          requiredAction: "add",
         });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "fail",
           message: "Access denied. You don't have permission to create posts.",
         });
       }
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.info("Staff permission check passed", { userId });
+      // 🔴 END OF LOGGING
     }
 
     // 4. لو graduate → تحقق من الحالة
@@ -123,7 +161,9 @@ const createPost = async (req, res) => {
       });
 
       if (!graduate) {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.error("GRADUATE RECORD NOT FOUND in createPost", { userId });
+        // 🔴 END OF LOGGING
         return res.status(404).json({
           status: "fail",
           message: "Graduate record not found",
@@ -131,23 +171,32 @@ const createPost = async (req, res) => {
       }
 
       if (graduate.status !== "active") {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("GRADUATE ACCOUNT INACTIVE in createPost", {
           userId,
           currentStatus: graduate.status,
-          requiredStatus: "active"
+          requiredStatus: "active",
         });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "fail",
           message:
             "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
         });
       }
-      logger.info("Graduate status check passed", { userId, status: graduate.status });
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.info("Graduate status check passed", {
+        userId,
+        status: graduate.status,
+      });
+      // 🔴 END OF LOGGING
     }
 
     const user = await User.findByPk(userId);
     if (!user) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.error("USER NOT FOUND IN DATABASE in createPost", { userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "User not found",
@@ -164,19 +213,28 @@ const createPost = async (req, res) => {
 
       if (adminUser) {
         authorId = adminUser.id;
-        logger.info("Staff posting as Admin", { staffId: userId, adminId: authorId });
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.info("Staff posting as Admin", {
+          staffId: userId,
+          adminId: authorId,
+        });
+        // 🔴 END OF LOGGING
       } else {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("No admin user found, posting as staff", { userId });
+        // 🔴 END OF LOGGING
       }
     }
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Creating post", {
       authorId,
       category: category || type || "General",
       contentLength: content?.length || 0,
       groupId,
-      inLanding
+      inLanding,
     });
+    // 🔴 END OF LOGGING
 
     const newPost = await Post.create({
       category: category || type || "General",
@@ -186,12 +244,21 @@ const createPost = async (req, res) => {
       "in-landing": inLanding || false,
     });
 
-    logger.info("Post created successfully", { postId: newPost.post_id, authorId });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Post created successfully", {
+      postId: newPost.post_id,
+      authorId,
+    });
+    // 🔴 END OF LOGGING
 
     // 🖼️ رفع الصور
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-      logger.info(`Processing ${req.files.length} file(s) for post`, { postId: newPost.post_id });
-      
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.info(`Processing ${req.files.length} file(s) for post`, {
+        postId: newPost.post_id,
+      });
+      // 🔴 END OF LOGGING
+
       try {
         const imagesData = req.files.map((file) => ({
           "post-id": newPost.post_id,
@@ -199,13 +266,27 @@ const createPost = async (req, res) => {
         }));
 
         await PostImage.bulkCreate(imagesData);
-        logger.info("Images saved to PostImage table", { postId: newPost.post_id, imagesCount: imagesData.length });
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.info("Images saved to PostImage table", {
+          postId: newPost.post_id,
+          imagesCount: imagesData.length,
+        });
+        // 🔴 END OF LOGGING
       } catch (imgErr) {
-        logger.error("Error saving images to DB", { postId: newPost.post_id, error: imgErr.message });
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.error("Error saving images to DB", {
+          postId: newPost.post_id,
+          error: imgErr.message,
+        });
+        // 🔴 END OF LOGGING
       }
     }
 
-    logger.info("🟢 ----- [createPost] END SUCCESS -----", { postId: newPost.post_id });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [createPost] END SUCCESS -----", {
+      postId: newPost.post_id,
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(201).json({
       status: "success",
@@ -213,12 +294,16 @@ const createPost = async (req, res) => {
       post: newPost,
     });
   } catch (error) {
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.error("❌ [createPost] Unexpected Error", {
       error: error.message,
       stack: error.stack,
-      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+      user: req.user
+        ? { id: req.user.id, type: req.user["user-type"] }
+        : "undefined",
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: "error",
       message: error.message || "Failed to create post",
@@ -227,21 +312,33 @@ const createPost = async (req, res) => {
 };
 
 const getGroupPosts = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getGroupPosts] START -----", {
+    groupId: req.params.groupId,
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { groupId } = req.params;
     const userId = req.user?.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Getting group posts", { groupId, userId });
+    // 🔴 END OF LOGGING
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("ACCESS DENIED in getGroupPosts", {
         userType: req.user ? req.user["user-type"] : "undefined",
-        groupId
+        groupId,
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -258,11 +355,13 @@ const getGroupPosts = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED in getGroupPosts", {
           userId: req.user.id,
           groupId,
-          requiredPermission: "Community Post's management"
+          requiredPermission: "Community Post's management",
         });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
           message:
@@ -340,11 +439,13 @@ const getGroupPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    logger.info("Group posts fetched successfully", { 
-      groupId, 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Group posts fetched successfully", {
+      groupId,
       postsCount: posts.length,
-      userId 
+      userId,
     });
+    // 🔴 END OF LOGGING
 
     const currentUserId = req.user?.id || null;
 
@@ -420,18 +521,27 @@ const getGroupPosts = async (req, res) => {
       };
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getGroupPosts] END SUCCESS -----", {
+      groupId,
+      postsCount: responseData.length,
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Visible group posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
-    logger.error("Error in getGroupPosts", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getGroupPosts] Error", {
       groupId: req.params.groupId,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: "Failed to fetch group posts: " + error.message,
@@ -441,6 +551,15 @@ const getGroupPosts = async (req, res) => {
 };
 
 const getAllPostsOfUsers = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getAllPostsOfUsers] START -----", {
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+    page: req.query.page,
+    limit: req.query.limit,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const user = req.user;
     const isAdmin = user && user["user-type"] === "admin";
@@ -451,12 +570,14 @@ const getAllPostsOfUsers = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const offset = (page - 1) * limit;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Getting all posts of users", {
       userId: user?.id,
       userType: user?.["user-type"],
       page,
-      limit
+      limit,
     });
+    // 🔴 END OF LOGGING
 
     let whereCondition = {};
 
@@ -633,12 +754,21 @@ const getAllPostsOfUsers = async (req, res) => {
       };
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("All posts fetched successfully", {
       totalPosts,
       returnedPosts: posts.length,
       page,
-      totalPages
+      totalPages,
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getAllPostsOfUsers] END SUCCESS -----", {
+      totalPosts,
+      returnedPosts: responseData.length,
+    });
+    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: "success",
@@ -653,12 +783,16 @@ const getAllPostsOfUsers = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error("Error in getAllPostsOfUsers", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getAllPostsOfUsers] Error", {
       error: error.message,
-      stack: error.stack,
-      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+      stack: error.stack.substring(0, 200),
+      user: req.user
+        ? { id: req.user.id, type: req.user["user-type"] }
+        : "undefined",
     });
-    
+    // 🔴 END OF LOGGING
+
     res.status(500).json({
       status: "error",
       message: "Failed to fetch posts: " + error.message,
@@ -668,17 +802,26 @@ const getAllPostsOfUsers = async (req, res) => {
 };
 
 const getAllPosts = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getAllPosts] START -----", {
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const user = req.user;
     const isAdmin = user && user["user-type"] === "admin";
     const isStaff = user && user["user-type"] === "staff";
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Getting all posts", {
       userId: user?.id,
       userType: user?.["user-type"],
       isAdmin,
-      isStaff
+      isStaff,
     });
+    // 🔴 END OF LOGGING
 
     // ✅ التحقق من الصلاحية للـ Staff
     if (isStaff) {
@@ -689,10 +832,12 @@ const getAllPosts = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED in getAllPosts", {
           userId: user.id,
-          requiredPermission: "Graduates posts management"
+          requiredPermission: "Graduates posts management",
         });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
           message:
@@ -761,10 +906,12 @@ const getAllPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Posts fetched successfully", {
       postsCount: posts.length,
-      whereCondition
+      whereCondition,
     });
+    // 🔴 END OF LOGGING
 
     const currentUserId = req.user?.id || null;
 
@@ -833,18 +980,28 @@ const getAllPosts = async (req, res) => {
       };
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getAllPosts] END SUCCESS -----", {
+      postsCount: responseData.length,
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
       status: "success",
       message: "Posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
-    logger.error("Error in getAllPosts", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getAllPosts] Error", {
       error: error.message,
-      stack: error.stack,
-      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+      stack: error.stack.substring(0, 200),
+      user: req.user
+        ? { id: req.user.id, type: req.user["user-type"] }
+        : "undefined",
     });
-    
+    // 🔴 END OF LOGGING
+
     res.status(500).json({
       status: "error",
       message: "Failed to fetch posts: " + error.message,
@@ -854,22 +1011,38 @@ const getAllPosts = async (req, res) => {
 };
 
 const hideNegativePost = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [hideNegativePost] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const user = req.user;
     const { postId } = req.params;
 
-    logger.info("Attempting to hide post", { postId, userId: user?.id, userType: user?.["user-type"] });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Attempting to hide post", {
+      postId,
+      userId: user?.id,
+      userType: user?.["user-type"],
+    });
+    // 🔴 END OF LOGGING
 
     // ✅ التعديل هنا: لازم يكون Admin أو Staff
     if (
       !user ||
       (user["user-type"] !== "admin" && user["user-type"] !== "staff")
     ) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("UNAUTHORIZED hide post attempt", {
         postId,
         userId: user?.id,
-        userType: user?.["user-type"]
+        userType: user?.["user-type"],
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "fail",
         message: "Only admins and staff can hide posts",
@@ -886,11 +1059,13 @@ const hideNegativePost = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED for hide post", {
           userId: user.id,
           postId,
-          requiredPermission: "Graduates posts management"
+          requiredPermission: "Graduates posts management",
         });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "fail",
           message:
@@ -903,7 +1078,9 @@ const hideNegativePost = async (req, res) => {
     // 🔍 تأكد أن البوست موجود
     const post = await Post.findByPk(postId);
     if (!post) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Post not found for hiding", { postId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "fail",
         message: "Post not found",
@@ -914,12 +1091,18 @@ const hideNegativePost = async (req, res) => {
     // ✅ نحدث العمود يدويًا في قاعدة البيانات
     await Post.update({ "is-hidden": true }, { where: { post_id: postId } });
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Post hidden successfully", {
       postId,
       userId: user.id,
       userType: user["user-type"],
-      postContent: post.content.substring(0, 100)
+      postContent: post.content.substring(0, 100),
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [hideNegativePost] END SUCCESS -----", { postId });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -933,13 +1116,17 @@ const hideNegativePost = async (req, res) => {
       ],
     });
   } catch (err) {
-    logger.error("Error in hideNegativePost", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [hideNegativePost] Error", {
       postId: req.params.postId,
       error: err.message,
-      stack: err.stack,
-      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+      stack: err.stack.substring(0, 200),
+      user: req.user
+        ? { id: req.user.id, type: req.user["user-type"] }
+        : "undefined",
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: "error",
       message: err.message,
@@ -949,22 +1136,38 @@ const hideNegativePost = async (req, res) => {
 };
 
 const unhidePost = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [unhidePost] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const user = req.user;
     const { postId } = req.params;
 
-    logger.info("Attempting to unhide post", { postId, userId: user?.id, userType: user?.["user-type"] });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Attempting to unhide post", {
+      postId,
+      userId: user?.id,
+      userType: user?.["user-type"],
+    });
+    // 🔴 END OF LOGGING
 
     // ✅ التعديل هنا: لازم يكون Admin أو Staff
     if (
       !user ||
       (user["user-type"] !== "admin" && user["user-type"] !== "staff")
     ) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("UNAUTHORIZED unhide post attempt", {
         postId,
         userId: user?.id,
-        userType: user?.["user-type"]
+        userType: user?.["user-type"],
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "fail",
         message: "Only admins and staff can unhide posts",
@@ -981,11 +1184,13 @@ const unhidePost = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED for unhide post", {
           userId: user.id,
           postId,
-          requiredPermission: "Graduates posts management"
+          requiredPermission: "Graduates posts management",
         });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "fail",
           message:
@@ -998,7 +1203,9 @@ const unhidePost = async (req, res) => {
     // 🔍 تأكد أن البوست موجود
     const post = await Post.findByPk(postId);
     if (!post) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Post not found for unhiding", { postId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "fail",
         message: "Post not found",
@@ -1009,12 +1216,18 @@ const unhidePost = async (req, res) => {
     // ✅ نحدث العمود يدويًا
     await Post.update({ "is-hidden": false }, { where: { post_id: postId } });
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Post unhidden successfully", {
       postId,
       userId: user.id,
       userType: user["user-type"],
-      postContent: post.content.substring(0, 100)
+      postContent: post.content.substring(0, 100),
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [unhidePost] END SUCCESS -----", { postId });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -1028,13 +1241,17 @@ const unhidePost = async (req, res) => {
       ],
     });
   } catch (err) {
-    logger.error("Error in unhidePost", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [unhidePost] Error", {
       postId: req.params.postId,
       error: err.message,
-      stack: err.stack,
-      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+      stack: err.stack.substring(0, 200),
+      user: req.user
+        ? { id: req.user.id, type: req.user["user-type"] }
+        : "undefined",
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: "error",
       message: err.message,
@@ -1044,17 +1261,31 @@ const unhidePost = async (req, res) => {
 };
 
 const getAdminPosts = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getAdminPosts] START -----", {
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
+  // 🔴 END OF LOGGING
+
   try {
-    logger.info("Getting admin posts", { userId: req.user?.id, userType: req.user?.["user-type"] });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Getting admin posts", {
+      userId: req.user?.id,
+      userType: req.user?.["user-type"],
+    });
+    // 🔴 END OF LOGGING
 
     // 1. تحديد اليوزر types المسموح لهم - كل اليوزر types
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("ACCESS DENIED in getAdminPosts", {
-        userType: req.user ? req.user["user-type"] : "undefined"
+        userType: req.user ? req.user["user-type"] : "undefined",
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -1071,10 +1302,12 @@ const getAdminPosts = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED in getAdminPosts", {
           userId: req.user.id,
-          requiredPermission: "Portal posts management"
+          requiredPermission: "Portal posts management",
         });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
           message:
@@ -1144,7 +1377,11 @@ const getAdminPosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    logger.info("Admin posts fetched successfully", { postsCount: posts.length });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Admin posts fetched successfully", {
+      postsCount: posts.length,
+    });
+    // 🔴 END OF LOGGING
 
     const currentUserId = req.user?.id || null;
 
@@ -1214,18 +1451,28 @@ const getAdminPosts = async (req, res) => {
       };
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getAdminPosts] END SUCCESS -----", {
+      postsCount: responseData.length,
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
       status: "success",
       message: "Admin and staff posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
-    logger.error("Error in getAdminPosts", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getAdminPosts] Error", {
       error: error.message,
-      stack: error.stack,
-      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined"
+      stack: error.stack.substring(0, 200),
+      user: req.user
+        ? { id: req.user.id, type: req.user["user-type"] }
+        : "undefined",
     });
-    
+    // 🔴 END OF LOGGING
+
     res.status(500).json({
       status: "error",
       message: "Failed to fetch admin and staff posts",
@@ -1235,13 +1482,24 @@ const getAdminPosts = async (req, res) => {
 };
 
 const getGraduatePosts = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getGraduatePosts] START -----", {
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
+  // 🔴 END OF LOGGING
+
   try {
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Getting graduate posts", { userId: req.user?.id });
+    // 🔴 END OF LOGGING
 
     if (!req.user || req.user["user-type"] !== "graduate") {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("UNAUTHORIZED access to graduate posts", {
-        userType: req.user ? req.user["user-type"] : "undefined"
+        userType: req.user ? req.user["user-type"] : "undefined",
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Not authorized as a graduate",
@@ -1310,10 +1568,12 @@ const getGraduatePosts = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    logger.info("Graduate posts fetched successfully", { 
-      userId: req.user.id, 
-      postsCount: posts.length 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Graduate posts fetched successfully", {
+      userId: req.user.id,
+      postsCount: posts.length,
     });
+    // 🔴 END OF LOGGING
 
     const currentUserId = req.user?.id || null;
 
@@ -1384,18 +1644,26 @@ const getGraduatePosts = async (req, res) => {
       };
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getGraduatePosts] END SUCCESS -----", {
+      postsCount: responseData.length,
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
       status: "success",
       message: "Graduate posts fetched successfully",
       data: responseData,
     });
   } catch (error) {
-    logger.error("Error in getGraduatePosts", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getGraduatePosts] Error", {
       error: error.message,
-      stack: error.stack,
-      userId: req.user?.id
+      stack: error.stack.substring(0, 200),
+      userId: req.user?.id,
     });
-    
+    // 🔴 END OF LOGGING
+
     res.status(500).json({
       status: "error",
       message: "Failed to fetch graduate posts: " + error.message,
@@ -1405,10 +1673,19 @@ const getGraduatePosts = async (req, res) => {
 };
 
 const getMyPosts = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getMyPosts] START -----", {
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const userId = req.user.id;
-    
+
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Getting user's own posts", { userId });
+    // 🔴 END OF LOGGING
 
     const posts = await Post.findAll({
       where: { "author-id": userId },
@@ -1470,7 +1747,18 @@ const getMyPosts = async (req, res) => {
       };
     });
 
-    logger.info("User posts fetched successfully", { userId, postsCount: posts.length });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("User posts fetched successfully", {
+      userId,
+      postsCount: posts.length,
+    });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getMyPosts] END SUCCESS -----", {
+      postsCount: responseData.length,
+    });
+    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: "success",
@@ -1478,12 +1766,14 @@ const getMyPosts = async (req, res) => {
       data: responseData,
     });
   } catch (error) {
-    logger.error("Error in getMyPosts", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getMyPosts] Error", {
       error: error.message,
-      stack: error.stack,
-      userId: req.user?.id
+      stack: error.stack.substring(0, 200),
+      userId: req.user?.id,
     });
-    
+    // 🔴 END OF LOGGING
+
     res.status(500).json({
       status: "error",
       message: "Failed to fetch user posts: " + error.message,
@@ -1493,41 +1783,86 @@ const getMyPosts = async (req, res) => {
 };
 
 const editPost = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [editPost] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { postId } = req.params;
-    const { category, type, content, link, groupId, inLanding, removeImages } = req.body;
+    const { category, type, content, link, groupId, inLanding, removeImages } =
+      req.body;
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Editing post", {
+      postId,
+      userId: req.user?.id,
+      hasContent: !!content,
+      contentLength: content?.length || 0,
+      hasCategory: !!category,
+      hasType: !!type,
+      removeImagesCount: removeImages?.length || 0,
+    });
+    // 🔴 END OF LOGGING
 
     const post = await Post.findByPk(postId, {
       include: [{ model: PostImage, attributes: ["image-url"] }],
     });
 
     if (!post) {
-      return res.status(404).json({ status: "error", message: "Post not found" });
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Post not found for editing", { postId });
+      // 🔴 END OF LOGGING
+      return res
+        .status(404)
+        .json({ status: "error", message: "Post not found" });
     }
 
     // حفظ المحتوى القديم
     const oldContent = post.content;
     const oldCategory = post.category;
-    const oldImages = post.PostImages.map(img => img["image-url"]);
+    const oldImages = post.PostImages.map((img) => img["image-url"]);
 
     // تحديث الحقول
     if (category !== undefined) post.category = category;
     if (type !== undefined) post.category = type; // لو type معمول له override
     if (content !== undefined) post.content = content;
     if (link !== undefined) post.link = link;
-    if (groupId !== undefined) post["group-id"] = groupId === null ? null : groupId;
+    if (groupId !== undefined)
+      post["group-id"] = groupId === null ? null : groupId;
     if (inLanding !== undefined) post["in-landing"] = inLanding;
 
     await post.save();
 
     // حذف الصور المطلوبة
-    if (removeImages && Array.isArray(removeImages) && removeImages.length > 0) {
-      await PostImage.destroy({ where: { "post-id": postId, "image-url": removeImages } });
+    if (
+      removeImages &&
+      Array.isArray(removeImages) &&
+      removeImages.length > 0
+    ) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.info("Removing images from post", {
+        postId,
+        imagesToRemove: removeImages,
+      });
+      // 🔴 END OF LOGGING
+      await PostImage.destroy({
+        where: { "post-id": postId, "image-url": removeImages },
+      });
     }
 
     // إضافة صور جديدة (لو موجودة)
     if (req.files && req.files.length > 0) {
-      const uploadedImages = req.files.map(file => ({
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.info("Adding new images to post", {
+        postId,
+        newImagesCount: req.files.length,
+      });
+      // 🔴 END OF LOGGING
+      const uploadedImages = req.files.map((file) => ({
         "post-id": postId,
         "image-url": file.path || file.url || file.location,
       }));
@@ -1541,20 +1876,27 @@ const editPost = async (req, res) => {
 
     const newContent = updatedPost.content;
     const newCategory = updatedPost.category;
-    const newImages = updatedPost.PostImages.map(img => img["image-url"]);
-    const imagesChanged = JSON.stringify(oldImages) !== JSON.stringify(newImages);
+    const newImages = updatedPost.PostImages.map((img) => img["image-url"]);
+    const imagesChanged =
+      JSON.stringify(oldImages) !== JSON.stringify(newImages);
 
     // تسجيل اللوج قبل وبعد التعديل
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Post updated details", {
       postId,
-      oldContent,
-      newContent,
+      oldContent: oldContent.substring(0, 100),
+      newContent: newContent.substring(0, 100),
       oldCategory,
       newCategory,
-      oldImages,
-      newImages,
-      imagesChanged
+      oldImagesCount: oldImages.length,
+      newImagesCount: newImages.length,
+      imagesChanged,
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [editPost] END SUCCESS -----", { postId });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -1567,31 +1909,43 @@ const editPost = async (req, res) => {
         newCategory,
         oldImages,
         newImages,
-        imagesChanged
-      }
+        imagesChanged,
+      },
     });
-
   } catch (error) {
-    logger.error("Error in editPost", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [editPost] Error", {
       postId: req.params.postId,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
+    // 🔴 END OF LOGGING
     return res.status(500).json({ status: "error", message: error.message });
   }
 };
 
 const likePost = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [likePost] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { postId } = req.params;
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Like post attempt", { postId, userId });
+    // 🔴 END OF LOGGING
 
     // تحقق من وجود البوست
     const post = await Post.findByPk(postId);
     if (!post) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Post not found for like", { postId, userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -1609,7 +1963,17 @@ const likePost = async (req, res) => {
     if (existingLike) {
       // لو موجود، نحذفه (unlike)
       await existingLike.destroy();
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.info("Like removed successfully", { postId, userId });
+      // 🔴 END OF LOGGING
+
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.info("🟢 ----- [likePost] END SUCCESS (Unlike) -----", {
+        postId,
+        userId,
+      });
+      // 🔴 END OF LOGGING
+
       return res.json({
         status: HttpStatusHelper.SUCCESS,
         message: "Like removed successfully",
@@ -1627,7 +1991,21 @@ const likePost = async (req, res) => {
       await notifyPostLiked(post["author-id"], userId, postId);
     }
 
-    logger.info("Post liked successfully", { postId, userId, likeId: newLike.like_id });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Post liked successfully", {
+      postId,
+      userId,
+      likeId: newLike.like_id,
+    });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [likePost] END SUCCESS (Like) -----", {
+      postId,
+      userId,
+      likeId: newLike.like_id,
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
@@ -1635,13 +2013,15 @@ const likePost = async (req, res) => {
       like: newLike,
     });
   } catch (error) {
-    logger.error("Error in likePost", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [likePost] Error", {
       postId: req.params.postId,
       userId: req.user.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -1650,11 +2030,20 @@ const likePost = async (req, res) => {
 };
 
 const unlikePost = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [unlikePost] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { postId } = req.params;
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Unlike post attempt", { postId, userId });
+    // 🔴 END OF LOGGING
 
     // البحث عن Like
     const like = await Like.findOne({
@@ -1665,7 +2054,9 @@ const unlikePost = async (req, res) => {
     });
 
     if (!like) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Like not found for unlike", { postId, userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Like not found",
@@ -1675,20 +2066,28 @@ const unlikePost = async (req, res) => {
     // حذف الـ Like
     await like.destroy();
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Post unliked successfully", { postId, userId });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [unlikePost] END SUCCESS -----", { postId, userId });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Post unliked successfully",
     });
   } catch (error) {
-    logger.error("Error in unlikePost", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [unlikePost] Error", {
       postId: req.params.postId,
       userId: req.user.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -1697,17 +2096,32 @@ const unlikePost = async (req, res) => {
 };
 
 const addComment = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [addComment] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { postId } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
 
-    logger.info("Add comment attempt", { postId, userId, contentLength: content?.length });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Add comment attempt", {
+      postId,
+      userId,
+      contentLength: content?.length,
+    });
+    // 🔴 END OF LOGGING
 
     // Check if post exists
     const post = await Post.findByPk(postId);
     if (!post) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Post not found for comment", { postId, userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -1716,7 +2130,9 @@ const addComment = async (req, res) => {
 
     // Validate content
     if (!content || content.trim().length === 0) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Empty comment content", { postId, userId });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "Comment content is required",
@@ -1755,12 +2171,21 @@ const addComment = async (req, res) => {
       );
     }
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Comment added successfully", {
       postId,
       userId,
-      content,
-      commentId: newComment.comment_id
+      commentId: newComment.comment_id,
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [addComment] END SUCCESS -----", {
+      postId,
+      userId,
+      commentId: newComment.comment_id,
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
@@ -1781,13 +2206,15 @@ const addComment = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error("Error in addComment", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [addComment] Error", {
       postId: req.params.postId,
       userId: req.user.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -1796,17 +2223,28 @@ const addComment = async (req, res) => {
 };
 
 const editComment = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [editComment] START -----", {
+    commentId: req.params.commentId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { commentId } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Edit comment attempt", { commentId, userId });
+    // 🔴 END OF LOGGING
 
     // Find the comment
     const comment = await Comment.findByPk(commentId);
     if (!comment) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Comment not found for editing", { commentId, userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Comment not found",
@@ -1815,7 +2253,13 @@ const editComment = async (req, res) => {
 
     // Check if user owns the comment
     if (comment["author-id"] !== userId) {
-      logger.warn("UNAUTHORIZED comment edit attempt", { commentId, userId, authorId: comment["author-id"] });
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("UNAUTHORIZED comment edit attempt", {
+        commentId,
+        userId,
+        authorId: comment["author-id"],
+      });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "You can only edit your own comments",
@@ -1824,7 +2268,9 @@ const editComment = async (req, res) => {
 
     // Validate content
     if (!content || content.trim().length === 0) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Empty comment content for edit", { commentId, userId });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "Comment content is required",
@@ -1857,7 +2303,16 @@ const editComment = async (req, res) => {
       ],
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Comment updated successfully", { commentId, userId });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [editComment] END SUCCESS -----", {
+      commentId,
+      userId,
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -1875,13 +2330,15 @@ const editComment = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error("Error in editComment", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [editComment] Error", {
       commentId: req.params.commentId,
       userId: req.user.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -1890,16 +2347,27 @@ const editComment = async (req, res) => {
 };
 
 const deleteComment = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [deleteComment] START -----", {
+    commentId: req.params.commentId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { commentId } = req.params;
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Delete comment attempt", { commentId, userId });
+    // 🔴 END OF LOGGING
 
     // Find the comment
     const comment = await Comment.findByPk(commentId);
     if (!comment) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Comment not found for deletion", { commentId, userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Comment not found",
@@ -1908,11 +2376,13 @@ const deleteComment = async (req, res) => {
 
     // Check if user owns the comment
     if (comment["author-id"] !== userId) {
-      logger.warn("UNAUTHORIZED comment deletion attempt", { 
-        commentId, 
-        userId, 
-        authorId: comment["author-id"] 
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("UNAUTHORIZED comment deletion attempt", {
+        commentId,
+        userId,
+        authorId: comment["author-id"],
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "You can only delete your own comments",
@@ -1931,20 +2401,31 @@ const deleteComment = async (req, res) => {
       await notifyCommentDeleted(post["author-id"], userId, postId);
     }
 
-    logger.info("Comment deleted successfully", { commentId, userId, postId,co });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Comment deleted successfully", { commentId, userId, postId });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [deleteComment] END SUCCESS -----", {
+      commentId,
+      userId,
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Comment deleted successfully",
     });
   } catch (error) {
-    logger.error("Error in deleteComment", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [deleteComment] Error", {
       commentId: req.params.commentId,
       userId: req.user.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -1953,22 +2434,38 @@ const deleteComment = async (req, res) => {
 };
 
 const deletePost = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [deletePost] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { postId } = req.params;
     const userId = req.user.id;
 
-    logger.info("Delete post attempt", { postId, userId,content, userType: req.user["user-type"] });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Delete post attempt", {
+      postId,
+      userId,
+      userType: req.user["user-type"],
+    });
+    // 🔴 END OF LOGGING
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!userId || !allowedUserTypes.includes(req.user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("UNAUTHORIZED delete post attempt", {
         postId,
         userId,
-        userType: req.user["user-type"]
+        userType: req.user["user-type"],
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -1991,12 +2488,14 @@ const deletePost = async (req, res) => {
 
       // Staff هيقدر يحذف لو عنده أي من الصلاحيتين
       if (!hasCommunityPermission && !hasPortalPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED for delete post", {
           userId,
           postId,
           hasCommunityPermission,
-          hasPortalPermission
+          hasPortalPermission,
         });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
           message: "Access denied. You don't have permission to delete posts.",
@@ -2008,7 +2507,9 @@ const deletePost = async (req, res) => {
     // Find the post
     const post = await Post.findByPk(postId);
     if (!post) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Post not found for deletion", { postId, userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -2017,7 +2518,9 @@ const deletePost = async (req, res) => {
 
     // ⬇️⬇️⬇️ التحقق الجديد: منع الحذف إذا البوست مخفي ⬇️⬇️⬇️
     if (post["is-hidden"]) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Attempt to delete hidden post", { postId, userId });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Cannot delete a hidden post",
@@ -2027,7 +2530,12 @@ const deletePost = async (req, res) => {
     // Check if the post was created by the current staff member or by a graduate
     const postAuthor = await User.findByPk(post["author-id"]);
     if (!postAuthor) {
-      logger.error("Post author not found", { postId, authorId: post["author-id"] });
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.error("Post author not found", {
+        postId,
+        authorId: post["author-id"],
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Post author not found",
@@ -2053,6 +2561,7 @@ const deletePost = async (req, res) => {
       !isStaffDeletingAdminPost &&
       !isAdminDeletingStaffPost
     ) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("UNAUTHORIZED post deletion - permission issue", {
         postId,
         userId,
@@ -2062,8 +2571,9 @@ const deletePost = async (req, res) => {
         isOwnPost,
         isGraduatePost,
         isStaffDeletingAdminPost,
-        isAdminDeletingStaffPost
+        isAdminDeletingStaffPost,
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message:
@@ -2078,26 +2588,34 @@ const deletePost = async (req, res) => {
     // Delete the post
     await post.destroy();
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Post deleted successfully", {
       postId,
       userId,
       userType: req.user["user-type"],
       authorId: post["author-id"],
-      authorType: postAuthor["user-type"]
+      authorType: postAuthor["user-type"],
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [deletePost] END SUCCESS -----", { postId, userId });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Post deleted successfully",
     });
   } catch (error) {
-    logger.error("Error in deletePost", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [deletePost] Error", {
       postId: req.params.postId,
       userId: req.user.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2106,15 +2624,26 @@ const deletePost = async (req, res) => {
 };
 
 const getPostWithDetails = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getPostWithDetails] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { postId } = req.params;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Getting post with details", { postId, userId: req.user?.id });
+    // 🔴 END OF LOGGING
 
     // Get the post
     const post = await Post.findByPk(postId);
     if (!post) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Post not found for details", { postId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -2260,7 +2789,13 @@ const getPostWithDetails = async (req, res) => {
       isLikedByYou: isLikedByYou,
     };
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Post details fetched successfully", { postId });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getPostWithDetails] END SUCCESS -----", { postId });
+    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: "success",
@@ -2268,12 +2803,14 @@ const getPostWithDetails = async (req, res) => {
       data: responseData,
     });
   } catch (error) {
-    logger.error("Error in getPostWithDetails", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getPostWithDetails] Error", {
       postId: req.params.postId,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     res.status(500).json({
       status: "error",
       message: "Failed to fetch post details: " + error.message,
@@ -2283,8 +2820,16 @@ const getPostWithDetails = async (req, res) => {
 };
 
 const getCategories = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getCategories] START -----", {
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Getting post categories", { userId: req.user?.id });
+    // 🔴 END OF LOGGING
 
     // query مباشر من PostgreSQL علشان يجيب القيم بتاعت ENUM
     const query = `
@@ -2292,7 +2837,17 @@ const getCategories = async (req, res) => {
     `;
     const [results] = await Post.sequelize.query(query);
 
-    logger.info("Categories fetched successfully", { categoriesCount: results.length });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Categories fetched successfully", {
+      categoriesCount: results.length,
+    });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getCategories] END SUCCESS -----", {
+      categoriesCount: results.length,
+    });
+    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -2300,11 +2855,13 @@ const getCategories = async (req, res) => {
       data: results.map((r) => r.category),
     });
   } catch (error) {
-    logger.error("Error in getCategories", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getCategories] Error", {
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: "Failed to fetch categories: " + error.message,
@@ -2314,17 +2871,32 @@ const getCategories = async (req, res) => {
 };
 
 const addReply = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [addReply] START -----", {
+    commentId: req.params.commentId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { commentId } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
 
-    logger.info("Add reply attempt", { commentId, userId, contentLength: content?.length });
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Add reply attempt", {
+      commentId,
+      userId,
+      contentLength: content?.length,
+    });
+    // 🔴 END OF LOGGING
 
     // Check if parent comment exists
     const parentComment = await Comment.findByPk(commentId);
     if (!parentComment) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Parent comment not found for reply", { commentId, userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Parent comment not found",
@@ -2333,7 +2905,9 @@ const addReply = async (req, res) => {
 
     // Validate content
     if (!content || content.trim().length === 0) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Empty reply content", { commentId, userId });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "Reply content is required",
@@ -2374,12 +2948,22 @@ const addReply = async (req, res) => {
       ],
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Reply added successfully", {
       commentId,
       userId,
       replyId: newReply.comment_id,
-      postId: parentComment["post-id"]
+      postId: parentComment["post-id"],
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [addReply] END SUCCESS -----", {
+      commentId,
+      userId,
+      replyId: newReply.comment_id,
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
@@ -2398,13 +2982,15 @@ const addReply = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error("Error in addReply", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [addReply] Error", {
       commentId: req.params.commentId,
       userId: req.user.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2413,17 +2999,28 @@ const addReply = async (req, res) => {
 };
 
 const editReply = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [editReply] START -----", {
+    commentId: req.params.commentId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { commentId } = req.params;
     const { content } = req.body;
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Edit reply attempt", { commentId, userId });
+    // 🔴 END OF LOGGING
 
     // Find the reply
     const reply = await Comment.findByPk(commentId);
     if (!reply) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Reply not found for editing", { commentId, userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Reply not found",
@@ -2432,11 +3029,13 @@ const editReply = async (req, res) => {
 
     // Check if user owns the reply
     if (reply["author-id"] !== userId) {
-      logger.warn("UNAUTHORIZED reply edit attempt", { 
-        commentId, 
-        userId, 
-        authorId: reply["author-id"] 
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("UNAUTHORIZED reply edit attempt", {
+        commentId,
+        userId,
+        authorId: reply["author-id"],
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "You can only edit your own replies",
@@ -2445,7 +3044,9 @@ const editReply = async (req, res) => {
 
     // Validate content
     if (!content || content.trim().length === 0) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Empty reply content for edit", { commentId, userId });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "Reply content is required",
@@ -2467,7 +3068,16 @@ const editReply = async (req, res) => {
       ],
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Reply updated successfully", { commentId, userId });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [editReply] END SUCCESS -----", {
+      commentId,
+      userId,
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -2486,13 +3096,15 @@ const editReply = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error("Error in editReply", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [editReply] Error", {
       commentId: req.params.commentId,
       userId: req.user.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2501,16 +3113,27 @@ const editReply = async (req, res) => {
 };
 
 const deleteReply = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [deleteReply] START -----", {
+    commentId: req.params.commentId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { commentId } = req.params;
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Delete reply attempt", { commentId, userId });
+    // 🔴 END OF LOGGING
 
     // Find the reply
     const reply = await Comment.findByPk(commentId);
     if (!reply) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Reply not found for deletion", { commentId, userId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Reply not found",
@@ -2519,11 +3142,13 @@ const deleteReply = async (req, res) => {
 
     // Check if user owns the reply
     if (reply["author-id"] !== userId) {
-      logger.warn("UNAUTHORIZED reply deletion attempt", { 
-        commentId, 
-        userId, 
-        authorId: reply["author-id"] 
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("UNAUTHORIZED reply deletion attempt", {
+        commentId,
+        userId,
+        authorId: reply["author-id"],
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "You can only delete your own replies",
@@ -2541,20 +3166,31 @@ const deleteReply = async (req, res) => {
       where: { post_id: postId },
     });
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Reply deleted successfully", { commentId, userId, postId });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [deleteReply] END SUCCESS -----", {
+      commentId,
+      userId,
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Reply deleted successfully",
     });
   } catch (error) {
-    logger.error("Error in deleteReply", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [deleteReply] Error", {
       commentId: req.params.commentId,
       userId: req.user.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: error.message,
@@ -2563,15 +3199,26 @@ const deleteReply = async (req, res) => {
 };
 
 const getCommentReplies = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getCommentReplies] START -----", {
+    commentId: req.params.commentId,
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { commentId } = req.params;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Getting comment replies", { commentId, userId: req.user?.id });
+    // 🔴 END OF LOGGING
 
     // Check if parent comment exists
     const parentComment = await Comment.findByPk(commentId);
     if (!parentComment) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Parent comment not found for replies", { commentId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Parent comment not found",
@@ -2603,10 +3250,19 @@ const getCommentReplies = async (req, res) => {
       },
     }));
 
-    logger.info("Comment replies fetched successfully", { 
-      commentId, 
-      repliesCount: replies.length 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Comment replies fetched successfully", {
+      commentId,
+      repliesCount: replies.length,
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getCommentReplies] END SUCCESS -----", {
+      commentId,
+      repliesCount: responseData.length,
+    });
+    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: "success",
@@ -2614,12 +3270,14 @@ const getCommentReplies = async (req, res) => {
       data: responseData,
     });
   } catch (error) {
-    logger.error("Error in getCommentReplies", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getCommentReplies] Error", {
       commentId: req.params.commentId,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     res.status(500).json({
       status: "error",
       message: "Failed to fetch comment replies: " + error.message,
@@ -2629,26 +3287,39 @@ const getCommentReplies = async (req, res) => {
 };
 
 const toggleLandingStatus = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [toggleLandingStatus] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+    inLanding: req.body.inLanding,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const { postId } = req.params;
     const { inLanding } = req.body; // true or false
 
-    logger.info("Toggle landing status attempt", { 
-      postId, 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Toggle landing status attempt", {
+      postId,
       inLanding,
       userId: req.user?.id,
-      userType: req.user?.["user-type"]
+      userType: req.user?.["user-type"],
     });
+    // 🔴 END OF LOGGING
 
     // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
     // 2. لو مش من النوع المسموح → ارفض
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("UNAUTHORIZED toggle landing status attempt", {
         postId,
-        userType: req.user ? req.user["user-type"] : "undefined"
+        userType: req.user ? req.user["user-type"] : "undefined",
       });
+      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -2664,11 +3335,13 @@ const toggleLandingStatus = async (req, res) => {
       );
 
       if (!hasPermission) {
+        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED for toggle landing status", {
           userId: req.user.id,
           postId,
-          requiredPermission: "Portal posts management"
+          requiredPermission: "Portal posts management",
         });
+        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
           message:
@@ -2681,7 +3354,9 @@ const toggleLandingStatus = async (req, res) => {
     // جلب البوست
     const post = await Post.findByPk(postId);
     if (!post) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Post not found for landing status toggle", { postId });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Post not found",
@@ -2691,10 +3366,12 @@ const toggleLandingStatus = async (req, res) => {
     // جلب صاحب البوست
     const author = await User.findByPk(post["author-id"]);
     if (!author) {
-      logger.error("Author not found for landing status toggle", { 
-        postId, 
-        authorId: post["author-id"] 
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.error("Author not found for landing status toggle", {
+        postId,
+        authorId: post["author-id"],
       });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Author not found",
@@ -2707,13 +3384,15 @@ const toggleLandingStatus = async (req, res) => {
       post.category !== "Success story" &&
       inLanding === true
     ) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Invalid landing page assignment for graduate", {
         postId,
         authorId: author.id,
         authorType: author["user-type"],
         category: post.category,
-        requestedInLanding: inLanding
+        requestedInLanding: inLanding,
       });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message:
@@ -2725,6 +3404,7 @@ const toggleLandingStatus = async (req, res) => {
     post["in-landing"] = inLanding;
     await post.save();
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Landing status updated successfully", {
       postId,
       inLanding,
@@ -2732,8 +3412,16 @@ const toggleLandingStatus = async (req, res) => {
       userType: req.user["user-type"],
       authorId: author.id,
       authorType: author["user-type"],
-      category: post.category
+      category: post.category,
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [toggleLandingStatus] END SUCCESS -----", {
+      postId,
+      inLanding,
+    });
+    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -2749,13 +3437,15 @@ const toggleLandingStatus = async (req, res) => {
       },
     });
   } catch (error) {
-    logger.error("Error in toggleLandingStatus", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [toggleLandingStatus] Error", {
       postId: req.params.postId,
       userId: req.user?.id,
       error: error.message,
-      stack: error.stack
+      stack: error.stack.substring(0, 200),
     });
-    
+    // 🔴 END OF LOGGING
+
     return res.status(500).json({
       status: "error",
       message: "Server error",
@@ -2765,10 +3455,18 @@ const toggleLandingStatus = async (req, res) => {
 };
 
 const getLandingPosts = async (req, res) => {
+  // 🔴 START OF LOGGING - ADDED THIS
+  logger.info("🟢 ----- [getLandingPosts] START -----", {
+    userId: req.user?.id,
+  });
+  // 🔴 END OF LOGGING
+
   try {
     const currentUserId = req.user?.id || null;
 
+    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Getting landing posts", { currentUserId });
+    // 🔴 END OF LOGGING
 
     // جلب جميع البوستات في اللاندينج وغير مخفية مع الصور
     const posts = await Post.findAll({
@@ -2790,7 +3488,9 @@ const getLandingPosts = async (req, res) => {
     });
 
     if (posts.length === 0) {
+      // 🔴 START OF LOGGING - ADDED THIS
       logger.info("No landing posts found");
+      // 🔴 END OF LOGGING
       return res.status(200).json({
         status: "success",
         message: "No posts found",
@@ -2848,9 +3548,17 @@ const getLandingPosts = async (req, res) => {
       })
     );
 
-    logger.info("Landing posts fetched successfully", { 
-      postsCount: postsWithDetails.length 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Landing posts fetched successfully", {
+      postsCount: postsWithDetails.length,
     });
+    // 🔴 END OF LOGGING
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("🟢 ----- [getLandingPosts] END SUCCESS -----", {
+      postsCount: postsWithDetails.length,
+    });
+    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: "success",
@@ -2858,11 +3566,13 @@ const getLandingPosts = async (req, res) => {
       data: postsWithDetails,
     });
   } catch (error) {
-    logger.error("Error in getLandingPosts", {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("❌ [getLandingPosts] Error", {
       error: error.message,
-      stack: error.stack,
-      userId: req.user?.id
+      stack: error.stack.substring(0, 200),
+      userId: req.user?.id,
     });
+    // 🔴 END OF LOGGING
 
     res.status(500).json({
       status: "error",

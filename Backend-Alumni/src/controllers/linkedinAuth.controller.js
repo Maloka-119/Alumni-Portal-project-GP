@@ -1,19 +1,25 @@
-const { User } = require('../models');
-const axios = require('axios');
-const jwt = require('jsonwebtoken');
-const asyncHandler = require('express-async-handler');
+const { User } = require("../models");
+const axios = require("axios");
+const jwt = require("jsonwebtoken");
+const asyncHandler = require("express-async-handler");
+
+// 🔴 START OF LOGGER IMPORT - ADDED THIS
+const { logger, securityLogger } = require("../utils/logger");
+// 🔴 END OF LOGGER IMPORT
 
 // LinkedIn OAuth 2.0 configuration
 const LINKEDIN_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
-const LINKEDIN_REDIRECT_URI = process.env.LINKEDIN_REDIRECT_URI || 'http://localhost:3000/helwan-alumni-portal/auth/linkedin/callback';
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const LINKEDIN_REDIRECT_URI =
+  process.env.LINKEDIN_REDIRECT_URI ||
+  "http://localhost:3000/helwan-alumni-portal/auth/linkedin/callback";
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 
 /**
  * Generate JWT token for user
  */
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: "7d" });
 };
 
 /**
@@ -23,29 +29,57 @@ const generateToken = (userId) => {
  */
 const getLinkedInAuthUrl = asyncHandler(async (req, res) => {
   try {
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Get LinkedIn auth URL request initiated", {
+      ip: req.ip,
+      hasLinkedInClientId: !!LINKEDIN_CLIENT_ID,
+      hasLinkedInClientSecret: !!LINKEDIN_CLIENT_SECRET,
+      redirectUri: LINKEDIN_REDIRECT_URI,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     const state = Math.random().toString(36).substring(2, 15);
-    
+
     // Store state in session or database for security
     req.session.linkedinState = state;
-    
+
     // LinkedIn OAuth 2.0 scopes - Using OpenID Connect
-    // Your LinkedIn app shows these scopes are available: openid, profile, email
-    // These are the new OpenID Connect scopes (legacy r_liteprofile and r_emailaddress are deprecated)
-    const scope = 'openid profile email';
-    const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(LINKEDIN_REDIRECT_URI)}&state=${state}&scope=${encodeURIComponent(scope)}`;
-    
+    const scope = "openid profile email";
+    const authUrl = `https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=${LINKEDIN_CLIENT_ID}&redirect_uri=${encodeURIComponent(
+      LINKEDIN_REDIRECT_URI
+    )}&state=${state}&scope=${encodeURIComponent(scope)}`;
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("LinkedIn auth URL generated successfully", {
+      authUrlLength: authUrl.length,
+      state,
+      scope,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: {
         authUrl,
-        state
-      }
+        state,
+      },
     });
   } catch (error) {
-    console.error('LinkedIn auth URL error:', error);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error generating LinkedIn auth URL", {
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("LinkedIn auth URL error:", error);
     res.status(500).json({
-      status: 'error',
-      message: 'Failed to generate LinkedIn auth URL'
+      status: "error",
+      message: "Failed to generate LinkedIn auth URL",
     });
   }
 });
@@ -58,129 +92,312 @@ const getLinkedInAuthUrl = asyncHandler(async (req, res) => {
 const handleLinkedInCallback = asyncHandler(async (req, res) => {
   try {
     const { code, state } = req.query;
-    
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("LinkedIn callback received", {
+      hasCode: !!code,
+      hasState: !!state,
+      codeLength: code?.length || 0,
+      stateLength: state?.length || 0,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // Verify state parameter for security
     if (!req.session || state !== req.session.linkedinState) {
-      console.error('State mismatch:', { 
-        received: state, 
-        expected: req.session?.linkedinState,
-        hasSession: !!req.session 
+      // 🔴 START OF LOGGING - ADDED THIS
+      securityLogger.warn("LinkedIn state mismatch detected", {
+        receivedState: state,
+        expectedState: req.session?.linkedinState,
+        hasSession: !!req.session,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
       });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
-        status: 'error',
-        message: 'Invalid state parameter'
+        status: "error",
+        message: "Invalid state parameter",
       });
     }
-    
+
     if (!code) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("LinkedIn callback missing authorization code", {
+        state,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
-        status: 'error',
-        message: 'Authorization code not provided'
+        status: "error",
+        message: "Authorization code not provided",
       });
     }
-    
+
     // Exchange authorization code for access token
     let tokenResponse;
     try {
-      tokenResponse = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', {
-        grant_type: 'authorization_code',
-        code: code,
-        client_id: LINKEDIN_CLIENT_ID,
-        client_secret: LINKEDIN_CLIENT_SECRET,
-        redirect_uri: LINKEDIN_REDIRECT_URI
-      }, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("Exchanging LinkedIn authorization code for access token", {
+        codeLength: code.length,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
+
+      tokenResponse = await axios.post(
+        "https://www.linkedin.com/oauth/v2/accessToken",
+        {
+          grant_type: "authorization_code",
+          code: code,
+          client_id: LINKEDIN_CLIENT_ID,
+          client_secret: LINKEDIN_CLIENT_SECRET,
+          redirect_uri: LINKEDIN_REDIRECT_URI,
+        },
+        {
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
         }
+      );
+
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("LinkedIn token exchange successful", {
+        hasAccessToken: !!tokenResponse.data.access_token,
+        expiresIn: tokenResponse.data.expires_in,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
       });
+      // 🔴 END OF LOGGING
     } catch (tokenError) {
-      console.error('LinkedIn token exchange error:', tokenError.response?.data || tokenError.message);
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.error("LinkedIn token exchange failed", {
+        error: tokenError.response?.data?.error || tokenError.message,
+        errorDescription: tokenError.response?.data?.error_description,
+        statusCode: tokenError.response?.status,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
+      console.error(
+        "LinkedIn token exchange error:",
+        tokenError.response?.data || tokenError.message
+      );
       return res.status(400).json({
-        status: 'error',
-        message: 'Failed to exchange authorization code for access token',
-        error: tokenError.response?.data?.error_description || tokenError.message
+        status: "error",
+        message: "Failed to exchange authorization code for access token",
+        error:
+          tokenError.response?.data?.error_description || tokenError.message,
       });
     }
-    
+
     const { access_token, expires_in } = tokenResponse.data;
-    
+
     if (!access_token) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.error("LinkedIn returned empty access token", {
+        responseData: tokenResponse.data,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
-        status: 'error',
-        message: 'No access token received from LinkedIn'
+        status: "error",
+        message: "No access token received from LinkedIn",
       });
     }
-    
+
     // Fetch user profile using OpenID Connect userinfo endpoint
-    // This endpoint returns profile information when using openid, profile, email scopes
     let userInfoResponse;
     try {
-      userInfoResponse = await axios.get('https://api.linkedin.com/v2/userinfo', {
-        headers: {
-          'Authorization': `Bearer ${access_token}`
-        }
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("Fetching LinkedIn user info", {
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
       });
+      // 🔴 END OF LOGGING
+
+      userInfoResponse = await axios.get(
+        "https://api.linkedin.com/v2/userinfo",
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
+
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("LinkedIn user info fetched successfully", {
+        hasEmail: !!userInfoResponse.data.email,
+        hasSub: !!userInfoResponse.data.sub,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
     } catch (userInfoError) {
-      console.error('LinkedIn userinfo error:', userInfoError.response?.data || userInfoError.message);
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.error("LinkedIn user info fetch failed", {
+        error: userInfoError.response?.data?.error || userInfoError.message,
+        statusCode: userInfoError.response?.status,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
+      console.error(
+        "LinkedIn userinfo error:",
+        userInfoError.response?.data || userInfoError.message
+      );
       return res.status(400).json({
-        status: 'error',
-        message: 'Failed to fetch user profile from LinkedIn',
-        error: userInfoError.response?.data?.error_description || userInfoError.message
+        status: "error",
+        message: "Failed to fetch user profile from LinkedIn",
+        error:
+          userInfoError.response?.data?.error_description ||
+          userInfoError.message,
       });
     }
-    
+
     const userInfo = userInfoResponse.data;
-    
+
     // Extract data from OpenID Connect response
     const email = userInfo.email || null;
     const linkedinId = userInfo.sub || userInfo.id || null;
-    
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.debug("LinkedIn user info extracted", {
+      email: email ? email.substring(0, 3) + "***" : "null",
+      linkedinId: linkedinId ? linkedinId.substring(0, 3) + "***" : "null",
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // For additional profile info, try the v2 API (may need legacy scopes)
     let profile = {
       id: linkedinId,
-      firstName: { localized: { en_US: userInfo.given_name || userInfo.name?.split(' ')[0] || '' } },
-      lastName: { localized: { en_US: userInfo.family_name || userInfo.name?.split(' ').slice(1).join(' ') || '' } },
+      firstName: {
+        localized: {
+          en_US: userInfo.given_name || userInfo.name?.split(" ")[0] || "",
+        },
+      },
+      lastName: {
+        localized: {
+          en_US:
+            userInfo.family_name ||
+            userInfo.name?.split(" ").slice(1).join(" ") ||
+            "",
+        },
+      },
       profilePicture: null,
       headline: null,
-      location: null
+      location: null,
     };
-    
+
     // Try to get additional profile details if available
     try {
-      const profileResponse = await axios.get('https://api.linkedin.com/v2/me', {
-        headers: {
-          'Authorization': `Bearer ${access_token}`
-        }
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("Attempting to fetch additional LinkedIn profile details", {
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
       });
+      // 🔴 END OF LOGGING
+
+      const profileResponse = await axios.get(
+        "https://api.linkedin.com/v2/me",
+        {
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }
+      );
       profile = profileResponse.data;
+
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("Additional LinkedIn profile details fetched", {
+        hasProfileData: !!profile,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
     } catch (profileError) {
       // If v2/me fails, use the userinfo data we have
-      console.log('Using OpenID Connect userinfo data only');
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.debug("Using OpenID Connect userinfo data only (v2/me failed)", {
+        error: profileError.message,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
+      console.log("Using OpenID Connect userinfo data only");
     }
-    
+
     if (!email) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("LinkedIn did not return email address", {
+        linkedinId: linkedinId ? linkedinId.substring(0, 3) + "***" : "null",
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
-        status: 'error',
-        message: 'Could not retrieve email from LinkedIn'
+        status: "error",
+        message: "Could not retrieve email from LinkedIn",
       });
     }
-    
+
     // Check if user already exists
     let user = await User.findOne({
       where: {
-        email: email
-      }
+        email: email,
+      },
     });
-    
-    // Extract profile data (handle both OpenID Connect and v2 API formats)
-    const firstName = profile.firstName?.localized?.en_US || profile.firstName?.localized?.en || userInfo.given_name || userInfo.name?.split(' ')[0] || '';
-    const lastName = profile.lastName?.localized?.en_US || profile.lastName?.localized?.en || userInfo.family_name || userInfo.name?.split(' ').slice(1).join(' ') || '';
-    const profilePictureUrl = profile.profilePicture?.['displayImage~']?.elements?.[0]?.identifiers?.[0]?.identifier || userInfo.picture || null;
+
+    // Extract profile data
+    const firstName =
+      profile.firstName?.localized?.en_US ||
+      profile.firstName?.localized?.en ||
+      userInfo.given_name ||
+      userInfo.name?.split(" ")[0] ||
+      "";
+    const lastName =
+      profile.lastName?.localized?.en_US ||
+      profile.lastName?.localized?.en ||
+      userInfo.family_name ||
+      userInfo.name?.split(" ").slice(1).join(" ") ||
+      "";
+    const profilePictureUrl =
+      profile.profilePicture?.["displayImage~"]?.elements?.[0]?.identifiers?.[0]
+        ?.identifier ||
+      userInfo.picture ||
+      null;
     const headline = profile.headline || null;
     const location = profile.location?.name || null;
-    const linkedinProfileUrl = profile.id ? `https://www.linkedin.com/in/${profile.id}` : null;
-    
+    const linkedinProfileUrl = profile.id
+      ? `https://www.linkedin.com/in/${profile.id}`
+      : null;
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.debug("Profile data extracted", {
+      firstNameLength: firstName.length,
+      lastNameLength: lastName.length,
+      hasProfilePicture: !!profilePictureUrl,
+      hasHeadline: !!headline,
+      hasLocation: !!location,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     if (user) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.info("Updating existing user with LinkedIn data", {
+        userId: user.id,
+        email: email.substring(0, 3) + "***",
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
+
       // Update existing user with LinkedIn data
       await user.update({
         linkedin_id: linkedinId,
@@ -190,12 +407,21 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         linkedin_profile_url: linkedinProfileUrl,
         linkedin_headline: headline,
         linkedin_location: location,
-        auth_provider: 'linkedin',
+        auth_provider: "linkedin",
         is_linkedin_verified: true,
-        'first-name': firstName,
-        'last-name': lastName
+        "first-name": firstName,
+        "last-name": lastName,
       });
     } else {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.info("Creating new user from LinkedIn authentication", {
+        email: email.substring(0, 3) + "***",
+        linkedinId: linkedinId ? linkedinId.substring(0, 3) + "***" : "null",
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
+
       // Create new user
       user = await User.create({
         email: email,
@@ -206,50 +432,67 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         linkedin_profile_url: linkedinProfileUrl,
         linkedin_headline: headline,
         linkedin_location: location,
-        auth_provider: 'linkedin',
+        auth_provider: "linkedin",
         is_linkedin_verified: true,
-        'first-name': firstName,
-        'last-name': lastName,
-        'user-type': 'graduate', // Default to graduate for LinkedIn users
-        'hashed-password': null // No password for LinkedIn users
+        "first-name": firstName,
+        "last-name": lastName,
+        "user-type": "graduate",
+        "hashed-password": null,
       });
     }
-    
+
     // Generate JWT token
     const token = generateToken(user.id);
-    
+
     // Clear the state from session
     delete req.session.linkedinState;
-    
-    // ✅ تأكد من أن الرد يحتوي على كل البيانات المطلوبة
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("LinkedIn authentication successful", {
+      userId: user.id,
+      userType: user["user-type"],
+      authProvider: user.auth_provider,
+      tokenGenerated: !!token,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
-      status: 'success',
-      message: 'LinkedIn authentication successful',
+      status: "success",
+      message: "LinkedIn authentication successful",
       data: {
         user: {
           id: user.id,
-          'first-name': user['first-name'],
-          'last-name': user['last-name'],
+          "first-name": user["first-name"],
+          "last-name": user["last-name"],
           email: user.email,
-          'user-type': user['user-type'], // ✅ مهم جداً
+          "user-type": user["user-type"],
           profile_picture_url: user.profile_picture_url,
           linkedin_profile_url: user.linkedin_profile_url,
           linkedin_headline: user.linkedin_headline,
           linkedin_location: user.linkedin_location,
           auth_provider: user.auth_provider,
-          is_linkedin_verified: user.is_linkedin_verified
+          is_linkedin_verified: user.is_linkedin_verified,
         },
-        token // ✅ مهم جداً
-      }
+        token,
+      },
     });
-    
   } catch (error) {
-    console.error('LinkedIn callback error:', error);
-    console.error('Error stack:', error.stack);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("LinkedIn callback processing failed", {
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("LinkedIn callback error:", error);
+    console.error("Error stack:", error.stack);
     res.status(500).json({
-      status: 'error',
-      message: 'LinkedIn authentication failed',
-      error: error.message
+      status: "error",
+      message: "LinkedIn authentication failed",
+      error: error.message,
     });
   }
 });
@@ -262,54 +505,104 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
 const refreshLinkedInToken = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
-    
-    const user = await User.findByPk(userId);
-    if (!user || user.auth_provider !== 'linkedin') {
-      return res.status(400).json({
-        status: 'error',
-        message: 'User not found or not authenticated via LinkedIn'
-      });
-    }
-    
-    if (!user.linkedin_refresh_token) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'No refresh token available'
-      });
-    }
-    
-    // Exchange refresh token for new access token
-    const tokenResponse = await axios.post('https://www.linkedin.com/oauth/v2/accessToken', {
-      grant_type: 'refresh_token',
-      refresh_token: user.linkedin_refresh_token,
-      client_id: LINKEDIN_CLIENT_ID,
-      client_secret: LINKEDIN_CLIENT_SECRET
-    }, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Refresh LinkedIn token request initiated", {
+      userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
     });
-    
+    // 🔴 END OF LOGGING
+
+    const user = await User.findByPk(userId);
+    if (!user || user.auth_provider !== "linkedin") {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn(
+        "User not found or not LinkedIn authenticated for token refresh",
+        {
+          userId,
+          userExists: !!user,
+          authProvider: user?.auth_provider,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        }
+      );
+      // 🔴 END OF LOGGING
+      return res.status(400).json({
+        status: "error",
+        message: "User not found or not authenticated via LinkedIn",
+      });
+    }
+
+    if (!user.linkedin_refresh_token) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("No refresh token available for LinkedIn user", {
+        userId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
+      return res.status(400).json({
+        status: "error",
+        message: "No refresh token available",
+      });
+    }
+
+    // Exchange refresh token for new access token
+    const tokenResponse = await axios.post(
+      "https://www.linkedin.com/oauth/v2/accessToken",
+      {
+        grant_type: "refresh_token",
+        refresh_token: user.linkedin_refresh_token,
+        client_id: LINKEDIN_CLIENT_ID,
+        client_secret: LINKEDIN_CLIENT_SECRET,
+      },
+      {
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      }
+    );
+
     const { access_token, expires_in, refresh_token } = tokenResponse.data;
-    
+
     // Update user with new tokens
     await user.update({
       linkedin_access_token: access_token,
       linkedin_refresh_token: refresh_token || user.linkedin_refresh_token,
-      linkedin_token_expires_at: new Date(Date.now() + expires_in * 1000)
+      linkedin_token_expires_at: new Date(Date.now() + expires_in * 1000),
     });
-    
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("LinkedIn token refreshed successfully", {
+      userId,
+      hasNewAccessToken: !!access_token,
+      hasNewRefreshToken: !!refresh_token,
+      expiresIn: expires_in,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
-      status: 'success',
-      message: 'LinkedIn token refreshed successfully'
+      status: "success",
+      message: "LinkedIn token refreshed successfully",
     });
-    
   } catch (error) {
-    console.error('LinkedIn token refresh error:', error);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("LinkedIn token refresh failed", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("LinkedIn token refresh error:", error);
     res.status(500).json({
-      status: 'error',
-      message: 'Failed to refresh LinkedIn token',
-      error: error.message
+      status: "error",
+      message: "Failed to refresh LinkedIn token",
+      error: error.message,
     });
   }
 });
@@ -322,15 +615,40 @@ const refreshLinkedInToken = asyncHandler(async (req, res) => {
 const disconnectLinkedIn = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Disconnect LinkedIn request initiated", {
+      userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     const user = await User.findByPk(userId);
     if (!user) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("User not found for LinkedIn disconnect", {
+        userId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
-        status: 'error',
-        message: 'User not found'
+        status: "error",
+        message: "User not found",
       });
     }
-    
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Clearing LinkedIn data for user", {
+      userId,
+      email: user.email.substring(0, 3) + "***",
+      currentAuthProvider: user.auth_provider,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     // Clear LinkedIn data
     await user.update({
       linkedin_id: null,
@@ -340,21 +658,37 @@ const disconnectLinkedIn = asyncHandler(async (req, res) => {
       linkedin_profile_url: null,
       linkedin_headline: null,
       linkedin_location: null,
-      auth_provider: 'local',
-      is_linkedin_verified: false
+      auth_provider: "local",
+      is_linkedin_verified: false,
     });
-    
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("LinkedIn account disconnected successfully", {
+      userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
-      status: 'success',
-      message: 'LinkedIn account disconnected successfully'
+      status: "success",
+      message: "LinkedIn account disconnected successfully",
     });
-    
   } catch (error) {
-    console.error('LinkedIn disconnect error:', error);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("LinkedIn disconnect failed", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("LinkedIn disconnect error:", error);
     res.status(500).json({
-      status: 'error',
-      message: 'Failed to disconnect LinkedIn account',
-      error: error.message
+      status: "error",
+      message: "Failed to disconnect LinkedIn account",
+      error: error.message,
     });
   }
 });
@@ -367,56 +701,106 @@ const disconnectLinkedIn = asyncHandler(async (req, res) => {
 const getLinkedInProfile = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
-    
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Get LinkedIn profile request initiated", {
+      userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     const user = await User.findByPk(userId, {
       attributes: [
-        'id', 'first-name', 'last-name', 'email', 'user-type',
-        'profile_picture_url', 'linkedin_profile_url', 'linkedin_headline',
-        'linkedin_location', 'auth_provider', 'is_linkedin_verified',
-        'linkedin_token_expires_at'
-      ]
+        "id",
+        "first-name",
+        "last-name",
+        "email",
+        "user-type",
+        "profile_picture_url",
+        "linkedin_profile_url",
+        "linkedin_headline",
+        "linkedin_location",
+        "auth_provider",
+        "is_linkedin_verified",
+        "linkedin_token_expires_at",
+      ],
     });
-    
+
     if (!user) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("User not found for LinkedIn profile request", {
+        userId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
-        status: 'error',
-        message: 'User not found'
+        status: "error",
+        message: "User not found",
       });
     }
-    
-    if (user.auth_provider !== 'linkedin') {
+
+    if (user.auth_provider !== "linkedin") {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("User not LinkedIn authenticated for profile request", {
+        userId,
+        authProvider: user.auth_provider,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(400).json({
-        status: 'error',
-        message: 'User not authenticated via LinkedIn'
+        status: "error",
+        message: "User not authenticated via LinkedIn",
       });
     }
-    
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("LinkedIn profile retrieved successfully", {
+      userId,
+      email: user.email.substring(0, 3) + "***",
+      userType: user["user-type"],
+      hasTokenExpiry: !!user.linkedin_token_expires_at,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
-      status: 'success',
+      status: "success",
       data: {
         user: {
           id: user.id,
-          'first-name': user['first-name'],
-          'last-name': user['last-name'],
+          "first-name": user["first-name"],
+          "last-name": user["last-name"],
           email: user.email,
-          'user-type': user['user-type'],
+          "user-type": user["user-type"],
           profile_picture_url: user.profile_picture_url,
           linkedin_profile_url: user.linkedin_profile_url,
           linkedin_headline: user.linkedin_headline,
           linkedin_location: user.linkedin_location,
           auth_provider: user.auth_provider,
           is_linkedin_verified: user.is_linkedin_verified,
-          token_expires_at: user.linkedin_token_expires_at
-        }
-      }
+          token_expires_at: user.linkedin_token_expires_at,
+        },
+      },
     });
-    
   } catch (error) {
-    console.error('Get LinkedIn profile error:', error);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Get LinkedIn profile failed", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("Get LinkedIn profile error:", error);
     res.status(500).json({
-      status: 'error',
-      message: 'Failed to get LinkedIn profile',
-      error: error.message
+      status: "error",
+      message: "Failed to get LinkedIn profile",
+      error: error.message,
     });
   }
 });
@@ -426,5 +810,5 @@ module.exports = {
   handleLinkedInCallback,
   refreshLinkedInToken,
   disconnectLinkedIn,
-  getLinkedInProfile
+  getLinkedInProfile,
 };

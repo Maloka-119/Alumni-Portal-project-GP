@@ -1,7 +1,11 @@
-const Notification = require('../models/Notification');
-const User = require('../models/User');
-const HttpStatusHelper = require('../utils/HttpStatuHelper');
-const { Op } = require('sequelize');
+const Notification = require("../models/Notification");
+const User = require("../models/User");
+const HttpStatusHelper = require("../utils/HttpStatuHelper");
+const { Op } = require("sequelize");
+
+// 🔴 START OF LOGGER IMPORT - ADDED THIS
+const { logger, securityLogger } = require("../utils/logger");
+// 🔴 END OF LOGGER IMPORT
 
 /**
  * Get all notifications for the current user
@@ -13,13 +17,24 @@ const getNotifications = async (req, res) => {
     const userId = req.user.id;
     const { page = 1, limit = 20, unreadOnly = false } = req.query;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Get notifications request initiated", {
+      userId,
+      page: parseInt(page),
+      limit: parseInt(limit),
+      unreadOnly: unreadOnly === "true",
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     const whereClause = {
-      receiverId: userId
+      receiverId: userId,
     };
 
-    if (unreadOnly === 'true') {
+    if (unreadOnly === "true") {
       whereClause.isRead = false;
     }
 
@@ -28,17 +43,17 @@ const getNotifications = async (req, res) => {
       include: [
         {
           model: User,
-          as: 'sender',
-          attributes: ['id', 'first-name', 'last-name', 'email'],
-          required: false
-        }
+          as: "sender",
+          attributes: ["id", "first-name", "last-name", "email"],
+          required: false,
+        },
       ],
-      order: [['createdAt', 'DESC']],
+      order: [["createdAt", "DESC"]],
       limit: parseInt(limit),
-      offset: offset
+      offset: offset,
     });
 
-    const formattedNotifications = notifications.map(notification => ({
+    const formattedNotifications = notifications.map((notification) => ({
       id: notification.notification_id,
       receiverId: notification.receiverId,
       senderId: notification.senderId,
@@ -47,29 +62,55 @@ const getNotifications = async (req, res) => {
       isRead: notification.isRead,
       createdAt: notification.createdAt,
       navigation: notification.navigation,
-      sender: notification.sender ? {
-        id: notification.sender.id,
-        fullName: `${notification.sender['first-name']} ${notification.sender['last-name']}`,
-        email: notification.sender.email
-      } : null
+      sender: notification.sender
+        ? {
+            id: notification.sender.id,
+            fullName: `${notification.sender["first-name"]} ${notification.sender["last-name"]}`,
+            email: notification.sender.email,
+          }
+        : null,
     }));
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Notifications retrieved successfully", {
+      userId,
+      totalNotifications: count,
+      returnedNotifications: formattedNotifications.length,
+      page: parseInt(page),
+      totalPages: Math.ceil(count / parseInt(limit)),
+      hasUnreadFilter: unreadOnly === "true",
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
-      message: 'Notifications fetched successfully',
+      message: "Notifications fetched successfully",
       data: formattedNotifications,
       pagination: {
         currentPage: parseInt(page),
         totalPages: Math.ceil(count / parseInt(limit)),
         totalNotifications: count,
-        hasMore: offset + notifications.length < count
-      }
+        hasMore: offset + notifications.length < count,
+      },
     });
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error fetching notifications", {
+      userId: req.user?.id,
+      page: req.query.page,
+      limit: req.query.limit,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("Error fetching notifications:", error);
     res.status(500).json({
       status: HttpStatusHelper.ERROR,
-      message: 'Failed to fetch notifications: ' + error.message
+      message: "Failed to fetch notifications: " + error.message,
     });
   }
 };
@@ -83,25 +124,51 @@ const getUnreadCount = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Get unread notifications count request initiated", {
+      userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     const unreadCount = await Notification.count({
       where: {
         receiverId: userId,
-        isRead: false
-      }
+        isRead: false,
+      },
     });
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Unread notifications count retrieved", {
+      userId,
+      unreadCount,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
-      message: 'Unread count fetched successfully',
+      message: "Unread count fetched successfully",
       data: {
-        unreadCount
-      }
+        unreadCount,
+      },
     });
   } catch (error) {
-    console.error('Error fetching unread count:', error);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error fetching unread notifications count", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("Error fetching unread count:", error);
     res.status(500).json({
       status: HttpStatusHelper.ERROR,
-      message: 'Failed to fetch unread count: ' + error.message
+      message: "Failed to fetch unread count: " + error.message,
     });
   }
 };
@@ -116,36 +183,76 @@ const markAsRead = async (req, res) => {
     const { notificationId } = req.params;
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Mark notification as read request initiated", {
+      userId,
+      notificationId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     const notification = await Notification.findOne({
       where: {
         notification_id: notificationId,
-        receiverId: userId
-      }
+        receiverId: userId,
+      },
     });
 
     if (!notification) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Notification not found for marking as read", {
+        userId,
+        notificationId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
-        message: 'Notification not found'
+        message: "Notification not found",
       });
     }
 
+    const wasRead = notification.isRead;
     notification.isRead = true;
     await notification.save();
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Notification marked as read successfully", {
+      userId,
+      notificationId,
+      notificationType: notification.type,
+      wasRead,
+      nowRead: notification.isRead,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
-      message: 'Notification marked as read',
+      message: "Notification marked as read",
       data: {
         id: notification.notification_id,
-        isRead: notification.isRead
-      }
+        isRead: notification.isRead,
+      },
     });
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error marking notification as read", {
+      userId: req.user?.id,
+      notificationId: req.params.notificationId,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("Error marking notification as read:", error);
     res.status(500).json({
       status: HttpStatusHelper.ERROR,
-      message: 'Failed to mark notification as read: ' + error.message
+      message: "Failed to mark notification as read: " + error.message,
     });
   }
 };
@@ -159,28 +266,54 @@ const markAllAsRead = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Mark all notifications as read request initiated", {
+      userId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     const [updatedCount] = await Notification.update(
       { isRead: true },
       {
         where: {
           receiverId: userId,
-          isRead: false
-        }
+          isRead: false,
+        },
       }
     );
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("All notifications marked as read successfully", {
+      userId,
+      updatedCount,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
-      message: 'All notifications marked as read',
+      message: "All notifications marked as read",
       data: {
-        updatedCount
-      }
+        updatedCount,
+      },
     });
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error marking all notifications as read", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("Error marking all notifications as read:", error);
     res.status(500).json({
       status: HttpStatusHelper.ERROR,
-      message: 'Failed to mark all notifications as read: ' + error.message
+      message: "Failed to mark all notifications as read: " + error.message,
     });
   }
 };
@@ -195,31 +328,77 @@ const deleteNotification = async (req, res) => {
     const { notificationId } = req.params;
     const userId = req.user.id;
 
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Delete notification request initiated", {
+      userId,
+      notificationId,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
     const notification = await Notification.findOne({
       where: {
         notification_id: notificationId,
-        receiverId: userId
-      }
+        receiverId: userId,
+      },
     });
 
     if (!notification) {
+      // 🔴 START OF LOGGING - ADDED THIS
+      logger.warn("Notification not found for deletion", {
+        userId,
+        notificationId,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
-        message: 'Notification not found'
+        message: "Notification not found",
       });
     }
 
+    // حفظ معلومات الإشعار قبل الحذف
+    const notificationInfo = {
+      id: notification.notification_id,
+      type: notification.type,
+      message: notification.message.substring(0, 100) + "...", // أول 100 حرف فقط
+      isRead: notification.isRead,
+      createdAt: notification.createdAt,
+    };
+
     await notification.destroy();
+
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Notification deleted successfully", {
+      userId,
+      notificationId,
+      notificationInfo,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
-      message: 'Notification deleted successfully'
+      message: "Notification deleted successfully",
     });
   } catch (error) {
-    console.error('Error deleting notification:', error);
+    // 🔴 START OF LOGGING - ADDED THIS
+    logger.error("Error deleting notification", {
+      userId: req.user?.id,
+      notificationId: req.params.notificationId,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    console.error("Error deleting notification:", error);
     res.status(500).json({
       status: HttpStatusHelper.ERROR,
-      message: 'Failed to delete notification: ' + error.message
+      message: "Failed to delete notification: " + error.message,
     });
   }
 };
@@ -229,6 +408,5 @@ module.exports = {
   getUnreadCount,
   markAsRead,
   markAllAsRead,
-  deleteNotification
+  deleteNotification,
 };
-
