@@ -236,12 +236,21 @@ const NotificationsPage = ({ openChat }) => {
     className={`notification-item ${inv.status === "pending" ? "unread" : ""}`}
   >
     <div className="notif-content">
-      <p>{inv.senderFullName} - {inv.groupName}</p>
+      <p>{inv.senderFullName} - {t("invitationMessage")}- {inv.groupName}</p>
       <span className="time">
-        {new Date(inv.sent_date).toLocaleString(
-          i18n.language === "ar" ? "ar-EG" : "en-US"
-        )}
-      </span>
+  {new Intl.DateTimeFormat(
+    i18n.language === "ar" ? "ar-EG" : "en-US",
+    {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }
+  ).format(new Date(inv.sent_date))}
+</span>
+
     </div>
 
     <div className="notif-actions" onClick={(e) => e.stopPropagation()}>

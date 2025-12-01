@@ -241,7 +241,9 @@ const alumni = {
   "Delete": "Delete"
 ,
   "edited": "Edited",
-    "Message deleted": "Message deleted"
+    "Message deleted": "Message deleted",
+
+    "invitationMessage": "sent you an invitation to join the community "
     },
   },
 
@@ -484,7 +486,9 @@ const alumni = {
   "Mark as Read": "تحديد كمقروء",
   "Delete": "حذف",
     "edited": "تم التعديل",
-      "Message deleted": "تم حذف الرسالة"
+      "Message deleted": "تم حذف الرسالة",
+
+      "invitationMessage": " أرسل لك دعوة للانضمام إلى المجتمع"
   
     },
   },
