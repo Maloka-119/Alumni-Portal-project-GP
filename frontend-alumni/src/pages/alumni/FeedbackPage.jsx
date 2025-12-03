@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import API from "../../services/api";
 import "./FeedbackPage.css";
+import { X } from "lucide-react";
+
 
 export default function FeedbackPageUnique() {
   const { t, i18n } = useTranslation();
@@ -177,11 +179,13 @@ export default function FeedbackPageUnique() {
               <p><strong>{t("email")}:</strong> {modalItem.email || "-"}</p>
             </div>
             <button
-              className="modal-close-btn"
-              onClick={() => setModalItem(null)}
-            >
-              {t("close")}
-            </button>
+  className="modal-close-icon"
+  onClick={() => setModalItem(null)}
+  aria-label={t("close")}
+>
+  <X size={20} />
+</button>
+
           </div>
         </div>
       )}
