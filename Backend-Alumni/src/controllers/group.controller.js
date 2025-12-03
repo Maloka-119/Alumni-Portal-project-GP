@@ -1575,22 +1575,26 @@ const getGroupUsers = async (req, res) => {
     // تحويل faculty_code إلى اسم الكلية
     const lang = req.headers["accept-language"] || req.user?.language || "ar";
 
-    // هنعمل تعديل صغير عشان لو مش موجود Graduate يرجع قيم افتراضية
-    const usersWithGraduateInfo = group.Users.map((user) => {
-      const facultyName = getCollegeNameByCode(
-        user.Graduate?.faculty_code,
-        lang
-      );
+ const usersWithGraduateInfo = group.Users.map((user) => {
+  const facultyName = getCollegeNameByCode(
+    user.Graduate?.faculty_code,
+    lang
+  );
 
-      return {
-        ...user.toJSON(),
-        faculty: facultyName,
-        graduationYear: user.Graduate ? user.Graduate["graduation-year"] : null,
-        profilePicture: user.Graduate
-          ? user.Graduate["profile-picture-url"]
-          : null,
-      };
-    });
+  return {
+    id: user.id,
+    "first-name": user["first-name"],
+    "last-name": user["last-name"],
+    email: user.email,
+    "user-type": user["user-type"],
+    Graduate: {  // ◀ إرجاع Graduate ككائن متداخل
+      faculty: facultyName,  // ◀ اسم الكلية بدلًا من الكود
+      "graduation-year": user.Graduate ? user.Graduate["graduation-year"] : null,
+      "profile-picture-url": user.Graduate ? user.Graduate["profile-picture-url"] : null,
+      faculty_code: user.Graduate?.faculty_code  // ◀ اختياري: إذا أردت حفظ الكود أيضًا
+    }
+  };
+});
 
     // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Group users retrieved successfully", {
