@@ -251,6 +251,7 @@ const alumni = {
     "Later": "Later",
     "Suggested for you": "Suggested for you",
 "All communities": "All communities",
+"Batch":"Batch"
 
     },
   },
@@ -503,8 +504,8 @@ const alumni = {
   "Accept": "قبول",
   "Later": "لاحقًا",
   "Suggested for you": "مقترحة لك",
-"All communities": "كل المجتمعات"
-  
+"All communities": "كل المجتمعات",
+  "Batch":"دفعه"
     },
   },
 };
