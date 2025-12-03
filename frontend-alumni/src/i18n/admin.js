@@ -241,7 +241,8 @@ const admin = {
   "selectFaculty": "select Faculty",
   "chooseImage": "Choose image",
   "changeImage": "Change image",
-  "noFile": "No file selected"
+  "noFile": "No file selected",
+  "Enter the batch number related to this group":"Enter the batch number related to this group",
 
       }
     },
@@ -489,7 +490,7 @@ const admin = {
   "chooseImage": "اختر صورة",
   "changeImage": "تغيير الصورة",
   "noFile": "لا يوجد ملف",
-
+  "Enter the batch number related to this group":"أدخل رقم الدفعه المرتبط بهذا الجروب"
       
       }
     }

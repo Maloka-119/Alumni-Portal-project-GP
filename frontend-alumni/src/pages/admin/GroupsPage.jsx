@@ -330,11 +330,13 @@ function GroupsPage({ currentUser }) {
             </select>
           </div>
 
-          <textarea
-            placeholder={t("description with related year")}
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-          />
+          <input
+  type="number"
+  placeholder={t("Enter the batch number related to this group")}
+  value={formData.description}
+  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+/>
+
 
           <input
             type="file"

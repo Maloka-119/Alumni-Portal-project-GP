@@ -231,7 +231,9 @@ function GroupDetails({ group, goBack }) {
         />
 
         <h1>{group.groupName || group.name}</h1>
-        <p className="group-description">{group.description}</p>
+        <p className="group-description">
+  {t("Welcome to this group! This group is associated with batch number {{batch}}", { batch: group.description })}
+</p>
 
         <button className="invite-btn" onClick={() => setShowInviteSection(!showInviteSection)}>
           {showInviteSection ? t("Hide Invites") : t("Invite")}
