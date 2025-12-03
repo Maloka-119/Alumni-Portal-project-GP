@@ -34,6 +34,7 @@ const alumni = {
       "logout": "Logout",
       "allCommunities": "All Communities",
       "myCommunities": "My Communities",
+      "Welcome to this group! This group is associated with batch number {{batch}":"Welcome to this group! This group is associated with batch number {{batch}",
 
       // ===== Profile =====
       "faculty": "Faculty",
@@ -282,6 +283,7 @@ const alumni = {
       "logout": "تسجيل خروج",
       "allCommunities": "كل المجتمعات",
       "myCommunities": "مجتمعاتي",
+      "Welcome to this group! This group is associated with batch number {{batch}}": "مرحبًا بكم في هذا الجروب! هذا الجروب مرتبط بالدفعه رقم {{batch}}",
 
       "dontHaveAccount": "ليس لديك حساب؟ انشئ حساب جديد",
         "next": "التالي",

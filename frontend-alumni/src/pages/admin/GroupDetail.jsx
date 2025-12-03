@@ -421,7 +421,10 @@ const handlePostSubmit = async (formData, postId = null) => {
   </div>
 )}
 
-          <p className="group-description">{group.description}</p>
+<p className="group-description">
+  {t("Welcome to this group! This group is associated with batch number {{batch}}", { batch: group.description })}
+</p>
+
         </div>
       </div>
 
