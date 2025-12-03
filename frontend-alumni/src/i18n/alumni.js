@@ -249,6 +249,9 @@ const alumni = {
     "You have been invited to join the group <strong>{{groupName}}</strong>. You can accept now or view it later in your Notifications.": "You have been invited to join the group <strong>{{groupName}}</strong>. You can accept now or view it later in your Notifications.",
     "Accept": "Accept",
     "Later": "Later",
+    "Suggested for you": "Suggested for you",
+"All communities": "All communities",
+
     },
   },
 
@@ -498,7 +501,9 @@ const alumni = {
   "Welcome to Helwan Alumni Portal!": "مرحبًا بك في بوابة خريجي حلوان!",
   "You have been invited to join the group <strong>{{groupName}}</strong>. You can accept now or view it later in your Notifications.": "لقد تمت دعوتك للانضمام إلى الجروب <strong>{{groupName}}</strong>. يمكنك القبول الآن أو مشاهدته لاحقًا في الإشعارات.",
   "Accept": "قبول",
-  "Later": "لاحقًا"
+  "Later": "لاحقًا",
+  "Suggested for you": "مقترحة لك",
+"All communities": "كل المجتمعات"
   
     },
   },

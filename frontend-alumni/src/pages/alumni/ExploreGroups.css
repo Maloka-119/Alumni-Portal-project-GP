@@ -214,3 +214,45 @@
 .dark .explorer-search::placeholder {
   color: #9ca3af;
 }
+
+.suggested-section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.suggested-scroll {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 10px;
+}
+
+.suggested-scroll::-webkit-scrollbar {
+  height: 6px;
+}
+
+.suggested-scroll::-webkit-scrollbar-thumb {
+  background: #aaa;
+  border-radius: 4px;
+}
+
+.suggested-card {
+  min-width: 220px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  text-align: center;
+}
+
+.suggested-card img {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 10px;
+}

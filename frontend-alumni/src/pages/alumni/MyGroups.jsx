@@ -106,6 +106,11 @@ function MyGroups() {
                 <div className="mycommunity-name">
                   {g.groupName}
                 </div>
+                <p
+              className="explorer-desc"
+            >
+              {t("Batch")}-{g.description}
+            </p>
                 <div className="mycoomunity-butn">
                   <button className="viewgr-btn" onClick={() => openGroupDetails(g)}>
                     <Eye size={16} style={{ marginRight: "5px" }} />
