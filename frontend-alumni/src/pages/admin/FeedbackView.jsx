@@ -2,14 +2,18 @@ import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import API from "../../services/api";
 import "./FeedbackView.css";
+import { getPermission } from '../../components/usePermission';
 
-export default function FeedbackView() {
+export default function FeedbackView({ currentUser }) {
   const { t, i18n } = useTranslation();
   const [records, setRecords] = useState([]);
   const [modalItem, setModalItem] = useState(null);
   const [filter, setFilter] = useState("all"); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const perm = currentUser?.userType === "admin"
+  ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
+  : getPermission("Graduates Feedback", currentUser) || { canView: false, canAdd: false, canEdit: false, canDelete: false };
 
 
   useEffect(() => {
@@ -37,6 +41,8 @@ export default function FeedbackView() {
       : records.filter(
           (item) => item.category.toLowerCase() === filter.toLowerCase()
         );
+
+  if (!perm.canView) return <p>{t("noPermission")}</p>;
 
   return (
     <div
@@ -79,12 +85,15 @@ export default function FeedbackView() {
                   <p className="admin-feedback-card-text">
                     {smallText(item.details)}
                   </p>
-                  <button
-                    className="admin-feedback-see-more"
-                    onClick={() => setModalItem(item)}
-                  >
-                    {t("seeMore")}
-                  </button>
+                  {perm.canView && (
+  <button
+    className="admin-feedback-see-more"
+    onClick={() => setModalItem(item)}
+  >
+    {t("seeMore")}
+  </button>
+)}
+
                 </div>
               ))}
             </div>
