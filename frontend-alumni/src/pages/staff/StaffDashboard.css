@@ -138,6 +138,7 @@
     transition: transform 0.3s ease-in-out;
     z-index: 999;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .dashboard-root.sidebar-visible .sidebar-panel {
@@ -277,16 +278,18 @@
     color: #8b5cf6;
     font-weight: 600;
   }
-  
-  .child-link {
-    padding-left: 40px; /* زيادة المسافة عن الأب */
-    font-size: 0.9rem; /* حجم الخط أصغر */
-    color: #1f40a0; /* لون النص */
-    font-weight: 500; /* سمك الخط */
-    text-transform: capitalize; /* أول حرف كبير */
-    transition: all 0.2s;
-  }
-  
+  .sidebar-link {
+    font-size: 0.9rem;   /* أصغر */
+    font-weight: 400;    /* أنعم */
+    letter-spacing: 0.3px; /* أقل تباعد */
+}
+
+.child-link {
+    font-size: 0.85rem;  /* أصغر شويه */
+    font-weight: 500;    /* أنعم */
+    letter-spacing: 0.2px;
+}
+
   .child-link:hover {
     background-color: #cfe0ff; /* لون عند المرور */
     color: #0f2a75; /* تغيير لون النص عند hover */
