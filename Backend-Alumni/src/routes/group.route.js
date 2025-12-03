@@ -15,4 +15,5 @@ router.put("/groups/:groupId", authMiddleware.protect, uploadGroup.single("group
 router.delete("/groups/:groupId", authMiddleware.protect, groupController.deleteGroup);
 router.get("/groups/:groupId/members/count", authMiddleware.protect, groupController.getGroupMembersCount);
 
+router.get('/groups/sorted-groups', authMiddleware.protect, groupController.getSortedGroups);
 module.exports = router;

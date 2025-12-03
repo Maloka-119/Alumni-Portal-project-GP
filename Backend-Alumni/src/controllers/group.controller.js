@@ -1632,6 +1632,129 @@ const getGroupUsers = async (req, res) => {
   }
 };
 
+const getSortedGroups = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const userType = req.user?.["user-type"];
+    
+    // 🔴 START OF LOGGING
+    logger.info("Get sorted groups request initiated", {
+      userId,
+      userType,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
+    // 1. جلب كلية الخريج (إذا كان خريج)
+    let userFaculty = null;
+    
+    if (userType === "graduate") {
+      const graduate = await Graduate.findOne({
+        where: { graduate_id: userId },
+        attributes: ["faculty_code"]
+      });
+      
+      if (graduate) {
+        userFaculty = graduate.faculty_code;
+        logger.info("User faculty retrieved", {
+          userId,
+          faculty_code: userFaculty
+        });
+      }
+    }
+
+    // 2. جلب جميع المجتمعات
+    const groups = await Group.findAll({
+      include: [
+        {
+          model: User,
+          attributes: ["id"],
+          through: { attributes: [] },
+        }
+      ],
+      order: [['group-name', 'ASC']]
+    });
+
+    // 3. تحويل faculty_code إلى اسم الكلية
+    const lang = req.headers["accept-language"] || req.user?.language || "ar";
+    
+    const groupsWithDetails = groups.map(group => {
+      // الحصول على اسم الكلية
+      const facultyName = group.faculty_code ? 
+        getCollegeNameByCode(group.faculty_code, lang) : 
+        "عام";
+      
+      return {
+        id: group.id,
+        name: group["group-name"],
+        description: group.description,
+        image: group["group-image"],
+        faculty_code: group.faculty_code,
+        faculty_name: facultyName,
+        graduation_year: group.graduation_year,
+        members_count: group.Users?.length || 0,
+        created_date: group["created-date"]
+      };
+    });
+
+    // 4. ترتيب المجتمعات: أولاً مجتمعات الكلية، ثم باقي المجتمعات
+    const sortedGroups = [...groupsWithDetails].sort((a, b) => {
+      // إذا كانت a هي كلية الخريج و b ليست كذلك → a أولاً
+      if (userFaculty && a.faculty_code === userFaculty && b.faculty_code !== userFaculty) {
+        return -1;
+      }
+      // إذا كانت b هي كلية الخريج و a ليست كذلك → b أولاً
+      if (userFaculty && b.faculty_code === userFaculty && a.faculty_code !== userFaculty) {
+        return 1;
+      }
+      // إذا كانت كلاهما من نفس الكلية أو لا توجد كلية → أبجدي
+      return a.name.localeCompare(b.name);
+    });
+
+    // 5. إضافة علامة خاصة لمجتمعات الكلية
+    const groupsWithFlags = sortedGroups.map(group => ({
+      ...group,
+      is_user_faculty: userFaculty ? group.faculty_code === userFaculty : false
+    }));
+
+    // 🔴 START OF LOGGING
+    logger.info("Groups sorted and retrieved successfully", {
+      userId,
+      userFaculty,
+      totalGroups: groupsWithFlags.length,
+      userFacultyGroups: groupsWithFlags.filter(g => g.is_user_faculty).length,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+
+    res.json({
+      status: "success",
+      count: groupsWithFlags.length,
+      user_faculty: userFaculty ? getCollegeNameByCode(userFaculty, lang) : null,
+      data: groupsWithFlags
+    });
+
+  } catch (error) {
+    // 🔴 START OF LOGGING
+    logger.error("Error fetching sorted groups", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    // 🔴 END OF LOGGING
+    
+    console.error("Error fetching sorted groups:", error);
+    res.status(500).json({
+      status: "error",
+      message: "Failed to fetch groups",
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   createGroup,
   getGroups,
@@ -1644,4 +1767,5 @@ module.exports = {
   getMyGroups,
   getGroupUsers,
   getGraduatesForGroup,
+  getSortedGroups
 };
