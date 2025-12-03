@@ -670,6 +670,39 @@ const sendAutoGroupInvitation = async (userId) => {
   }
 };
 
+
+
+const getAutoSentInvitation = async (req, res) => {
+  try {
+    // جلب الدعوة من admin (id=1) للمستخدم الحالي
+    const invitation = await Invitation.findOne({
+      where: {
+        sender_id: 1,
+        receiver_id: req.user.id,
+      },
+      include: [
+        {
+          model: Group,
+          attributes: ["id", "group-name"], // ممكن تضيفي description لو حابة
+        }
+      ]
+    });
+
+    if (!invitation) {
+      return res.json({ invited: false, invitation: null });
+    }
+
+    res.json({
+      invited: true,
+      invitation: invitation,
+    });
+  } catch (error) {
+    console.error("Error fetching auto-sent invitation:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+
 // export all at once
 module.exports = {
   sendInvitation,
@@ -679,4 +712,5 @@ module.exports = {
   getReceivedInvitations,
   sendAutoGroupInvitation,
   getSentInvitations,
+getAutoSentInvitation
 };
