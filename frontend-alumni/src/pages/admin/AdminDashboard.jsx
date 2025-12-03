@@ -13,6 +13,7 @@ import {
   Legend,
 } from "chart.js";
 import "./Analysis.css";
+import { getPermission } from '../../components/usePermission';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
@@ -24,18 +25,21 @@ const CardContent = ({ children }) => (
   <div className="dashboard-card-content">{children}</div>
 );
 
-function AdminDashboard() {
+function AdminDashboard({ currentUser }) {
   const { t } = useTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const perm = currentUser?.userType === "admin"
+  ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
+  : getPermission("Graduates Feedback", currentUser) || { canView: false, canAdd: false, canEdit: false, canDelete: false };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
         const response = await API.get("/reports-stats");
-        setData(response.data.data); // ⬅️ غير هنا من response.data إلى response.data.data
+        setData(response.data.data); 
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
         setError("Failed to fetch dashboard data");
@@ -46,7 +50,6 @@ function AdminDashboard() {
     fetchDashboardData();
   }, []);
 
-  // ⬅️ أضف loading و error handling
   if (loading) return <p className="loading-text">{t("loadingDashboard")}</p>;
   if (error) return <p className="error-text">{error}</p>;
   if (!data) return <p className="loading-text">No data available</p>;
@@ -90,7 +93,7 @@ function AdminDashboard() {
     datasets: [{ data: [activeStaff, inactiveStaff], backgroundColor: ["#10b981", "#cbd5e1"] }],
   };
 
-  // ⬅️ تحقق من graduatesByFaculty قبل map
+  
   const facultyChartData = {
     labels: graduatesByFaculty.map((f) => f.faculty || t("Unknown")),
     datasets: [{ 
@@ -101,7 +104,6 @@ function AdminDashboard() {
     }],
   };
 
-  // ⬅️ تحقق من staffRoles قبل map
   const rolesChartData = {
     labels: staffRoles.map((r) => r.Role ? r.Role["role-name"] : t("Unknown")),
     datasets: [{ 
@@ -126,6 +128,8 @@ function AdminDashboard() {
     maintainAspectRatio: false,
     scales: { x: { ticks: { font: { size: 9 } } }, y: { ticks: { font: { size: 9 } } } },
   };
+  
+  if (!perm.canView) return <p>{t("noPermission")}</p>;
 
   return (
     <div className="dashboard-container">
