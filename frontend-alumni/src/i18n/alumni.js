@@ -244,7 +244,11 @@ const alumni = {
   "edited": "Edited",
     "Message deleted": "Message deleted",
 
-    "invitationMessage": "sent you an invitation to join the community "
+    "invitationMessage": "sent you an invitation to join the community ",
+    "Welcome to Helwan Alumni Portal!": "Welcome to Helwan Alumni Portal!",
+    "You have been invited to join the group <strong>{{groupName}}</strong>. You can accept now or view it later in your Notifications.": "You have been invited to join the group <strong>{{groupName}}</strong>. You can accept now or view it later in your Notifications.",
+    "Accept": "Accept",
+    "Later": "Later",
     },
   },
 
@@ -487,10 +491,14 @@ const alumni = {
   "Loading notifications...": "جاري تحميل الإشعارات...",
   "Mark as Read": "تحديد كمقروء",
   "Delete": "حذف",
-    "edited": "تم التعديل",
-      "Message deleted": "تم حذف الرسالة",
+  "edited": "تم التعديل",
+  "Message deleted": "تم حذف الرسالة",
 
-      "invitationMessage": " أرسل لك دعوة للانضمام إلى المجتمع"
+  "invitationMessage": " أرسل لك دعوة للانضمام إلى المجتمع",
+  "Welcome to Helwan Alumni Portal!": "مرحبًا بك في بوابة خريجي حلوان!",
+  "You have been invited to join the group <strong>{{groupName}}</strong>. You can accept now or view it later in your Notifications.": "لقد تمت دعوتك للانضمام إلى الجروب <strong>{{groupName}}</strong>. يمكنك القبول الآن أو مشاهدته لاحقًا في الإشعارات.",
+  "Accept": "قبول",
+  "Later": "لاحقًا"
   
     },
   },
