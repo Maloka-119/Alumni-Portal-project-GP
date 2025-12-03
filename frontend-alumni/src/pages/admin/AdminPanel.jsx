@@ -147,7 +147,7 @@ const AdminPanel = ({ setUser }) => {
           <Route path="consultationRequests" element={<EmptyPage title="Consultation Requests" />} />
           <Route path="alumniManagement" element={<AlumniManagement currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="staffManagement" element={<StaffManagement currentUser={JSON.parse(localStorage.getItem("user"))} />} />
-          <Route path="permissionsRoles" element={<RolesManagement />} />
+          <Route path="permissionsRoles" element={<RolesManagement currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="adminPosts" element={<AdminPostsPage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="usersPosts" element={<UsersPostsPage currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="faqManage" element={<FAQManage currentUser={JSON.parse(localStorage.getItem("user"))} />} />

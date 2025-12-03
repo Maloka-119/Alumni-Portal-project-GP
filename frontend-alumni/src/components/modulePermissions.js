@@ -8,7 +8,9 @@ import UsersPostsPage from "../pages/admin/UsersPostsPage";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import EmptyPage from "../pages/admin/EmptyPage";
 import FAQManage from "../pages/admin/FAQManage";
-import { Users, UserCheck, FileText, MessageCircle, Grid, File, Clipboard, Globe, Layers, FileMinus, UserPlus ,BarChart, FilePlus2} from "lucide-react";
+import FeedbackView from "../pages/admin/FeedbackView";
+import RolesManagement from "../pages/admin/RolesManagement";
+import { Users, UserCheck, FileText, MessageCircle, Grid, File, Clipboard, Globe, Layers, FileMinus, UserPlus ,BarChart, FilePlus2 ,MessageSquare ,Shield} from "lucide-react";
 
 export const modulesConfig = [
   { id: 1, nameKey: "graduateManagement", path: "alumniManagement", component: AlumniManagement, permKey: "Graduate management", icon: <Users size={16} /> },
@@ -46,4 +48,6 @@ export const modulesConfig = [
   { id: 10, nameKey: "documentRequestsManagement", path: "documentManagement", component: () => <EmptyPage title="Document Requests" />, permKey: "Document Requests management", icon: <FileText size={16} /> },
   { id: 11, nameKey: "consultationManagement", path: "consultationRequests", component: () => <EmptyPage title="Consultations" />, permKey: "Consultation management", icon: <MessageCircle size={16} /> },
   { id: 12, nameKey: "faqManagement", path: "faqManage", component: FAQManage, permKey: "FAQ management", icon: <Globe size={16} /> },
+  { id: 13, nameKey: "GraduatedFeedback", path: "GraduatedFeedback", component: FeedbackView, permKey: "Graduates Feedback", icon: <MessageSquare size={16} /> },
+  { id: 14, nameKey: "rolesManagement", path: "rolesmanagement", component: RolesManagement, permKey: "Roles and Permissions Management", icon: <Shield size={16} /> },
 ];
