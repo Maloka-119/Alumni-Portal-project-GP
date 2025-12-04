@@ -1,13 +1,15 @@
 import PROFILE from "./PROFILE.jpeg";
 import React from "react";
 import "./GradProfile.css";
+import { useTranslation } from "react-i18next";
 
 function GraduatedProfileView({ user }) {
-  if (!user) return <p>No profile data found</p>;
+  const { t } = useTranslation();
+  if (!user) return <p>{t("No profile data found")}</p>;
 
   return (
     <div>
-      <h1 className="h1">Profile</h1>
+      <h1 className="h1">{t("Profile")}</h1>
 
       <div className="profile-card">
         <img
@@ -17,30 +19,30 @@ function GraduatedProfileView({ user }) {
         />
         <h2>{user.fullName || "No Name"}</h2>
 
-        <p><strong>Faculty:</strong> {user.faculty || "Not provided"}</p>
-        <p><strong>Graduation Year:</strong> {user.graduationYear}</p>
-        <p><strong>Phone Number:</strong> {user.phoneNumber || "noPhone"}</p>
-        <p><strong>Bio:</strong> {user.bio || "No bio"}</p>
+        <p><strong>{t("Faculty")}:</strong> {user.faculty || "Not provided"}</p>
+        <p><strong>{t("Graduation Year")}:</strong> {user.graduationYear}</p>
+        <p><strong>{t("Phone Number")}:</strong> {user.phoneNumber || "noPhone"}</p>
+        <p><strong>{t("Bio")}:</strong> {user.bio || t("No bio")}</p>
         <p>
           <strong>CV:</strong>{" "}
           {user.CV ? (
             <a href={user.CV} download="My_CV">
-              Download CV
+              {t("Download CV")}
             </a>
           ) : (
-            "No CV uploaded"
+            t("No CV uploaded")
           )}
         </p>
         <p>
-          <strong>Skills:</strong>{" "}
-          {user.skills ? user.skills : "No skills"}
+          <strong>{t("Skills")}:</strong>{" "}
+          {user.skills ? user.skills : t("No skills")}
         </p>
-        <p><strong>Current Job:</strong> {user.currentJob || "Not provided"}</p>
+        <p><strong>{t("Current Job")}:</strong> {user.currentJob || t("Not provided")}</p>
         {user.linkedInLink && (
           <p>
-            <strong>LinkedIn:</strong>{" "}
+            <strong>{t("LinkedIn")}:</strong>{" "}
             <a href={user.linkedInLink} target="_blank" rel="noreferrer">
-              View Profile
+            {t("View Profile")}
             </a>
           </p>
         )}

@@ -89,10 +89,10 @@ const { t, i18n } = useTranslation();
     try {
       await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, inLanding: !currentValue } : p));
-      Swal.fire({ icon: "success", title: "Updated", text: `Post ${!currentValue ? "added to" : "removed from"} landing`, toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+      Swal.fire({ icon: "success", title: t("Updated"), text: `Post ${!currentValue ? "added to" : "removed from"} landing`, toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
     } catch (err) {
       console.error("Error updating landing status", err);
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to update landing status", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+      Swal.fire({ icon: "error", title: t("Error"), text: t("Failed to update landing status"), toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
     }
   };
 
@@ -103,11 +103,11 @@ const { t, i18n } = useTranslation();
       //  console.log("Hide post response:", response);
       if (response.data.status === "success") {
         await fetchPosts();
-        Swal.fire({ icon: "success", title: "Post hidden", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+        Swal.fire({ icon: "success", title: t("Post hidden"), toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
       }
     } catch (err) {
       console.error("Error hiding post", err);
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to hide the post.", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+      Swal.fire({ icon: "error", title: t("Error"), text: t("Failed to hide the post."), toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
     }
   };
 
@@ -117,11 +117,11 @@ const { t, i18n } = useTranslation();
       const response = await API.put(`/posts/${id}/unhide`);
       if (response.data.status === "success") {
         await fetchPosts();
-        Swal.fire({ icon: "success", title: "Post unhidden", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+        Swal.fire({ icon: "success", title: t("Post unhidden"), toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
       }
     } catch (err) {
       console.error("Error unhiding post", err);
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to unhide the post.", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+      Swal.fire({ icon: "error", title: t("Error"), text: t("Failed to unhide the post."), toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
     }
   };
 
@@ -187,8 +187,8 @@ const { t, i18n } = useTranslation();
       console.error("Error submitting comment:", err.response?.data || err);
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "Failed to add comment",
+        title: t("Error"),
+        text: t("Failed to add comment"),
         toast: true,
         position: "top-end",
         timer: 1800,

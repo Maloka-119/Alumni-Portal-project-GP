@@ -295,10 +295,10 @@ const AlumniManagement = ({ currentUser }) => {
         ));
         Swal.fire({
           icon: newStatus === "active" ? "success" : "error",
-          title: newStatus === "active" ? "Account activated" : "Account deactivated",
+          title: newStatus === "active" ? t("Account activated") : t("Account deactivated"),
           text: newStatus === "active"
-            ? "The graduate can now create posts in the Alumni Portal."
-            : "The graduate is now prevented from creating posts .",
+            ? t("The graduate can now create posts in the Alumni Portal.")
+            : t("The graduate is now prevented from creating posts ."),
           showConfirmButton: false,
           timer: 1800,
           toast: true,
@@ -313,8 +313,8 @@ const AlumniManagement = ({ currentUser }) => {
       console.error("Error updating status:", err);
       Swal.fire({
         icon: "error",
-        title: "Connection failed",
-        text: "Please try again later",
+        title: t("Connection failed"),
+        text: t("Please try again later"),
         showConfirmButton: true,
       });
     }

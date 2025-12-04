@@ -69,10 +69,10 @@ const { t , i18n } = useTranslation();
       );
       setRequests(prev => prev.filter(r => r.alumniId !== selectedAlumni));
       closeModal();
-      Swal.fire({ icon: "success", title: "Account accepted!", text: "The graduate can now log in to the Alumni Portal and create posts.", showConfirmButton: false, timer: 1800, toast: true, position: "top-end", background: "#fefefe", color: "#333" });
+      Swal.fire({ icon: "success", title: t("Account accepted!"), text: t("The graduate can now log in to the Alumni Portal and create posts."), showConfirmButton: false, timer: 1800, toast: true, position: "top-end", background: "#fefefe", color: "#333" });
     } catch (err) {
       console.error("Error approving request:", err);
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to approve the request. Please try again." });
+      Swal.fire({ icon: "error", title: t("Error"), text: t("Failed to approve the request. Please try again.") });
     }
   };
 
@@ -82,10 +82,10 @@ const { t , i18n } = useTranslation();
       const token = localStorage.getItem("token");
       await API.put(`/graduates/reject/${alumniId}`, {}, { headers: { Authorization: `Bearer ${token}` } });
       setRequests(prev => prev.filter(r => r.alumniId !== alumniId));
-      Swal.fire({ icon: "error", title: "Request rejected", text: "The graduate request has been rejected. The graduate cannot log in to the Alumni Portal.", showConfirmButton: false, timer: 1800, toast: true, position: "top-end", background: "#fefefe", color: "#333" });
+      Swal.fire({ icon: "error", title: t("Request rejected"), text: t("The graduate request has been rejected. The graduate cannot log in to the Alumni Portal."), showConfirmButton: false, timer: 1800, toast: true, position: "top-end", background: "#fefefe", color: "#333" });
     } catch (err) {
       console.error("Error rejecting request:", err);
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to reject the request. Please try again." });
+      Swal.fire({ icon: "error", title: t("Error"), text: t("Failed to reject the request. Please try again.") });
     }
   };
 

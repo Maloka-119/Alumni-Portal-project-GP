@@ -41,23 +41,20 @@ function FAQManage({ currentUser }) {
     if (!faqPerm.canAdd && !editId) return;
 
     if (!newFAQ.question_ar || !newFAQ.answer_ar || !newFAQ.question_en || !newFAQ.answer_en) {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: "Please fill all question and answer fields!"
-      });
+      Swal.fire({ icon: "warning", title: t("Warning"), text: t("Please fill all question and answer fields!") });
+
       return;
     }
 
     try {
       if (editId && faqPerm.canEdit) {
         await API.put(`/admin/faqs/${editId}`, newFAQ);
-        Swal.fire({ icon: "success", title: "Updated", text: "FAQ updated successfully" });
+        Swal.fire({ icon: "success", title: t("Updated"), text: t("FAQ updated successfully") });
       } else if (!editId && faqPerm.canAdd) {
         await API.post("/admin/faqs", newFAQ);
-        Swal.fire({ icon: "success", title: "Added", text: "New FAQ added successfully" });
+        Swal.fire({ icon: "success", title: t("Added"), text: t("New FAQ added successfully") });
       } else {
-        Swal.fire({ icon: "error", title: "Permission Denied", text: "You cannot perform this action" });
+        Swal.fire({ icon: "error", title: t("Permission Denied"), text: t("You cannot perform this action") });
         return;
       }
 
@@ -67,7 +64,7 @@ function FAQManage({ currentUser }) {
       await fetchFaqs();
     } catch (err) {
       console.error("Error saving FAQ:", err);
-      Swal.fire({ icon: "error", title: "Error", text: "An error occurred while saving the FAQ" });
+      Swal.fire({ icon: "error", title: t("Error"), text: t("An error occurred while saving the FAQ") });
     }
   };
 
@@ -87,22 +84,22 @@ function FAQManage({ currentUser }) {
   const handleDelete = async (faq_id) => {
     if (!faqPerm.canDelete) return;
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
+      title: t("Are you sure?"),
+      text: t("You won't be able to revert this!"),
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "Cancel"
+      confirmButtonText: t("Yes, delete it!"),
+      cancelButtonText: t("Cancel")
     });
 
     if (result.isConfirmed) {
       try {
         await API.delete(`/admin/faqs/${faq_id}/hard`);
-        Swal.fire({ icon: "success", title: "Deleted", text: "FAQ deleted successfully" });
+        Swal.fire({ icon: "success", title: t("Deleted"), text: t("FAQ deleted successfully") });
         await fetchFaqs();
       } catch (err) {
         console.error("Error deleting FAQ:", err);
-        Swal.fire({ icon: "error", title: "Error", text: "An error occurred while deleting the FAQ" });
+        Swal.fire({ icon: "error", title: t("Error"), text: t("An error occurred while deleting the FAQ") });
       }
     }
   };

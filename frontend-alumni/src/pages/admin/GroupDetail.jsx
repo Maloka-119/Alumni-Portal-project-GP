@@ -216,7 +216,7 @@ const addGraduates = async () => {
 
     Swal.fire({
       icon: "success",
-      title: "Graduates added successfully!",
+      title: t("Graduates added successfully!"),
       showConfirmButton: false,
       timer: 1500,
     });
@@ -224,7 +224,7 @@ const addGraduates = async () => {
     console.error("Error adding graduates:", err);
     Swal.fire({
       icon: "error",
-      title: "Failed to add graduates",
+      title: t("Failed to add graduates"),
       text: err.response?.data?.message || "",
     });
   }
@@ -282,10 +282,10 @@ const handleLike = async (postId) => {
       }
   
       setCommentInputs((prev) => ({ ...prev, [postId]: "" }));
-      Swal.fire({ icon: "success", title: "Comment added!", showConfirmButton: false, timer: 1200 });
+      Swal.fire({ icon: "success", title: t("Comment added!"), showConfirmButton: false, timer: 1200 });
     } catch (err) {
       console.error("Error submitting comment:", err.response?.data || err);
-      Swal.fire({ icon: "error", title: "Failed to add comment", text: err.response?.data?.message || "" });
+      Swal.fire({ icon: "error", title: t("Failed to add comment"), text: err.response?.data?.message || "" });
     }
   };
   
@@ -342,21 +342,21 @@ const handlePostSubmit = async (formData, postId = null) => {
   const handleDelete = async (id) => {
     if (!perms.postPerms.canDelete) return;
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
+      title: t("Are you sure?"),
+      text: t("You won't be able to revert this!"),
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "Cancel",
+      confirmButtonText: t("Yes, delete it!"),
+      cancelButtonText: t("Cancel"),
     });
     if (result.isConfirmed) {
       try {
         await API.delete(`/posts/${id}`);
-        Swal.fire({ icon: "success", title: "Deleted!", text: "Post deleted successfully" });
+        Swal.fire({ icon: "success", title: t("Deleted!"), text: t("Post deleted successfully") });
         fetchPosts();
       } catch (err) {
         console.error("Error deleting post:", err);
-        Swal.fire({ icon: "error", title: "Error", text: "Failed to delete post" });
+        Swal.fire({ icon: "error", title: t("Error"), text: t("Failed to delete post") });
       }
     }
   };

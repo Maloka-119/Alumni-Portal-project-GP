@@ -134,21 +134,21 @@ const AdminPostsPage = ({ currentUser }) => {
   const handleDelete = async (id) => {
     if (!postPerm.canDelete) return;
     const result = await Swal.fire({
-      title: "Are you sure?",
-      text: "You won't be able to revert this!",
+      title: t("Are you sure?"),
+text: t("You won't be able to revert this!"),
       icon: "warning",
       showCancelButton: true,
-      confirmButtonText: "Yes, delete it!",
-      cancelButtonText: "Cancel",
+      confirmButtonText: t("Yes, delete it!"),
+cancelButtonText: t("Cancel"),
     });
     if (result.isConfirmed) {
       try {
         await API.delete(`/posts/${id}`);
-        Swal.fire({ icon: "success", title: "Deleted!", text: "Post deleted successfully" });
+        Swal.fire({ icon: "success", title: t("Deleted!"), text: t("Post deleted successfully") });
         fetchPosts();
       } catch (err) {
         console.error("Error deleting post:", err);
-        Swal.fire({ icon: "error", title: "Error", text: "Failed to delete post" });
+        Swal.fire({ icon: "error", title: t("Error"), text: t("Failed to delete post") });
       }
     }
   };
@@ -221,11 +221,16 @@ const AdminPostsPage = ({ currentUser }) => {
 
     try {
       await API.patch(`/posts/${postId}/landing`, { inLanding: !currentValue });
-      Swal.fire({ icon: "success", title: "Updated", text: `Post ${!currentValue ? "added to" : "removed from"} landing`, toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+      Swal.fire({
+        icon: "success",
+        title: t("Updated"),
+        text: !currentValue ? t("Post added to landing") : t("Post removed from landing")
+      });
+      
     } catch (err) {
       console.error("Error updating landing status", err);
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, inLanding: currentValue } : p));
-      Swal.fire({ icon: "error", title: "Error", text: "Failed to update landing status", toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
+      Swal.fire({ icon: "error", title: "Error", text: t("Failed to update landing status"), toast: true, position: "top-end", timer: 1800, showConfirmButton: false });
     }
   };
 

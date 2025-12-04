@@ -24,7 +24,7 @@ export default function FeedbackView({ currentUser }) {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching feedbacks:", err);
-        setError("Failed to fetch feedbacks");
+        setError(t("Failed to fetch feedbacks"));
         setLoading(false);
       }
     };

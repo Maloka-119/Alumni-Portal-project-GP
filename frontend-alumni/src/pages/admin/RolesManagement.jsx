@@ -102,8 +102,8 @@ const RolesManagement = ({ currentUser }) => {
       console.error("Failed to fetch available staff:", err);
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "Failed to load available staff",
+        title: t("Error"),
+        text: t("Failed to load available staff"),
         toast: true,
         position: "top-end",
         timer: 1800,
@@ -171,8 +171,8 @@ const RolesManagement = ({ currentUser }) => {
 
         Swal.fire({
           icon: "success",
-          title: "Staff removed",
-          text: `The staff member has been removed from the "${selectedRole}" role.`,
+          title: t("Staff removed"),
+          text: t(`The staff member has been removed from the "${selectedRole}" role.`),
           showConfirmButton: false,
           timer: 1800,
           toast: true,
@@ -184,8 +184,8 @@ const RolesManagement = ({ currentUser }) => {
       } else {
         Swal.fire({
           icon: "error",
-          title: "Failed",
-          text: "Failed to remove staff from role",
+          title: t("Failed"),
+          text: t("Failed to remove staff from role"),
           showConfirmButton: false,
           timer: 1800,
           toast: true,
@@ -198,8 +198,8 @@ const RolesManagement = ({ currentUser }) => {
       console.error("Failed to remove staff from role:", err);
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "Error removing staff. Check console for details.",
+        title: t("Error"),
+        text: t("Error removing staff. Check console for details."),
         showConfirmButton: false,
         timer: 1800,
         toast: true,
@@ -244,8 +244,8 @@ const RolesManagement = ({ currentUser }) => {
     const roleObj = rolesData.find((r) => r.role_name === roleName);
     if (!roleObj) return Swal.fire({
       icon: "error",
-      title: "Error",
-      text: "Role not found",
+      title: t("Error"),
+      text: t("Role not found"),
       toast: true,
       position: "top-end",
       timer: 1800,
@@ -256,10 +256,10 @@ const RolesManagement = ({ currentUser }) => {
 
     const confirm = await Swal.fire({
       icon: "warning",
-      title: `Delete role "${roleName}"?`,
+      title: t(`Delete role "${roleName}"?`),
       showCancelButton: true,
-      confirmButtonText: "Yes",
-      cancelButtonText: "No",
+      confirmButtonText: t("Yes"),
+      cancelButtonText: t("No"),
       toast: false,
     });
 
@@ -272,7 +272,7 @@ const RolesManagement = ({ currentUser }) => {
         if (selectedRole === roleName) setSelectedRole("");
         Swal.fire({
           icon: "success",
-          title: "Deleted",
+          title: t("Deleted"),
           text: res.data.message,
           toast: true,
           position: "top-end",
@@ -284,8 +284,8 @@ const RolesManagement = ({ currentUser }) => {
       } else {
         Swal.fire({
           icon: "error",
-          title: "Error",
-          text: "Failed to delete role",
+          title: t("Error"),
+          text: t("Failed to delete role"),
           toast: true,
           position: "top-end",
           timer: 1800,
@@ -298,8 +298,8 @@ const RolesManagement = ({ currentUser }) => {
       console.error("Error deleting role:", err);
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "Error deleting role. Check console.",
+        title: t("Error"),
+        text: t("Error deleting role. Check console."),
         toast: true,
         position: "top-end",
         timer: 1800,
@@ -315,8 +315,8 @@ const RolesManagement = ({ currentUser }) => {
     const roleName = e.target.role.value.trim();
     if (!roleName) return Swal.fire({
       icon: "error",
-      title: "Error",
-      text: "Role name cannot be empty",
+      title: t("Error"),
+      text: t("Role name cannot be empty"),
       toast: true,
       position: "top-end",
       timer: 1800,
@@ -363,8 +363,8 @@ const RolesManagement = ({ currentUser }) => {
 
         Swal.fire({
           icon: "success",
-          title: "Role created",
-          text: `Role "${roleName}" created successfully.`,
+          title: t("Role created"),
+          text: t(`Role "${roleName}" created successfully.`),
           showConfirmButton: false,
           timer: 1800,
           toast: true,
@@ -376,8 +376,8 @@ const RolesManagement = ({ currentUser }) => {
       } else {
         Swal.fire({
           icon: "error",
-          title: "Failed",
-          text: "Failed to create role",
+          title: t("Failed"),
+          text: t("Failed to create role"),
           toast: true,
           position: "top-end",
           timer: 1800,
@@ -390,8 +390,8 @@ const RolesManagement = ({ currentUser }) => {
       console.error("Error creating role:", err);
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "Error creating role. Check console for details.",
+        title: t("Error"),
+        text: t("Error creating role. Check console for details."),
         toast: true,
         position: "top-end",
         timer: 1800,
@@ -479,8 +479,8 @@ const RolesManagement = ({ currentUser }) => {
       if (res.data.status === "success") {
         Swal.fire({
           icon: "success",
-          title: "Staff assigned",
-          text: `The staff member has been assigned to the "${selectedRole}" role.`,
+          title: t("Staff assigned"),
+          text: t(`The staff member has been assigned to the "${selectedRole}" role.`),
           showConfirmButton: false,
           timer: 1800,
           toast: true,
@@ -507,7 +507,7 @@ const RolesManagement = ({ currentUser }) => {
       }
     } catch (err) {
       console.error("Failed to assign role:", err);
-      alert("Failed to assign role. Check console for details.");
+      alert(t("Failed to assign role. Check console for details."));
     }
   };
 
@@ -515,8 +515,8 @@ const RolesManagement = ({ currentUser }) => {
     const roleObj = rolesData.find((r) => r.role_name === selectedRole);
     if (!roleObj) return Swal.fire({
       icon: "error",
-      title: "Error",
-      text: "Role not found",
+      title: t("Error"),
+      text: t("Role not found"),
       toast: true,
       position: "top-end",
       timer: 1800,
@@ -551,8 +551,8 @@ const RolesManagement = ({ currentUser }) => {
 
         Swal.fire({
           icon: "success",
-          title: "Updated",
-          text: "Role permissions updated successfully.",
+          title: t("Updated"),
+          text: t("Role permissions updated successfully."),
           toast: true,
           position: "top-end",
           timer: 1800,
@@ -563,8 +563,8 @@ const RolesManagement = ({ currentUser }) => {
       } else {
         Swal.fire({
           icon: "error",
-          title: "Failed",
-          text: "Failed to update role",
+          title: t("Failed"),
+          text: t("Failed to update role"),
           toast: true,
           position: "top-end",
           timer: 1800,
@@ -577,8 +577,8 @@ const RolesManagement = ({ currentUser }) => {
       console.error("Error updating role:", err);
       Swal.fire({
         icon: "error",
-        title: "Error",
-        text: "Error updating role. Check console for details.",
+        title: t("Error"),
+        text: t("Error updating role. Check console for details."),
         toast: true,
         position: "top-end",
         timer: 1800,

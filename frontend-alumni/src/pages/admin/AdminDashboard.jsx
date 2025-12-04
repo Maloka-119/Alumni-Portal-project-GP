@@ -42,7 +42,7 @@ function AdminDashboard({ currentUser }) {
         setData(response.data.data); 
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
-        setError("Failed to fetch dashboard data");
+        setError(t("errorFetchingDashboard"));
       } finally {
         setLoading(false);
       }
@@ -52,7 +52,7 @@ function AdminDashboard({ currentUser }) {
 
   if (loading) return <p className="loading-text">{t("loadingDashboard")}</p>;
   if (error) return <p className="error-text">{error}</p>;
-  if (!data) return <p className="loading-text">No data available</p>;
+  if (!data) return <p className="loading-text">{t("No data available")}</p>;
 
   const {
     totalGraduates,

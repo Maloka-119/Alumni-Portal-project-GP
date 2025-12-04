@@ -66,17 +66,17 @@ const StaffManagement = ({ currentUser }) => {
 
       Swal.fire({
         icon: newStatus === "active" ? "success" : "error",
-        title: newStatus === "active" ? "Account activated" : "Account deactivated",
-        text: newStatus === "active"
-          ? "The staff member can now log in ."
-          : "The staff member is now prevented from logging in .",
+        title: t(newStatus === "active" ? "Account activated" : "Account deactivated"),
+        text: t(newStatus === "active" 
+                ? "The staff member can now log in ." 
+                : "The staff member is now prevented from logging in ."),
         showConfirmButton: false,
         timer: 1800,
         toast: true,
         position: "top-end",
         background: "#fefefe",
         color: "#333",
-      });
+      });      
 
     } catch (err) {
       console.error('Failed to update status:', err);
