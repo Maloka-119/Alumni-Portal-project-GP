@@ -204,6 +204,7 @@ html[dir="rtl"] .main-content {
 html[dir="rtl"] .main-content.sidebar-open {
   margin-left: 0;
   /* margin-right: 250px; */
+  margin-inline-start: 240px;
 }
 
 /* Sidebar mobile */

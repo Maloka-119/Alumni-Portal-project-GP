@@ -95,33 +95,46 @@
 /* ===== Toggle switch ===== */
 .toggle-switch {
   position: relative;
-  width: 40px;
-  height: 20px;
+  width: 45px; 
+  height: 22px; 
   background-color: #e5e7eb;
-  border-radius: 10px;
+  border-radius: 11px; /* دائري وناعم */
   cursor: pointer;
   transition: background-color 0.3s ease;
   display: flex;
   align-items: center;
   padding: 2px;
   box-sizing: border-box;
+  border-color: transparent;
 }
 
 .toggle-switch.active {
-  background-color: #22c55e;
+  background-color: #22c55e; /* أخضر ناعم */
 }
 
 .toggle-slider {
-  width: 16px;
-  height: 16px;
+  width: 18px; 
+  height: 18px; 
   background-color: white;
   border-radius: 50%;
   transition: transform 0.3s ease;
+  box-shadow: none; /* إزالة الظل */
 }
 
+/* الحركة على LTR */
 .toggle-switch.active .toggle-slider {
-  transform: translateX(20px);
+  transform: translateX(23px);
 }
+
+/* دعم RTL */
+html[dir="rtl"] .toggle-switch .toggle-slider {
+  transform: translateX(0);
+}
+
+html[dir="rtl"] .toggle-switch.active .toggle-slider {
+  transform: translateX(-23px);
+}
+
 
 /* ===== Add button ===== */
 .add-button {
