@@ -186,7 +186,6 @@ function Login({ setUser }) {
                 {t("signIn")}
               </button>
 
-              <GoogleLoginButton />
 
               <p className="forgot-link" onClick={() => setShowReset(true)}>
                 {t("forgotPassword")}
@@ -196,6 +195,10 @@ function Login({ setUser }) {
                 {t("dontHaveAccount")}
               </p>
             </form>
+            <hr className="form-divider" />
+            <GoogleLoginButton
+  text={t("signInWithGoogle")}
+/>
           </div>
 
           {/* RESET MODALS */}

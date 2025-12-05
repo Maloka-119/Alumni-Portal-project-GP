@@ -1,58 +1,20 @@
-.linkedin-button {
-  width: 100%;
-  max-width: 320px;
-  margin: 24px auto 0;
-  padding: 0.9rem 1.2rem;
-  background-color: white;
-  color: #0a66c2;
-  border: none;
-  border-radius: 8px;
-  
+.linkedin-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  
-  font-size: 1rem;
-  font-weight: 600;
-  
-  transition: transform 0.15s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-  
-  box-shadow: 0 4px 8px rgba(10, 102, 194, 0.25);
+  gap: 8px;
+  width: 60%;
+  padding: 10px 16px;
+  background: #f5f5f5;
+  color: #000;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+  margin: 0 auto 15px auto; /* يوسّط الزر + مسافة تحت */
 }
 
-.linkedin-button:hover {
-  background-color: #004182;
-  transform: translateY(-3px);
-  box-shadow: 0 6px 14px rgba(10, 102, 194, 0.35);
-  color: white;
-}
-
-.linkedin-button:active {
-  transform: translateY(-1px);
-}
-
-.linkedin-button img {
-  width: 22px;
-  height: 22px;
-  
-}
-
-/* Responsive */
-@media (max-width: 480px) {
-  .linkedin-button {
-    padding: 0.8rem 1rem;
-    font-size: 0.95rem;
-    border-radius: 6px;
-  }
-
-  .linkedin-button img {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.linkedin-button img,
-.linkedin-button svg {
-  fill: white;
+.linkedin-btn:hover {
+  background: #fff;
 }

@@ -49,11 +49,19 @@ const general = {
       "Roles": "Roles",
       "No roles assigned": "No roles assigned",
 
+      "Enter Your National Id":"Enter Your National Id",
+      "signInWithGoogle": "Sign In with Google",
+      "signUpWithGoogle": "Sign Up with Google",
+
       
       }
     },
     ar: {
       translation: {
+        "signUpWithGoogle": "إنشاء حساب عبر جوجل",
+  "signInWithGoogle": "تسجيل الدخول عبر جوجل",
+
+        "Enter Your National Id":"ادخل الرقم القومي",
         createAccount: "إنشاء حساب خريج",
         helwan: "جامعة حلوان",
         nationalId: "الرقم القومي",

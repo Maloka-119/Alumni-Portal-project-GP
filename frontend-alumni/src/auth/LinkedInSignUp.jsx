@@ -1,4 +1,6 @@
 import React from "react";
+import { FaLinkedin } from "react-icons/fa"
+import "./LinkedInSignUp.css"
 
 const LinkedInSignUp = () => {
   const handleLinkedInLogin = async () => {
@@ -18,12 +20,14 @@ const LinkedInSignUp = () => {
 
   return (
     <button
-      type="button"
-      className="linkedin-btn"
-      onClick={handleLinkedInLogin}
-    >
-      Sign up with LinkedIn
-    </button>
+    type="button"
+    className="linkedin-btn"
+    onClick={handleLinkedInLogin}
+  >
+    <FaLinkedin size={18} color="#0A66C2" />
+    Sign up with LinkedIn
+  </button>
+  
   );
 };
 

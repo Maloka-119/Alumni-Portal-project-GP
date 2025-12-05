@@ -293,3 +293,86 @@
     font-size: 1.75rem;
   }
 }
+
+/* مودال الرقم القومي */
+.nid-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.nid-box {
+  background: #fff;
+  padding: 30px 20px;
+  border-radius: 12px;
+  width: 320px;
+  max-width: 90%;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  text-align: center;
+}
+
+.nid-box h3 {
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+.nid-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.nid-input:focus {
+  border-color: #0073e6;
+}
+
+.nid-submit {
+  background: #0073e6;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+  margin-bottom: 10px;
+  transition: background 0.2s;
+}
+
+.nid-submit:hover {
+  background: #005bb5;
+}
+
+.nid-close {
+  background: #ccc;
+  color: #000;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  font-size: 16px;
+  transition: background 0.2s;
+}
+
+.nid-close:hover {
+  background: #999;
+}
+.form-divider {
+  border: none;
+  height: 1px;
+  background: #ddd; /* لون الخط */
+  margin: 20px 0;   /* المسافة فوق وتحت الخط */
+}

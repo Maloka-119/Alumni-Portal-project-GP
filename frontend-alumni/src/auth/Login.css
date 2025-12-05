@@ -5,6 +5,7 @@
       padding: 2rem 1rem;
       background: repeat-y center center fixed;
   background-size: cover; 
+  
 }
 
 .login-content {
@@ -19,7 +20,7 @@ background: #ffffff;
   /* border-radius: 22px; */
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   padding: 2rem;  
-  
+  width: 540px;
 }
 
 .wrapperr {
@@ -130,6 +131,11 @@ background: #ffffff;
   text-decoration: underline;
 }
 
+.forgot-link,
+.dont-have-account {
+  display: block;   /* كل عنصر في سطر جديد */
+  text-align: center; /* لو حابة يكون في النص */
+}
 
 
 /* Modal Styles */
@@ -210,6 +216,15 @@ background: #ffffff;
   
   .modal-button {
     width: 100%;
+  }
+  .login-content{
+    width: 90%;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-content {
+    width: 80%;
   }
 }
 .dont-have-account {
