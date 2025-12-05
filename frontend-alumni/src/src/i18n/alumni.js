@@ -135,7 +135,16 @@ const alumni = {
       "Requests": "Requests",
       "unfriend": "Unfriend",
       "Seen": "seen",
-      "Edited": "Edited" // ✅ أضفتها
+      "Edited": "Edited", // ✅ أضفتها
+        "No Communities found": "No Communities found",
+        "Created": "Created",
+        "Members": "Members",
+        "View": "View",
+        "Leave": "Leave",
+        "leaveSuccess": "You left the community successfully!",
+        "leaveFailed": "Failed to leave the community.",
+        "leaveFailedTryAgain": "Failed to leave the community, please try again.",
+        "My Communities":"My Communities"
       
     }
   },
@@ -173,7 +182,6 @@ const alumni = {
       "language": "اللغة",
       "logout": "تسجيل خروج",
       "allCommunities": "كل المجتمعات",
-      "myCommunities": "مجتمعاتي",
 
       // Profile
       "faculty": "الكلية",
@@ -275,7 +283,19 @@ const alumni = {
       "Requests": "الطلبات",
       "unfriend": "إلغاء الصداقة",
       "Seen": "تمت المشاهدة",
-      "Edited": "تم التعديل" // ✅ أضفتها
+      "Edited": "تم التعديل",// ✅ أضفتها,
+        "No Communities found": "لا توجد مجتمعات",
+        "Created": "تاريخ الإنشاء",
+        "Members": "الأعضاء",
+        "View": "عرض",
+        "Leave": "مغادرة",
+        "leaveSuccess": "تم مغادرة المجتمع بنجاح!",
+        "leaveFailed": "فشل في مغادرة المجتمع.",
+        "leaveFailedTryAgain": "فشل في مغادرة المجتمع، حاول مرة أخرى.",
+          "My Communities":"مجتمعاتي"
+   
+      
+
     }
   }
 };

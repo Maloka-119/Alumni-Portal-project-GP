@@ -3,8 +3,11 @@ import API from "../../services/api";
 import GroupDetails from "./GroupDetails";
 import "./MyGroups.css";
 
+import { useTranslation } from "react-i18next";
+
 function MyGroups() {
   const [groups, setGroups] = useState([]);
+  const { t } = useTranslation();
   const [selectedGroup, setSelectedGroup] = useState(null);
 
   useEffect(() => {
@@ -39,7 +42,7 @@ function MyGroups() {
 
   return (
     <div className="community-panel">
-      <h2 className="uni-header">My Communities</h2>
+      <h2 className="uni-header">{t("My Communities")}</h2>
 
       {groups.length === 0 ? (
         <p className="community-empty">No Communities found</p>

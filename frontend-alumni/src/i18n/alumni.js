@@ -34,8 +34,12 @@ const alumni = {
       "logout": "Logout",
       "allCommunities": "All Communities",
       "myCommunities": "My Communities",
+<<<<<<< Updated upstream
       "Welcome to this group! This group is associated with batch number {{batch}":"Welcome to this group! This group is associated with batch number {{batch}",
 
+=======
+  
+>>>>>>> Stashed changes
       // ===== Profile =====
       "faculty": "Faculty",
       "graduationYear": "Graduation Year",
@@ -243,6 +247,7 @@ const alumni = {
 ,
   "edited": "Edited",
     "Message deleted": "Message deleted",
+<<<<<<< Updated upstream
 
     "invitationMessage": "sent you an invitation to join the community ",
     "Welcome to Helwan Alumni Portal!": "Welcome to Helwan Alumni Portal!",
@@ -254,6 +259,15 @@ const alumni = {
 "Batch":"Batch"
 
     },
+=======
+    "noMorePosts":"noMorePosts",
+          "loading":"loading",
+          "loginSuccess":"loginSuccess",
+            "loginFailed":"loginFailed",
+            "Opportunities":"Opportunities",
+              "All":"All"
+                },
+>>>>>>> Stashed changes
   },
 
   ar: {
@@ -495,6 +509,7 @@ const alumni = {
   "Loading notifications...": "جاري تحميل الإشعارات...",
   "Mark as Read": "تحديد كمقروء",
   "Delete": "حذف",
+<<<<<<< Updated upstream
   "edited": "تم التعديل",
   "Message deleted": "تم حذف الرسالة",
 
@@ -506,6 +521,19 @@ const alumni = {
   "Suggested for you": "مقترحة لك",
 "All communities": "كل المجتمعات",
   "Batch":"دفعه"
+=======
+    "edited": "تم التعديل",
+      "Message deleted": "تم حذف الرسالة",
+       "noMorePosts":"لا توجد منشورات أخرى",
+       "loading":"جارٍ التحميل…",
+       "loginSuccess":"تم تسجيل الدخول بنجاح",
+         "loginFailed":"فشل تسجيل الدخول",
+                       "My Communities":"مجتمعاتي",
+                       "Opportunities":"الفرص",
+                       "All":"الكل"
+
+  
+>>>>>>> Stashed changes
     },
   },
 };
