@@ -525,12 +525,15 @@ const Dashboard = ({ setUser }) => {
         <main className="alumni-main-content">
 
           {/* Chat Sidebar */}
-          <ChatSidebar 
-            darkMode={darkMode} 
-            chatOpen={chatOpen} 
-            setChatOpen={setChatOpen} 
-            chatId={chatId} 
-          />
+          {chatOpen && (
+  <ChatSidebar 
+    darkMode={darkMode} 
+    chatOpen={chatOpen} 
+    setChatOpen={setChatOpen} 
+    chatId={chatId} 
+  />
+)}
+
 
           {/* Routes */}
           <Routes>
