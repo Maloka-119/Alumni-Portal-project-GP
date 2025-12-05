@@ -3,8 +3,10 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 360px;
-  height: 500px;
+  width: 90%;
+  max-width: 360px;
+  height: 70%;
+  max-height: 500px;
   display: flex;
   flex-direction: column;
   background: #fcfcfc;
@@ -16,6 +18,7 @@
   transition: all 0.3s ease;
   z-index: 999;
 }
+
 [dir="rtl"] .chat-overlay { right: auto; left: 20px; }
 
 /* ================= Header ================= */
@@ -48,7 +51,7 @@
 .chat-message {
   display: flex;
   flex-direction: column;
-  max-width: 70%;
+  max-width: 80%;
   padding: 10px 14px;
   border-radius: 18px;
   position: relative;
@@ -85,10 +88,15 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 4px;
+  padding: 4px 8px;
+  background: #f3f3f3;
+  border-radius: 6px;
+  max-width: 80%;
+  overflow: hidden;
 }
 .file-preview img { max-height: 60px; border-radius: 6px; }
-.file-preview span { font-size: 13px; }
+.file-preview span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
+.file-preview button { flex-shrink: 0; }
 
 /* ================= Message Actions ================= */
 .chat-message .message-actions { display: flex; gap: 6px; margin-top: 4px; }
@@ -112,6 +120,7 @@
   border: 1px solid #cbd5e1;
   outline: none;
   background: #ffffff;
+  font-size: 14px;
 }
 
 /* ================= Dark Mode ================= */
@@ -122,40 +131,175 @@
 .dark .chat-message.friend { background-color: #374151; color: #f9fafb; }
 .dark .chat-input { background-color: #1e293b; border-top: 1px solid #374151; }
 .dark .chat-input input[type="text"] { background: #111827; color: #f9fafb; border: 1px solid #374151; }
+
 .message-time {
   font-size: 12px;
-  color: #999; /* اللون الرمادي */
+  color: #999;
   display: flex;
   gap: 5px;
   align-items: center;
 }
+.edited-label { font-size: 11px; color: #999; font-style: italic; }
+.status-label.seen { color: #1b18e6; }
 
-.edited-label {
-  font-size: 11px;
-  color: #999;
-  font-style: italic;
+/* ================= Media Queries (Responsive) ================= */
+@media (max-width: 768px) {
+  .chat-overlay {
+    width: 95%;
+    height: 70%;
+    bottom: 10px;
+    right: 50%;
+    left: auto;
+    transform: translateX(50%);
+  }
+  .chat-message { max-width: 90%; font-size: 13px; }
+  .chat-input input[type="text"] { font-size: 13px; }
 }
+
+/* ================= File Preview in Chat Input - Modern ================= */
 .file-preview {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: #f3f3f3;
-  border-radius: 6px;
-  max-width: 80%; /* مهم عشان ما ياخدش كل المساحة */
+  gap: 10px;
+  padding: 8px 12px;
+  background: linear-gradient(145deg, #f0f4ff, #e0ebff);
+  border-radius: 16px;
+  border: 1px solid #60a5fa;
+  max-width: 85%;
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  transition: all 0.2s ease;
+}
+
+.file-preview:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+.file-preview img.preview-img {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  transition: transform 0.2s ease;
+}
+
+.file-preview img.preview-img:hover {
+  transform: scale(1.05);
 }
 
 .file-preview span {
   display: block;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* يختصر الاسم الطويل */
+  text-overflow: ellipsis;
+  font-size: 14px;
+  color: #1e293b;
+  flex: 1;
+  font-weight: 500;
 }
 
-.file-preview button {
-  flex-shrink: 0; /* الزرار يظل ظاهر */
+/* ================= Sent Images in Messages ================= */
+.sent-image {
+  max-width: 220px;
+  max-height: 220px;
+  border-radius: 12px;
+  object-fit: cover;
+  cursor: pointer;
+  border: 1px solid #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease;
 }
-.status-label.seen {
-  color: #1b18e6;
+
+.sent-image:hover {
+  transform: scale(1.05);
+}
+
+/* ================= PDF / Other Files in Messages ================= */
+.chat-message button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: linear-gradient(145deg, #f0f4ff, #e0ebff);
+  border: 1px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  /* color: #1e293b; */
+  transition: all 0.2s ease;
+}
+
+.chat-message button:hover {
+  background: linear-gradient(145deg, #e0ebff, #d0e2ff);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transform: translateY(-1px);
+}
+
+.chat-message button svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+
+/* ================= Keep Icons Intact ================= */
+/* لا نعدل أي شيء في .action-btn أو أيقونات Edit / Delete / Reply */
+
+/* ================= Responsive ================= */
+@media (max-width: 768px) {
+  .file-preview img.preview-img {
+    width: 50px;
+    height: 50px;
+  }
+
+  .sent-image {
+    max-width: 150px;
+    max-height: 150px;
+  }
+
+  .chat-message button {
+    font-size: 13px;
+  }
+}
+
+/* ================= Message Actions - Smooth & Small ================= */
+.chat-message .message-actions {
+  display: flex;
+  gap: 4px; /* أقل مسافة بين الأزرار */
+  margin-top: 2px;
+}
+
+.action-btn {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px; /* يجعل الزر أنعم */
+  transition: background 0.2s, transform 0.15s;
+}
+
+.action-btn:hover {
+  background: rgba(96, 165, 250, 0.15); /* لمسة لونية خفيفة عند المرور */
+  transform: scale(1.1);
+}
+
+.action-btn svg {
+  width: 14px; /* أصغر قليلاً */
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.action-btn.delete:hover {
+  background: rgba(239, 68, 68, 0.15); /* لون خفيف لحذف */
+}
+/* تصغير أيقونات الـ actions */
+.chat-message .message-actions svg {
+  width: 14px;   /* أقل من 12px */
+  height: 14px;  /* نفس الحجم للارتفاع */
 }

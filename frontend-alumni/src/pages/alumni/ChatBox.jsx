@@ -314,7 +314,10 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
   return (
     <div className="chat-overlay" dir={direction}>
       <div className="chat-header">
-      <span>{activeChatFriend?.fullName || "Unknown"}</span>
+      <span>
+  {activeChatFriend?.fullName || activeChatFriend?.name || t("Unknown")}
+</span>
+
 
 
 
@@ -368,24 +371,25 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
                     )}
                     {m.content && <p className={m.is_deleted ? "deleted-text" : ""}>{m.content}</p>}
 
-                    <div className="message-time">
+                    
+                  </div>
+                )}
+
+                <div className="message-actions">
+                  <button className="action-btn" onClick={() => setReplyTo(m)} style={{backgroundColor:"transparent" , background:"none"}}><Reply size={12} /></button>
+                  {isMine && !m.is_deleted && (
+                    <>
+                      <button className="action-btn" onClick={() => startEditMessage(m)} style={{backgroundColor:"transparent" , background:"none"}}><Edit size={12} /></button>
+                      <button className="action-btn delete" onClick={() => deleteMessage(m.message_id)} style={{backgroundColor:"transparent" , background:"none"}}><Trash2 size={12} /></button>
+                    </>
+                  )}
+                </div>
+                <div className="message-time">
                       {timeString}
                       {m.edited && !m.is_deleted && <span className="edited-label">{t("edited")}</span>}
                       {isMine && m.localStatus === "sent" && <span className="status-label">• {t("sent")}</span>}
                       {isMine && m.localStatus === "seen" && <span className="status-label seen">• {t("seen")}</span>}
                     </div>
-                  </div>
-                )}
-
-                <div className="message-actions">
-                  <button className="action-btn" onClick={() => setReplyTo(m)}><Reply size={16} /></button>
-                  {isMine && !m.is_deleted && (
-                    <>
-                      <button className="action-btn" onClick={() => startEditMessage(m)}><Edit size={16} /></button>
-                      <button className="action-btn delete" onClick={() => deleteMessage(m.message_id)}><Trash2 size={16} /></button>
-                    </>
-                  )}
-                </div>
               </div>
             );
         })}
