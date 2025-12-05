@@ -191,8 +191,11 @@ setPosts(updated);
       <div className="uni-filter">
         <label>{t("filterByType")}</label>
         <select value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-          <option>All</option>
-          {types.map(t => <option key={t}>{t}</option>)}
+          <option>{t("All")}</option>
+          {types.map(type => (
+  <option key={type}>{t(type)}</option>
+))}
+
         </select>
       </div>
 

@@ -1,43 +1,28 @@
-import React, { useState } from "react";
-import API from "../services/api";
-import { useNavigate } from "react-router-dom";
-import "./LinkedInSignUp.css";
+import React from "react";
 
-const LinkedInSignUp = ({ setUser }) => {
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
-
-  const handleSignUp = async () => {
-    setLoading(true);
+const LinkedInSignUp = () => {
+  const handleLinkedInLogin = async () => {
     try {
-      const res = await API.get("/auth/linkedin");
-      const authUrl = res.data?.data?.authUrl;
+      // اطلب auth URL من السيرفر
+      const res = await fetch("http://localhost:5005/alumni-portal/auth/linkedin");
+      const data = await res.json();
 
-      if (authUrl) {
-        // نفتح لينكدإن في نافذة جديدة
-        window.location.href = authUrl;
-      } else {
-        alert("Failed to get LinkedIn authorization URL. Try again later.");
+      if (data.status === "success") {
+        // حول المستخدم لصفحة LinkedIn
+        window.location.href = data.data.authUrl;
       }
     } catch (err) {
-      console.error("Error fetching LinkedIn auth URL:", err);
-      alert("Cannot connect to server. Please make sure the backend is running.");
-    } finally {
-      setLoading(false);
+      console.error("LinkedIn login error:", err);
     }
   };
 
   return (
     <button
-      onClick={handleSignUp}
-      disabled={loading}
-      className="linkedin-button"
+      type="button"
+      className="linkedin-btn"
+      onClick={handleLinkedInLogin}
     >
-      <img
-        src="https://cdn-icons-png.flaticon.com/512/174/174857.png"
-        alt="LinkedIn"
-      />
-      {loading ? "Redirecting..." : "Sign up with LinkedIn"}
+      Sign up with LinkedIn
     </button>
   );
 };

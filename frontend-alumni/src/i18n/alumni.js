@@ -34,7 +34,9 @@ const alumni = {
       "logout": "Logout",
       "allCommunities": "All Communities",
       "myCommunities": "My Communities",
+
       "Welcome to this group! This group is associated with batch number {{batch}":"Welcome to this group! This group is associated with batch number {{batch}",
+
 
       // ===== Profile =====
       "faculty": "Faculty",
@@ -244,6 +246,7 @@ const alumni = {
   "edited": "Edited",
     "Message deleted": "Message deleted",
 
+
     "invitationMessage": "sent you an invitation to join the community ",
     "Welcome to Helwan Alumni Portal!": "Welcome to Helwan Alumni Portal!",
     "You have been invited to join the group <strong>{{groupName}}</strong>. You can accept now or view it later in your Notifications.": "You have been invited to join the group <strong>{{groupName}}</strong>. You can accept now or view it later in your Notifications.",
@@ -254,6 +257,15 @@ const alumni = {
 "Batch":"Batch"
 
     },
+
+    "noMorePosts":"noMorePosts",
+          "loading":"loading",
+          "loginSuccess":"loginSuccess",
+            "loginFailed":"loginFailed",
+            "Opportunities":"Opportunities",
+              "All":"All",
+           
+
   },
 
   ar: {
@@ -495,6 +507,7 @@ const alumni = {
   "Loading notifications...": "جاري تحميل الإشعارات...",
   "Mark as Read": "تحديد كمقروء",
   "Delete": "حذف",
+
   "edited": "تم التعديل",
   "Message deleted": "تم حذف الرسالة",
 
@@ -505,7 +518,19 @@ const alumni = {
   "Later": "لاحقًا",
   "Suggested for you": "مقترحة لك",
 "All communities": "كل المجتمعات",
-  "Batch":"دفعه"
+  "Batch":"دفعه",
+    "edited": "تم التعديل",
+      "Message deleted": "تم حذف الرسالة",
+       "noMorePosts":"لا توجد منشورات أخرى",
+       "loading":"جارٍ التحميل…",
+       "loginSuccess":"تم تسجيل الدخول بنجاح",
+         "loginFailed":"فشل تسجيل الدخول",
+                       "My Communities":"مجتمعاتي",
+                       "Opportunities":"الفرص",
+                       "All":"الكل"
+
+  
+
     },
   },
 };
