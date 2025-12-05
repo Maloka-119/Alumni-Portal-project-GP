@@ -174,6 +174,9 @@ app.use("/alumni-portal/feedbacks", feedbackRoutes);
 const facultiesRoute = require("./routes/faculties.route.js");
 app.use("/alumni-portal/faculties", facultiesRoute);
 
+
+const googleRoute = require("./routes/googleAuth.route.js");
+app.use("/alumni-portal/auth/google", googleRoute);
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 

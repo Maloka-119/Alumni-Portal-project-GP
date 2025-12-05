@@ -1,32 +1,61 @@
-import { useState } from "react";
+
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
-import "../components/Header.css";
-import "../components/Footer.css";
+import GoogleLoginButton from "../components/GoogleLoginButton";
 import Unibackground from "./Unibackground.jpeg";
 import { useTranslation } from "react-i18next";
-import "./Login.css";
 import API from "../services/api";
-import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import "../components/Header.css";
+import "../components/Footer.css";
+import "./Login.css";
 
 function Login({ setUser }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [showReset, setShowReset] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [showNewPass, setShowNewPass] = useState(false);
-
   const [code, setCode] = useState("");
   const [newPass, setNewPass] = useState("");
 
-  // -----------------------
-  // LOGIN
-  // -----------------------
+  // =====================
+  // التعامل مع Google OAuth بعد redirect
+  // =====================
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const token = params.get("token");
+    const id = params.get("id");
+    const emailParam = params.get("email");
+    const userType = params.get("userType");
+
+    if (token && id && emailParam && userType) {
+      const user = { id, email: emailParam, userType };
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      setUser(user);
+
+      if (userType === "admin") {
+        navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
+      } else if (userType === "graduate") {
+        navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
+      } else if (userType === "staff") {
+        navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
+      } else {
+        navigate("/helwan-alumni-portal/login", { replace: true });
+      }
+    }
+  }, [location.search, navigate, setUser]);
+
+  // =====================
+  // تسجيل الدخول التقليدي
+  // =====================
   const handleLogin = async () => {
     try {
       const res = await API.post("/login", { email, password });
@@ -45,46 +74,14 @@ function Login({ setUser }) {
         timer: 1500,
       });
 
-      if (user.userType === "admin") {
+      if (userType === "admin") {
         navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
-      } else if (user.userType === "graduate") {
+      } else if (userType === "graduate") {
         navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
-      } else if (user.userType === "staff") {
+      } else if (userType === "staff") {
         navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
-      } else {
-        navigate("/helwan-alumni-portal/login", { replace: true });
       }
-    } 
-catch (err) {
-  Swal.fire({
-    icon: "error",
-    title: t("loginFailed"),
-    text: err.response?.data?.error || err.response?.data?.message || err.message,
-  });
-}
-
-  };
-
-  // -----------------------
-  // SEND RESET CODE
-  // -----------------------
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
-
-    try {
-      await API.post("/forgotpassword", { email });
-
-      Swal.fire({
-        icon: "info",
-        title: t("resetCodeSent"),
-        showConfirmButton: false,
-        timer: 2000,
-      });
-
-      setShowReset(false);
-      setShowCode(true);
     } catch (err) {
-      console.error("Forgot password failed:", err);
       Swal.fire({
         icon: "error",
         title: t("loginFailed"),
@@ -93,38 +90,58 @@ catch (err) {
     }
   };
 
-  // -----------------------
-  // CONFIRM CODE
-  // -----------------------
+  // =====================
+  // إرسال رمز إعادة تعيين كلمة المرور
+  // =====================
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    try {
+      await API.post("/forgotpassword", { email });
+      Swal.fire({
+        icon: "info",
+        title: t("resetCodeSent"),
+        showConfirmButton: false,
+        timer: 2000,
+      });
+      setShowReset(false);
+      setShowCode(true);
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: t("loginFailed"),
+        text: err.response?.data?.message || err.message,
+      });
+    }
+  };
+
+  // =====================
+  // تأكيد الكود
+  // =====================
   const handleCodeSubmit = (e) => {
     e.preventDefault();
     setShowCode(false);
     setShowNewPass(true);
   };
 
-  // -----------------------
-  // SET NEW PASSWORD
-  // -----------------------
+  // =====================
+  // تعيين كلمة المرور الجديدة
+  // =====================
   const handleNewPassword = async (e) => {
     e.preventDefault();
-
     try {
       await API.post("/resetpassword", {
         email,
         code,
         newPassword: newPass,
       });
-
       Swal.fire({
         icon: "success",
         title: t("passwordResetSuccess"),
         showConfirmButton: false,
         timer: 2000,
       });
-
       setShowNewPass(false);
     } catch (err) {
-      console.error("Reset password failed:", err);
       Swal.fire({
         icon: "error",
         title: t("loginFailed"),
@@ -134,10 +151,7 @@ catch (err) {
   };
 
   return (
-    <div
-      className="login-container"
-      style={{ backgroundImage: `url(${Unibackground})` }}
-    >
+    <div className="login-container" style={{ backgroundImage: `url(${Unibackground})` }}>
       <Header />
 
       <div className="wrapperr">
@@ -147,7 +161,6 @@ catch (err) {
 
           <div className="login-form-container">
             <form className="login-form" onSubmit={(e) => e.preventDefault()}>
-              {/* EMAIL */}
               <div className="form-group">
                 <label className="form-label">{t("email")}</label>
                 <input
@@ -158,51 +171,39 @@ catch (err) {
                 />
               </div>
 
-              {/* PASSWORD */}
               <div className="form-group">
                 <label className="form-label">{t("password")}</label>
                 <input
                   className="form-inputre"
-                  required
-                  autoComplete="current-password"
-                  placeholder={t("enterYourPassword")}
                   type="password"
+                  placeholder={t("enterYourPassword")}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
 
-              {/* LOGIN BUTTON */}
               <button type="button" className="login-button" onClick={handleLogin}>
                 {t("signIn")}
               </button>
 
-              {/* RESET PASSWORD */}
+              <GoogleLoginButton />
+
               <p className="forgot-link" onClick={() => setShowReset(true)}>
                 {t("forgotPassword")}
               </p>
 
-              {/* REGISTER */}
-              <p
-                className="dont-have-account"
-                onClick={() =>
-                  navigate("/helwan-alumni-portal/register")
-                }
-              >
+              <p className="dont-have-account" onClick={() => navigate("/helwan-alumni-portal/register")}>
                 {t("dontHaveAccount")}
               </p>
             </form>
           </div>
 
-          {/* -----------------------
-              RESET MODAL
-          ----------------------- */}
+          {/* RESET MODALS */}
           {showReset && (
             <div className="modal-overlay">
               <div className="reset-modal">
                 <form onSubmit={handleResetPassword}>
                   <h3 className="reset-title">{t("resetPassword")}</h3>
-
                   <div className="form-group">
                     <label className="form-label">{t("email")}</label>
                     <input
@@ -214,33 +215,22 @@ catch (err) {
                       onChange={(e) => setEmail(e.target.value)}
                     />
                   </div>
-
                   <div className="modal-buttons">
-                    <button
-                      type="button"
-                      className="modal-button cancel"
-                      onClick={() => setShowReset(false)}
-                    >
+                    <button type="button" className="modal-button cancel" onClick={() => setShowReset(false)}>
                       {t("cancel")}
                     </button>
-                    <button type="submit" className="modal-button primary">
-                      {t("resetPassword")}
-                    </button>
+                    <button type="submit" className="modal-button primary">{t("resetPassword")}</button>
                   </div>
                 </form>
               </div>
             </div>
           )}
 
-          {/* -----------------------
-              CODE MODAL
-          ----------------------- */}
           {showCode && (
             <div className="modal-overlay">
               <div className="reset-modal">
                 <form onSubmit={handleCodeSubmit}>
                   <h3 className="reset-title">{t("verificationCode")}</h3>
-
                   <div className="form-group">
                     <label className="form-label">{t("enterCode")}</label>
                     <input
@@ -251,33 +241,22 @@ catch (err) {
                       onChange={(e) => setCode(e.target.value)}
                     />
                   </div>
-
                   <div className="modal-buttons">
-                    <button
-                      type="button"
-                      className="modal-button cancel"
-                      onClick={() => setShowCode(false)}
-                    >
+                    <button type="button" className="modal-button cancel" onClick={() => setShowCode(false)}>
                       {t("cancel")}
                     </button>
-                    <button type="submit" className="modal-button primary">
-                      {t("submit")}
-                    </button>
+                    <button type="submit" className="modal-button primary">{t("submit")}</button>
                   </div>
                 </form>
               </div>
             </div>
           )}
 
-          {/* -----------------------
-              NEW PASSWORD MODAL
-          ----------------------- */}
           {showNewPass && (
             <div className="modal-overlay">
               <div className="reset-modal">
                 <form onSubmit={handleNewPassword}>
                   <h3 className="reset-title">{t("setNewPassword")}</h3>
-
                   <div className="form-group">
                     <label className="form-label">{t("newPassword")}</label>
                     <input
@@ -289,16 +268,14 @@ catch (err) {
                       onChange={(e) => setNewPass(e.target.value)}
                     />
                   </div>
-
                   <div className="modal-buttons">
-                    <button type="submit" className="modal-button primary">
-                      {t("resetPassword")}
-                    </button>
+                    <button type="submit" className="modal-button primary">{t("resetPassword")}</button>
                   </div>
                 </form>
               </div>
             </div>
           )}
+
         </div>
       </div>
 
@@ -308,5 +285,3 @@ catch (err) {
 }
 
 export default Login;
-
-

@@ -14,7 +14,8 @@ import LinkedInSignUp from "./auth/LinkedInSignUp";
 import Loading from "./components/Loading";
 import ForgotPassword from "./auth/ForgotPassword";
 import ResetPassword from "./auth/ResetPassword";
-import PublicGraduateProfile from './pages/alumni/PublicGraduateProfile.jsx'
+import PublicGraduateProfile from './pages/alumni/PublicGraduateProfile.jsx';
+import CompleteRegistration from "./auth/CompleteRegistration.jsx"; 
 
 function App() {
   const [user, setUser] = useState(null);
@@ -44,12 +45,14 @@ function App() {
             <Route path="/helwan-alumni-portal" element={<LandingPage />} />
             <Route path="/helwan-alumni-portal/register" element={<Register />} />
             <Route path="/helwan-alumni-portal/login" element={<Login setUser={setUser} />} />
+            
+            {/* مسار إكمال تسجيل جوجل - أضف هذا السطر */}
+            <Route path="/helwan-alumni-portal/complete-registration" element={<CompleteRegistration setUser={setUser} />} />
 
             <Route
-  path="/helwan-alumni-portal/public-graduate/:graduationId"
-  element={<PublicGraduateProfile />}
-/>
-          
+              path="/helwan-alumni-portal/public-graduate/:graduationId"
+              element={<PublicGraduateProfile />}
+            />
 
             {/* LinkedIn routes */}
             <Route path="/helwan-alumni-portal/auth/linkedin/signup" element={<LinkedInSignUp />} />
@@ -82,23 +85,22 @@ function App() {
               element={
                 <ProtectedRoute user={user} requiredRole="graduate">
                   <AlumniPortal setUser={setUser} />
-          
                 </ProtectedRoute>
               }
             />
 
+            {/* صفحات إعادة تعيين كلمة المرور */}
+            <Route
+              path="/helwan-alumni-portal/forgot-password"
+              element={<ForgotPassword />}
+            />
+            <Route
+              path="/helwan-alumni-portal/reset-password"
+              element={<ResetPassword />}
+            />
+
             {/* أي مسار غير معروف يعيد للتسجيل/اللاندنج */}
             <Route path="*" element={<Navigate to="/helwan-alumni-portal" />} />
-            <Route
-  path="/helwan-alumni-portal/forgot-password"
-  element={<ForgotPassword />}
-/>
-
-<Route
-  path="/helwan-alumni-portal/reset-password"
-  element={<ResetPassword />}
-/>
-
           </Routes>
         </DarkModeProvider>
       </Router>
