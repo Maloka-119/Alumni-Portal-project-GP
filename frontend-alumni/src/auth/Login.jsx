@@ -36,9 +36,9 @@ function Login({ setUser }) {
       Swal.fire({
         icon: "error",
         title: "Error",
-         text: decodeURIComponent(errorMessage),
+        text: decodeURIComponent(errorMessage),
         timer: 4000,
-        showConfirmButton: false
+        showConfirmButton: false,
       });
     }
 
@@ -213,9 +213,10 @@ function Login({ setUser }) {
               </p>
             </form>
             <hr className="form-divider" />
+            {/* زر Google login تحت الفورم */}
             <GoogleLoginButton
-             onClick={handleGoogleLogin}
-             text={t("signInWithGoogle")}
+              onClick={handleGoogleLogin}
+              text={t("signInWithGoogle")}
             />
           </div>
 

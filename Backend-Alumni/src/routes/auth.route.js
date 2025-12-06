@@ -20,9 +20,7 @@ router.post('/login', loginUser);
 router.post('/forgotpassword', forgotPassword);
 router.put('/resetpassword/:resettoken', resetPassword);
 router.get('/logout', protect, logoutUser);
-router.post("/register-google", registerWithGoogle);
-// POST /auth/register/google-complete
-router.post("/register/google-complete", completeGoogleRegistration);
+
 // Protected routes
 router.route('/profile')
   .get(protect, getUserProfile)

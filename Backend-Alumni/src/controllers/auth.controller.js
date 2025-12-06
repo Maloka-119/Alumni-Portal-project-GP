@@ -738,132 +738,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   res.status(200).json({ message: "Logged out successfully" });
 });
 
-const completeGoogleRegistration = async (req, res) => {
-  const { email, nationalId, phoneNumber, token } = req.body;
 
-  try {
-    // تحقق من التوكن
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    if (decoded.email !== email) {
-      return res.status(401).json({ message: "Invalid token" });
-    }
-
-    // جلب المستخدم
-    const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    // تحديث البيانات الإضافية
-    user["national-id"] = nationalId;
-    user.phoneNumber = phoneNumber;
-    await user.save();
-
-    res.status(201).json({ message: "Registration completed successfully" });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error", error: err.message });
-  }
-};
-
-const registerWithGoogle = asyncHandler(async (req, res) => {
-  const { firstName, lastName, email, nationalId, phoneNumber } = req.body;
-
-  // للتحقق من وجود الحقول الأساسية (لكن National ID ممكن يكون فارغ للـ Google login الجديد)
-  if (!firstName || !lastName || !email) {
-    res.status(400);
-    throw new Error("First name, last name, and email are required");
-  }
-
-  // Validate email and phoneNumber formats
-  if (!validateEmail(email)) throw new Error("Invalid email format");
-  if (phoneNumber && !validatePhoneNumber(phoneNumber)) throw new Error("Invalid phone number");
-
-  // إذا فيه رقم قومي، نتحقق منه ونستخرج تاريخ الميلاد
-  let birthDateFromNid = null;
-  let encryptedNationalId = null;
-  if (nationalId) {
-    if (!validateNationalId(nationalId)) throw new Error("National ID must be 14 digits");
-    birthDateFromNid = extractDOBFromEgyptianNID(nationalId);
-    encryptedNationalId = aes.encryptNationalId(nationalId);
-
-    // Check duplicates
-    const allUsers = await User.findAll({ attributes: ["id", "national-id", "email"] });
-    for (const u of allUsers) {
-      if (aes.decryptNationalId(u["national-id"]) === nationalId) {
-        throw new Error("This national ID is already registered");
-      }
-    }
-  }
-
-  if (await User.findOne({ where: { email } })) {
-    throw new Error("User already exists with this email");
-  }
-
-  // Detect userType via APIs (Staff / Graduate) فقط لو فيه رقم قومي
-  let userType = "graduate"; // افتراضي
-  let statusToLogin = nationalId ? "accepted" : "pending";
-  let externalData = null;
-
-  if (nationalId) {
-    try {
-      const { data } = await axios.get(`${process.env.STAFF_API_URL}?nationalId=${encodeURIComponent(nationalId)}`);
-      if (data?.department) { userType = "staff"; statusToLogin = "inactive"; externalData = data; }
-    } catch (err) {}
-
-    if (userType !== "staff") {
-      try {
-        const { data } = await axios.get(`${process.env.GRADUATE_API_URL}?nationalId=${encodeURIComponent(nationalId)}`);
-        if (data?.faculty || data?.facultyName) { userType = "graduate"; statusToLogin = "accepted"; externalData = data; }
-        else { userType = "graduate"; statusToLogin = "pending"; }
-      } catch (err) { userType = "graduate"; statusToLogin = "pending"; }
-    }
-  }
-
-  // Create User
-  const user = await User.create({
-    "first-name": validator.escape(firstName),
-    "last-name": validator.escape(lastName),
-    email: validator.normalizeEmail(email),
-    phoneNumber: phoneNumber ? validator.escape(phoneNumber) : null,
-    "hashed-password": null, // Google login → no password
-    "birth-date": birthDateFromNid,
-    "user-type": userType,
-    "national-id": encryptedNationalId,
-    "auth-provider": "google"
-  });
-
-  // Create Graduate / Staff
-  if (userType === "graduate" && externalData) {
-    const facultyName = externalData?.faculty || externalData?.facultyName || null;
-    const facultyCode = facultyName ? normalizeCollegeName(facultyName) : null;
-
-    await Graduate.create({
-      graduate_id: user.id,
-      faculty_code: facultyCode,
-      "graduation-year": externalData?.graduationYear || null,
-      "status-to-login": statusToLogin,
-    });
-
-    try { const { sendAutoGroupInvitation } = require("./invitation.controller"); await sendAutoGroupInvitation(user.id); }
-    catch (error) { console.error("Auto invitation failed:", error); }
-  }
-
-  if (userType === "staff" && externalData) {
-    await Staff.create({ staff_id: user.id, "status-to-login": statusToLogin });
-  }
-
-  // حقل جديد يحدد هل المستخدم أكمل بياناته
-  const isComplete = !!nationalId;
-
-  res.status(201).json({
-    id: user.id,
-    email: user.email,
-    userType,
-    token: generateToken(user.id),
-    isComplete, // frontend يعتمد عليه
-  });
-});
 module.exports = {
   registerUser,
   loginUser,
@@ -873,7 +748,6 @@ module.exports = {
   getUserProfile,
   updateUserProfile,
   logoutUser,
-  completeGoogleRegistration,
-  registerWithGoogle,
+
 };
 

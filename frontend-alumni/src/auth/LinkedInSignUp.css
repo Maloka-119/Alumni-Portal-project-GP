@@ -2,19 +2,22 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px; /* نفس gap زي زر Google */
   width: 85%;
-  padding: 10px 16px;
-  background: #f5f5f5;
-  color: #000;
+  padding: 12px 20px; /* نفس padding زي زر Google */
+  background: #ffffff;
+  color: #202124;
   border: 1px solid #dadce0;
-  border-radius: 4px;
+  border-radius: 8px; /* نفس الحواف المدورة */
   cursor: pointer;
   font-weight: 500;
-  transition: background 0.2s;
-  margin: 0 auto 15px auto; /* يوسّط الزر + مسافة تحت */
+  font-size: 16px;
+  transition: all 0.3s ease;
+  margin: 20px auto 0 auto; /* يوسّط الزر */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* ظل خفيف */
 }
 
 .linkedin-btn:hover {
-  background: #fff;
+  background: #f7f7f7; /* نفس تأثير hover زي Google */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* رفع الظل عند hover */
 }
