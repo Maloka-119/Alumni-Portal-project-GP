@@ -185,29 +185,24 @@ const Register = ({ setUser }) => {
     }
   };
 
+  // Start Google OAuth flow
   const startGoogleFlow = () => {
+    if (!googleNationalId.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: t("enterNationalId"),
+      });
+      return;
+    }
+    // إرسال الرقم القومي في query param
     window.open(
-      `http://localhost:5005/alumni-portal/auth/google?nationalId=${googleNationalId}`,
+      `http://localhost:5005/alumni-portal/auth/google?nationalId=${encodeURIComponent(googleNationalId)}`,
       "_self"
     );
   };
 
-  const handleGoogleNidSubmit = async () => {
-    if (!googleNationalId) return;
-
-    try {
-      await API.post("/register", { nationalId: googleNationalId });
-
-      setShowNidModal(false);
-      startGoogleFlow();
-
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "خطأ",
-        text: err.response?.data?.message || "حدث خطأ"
-      });
-    }
+  const handleGoogleNidSubmit = () => {
+    startGoogleFlow();
   };
 
   return (
@@ -216,56 +211,58 @@ const Register = ({ setUser }) => {
 
       <div className="wrapper">
         <div className="form-container">
-        <form  onSubmit={handleSubmit}>
-          <h2 className="main-title">{t("createAccount")}</h2>
-          <p className="subtitle">{t("helwan")}</p>
-          <br />
 
-          <div className="form-grid">
-            {[
-              { name: "nationalId", type: "text" },
-              { name: "email", type: "email" },
-              { name: "firstName", type: "text" },
-              { name: "lastName", type: "text" },
-              { name: "password", type: "password" },
-              { name: "confirmPassword", type: "password" },
-              { name: "phoneNumber", type: "tel", className: "phone-center" }
-            ].map((field) => (
-              <div className={`form-group ${field.className || ""}`} key={field.name}>
-                <label className="form-label">{t(field.name)}</label>
-                <input
-                  type={field.type}
-                  name={field.name}
-                  value={formData[field.name]}
-                  onChange={handleInputChange}
-                  className="form-inputre"
-                />
-              </div>
-            ))}
-          </div>
+          <form onSubmit={handleSubmit}>
+            <h2 className="main-title">{t("createAccount")}</h2>
+            <p className="subtitle">{t("helwan")}</p>
+            <br />
 
-          <div className="submit-section">
-            <button type="submit" className="register-btn" disabled={loading}>
-              {loading ? t("registering") : t("register")}
-            </button>
-          </div>
+            <div className="form-grid">
+              {[
+                { name: "nationalId", type: "text" },
+                { name: "email", type: "email" },
+                { name: "firstName", type: "text" },
+                { name: "lastName", type: "text" },
+                { name: "password", type: "password" },
+                { name: "confirmPassword", type: "password" },
+                { name: "phoneNumber", type: "tel", className: "phone-center" }
+              ].map((field) => (
+                <div className={`form-group ${field.className || ""}`} key={field.name}>
+                  <label className="form-label">{t(field.name)}</label>
+                  <input
+                    type={field.type}
+                    name={field.name}
+                    value={formData[field.name]}
+                    onChange={handleInputChange}
+                    className="form-inputre"
+                  />
+                </div>
+              ))}
+            </div>
 
-        </form>
-        <hr className="form-divider" />
-        
-        <LinkedInSignUp />
+            <div className="submit-section">
+              <button type="submit" className="register-btn" disabled={loading}>
+                {loading ? t("registering") : t("register")}
+              </button>
+            </div>
+          </form>
 
-        <GoogleLoginButton
-  onClick={() => setShowNidModal(true)}
-  text={t("signUpWithGoogle")}
-/>
+          <hr className="form-divider" />
 
+          <LinkedInSignUp />
 
-</div>
+          <GoogleLoginButton
+            onClick={() => setShowNidModal(true)}
+            text={t("signUpWithGoogle")}
+          />
+
+        </div>
+
+        {/* ========= National ID Modal for Google ========= */}
         {showNidModal && (
           <div className="nid-overlay">
             <div className="nid-box">
-              <h3>{t("Enter Your National Id")}</h3>
+              <h3>{t("enterYourNationalId")}</h3>
 
               <input
                 type="number"
@@ -276,11 +273,11 @@ const Register = ({ setUser }) => {
               />
 
               <button className="nid-submit" onClick={handleGoogleNidSubmit}>
-                {t("confirm")} 
+                {t("confirm")}
               </button>
 
               <button className="nid-close" onClick={() => setShowNidModal(false)}>
-               {t("close")}
+                {t("close")}
               </button>
             </div>
           </div>
@@ -293,3 +290,5 @@ const Register = ({ setUser }) => {
 };
 
 export default Register;
+
+

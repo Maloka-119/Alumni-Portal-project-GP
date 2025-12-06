@@ -17,3 +17,6 @@ Thumbs.db
 
 # Optional folders
 /dist
+
+# Ignore Google OAuth secrets
+Backend-Alumni/client_secret_*.json
