@@ -100,7 +100,7 @@ const GoogleLoginButton = ({ onClick, text  }) => {
         borderRadius: "4px",
         cursor: "pointer",
         fontWeight: "500",
-        width: "60%",
+        width: "85%",
         justifyContent: "center",
         transition: "background 0.2s",
         margin: "0 auto", 

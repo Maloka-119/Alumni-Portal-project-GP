@@ -149,6 +149,10 @@ function Login({ setUser }) {
       });
     }
   };
+  const handleGoogleLogin = () => {
+    // فتح صفحة تسجيل الدخول مع جوجل
+    window.open("http://localhost:5005/alumni-portal/auth/google", "_self");
+  };
 
   return (
     <div className="login-container" style={{ backgroundImage: `url(${Unibackground})` }}>
@@ -197,8 +201,9 @@ function Login({ setUser }) {
             </form>
             <hr className="form-divider" />
             <GoogleLoginButton
-  text={t("signInWithGoogle")}
-/>
+             onClick={handleGoogleLogin}
+             text={t("signInWithGoogle")}
+            />
           </div>
 
           {/* RESET MODALS */}
