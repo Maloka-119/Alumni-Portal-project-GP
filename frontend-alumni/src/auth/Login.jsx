@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
@@ -26,10 +25,24 @@ function Login({ setUser }) {
   const [newPass, setNewPass] = useState("");
 
   // =====================
-  // التعامل مع Google OAuth بعد redirect
+  // التعامل مع Google OAuth بعد redirect + عرض رسائل الخطأ
   // =====================
   useEffect(() => {
     const params = new URLSearchParams(location.search);
+
+    // ==== عرض رسالة الخطأ من الباك لو موجودة ====
+    const errorMessage = params.get("error");
+    if (errorMessage) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+         text: decodeURIComponent(errorMessage),
+        timer: 4000,
+        showConfirmButton: false
+      });
+    }
+
+    // ==== التعامل مع Google OAuth token ====
     const token = params.get("token");
     const id = params.get("id");
     const emailParam = params.get("email");
@@ -149,6 +162,7 @@ function Login({ setUser }) {
       });
     }
   };
+
   const handleGoogleLogin = () => {
     // فتح صفحة تسجيل الدخول مع جوجل
     window.open("http://localhost:5005/alumni-portal/auth/google", "_self");
@@ -189,7 +203,6 @@ function Login({ setUser }) {
               <button type="button" className="login-button" onClick={handleLogin}>
                 {t("signIn")}
               </button>
-
 
               <p className="forgot-link" onClick={() => setShowReset(true)}>
                 {t("forgotPassword")}

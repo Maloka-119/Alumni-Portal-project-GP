@@ -6,6 +6,12 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const generateToken = require("../utils/generateToken");
 const aes = require("../utils/aes");
 const axios = require("axios");
+const { logger, securityLogger } = require("../utils/logger");
+const {
+  normalizeCollegeName,
+  getCollegeNameByCode,
+} = require("../services/facultiesService");
+
 
 // =====================
 // Helper functions
@@ -47,10 +53,6 @@ function extractDOBFromEgyptianNID(nationalId) {
   }
 
   return `${year.toString().padStart(4, "0")}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
-}
-
-function normalizeCollegeName(facultyName) {
-  return facultyName.toLowerCase().replace(/\s+/g, "_");
 }
 
 // =====================
@@ -132,7 +134,10 @@ exports.loginWithGoogle = (req, res, next) => {
 // 2) Google OAuth callback
 exports.googleCallback = (req, res, next) => {
   passport.authenticate("google", { session: false }, async (err, googleUser) => {
+    const ip = req.ip || req.connection.remoteAddress;
+
     if (err || !googleUser) {
+      securityLogger.failedLogin(ip, req.body?.email || "unknown", err?.message || "Google authentication failed");
       return res.redirect(
         `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent(
           err?.message || "Google authentication failed"
@@ -143,6 +148,7 @@ exports.googleCallback = (req, res, next) => {
     try {
       const nationalId = req.session.nationalId;
       if (!nationalId || !validateNationalId(nationalId)) {
+        logger.error("Invalid National ID provided", { ip, nationalId });
         return res.redirect(
           `http://localhost:3000/helwan-alumni-portal/login?error=Invalid National ID`
         );
@@ -152,7 +158,9 @@ exports.googleCallback = (req, res, next) => {
       let birthDateFromNid;
       try {
         birthDateFromNid = extractDOBFromEgyptianNID(nationalId);
+        logger.info("Birth date extracted from NID", { ip, nationalId, birthDateFromNid });
       } catch (error) {
+        logger.error("Failed to extract DOB from National ID", { ip, nationalId, error: error.message });
         return res.redirect(
           `http://localhost:3000/helwan-alumni-portal/login?error=Invalid National ID`
         );
@@ -165,6 +173,7 @@ exports.googleCallback = (req, res, next) => {
       for (const u of allUsers) {
         const decrypted = aes.decryptNationalId(u["national-id"]);
         if (decrypted === nationalId && u.id !== googleUser.id) {
+          logger.warn("Duplicate National ID detected", { ip, nationalId, existingUserId: u.id });
           return res.redirect(
             `http://localhost:3000/helwan-alumni-portal/login?error=National ID already registered`
           );
@@ -185,8 +194,11 @@ exports.googleCallback = (req, res, next) => {
           externalData = data;
           userType = "staff";
           statusToLogin = "inactive";
+          logger.info("User detected as staff", { ip, nationalId });
         }
-      } catch (e) {}
+      } catch (e) {
+        logger.info("No staff record found", { ip, nationalId });
+      }
 
       // GRADUATE API
       if (!userType) {
@@ -206,13 +218,16 @@ exports.googleCallback = (req, res, next) => {
             userType = "graduate";
             statusToLogin = "pending";
           }
+          logger.info("User detected as graduate", { ip, nationalId, statusToLogin });
         } catch (err) {
           userType = "graduate";
           statusToLogin = "pending";
+          logger.warn("Graduate API failed, setting status to pending", { ip, nationalId, error: err.message });
         }
       }
 
       if (!userType) {
+        logger.error("National ID not found in records", { ip, nationalId });
         return res.redirect(
           `http://localhost:3000/helwan-alumni-portal/login?error=National ID not found in records`
         );
@@ -223,6 +238,7 @@ exports.googleCallback = (req, res, next) => {
       googleUser["birth-date"] = birthDateFromNid;
       googleUser["user-type"] = userType;
       await googleUser.save();
+      securityLogger.registration(ip, googleUser.email, userType, statusToLogin);
 
       // Create Graduate / Staff
       if (userType === "graduate") {
@@ -237,12 +253,16 @@ exports.googleCallback = (req, res, next) => {
             externalData?.["graduation-year"] || externalData?.graduationYear || externalData?.GraduationYear || null,
           "status-to-login": statusToLogin,
         });
+        logger.info("Graduate record created", { ip, userId: googleUser.id });
 
         // Auto group invitation
         try {
           const { sendAutoGroupInvitation } = require("./invitation.controller");
           await sendAutoGroupInvitation(googleUser.id);
-        } catch (error) {}
+          logger.info("Auto group invitation sent", { ip, userId: googleUser.id });
+        } catch (error) {
+          logger.warn("Failed to send auto group invitation", { ip, userId: googleUser.id, error: error.message });
+        }
       }
 
       if (userType === "staff") {
@@ -250,10 +270,12 @@ exports.googleCallback = (req, res, next) => {
           staff_id: googleUser.id,
           "status-to-login": statusToLogin,
         });
+        logger.info("Staff record created", { ip, userId: googleUser.id });
       }
 
       // Generate JWT
       const token = generateToken(googleUser.id);
+      logger.info("JWT generated for user", { ip, userId: googleUser.id });
 
       const redirectUrl = new URL("http://localhost:3000/helwan-alumni-portal/login");
       redirectUrl.searchParams.set("token", token);
@@ -263,9 +285,11 @@ exports.googleCallback = (req, res, next) => {
 
       return res.redirect(redirectUrl.toString());
     } catch (error) {
-      console.log("Google callback error:", error);
+      logger.error("Google callback error", { ip, error: error.message });
       return res.redirect(
-        `http://localhost:3000/helwan-alumni-portal/login?error=Authentication error`
+        `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent(
+          error.message || "Authentication error"
+        )}`
       );
     }
   })(req, res, next);
@@ -280,4 +304,4 @@ exports.logout = (req, res, next) => {
 };
 
 // Login failed (optional)
-exports.loginFailed = (req, res) => res.send("Login failed 😢");
+exports.loginFailed = (req, res) => res.send("Login failed ");

@@ -185,23 +185,22 @@ const Register = ({ setUser }) => {
     }
   };
 
-  // Start Google OAuth flow
   const startGoogleFlow = () => {
-    if (!googleNationalId.trim()) {
-      Swal.fire({
-        icon: "warning",
-        title: t("enterNationalId"),
-      });
-      return;
-    }
-    // إرسال الرقم القومي في query param
     window.open(
-      `http://localhost:5005/alumni-portal/auth/google?nationalId=${encodeURIComponent(googleNationalId)}`,
+      `http://localhost:5005/alumni-portal/auth/google?nationalId=${googleNationalId}`,
       "_self"
     );
   };
 
   const handleGoogleNidSubmit = () => {
+    if (!googleNationalId.trim()) {
+      Swal.fire({
+        icon: "warning",
+        title: "ادخلي الرقم القومي",
+      });
+      return;
+    }
+
     startGoogleFlow();
   };
 
@@ -262,7 +261,7 @@ const Register = ({ setUser }) => {
         {showNidModal && (
           <div className="nid-overlay">
             <div className="nid-box">
-              <h3>{t("enterYourNationalId")}</h3>
+              <h3>{t("Enter Your National Id")}</h3>
 
               <input
                 type="number"
@@ -290,5 +289,6 @@ const Register = ({ setUser }) => {
 };
 
 export default Register;
+
 
 
