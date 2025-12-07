@@ -10,7 +10,7 @@ const { securityLogger, logger } = require("../utils/logger");
 // Limits login attempts to prevent brute force attacks
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 5, // Allow maximum 5 failed login attempts
+  max: 4, // Allow maximum 5 failed login attempts
   message: {
     error: "Too many login attempts, please try again after 5 minutes.",
   },

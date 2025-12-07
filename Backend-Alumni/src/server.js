@@ -130,7 +130,7 @@ app.use("/alumni-portal/staff", staffRoutes);
 
 // 🔒 تطبيق rate limiting على routes المصادقة
 const authRoutes = require("./routes/auth.route");
-app.use("/alumni-portal", authLimiter, authRoutes);
+app.use("/alumni-portal", authRoutes);
 
 const groupRoutes = require("./routes/group.route");
 app.use("/alumni-portal", groupRoutes);

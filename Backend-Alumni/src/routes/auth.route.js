@@ -1,29 +1,64 @@
-//authRoutes
-const express = require('express');
+const express = require("express");
 const router = express.Router();
 const {
   registerUser,
   loginUser,
+  forgotPassword,
+  verifyCode,
+  resetPassword,
   getUserProfile,
   updateUserProfile,
-  forgotPassword,
-  resetPassword,
   logoutUser,
-  completeGoogleRegistration,
-  registerWithGoogle
-} = require('../controllers/auth.controller');
-const { protect } = require('../middleware/authMiddleware');
+} = require("../controllers/auth.controller");
 
-// Public routes
-router.post('/register', registerUser);
-router.post('/login', loginUser);
-router.post('/forgotpassword', forgotPassword);
-router.put('/resetpassword/:resettoken', resetPassword);
-router.get('/logout', protect, logoutUser);
+const { protect } = require("../middleware/authMiddleware");
+const {
+  authLimiter,
+  generalLimiter,
+  helmetConfig,
+  hppProtection,
+  sanitizeInput,
+  securityMiddleware,
+} = require("../middleware/security");
+const { validateRequest, registerSchema, loginSchema } = require("../middleware/validation");
 
-// Protected routes
-router.route('/profile')
-  .get(protect, getUserProfile)
-  .put(protect, updateUserProfile);
+// ===== Global security middlewares for all routes =====
+router.use(helmetConfig);       // HTTP headers security
+router.use(hppProtection);      // HPP protection
+router.use(securityMiddleware); // Detect SQLi, XSS, cookies attacks
+router.use(sanitizeInput);      // Sanitize inputs
+router.use(generalLimiter);     // Limit general requests
+
+// ===== Public Routes =====
+
+// تسجيل مستخدم جديد مع حماية ضد الـ brute-force
+router.post(
+  "/register",
+  authLimiter,                 // limit failed attempts
+  validateRequest(registerSchema),
+  registerUser
+);
+
+// تسجيل الدخول
+router.post(
+  "/login",
+  authLimiter,
+  validateRequest(loginSchema),
+  loginUser
+);
+
+// طلب إعادة كلمة المرور
+router.post("/forgot-password", authLimiter, forgotPassword);
+
+// التحقق من كود إعادة كلمة المرور
+router.post("/verify-code", authLimiter, verifyCode);
+
+// إعادة تعيين كلمة المرور
+router.post("/reset-password", authLimiter, resetPassword);
+
+// ===== Private Routes =====
+router.get("/profile", protect, getUserProfile);
+router.put("/profile", protect, updateUserProfile);
+router.get("/logout", protect, logoutUser);
 
 module.exports = router;

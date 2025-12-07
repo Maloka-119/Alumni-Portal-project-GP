@@ -69,39 +69,100 @@ function Login({ setUser }) {
   // =====================
   // تسجيل الدخول التقليدي
   // =====================
-  const handleLogin = async () => {
-    try {
-      const res = await API.post("/login", { email, password });
-      const { id, email: userEmail, userType, token } = res.data;
+const handleLogin = async () => {
+  try {
+    const res = await API.post("/login", { email, password });
+    const { id, email: userEmail, userType, token } = res.data;
 
-      const user = { id, email: userEmail, userType };
-      localStorage.clear();
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
+    const user = { id, email: userEmail, userType };
+    localStorage.clear();
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    setUser(user);
 
-      Swal.fire({
-        icon: "success",
-        title: t("loginSuccess"),
-        showConfirmButton: false,
-        timer: 1500,
-      });
+    Swal.fire({
+      icon: "success",
+      title: t("loginSuccess"),
+      showConfirmButton: false,
+      timer: 1500,
+    });
 
-      if (userType === "admin") {
-        navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
-      } else if (userType === "graduate") {
-        navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
-      } else if (userType === "staff") {
-        navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
-      }
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: t("loginFailed"),
-        text: err.response?.data?.message || err.message,
-      });
+    if (userType === "admin") {
+      navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
+    } else if (userType === "graduate") {
+      navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
+    } else if (userType === "staff") {
+      navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
     }
-  };
+
+  } catch (err) {
+    let message = "Something went wrong";
+
+    if (err.response) {
+      const data = err.response.data;
+
+      // Invalid credentials
+      if (data?.error === "Invalid credentials") {
+        message = "• The email or password you entered is incorrect. Please try again.";
+      }
+
+      // Validation errors array
+      else if (data?.details && Array.isArray(data.details)) {
+        const friendlyMessages = data.details.map(d => {
+          let text = d.replace(/"/g, "");
+
+          // General input validation (SQL injection)
+          if (/potential SQL injection/i.test(text)) {
+            text = "• Your input contains invalid characters. Please avoid using characters like ' ; --";
+          }
+
+          // General input validation (XSS attack)
+          else if (/potential XSS attack/i.test(text)) {
+            text = "• Your input contains forbidden characters like < > or scripts. Please remove them.";
+          }
+
+          // Email invalid
+          else if (/email must be a valid email/i.test(text)) {
+            text = "• Please enter a valid email address.";
+          }
+
+          // Password invalid format
+          else if (/password must be/i.test(text)) {
+            text = "• Your password does not meet the required format.";
+          }
+
+          return text;
+        });
+
+        message = friendlyMessages.join("<br/>");
+      }
+
+      // Generic backend error
+      else if (data?.error) {
+        message = "• " + data.error;
+      }
+
+      else if (data?.message) {
+        message = "• " + data.message;
+      }
+
+    }
+    else if (err.request) {
+      message = "• No response from server. Please check your internet connection.";
+    }
+    else {
+      message = "• " + err.message;
+    }
+
+    Swal.fire({
+      icon: "error",
+      title: t("loginFailed"),
+      html: message,
+    });
+  }
+};
+
+
 
   // =====================
   // إرسال رمز إعادة تعيين كلمة المرور
