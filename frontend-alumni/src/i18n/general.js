@@ -53,11 +53,15 @@ const general = {
       "signInWithGoogle": "Sign In with Google",
       "signUpWithGoogle": "Sign Up with Google",
 
+       "move_to_landing": "Move to landing",
+
       
       }
     },
     ar: {
       translation: {
+         "move_to_landing": "الانتقال للصفحة الرئيسية",
+
         "signUpWithGoogle": "إنشاء حساب عبر جوجل",
   "signInWithGoogle": "تسجيل الدخول عبر جوجل",
 

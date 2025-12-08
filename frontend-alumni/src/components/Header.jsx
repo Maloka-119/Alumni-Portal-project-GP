@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import UniLogo from './logo-white-deskt-min.png';
 import './Header.css';
-import { Globe, LogIn } from 'lucide-react';
+import { Globe, LogIn,Home ,DoorOpen} from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 const Header = () => {
   const navigate = useNavigate();
-  const { i18n } = useTranslation();
+  const {t, i18n } = useTranslation();
   const [language, setLanguage] = useState("EN");
 
   const toggleLanguage = () => {
@@ -32,11 +32,14 @@ const Header = () => {
           {language}
         </button>
         <button
-          className="login-btn"
-          onClick={() => navigate("/helwan-alumni-portal/login")}
-        >
-          <LogIn size={20} />
-        </button>
+  className="login-btn"
+  title={t("move_to_landing")}
+  onClick={() => navigate("/helwan-alumni-portal")}
+>
+  {/* <DoorOpen size={20} /> */}
+  <Home size={20} />
+</button>
+
       </div>
     </header>
   );
