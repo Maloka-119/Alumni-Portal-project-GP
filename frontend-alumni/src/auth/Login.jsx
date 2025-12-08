@@ -27,45 +27,68 @@ function Login({ setUser }) {
   // =====================
   // التعامل مع Google OAuth بعد redirect + عرض رسائل الخطأ
   // =====================
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
+useEffect(() => {
+  const params = new URLSearchParams(location.search);
 
-    // ==== عرض رسالة الخطأ من الباك لو موجودة ====
-    const errorMessage = params.get("error");
-    if (errorMessage) {
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text: decodeURIComponent(errorMessage),
-        timer: 4000,
-        showConfirmButton: false,
-      });
-    }
+  // Show error messages
+  const errorMessage = params.get("error");
+  if (errorMessage) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: decodeURIComponent(errorMessage),
+      timer: 5000,
+    });
+  }
 
-    // ==== التعامل مع Google OAuth token ====
-    const token = params.get("token");
-    const id = params.get("id");
-    const emailParam = params.get("email");
-    const userType = params.get("userType");
-
-    if (token && id && emailParam && userType) {
-      const user = { id, email: emailParam, userType };
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      setUser(user);
-
-      if (userType === "admin") {
-        navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
-      } else if (userType === "graduate") {
-        navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
-      } else if (userType === "staff") {
-        navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
-      } else {
-        navigate("/helwan-alumni-portal/login", { replace: true });
+  // Request National ID for first-time Google login
+  const requireNid = params.get("require_nid");
+  if (requireNid === "true") {
+    Swal.fire({
+      icon: "info",
+      title: "First time signing in with this email?",
+      text: "Please enter your Egyptian National ID to activate your account",
+      input: "text",
+      inputPlaceholder: "Enter your 14-digit National ID",
+      inputAttributes: { maxLength: 14, inputmode: "numeric" },
+      showCancelButton: true,
+      confirmButtonText: "Continue",
+      cancelButtonText: "Cancel",
+      preConfirm: (nid) => {
+        if (!nid || nid.length !== 14 || !/^\d+$/.test(nid)) {
+          Swal.showValidationMessage("National ID must be exactly 14 digits");
+        }
+        return nid;
       }
-    }
-  }, [location.search, navigate, setUser]);
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const nationalId = result.value;
+        window.location.href = `http://localhost:5005/alumni-portal/auth/google?nationalId=${nationalId}`;
+      }
+    });
+  }
 
+  // Successful login handling
+  const token = params.get("token");
+  const id = params.get("id");
+  const emailParam = params.get("email");
+  const userType = params.get("userType");
+
+  if (token && id && emailParam && userType) {
+    const user = { id, email: emailParam, userType };
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    setUser(user);
+
+    if (userType === "admin") {
+      navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
+    } else if (userType === "graduate") {
+      navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
+    } else if (userType === "staff") {
+      navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
+    }
+  }
+}, [location.search, navigate, setUser]);
   // =====================
   // تسجيل الدخول التقليدي
   // =====================
@@ -224,10 +247,19 @@ const handleLogin = async () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    // فتح صفحة تسجيل الدخول مع جوجل
+const handleGoogleLogin = async () => {
+  try {
+    // فتح صفحة Google login
     window.open("http://localhost:5005/alumni-portal/auth/google", "_self");
-  };
+  } catch (err) {
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: err.message || "Something went wrong"
+    });
+  }
+};
+
 
   return (
     <div className="login-container" style={{ backgroundImage: `url(${Unibackground})` }}>

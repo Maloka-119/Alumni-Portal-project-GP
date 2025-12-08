@@ -279,83 +279,56 @@ const updateStaffStatus = async (req, res) => {
   }
 };
 
+
 // get staff profile (staff can only access their own profile)
 const getStaffProfile = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [getStaffProfile] START -----", {
+  logger.info("----- [getStaffProfile] START -----", {
     timestamp: new Date().toISOString(),
-    user: req.user
-      ? { id: req.user.id, type: req.user["user-type"] }
-      : "undefined",
+    user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const userId = req.user.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Get staff profile request", {
       userId,
       userType: req.user["user-type"],
     });
-    // 🔴 END OF LOGGING
 
-    // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. لو مش من النوع المسموح → ارفض
     if (!allowedUserTypes.includes(req.user["user-type"])) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("ACCESS DENIED in getStaffProfile", {
         userType: req.user["user-type"],
         allowedUserTypes,
       });
-      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
       });
     }
 
-    // 3. لو staff → يتأكد إنه بيسأل على بروفايله الشخصي فقط (من غير صلاحية)
+    // Staff يشوف بروفايله الشخصي فقط (بدون صلاحية)
     if (req.user["user-type"] === "staff") {
-      // Staff مش محتاج صلاحية علشان يشوف بروفايله
-      // بس يتأكد إنه بيسأل على بروفايله هو فقط
-      // (الكود الحالي بيشوف بروفايله هو لأن userId = req.user.id)
-      // 🔴 START OF LOGGING - ADDED THIS
-      logger.info("Staff accessing own profile (no permission needed)", {
-        userId,
-      });
-      // 🔴 END OF LOGGING
+      logger.info("Staff accessing own profile (no permission needed)", { userId });
     }
-    // 4. لو admin → بيتحقق من الصلاحية علشان يشوف أي بروفايل
+    // Admin يحتاج صلاحية
     else if (req.user["user-type"] === "admin") {
-      const hasPermission = await checkStaffPermission(
-        req.user.id,
-        "Staff management",
-        "view"
-      );
-
+      const hasPermission = await checkStaffPermission(req.user.id, "Staff management", "view");
       if (!hasPermission) {
-        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("ADMIN PERMISSION DENIED in getStaffProfile", {
           userId: req.user.id,
-          requiredPermission: "Staff management",
+          requiredPermission: "Staff management - view",
         });
-        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
-          message:
-            "Access denied. You don't have permission to view staff profiles.",
+          message: "Access denied. You don't have permission to view staff profiles.",
         });
       }
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.info("Admin permission check passed", { userId: req.user.id });
-      // 🔴 END OF LOGGING
     }
 
-    // 5. لو admin مع صلاحية أو staff → اتركه يكمل
-    // Find staff record with user details, roles, and permissions
+    // جلب بيانات الـ Staff مع الـ User
     const staff = await Staff.findByPk(userId, {
       include: [
         {
@@ -364,7 +337,7 @@ const getStaffProfile = async (req, res) => {
             "id",
             "first-name",
             "last-name",
-            "national-id",
+            "national-id",   // مشفر
             "email",
             "phone-number",
             "birth-date",
@@ -390,29 +363,37 @@ const getStaffProfile = async (req, res) => {
       ],
     });
 
-    if (!staff) {
-      // 🔴 START OF LOGGING - ADDED THIS
+    if (!staff || !staff.User) {
       logger.warn("Staff profile not found", { userId });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Staff profile not found",
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Staff profile found", {
       userId,
       staffName: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
       rolesCount: staff.Roles.length,
     });
-    // 🔴 END OF LOGGING
 
-    // Format the response data with roles and permissions
+    // فك تشفير الرقم القومي قبل إرجاعه
+    let decryptedNationalId = null;
+    if (staff.User["national-id"]) {
+      try {
+        decryptedNationalId = aes.decryptNationalId(staff.User["national-id"]);
+      } catch (decryptError) {
+        logger.error("Failed to decrypt National ID", {
+          userId,
+          error: decryptError.message,
+        });
+        decryptedNationalId = "**************"; // إخفاء في حالة الفشل
+      }
+    }
+
     const profileData = {
       fullName: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
-      nationalId: staff.User["national-id"],
-      workId: staff.staff_id,
+      nationalId: decryptedNationalId, // الرقم القومي مفكوك التشفير
       email: staff.User.email,
       phoneNumber: staff.User["phone-number"],
       birthDate: staff.User["birth-date"],
@@ -431,43 +412,34 @@ const getStaffProfile = async (req, res) => {
       })),
     };
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Staff profile data formatted successfully", {
       userId,
       rolesCount: profileData.roles.length,
-      permissionsCount: profileData.roles.reduce(
-        (sum, role) => sum + role.permissions.length,
-        0
-      ),
+      permissionsCount: profileData.roles.reduce((sum, role) => sum + role.permissions.length, 0),
+      nationalIdDecrypted: !!decryptedNationalId, // لا نسجل الرقم نفسه
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [getStaffProfile] END SUCCESS -----", { userId });
-    // 🔴 END OF LOGGING
+    logger.info("----- [getStaffProfile] END SUCCESS -----", { userId });
 
     return res.status(200).json({
-      status: HttpStatusHelper.SUCCESS,
+      status: "success",
       message: "Staff profile retrieved successfully",
       data: profileData,
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [getStaffProfile] Unexpected Error", {
+    logger.error(" [getStaffProfile] Unexpected Error", {
       error: error.message,
-      stack: error.stack.substring(0, 200),
-      user: req.user
-        ? { id: req.user.id, type: req.user["user-type"] }
-        : "undefined",
+      stack: error.stack?.substring(0, 300),
+      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined",
     });
-    // 🔴 END OF LOGGING
 
     console.error("Error fetching staff profile:", error);
     return res.status(500).json({
-      status: HttpStatusHelper.ERROR,
-      message: "Failed to fetch staff profile: " + error.message,
+      status: "error",
+      message: "Failed to fetch staff profile",
     });
   }
 };
 
+module.exports = { getStaffProfile };
 module.exports = { getAllStaff, updateStaffStatus, getStaffProfile };

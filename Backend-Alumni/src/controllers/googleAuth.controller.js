@@ -6,12 +6,12 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const generateToken = require("../utils/generateToken");
 const aes = require("../utils/aes");
 const axios = require("axios");
+const validator = require("validator");
+const { Op } = require("sequelize");
 const { logger, securityLogger } = require("../utils/logger");
 const { normalizeCollegeName } = require("../services/facultiesService");
 
-// =====================
-// Helper functions
-// =====================
+// ===================== Helper functions =====================
 function validateNationalId(nationalId) {
   return /^\d{14}$/.test(nationalId);
 }
@@ -41,9 +41,7 @@ function extractDOBFromEgyptianNID(nationalId) {
   return `${year.toString().padStart(4, "0")}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
 }
 
-// =====================
-// Passport Google Strategy
-// =====================
+// ===================== Passport Google Strategy =====================
 passport.use(
   new GoogleStrategy(
     {
@@ -64,15 +62,15 @@ passport.use(
             return done(null, existingUser);
           }
 
-          user = await User.create({
+          // مستخدم مؤقت فقط (لا ننشئه في الداتابيز هنا)
+          user = {
             google_id: profile.id,
             email: profile.emails[0].value,
-            "first-name": profile.name.givenName,
-            "last-name": profile.name.familyName,
-            "user-type": "graduate", // سيتم تعديل النوع لاحقًا بعد APIs
-            auth_provider: "google",
+            "first-name": profile.name.givenName || "",
+            "last-name": profile.name.familyName || "",
             profile_picture_url: profile.photos?.[0]?.value || null,
-          });
+            isTemp: true,
+          };
         } else {
           if (profile.photos?.[0]?.value && !user.profile_picture_url) {
             user.profile_picture_url = profile.photos[0].value;
@@ -88,9 +86,6 @@ passport.use(
   )
 );
 
-// =====================
-// Serialize / Deserialize
-// =====================
 passport.serializeUser((user, done) => done(null, user.id));
 passport.deserializeUser(async (id, done) => {
   try {
@@ -101,154 +96,224 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
-// =====================
-// Controller Functions
-// =====================
+// ===================== Controller Functions =====================
 
-// 1) Start Google login (store nationalId in session if new user)
 exports.loginWithGoogle = (req, res, next) => {
   const { nationalId } = req.query;
+
   if (nationalId && !validateNationalId(nationalId)) {
     return res.redirect(
-      `http://localhost:3000/helwan-alumni-portal/login?error=Invalid National ID`
+      `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent("Invalid National ID")}`
     );
   }
-  req.session.nationalId = nationalId; // ممكن يكون undefined لو المستخدم موجود
-  passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
-};
 
-// 2) Google OAuth callback
+  req.session.nationalId = nationalId || null;
+  req.session.save(() => {
+    passport.authenticate("google", { scope: ["profile", "email"] })(req, res, next);
+  });
+};
 exports.googleCallback = (req, res, next) => {
   passport.authenticate("google", { session: false }, async (err, googleUser) => {
     const ip = req.ip || req.connection.remoteAddress;
 
     if (err || !googleUser) {
       return res.redirect(
-        `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent(
-          err?.message || "Google authentication failed"
-        )}`
+        `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent("Google authentication failed")}`
       );
     }
 
     try {
-      // ===== تحقق هل المستخدم موجود بالإيميل + Google ID =====
-      const existingUser = await User.findOne({
-        where: { email: googleUser.email, google_id: googleUser.google_id },
+      // ================== 1. Existing user? ==================
+      let user = await User.findOne({
+        where: { google_id: googleUser.google_id },
+        include: [
+          { model: Graduate, required: false },
+          { model: Staff, required: false }
+        ]
       });
 
-      if (existingUser) {
-        // يدخل مباشرة بدون أي لوجيك آخر
-        const token = generateToken(existingUser.id);
+      if (user) {
+        // Update profile picture if missing
+        if (googleUser.profile_picture_url && !user.profile_picture_url) {
+          user.profile_picture_url = googleUser.profile_picture_url;
+          await user.save();
+        }
+
+        // === Staff: Check activation status ===
+        if (user["user-type"] === "staff") {
+          const staffRecord = user.Staff || await Staff.findOne({ where: { staff_id: user.id } });
+          if (staffRecord && staffRecord["status-to-login"] !== "active") {
+            return res.redirect(
+              "http://localhost:3000/helwan-alumni-portal/login?error=" +
+              encodeURIComponent("Your account is not activated yet. Please wait for admin approval.")
+            );
+          }
+        }
+
+        // === Graduate: Check if login is allowed (only if accepted) ===
+        if (user["user-type"] === "graduate") {
+          const graduateRecord = user.Graduate || await Graduate.findOne({ where: { graduate_id: user.id } });
+          if (graduateRecord && graduateRecord["status-to-login"] !== "accepted") {
+            return res.redirect(
+              "http://localhost:3000/helwan-alumni-portal/login?error=" +
+              encodeURIComponent("Your account is under review. Please wait for admin approval to access the dashboard.")
+            );
+          }
+        }
+
+        // User is fully allowed → login
+        const token = generateToken(user.id);
         const redirectUrl = new URL("http://localhost:3000/helwan-alumni-portal/login");
         redirectUrl.searchParams.set("token", token);
-        redirectUrl.searchParams.set("id", existingUser.id);
-        redirectUrl.searchParams.set("email", existingUser.email);
-        redirectUrl.searchParams.set("userType", existingUser["user-type"]);
-
+        redirectUrl.searchParams.set("id", user.id);
+        redirectUrl.searchParams.set("email", user.email);
+        redirectUrl.searchParams.set("userType", user["user-type"]);
         return res.redirect(redirectUrl.toString());
       }
 
-      // ===== إذا المستخدم غير موجود، تابع باقي اللوجيك =====
-      const nationalIdFromFront = req.session.nationalId;
-      if (!nationalIdFromFront || !validateNationalId(nationalIdFromFront)) {
-        return res.redirect(
-          `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent(
-            "National ID required for new users"
-          )}`
-        );
+      // ================== 2. New user (first time) ==================
+      const nationalIdFromSession = req.session.nationalId;
+
+      if (!nationalIdFromSession || !validateNationalId(nationalIdFromSession)) {
+        req.session.tempGoogleData = {
+          google_id: googleUser.google_id,
+          email: googleUser.email,
+          firstName: validator.escape(googleUser["first-name"] || ""),
+          lastName: validator.escape(googleUser["last-name"] || ""),
+          profile_picture_url: googleUser.profile_picture_url,
+        };
+        req.session.save(() => {
+          return res.redirect("http://localhost:3000/helwan-alumni-portal/login?require_nid=true");
+        });
+        return;
       }
 
-      const encryptedNationalId = aes.encryptNationalId(nationalIdFromFront);
-      const birthDateFromNid = extractDOBFromEgyptianNID(nationalIdFromFront);
+      const birthDate = extractDOBFromEgyptianNID(nationalIdFromSession);
+      const encryptedNID = aes.encryptNationalId(nationalIdFromSession);
 
-      googleUser["national-id"] = encryptedNationalId;
-      googleUser["birth-date"] = birthDateFromNid;
-
-      // ===== التحقق من APIs خارجية وتحديد نوع المستخدم =====
       let userType = "graduate";
+      let statusToLogin = "pending";  // Default: pending (not found in any API)
       let externalData = null;
-      let statusToLogin = "accepted";
+      let foundInAPI = false;
 
-      // Staff API
+      // 1. Check Staff API first
       try {
-        const { data } = await axios.get(
-          `${process.env.STAFF_API_URL}?nationalId=${encodeURIComponent(nationalIdFromFront)}`
+        const staffResp = await axios.get(
+          `${process.env.STAFF_API_URL}?nationalId=${encodeURIComponent(nationalIdFromSession)}`,
+          { timeout: 8000 }
         );
-        if (data?.department || data?.Department) {
-          externalData = data;
+        if (staffResp.data?.department || staffResp.data?.Department) {
           userType = "staff";
           statusToLogin = "inactive";
+          externalData = staffResp.data;
+          foundInAPI = true;
         }
-      } catch (e) {}
+      } catch (e) { /* ignore */ }
 
-      // Graduate API
-      if (userType === "graduate") {
+      // 2. If not staff → check Graduate API
+      if (!foundInAPI) {
         try {
-          const { data } = await axios.get(
-            `${process.env.GRADUATE_API_URL}?nationalId=${encodeURIComponent(nationalIdFromFront)}`
+          const gradResp = await axios.get(
+            `${process.env.GRADUATE_API_URL}?nationalId=${encodeURIComponent(nationalIdFromSession)}`,
+            { timeout: 8000 }
           );
-          externalData = data;
+          const data = gradResp.data;
           const facultyField = data?.faculty || data?.Faculty || data?.FACULTY || data?.facultyName;
+
           if (facultyField) {
-            statusToLogin = "accepted";
-          } else {
-            statusToLogin = "pending";
+            statusToLogin = "accepted";   // Found in graduate API → auto-accept
+            externalData = data;
+            foundInAPI = true;
           }
-        } catch (err) {
-          statusToLogin = "pending";
+          // else → remains "pending"
+        } catch (e) {
+          // Not found → keep pending
         }
       }
 
-      googleUser["user-type"] = userType;
-      await googleUser.save();
-      securityLogger.registration(ip, googleUser.email, userType, statusToLogin);
+      // If not found in any API → still create as graduate with pending status
+      // (this is the new case you asked for)
 
-      // إنشاء Graduate / Staff records
+      // Create user
+      const newUser = await User.create({
+        google_id: googleUser.google_id,
+        email: validator.normalizeEmail(googleUser.email),
+        "first-name": validator.escape(googleUser["first-name"] || ""),
+        "last-name": validator.escape(googleUser["last-name"] || ""),
+        "national-id": encryptedNID,
+        "birth-date": birthDate,
+        "user-type": userType,
+        auth_provider: "google",
+        profile_picture_url: googleUser.profile_picture_url || null,
+      });
+
+      // Create related record
       if (userType === "graduate") {
         const facultyName = externalData?.faculty || externalData?.Faculty || externalData?.FACULTY || externalData?.facultyName || null;
         const facultyCode = facultyName ? normalizeCollegeName(facultyName) : null;
+        const graduationYear = externalData?.["graduation-year"] || externalData?.graduationYear || externalData?.GraduationYear || null;
 
         await Graduate.create({
-          graduate_id: googleUser.id,
+          graduate_id: newUser.id,
           faculty_code: facultyCode,
-          "graduation-year": externalData?.["graduation-year"] || externalData?.graduationYear || externalData?.GraduationYear || null,
-          "status-to-login": statusToLogin,
+          "graduation-year": graduationYear || null,
+          "status-to-login": statusToLogin,  // "accepted" if from API, otherwise "pending"
         });
       }
 
       if (userType === "staff") {
         await Staff.create({
-          staff_id: googleUser.id,
-          "status-to-login": statusToLogin,
+          staff_id: newUser.id,
+          "status-to-login": "inactive",
         });
+
+        securityLogger.registration(ip, newUser.email, userType, statusToLogin);
+
+        return res.redirect(
+          "http://localhost:3000/helwan-alumni-portal/login?success=" +
+          encodeURIComponent("Staff account created successfully. Your account is pending admin activation.")
+        );
       }
 
-      // توليد JWT
-      const token = generateToken(googleUser.id);
-      const redirectUrl = new URL("http://localhost:3000/helwan-alumni-portal/login");
-      redirectUrl.searchParams.set("token", token);
-      redirectUrl.searchParams.set("id", googleUser.id);
-      redirectUrl.searchParams.set("email", googleUser.email);
-      redirectUrl.searchParams.set("userType", userType);
+      // === Final Login Decision for Graduates ===
+      securityLogger.registration(ip, newUser.email, userType, statusToLogin);
 
-      return res.redirect(redirectUrl.toString());
+      if (statusToLogin === "accepted") {
+        // Only auto-login if confirmed graduate from API
+        const token = generateToken(newUser.id);
+        const redirectUrl = new URL("http://localhost:3000/helwan-alumni-portal/login");
+        redirectUrl.searchParams.set("token", token);
+        redirectUrl.searchParams.set("id", newUser.id);
+        redirectUrl.searchParams.set("email", newUser.email);
+        redirectUrl.searchParams.set("userType", userType);
+
+        delete req.session.nationalId;
+        delete req.session.tempGoogleData;
+        req.session.save();
+
+        return res.redirect(redirectUrl.toString());
+      } else {
+        // Pending graduate (not found in API) → show message, no login
+        delete req.session.nationalId;
+        delete req.session.tempGoogleData;
+        req.session.save();
+
+        return res.redirect(
+          "http://localhost:3000/helwan-alumni-portal/login?success=" +
+          encodeURIComponent("Account created successfully. Your graduation data is under review. You will be able to log in once approved.")
+        );
+      }
+
     } catch (error) {
+      console.error("Google OAuth Error:", error);
       return res.redirect(
-        `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent(
-          error.message || "Authentication error"
-        )}`
+        `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent("Registration failed. Please try again later.")}`
       );
     }
   })(req, res, next);
 };
-
-// Logout
-exports.logout = (req, res, next) => {
-  req.logout(function (err) {
-    if (err) return next(err);
-    res.redirect("http://localhost:3000/");
-  });
+exports.logout = (req, res) => {
+  req.logout(() => res.redirect("http://localhost:3000/"));
 };
 
-// Login failed (optional)
 exports.loginFailed = (req, res) => res.send("Login failed");

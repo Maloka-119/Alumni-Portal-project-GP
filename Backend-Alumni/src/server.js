@@ -28,36 +28,44 @@ const {
 const app = express();
 
 // ==================================================
-//  تطبيق إعدادات الحماية بالترتيب الصحيح
+// 🛡️ Security Middlewares (order IMPORTANT)
 // ==================================================
 
-// 1. helmet
+// 1) CORS
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+
+// 2) Helmet
 app.use(helmetConfig);
 
-// 2. rate limiter
-app.use(generalLimiter);
-
-// 3. Prevent HTTP Param Pollution
-app.use(hppProtection);
-
-// 4. XSS protection على مستوى request
-app.use(xssProtection);
-
-// 5. Body parser (يجب هنا)
+// 3) Body Parser (قبل أي rate limiter)
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
-// 6. Sanitize HTML inputs
+// 4) Sanitize + XSS + HPP
+app.use(hppProtection);
+app.use(xssProtection);
 app.use(sanitizeInput);
-// إضافة endpoints للتحقق من صحة النظام
-app.get("/health", (req, res) => {
-  res.json({
-    status: "OK",
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    database: db.authenticate() ? "connected" : "disconnected",
-  });
-});
+
+// 5) Sessions
+app.use(session({
+  secret: process.env.SESSION_SECRET || "mysecret",
+  resave: false,
+  saveUninitialized: true,
+  cookie: { maxAge: 60000 * 60 } // ساعة
+}));
+
+
+// 6) Rate Limiter (General) — هنا المكان الصحيح
+app.use(generalLimiter);
+
+// 7) Logger
+app.use(morgan("dev"));
+
 
 app.get("/health/detailed", async (req, res) => {
   const dbStatus = await checkDatabaseHealth();
@@ -97,6 +105,7 @@ app.use(
     },
   })
 );
+
 
 // ==================================================
 // 🌐 WebSocket setup
