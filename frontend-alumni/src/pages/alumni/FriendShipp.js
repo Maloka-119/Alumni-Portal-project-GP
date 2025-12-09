@@ -376,32 +376,25 @@ useEffect(() => {
                       {f.userName}
                     </span>
                   </div>
-                  <div className="friend-actions">
-                    {!f.added ? (
-                      <>
-                        <button
-                          className="button"
-                          onClick={() => toggleRequest(f.id, f.added)}
-                        >
-                           {t("addFriend")}
-                        </button>
-                        <button
-                          className="button"
-                          onClick={() => removeSuggestion(f.id)}
-                          style={{ backgroundColor: "red", color: "white" }}
-                        >
-                          {t("cancelRequest")}
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        className="button"
-                        onClick={() => toggleRequest(f.id, f.added)}
-                      >
-                        {t("requested")}
-                      </button>
-                    )}
-                  </div>
+                  <div className={`friend-actions ${i18n.language === "ar" ? "rtl" : "ltr"}`}>
+  {!f.added ? (
+    <button
+      className="button"
+      onClick={() => toggleRequest(f.id, f.added)}
+    >
+      {t("addFriend")}
+    </button>
+  ) : (
+    <button
+      className="button"
+      onClick={() => toggleRequest(f.id, f.added)}
+      style={{ backgroundColor: "red", color: "white" }}
+    >
+      {t("cancelRequest")}
+    </button>
+  )}
+</div>
+
                 </div>
               ))
             )}

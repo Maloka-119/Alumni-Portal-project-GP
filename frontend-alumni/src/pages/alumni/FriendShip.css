@@ -63,9 +63,18 @@
   
   /* Action buttons */
   .friend-actions {
-    display: flex;
+    /* display: flex; */
     gap: 10px;
-  }
+}
+
+.friend-actions.rtl {
+    margin-left: auto; /* يدفعهم لليمين */
+}
+
+.friend-actions.ltr {
+    margin-right: auto; /* يدفعهم للشمال */
+}
+
   
   .friend-actions button {
     border: none;
@@ -74,6 +83,7 @@
     cursor: pointer;
     font-weight: 500;
     transition: background 0.2s ease, transform 0.2s ease;
+    margin-left: 10px;
   }
   
   .friend-actions .accept {
