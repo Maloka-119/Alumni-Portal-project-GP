@@ -305,6 +305,9 @@ import Services from './Services.jsx';
 
 const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
 
+
+
+
 const sidebarSections = (darkMode, t) => [
   {
     title: t("personal"),
@@ -344,7 +347,7 @@ const sidebarSections = (darkMode, t) => [
 ];
 
 const Dashboard = ({ setUser }) => {
-
+  const [unreadCount, setUnreadCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [communitiesOpen, setCommunitiesOpen] = useState(false);
@@ -374,6 +377,19 @@ const Dashboard = ({ setUser }) => {
       console.error("Failed to accept invitation:", err);
     }
   };
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await API.get("/notifications/unread-count", { headers: getAuthHeaders() });
+      setUnreadCount(res.data.count); // assuming backend returns { count: number }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+  useEffect(() => {
+    fetchUnreadCount();
+  }, []);
+  
+  
 
   useEffect(() => {
     const checkInvitation = async () => {
@@ -470,9 +486,35 @@ const Dashboard = ({ setUser }) => {
         </div>
 
         <div className="alumni-header-right">
-          <button className="header-btn" onClick={() => navigate(`${BASE_PATH}/notifications`)}>
-            <Bell size={18}/>
-          </button>
+        <button 
+  className="header-btn" 
+  style={{ position: 'relative' }} // مهم
+  onClick={() => navigate(`${BASE_PATH}/notifications`)}
+>
+  <Bell size={18} />
+  {unreadCount > 0 && (
+    <span style={{
+      position: 'absolute',
+      top: '-5px',
+      right: '-5px',
+      backgroundColor: '#ff4d4f',
+      color: 'white',
+      borderRadius: '50%',
+      padding: '2px 6px',
+      fontSize: '12px',
+      fontWeight: 'bold',
+      minWidth: '18px',
+      height: '18px',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      {unreadCount}
+    </span>
+  )}
+</button>
+
+
           <button className="header-btn" onClick={() => setChatOpen(!chatOpen)}>
             <MessageCircle size={18}/>
           </button>
@@ -557,6 +599,7 @@ const Dashboard = ({ setUser }) => {
                 <Notifications 
                   darkMode={darkMode}
                   openChat={openChatFromNotification}
+                  setUnreadCount={setUnreadCount}
                   openFriendRequest={openFriendRequestSidebarHandler}
                 />
               }
