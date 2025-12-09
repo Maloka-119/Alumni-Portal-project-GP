@@ -10,6 +10,7 @@ import UsersPostsPage from './UsersPostsPage';
 import GroupsPage from './GroupsPage';
 import FAQManage from './FAQManage';
 import RolesManagement from './RolesManagement';
+import UniversityServicesAdmin from './UniversityServicesAdmin';
 import { 
   Globe, LogOut, BarChart2, Users, FileText, Phone, 
   UserCheck, User, Shield, Edit, Megaphone, HelpCircle, Wrench, Clipboard
@@ -51,8 +52,8 @@ const AdminPanel = ({ setUser }) => {
         { key: "reportsAnalysis", icon: <BarChart2 size={16} /> },
         { key: "communityManagement", icon: <Users size={16} /> },
         { key: "documentManagement", icon: <FileText size={16} /> },
-        { key: "consultationRequests", icon: <Phone size={16} /> },
-        { key: "GraduatedFeedback", icon: <Clipboard size={16} /> },
+        { key: "universityServices", icon: <Clipboard size={16} /> },
+        { key: "GraduatedFeedback", icon: <Phone size={16} /> },
       ],
     },
     {
@@ -144,7 +145,7 @@ const AdminPanel = ({ setUser }) => {
           <Route path="reportsAnalysis" element={<AdminDashboard currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="communityManagement" element={<GroupsPage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="documentManagement" element={<EmptyPage title="Document Management" />} />
-          <Route path="consultationRequests" element={<EmptyPage title="Consultation Requests" />} />
+          <Route path="universityServices" element={<UniversityServicesAdmin  currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="alumniManagement" element={<AlumniManagement currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="staffManagement" element={<StaffManagement currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="permissionsRoles" element={<RolesManagement currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
