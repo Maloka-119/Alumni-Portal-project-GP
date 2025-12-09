@@ -130,6 +130,7 @@ const Services = () => {
           <div className="service-card-content">
             {getIcon(service.pref)}
             <h3>{service.title}</h3>
+            <span className="service-subtitle">{service.pref}</span>
           </div>
         
           <hr className="service-divider" />

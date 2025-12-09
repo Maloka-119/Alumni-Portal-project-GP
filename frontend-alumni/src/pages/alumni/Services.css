@@ -48,6 +48,14 @@
     transform: translateY(-5px);
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   }
+
+  .service-subtitle {
+    font-size: 14px;
+    color: #6b7280; /* لون رمادي فاتح */
+    text-align: center;
+    word-break: break-word; /* لكى لا يكسر النص الطويل */
+  }
+  
   
   /* خط أفقي فوق الزرار */
   .service-divider {
