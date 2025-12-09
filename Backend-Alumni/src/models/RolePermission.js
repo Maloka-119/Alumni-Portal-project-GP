@@ -28,3 +28,4 @@ const RolePermission = sequelize.define(
     freezeTableName: true,
   }
 );
+module.exports = RolePermission;

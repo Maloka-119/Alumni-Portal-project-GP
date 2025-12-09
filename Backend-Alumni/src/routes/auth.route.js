@@ -20,21 +20,25 @@ const {
   sanitizeInput,
   securityMiddleware,
 } = require("../middleware/security");
-const { validateRequest, registerSchema, loginSchema } = require("../middleware/validation");
+const {
+  validateRequest,
+  registerSchema,
+  loginSchema,
+} = require("../middleware/validation");
 
 // ===== Global security middlewares for all routes =====
-router.use(helmetConfig);       // HTTP headers security
-router.use(hppProtection);      // HPP protection
+router.use(helmetConfig); // HTTP headers security
+router.use(hppProtection); // HPP protection
 router.use(securityMiddleware); // Detect SQLi, XSS, cookies attacks
-router.use(sanitizeInput);      // Sanitize inputs
-router.use(generalLimiter);     // Limit general requests
+router.use(sanitizeInput); // Sanitize inputs
+router.use(generalLimiter); // Limit general requests
 
 // ===== Public Routes =====
 
 // تسجيل مستخدم جديد مع حماية ضد الـ brute-force
 router.post(
   "/register",
-  authLimiter,                 // limit failed attempts
+  authLimiter, // limit failed attempts
   validateRequest(registerSchema),
   registerUser
 );
@@ -42,7 +46,7 @@ router.post(
 // تسجيل الدخول
 router.post(
   "/login",
-  authLimiter,
+  // authLimiter,
   validateRequest(loginSchema),
   loginUser
 );

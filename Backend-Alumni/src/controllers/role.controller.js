@@ -335,6 +335,7 @@ const assignRoleToStaff = async (req, res) => {
           include: [
             {
               model: Permission,
+              as: "Permissions",
               attributes: [
                 "id",
                 "name",
@@ -949,6 +950,7 @@ const getAllRoles = async (req, res) => {
       include: [
         {
           model: Permission,
+          as: "Permissions",
           through: {
             attributes: ["can-view", "can-edit", "can-delete", "can-add"], // ✅ أضفنا can-add هنا
           },
