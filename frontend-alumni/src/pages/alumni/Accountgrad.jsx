@@ -335,24 +335,24 @@ const [chatId, setChatId] = useState(null);
   <div className="friendship-buttons" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
     {formData.friendshipStatus === "no_relation" && (
       <button onClick={() => toggleRequest(false)} className="friend-btn" title={t("addFriend")}>
-        <FiUserPlus style={{ marginRight: "4px" }} />
+        <FiUserPlus style={{ marginRight: "4px" }} /> {t("addFriend")}
         
       </button>
     )}
     {formData.friendshipStatus === "i_sent_request" && (
       <button onClick={() => toggleRequest(true)} className="friend-btn" title={t("cancelRequest")}>
-        <FiUserX style={{ marginRight: "4px" }} />
+        <FiUserX style={{ marginRight: "4px" }} /> {t("cancelRequest")}
         
       </button>
     )}
     {formData.friendshipStatus === "he_sent_request" && (
       <div style={{ display: "flex", gap: "2px" }}>
         <button onClick={confirmFriend} className="acceptre-btn" title={t("confirm")}>
-          <FiUserCheck style={{ marginRight: "4px" }} />
+          <FiUserCheck style={{ marginRight: "4px" }} /> {t("confirm")}
           
         </button>
         <button onClick={removeRequest} className="rejectre-btn"title={t("remove")}>
-          <FiUserX style={{ marginRight: "4px" }} />
+          <FiUserX style={{ marginRight: "4px" }} /> {t("remove")}
           
         </button>
       </div>
@@ -373,7 +373,7 @@ const [chatId, setChatId] = useState(null);
 </button>
 
     <button onClick={unfriendFriend} className="rejectre-btn" title={t("unfriend")}>
-      <FiUserMinus style={{ marginRight: "4px" }} />
+      <FiUserMinus style={{ marginRight: "4px" }} /> {t("unfriend")}
       
     </button>
   </div>
