@@ -42,8 +42,9 @@ useEffect(() => {
     });
   }
 
-  // Request National ID for first-time Google login
+  // Request National ID for first-time OAuth login (Google or LinkedIn)
   const requireNid = params.get("require_nid");
+  const provider = params.get("provider") || "google"; // Default to google for backward compatibility
   if (requireNid === "true") {
     Swal.fire({
       icon: "info",
@@ -64,7 +65,33 @@ useEffect(() => {
     }).then((result) => {
       if (result.isConfirmed) {
         const nationalId = result.value;
-        window.location.href = `http://localhost:5005/alumni-portal/auth/google?nationalId=${nationalId}`;
+        if (provider === "linkedin") {
+          // For LinkedIn, get auth URL with National ID
+          fetch(`http://localhost:5005/alumni-portal/auth/linkedin?nationalId=${nationalId}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.status === "success" && data.data?.authUrl) {
+                window.location.href = data.data.authUrl;
+              } else {
+                Swal.fire({
+                  icon: "error",
+                  title: "Error",
+                  text: "Failed to get LinkedIn authentication URL. Please try again.",
+                });
+              }
+            })
+            .catch(err => {
+              console.error("LinkedIn auth URL error:", err);
+              Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "An error occurred. Please try again.",
+              });
+            });
+        } else {
+          // For Google
+          window.location.href = `http://localhost:5005/alumni-portal/auth/google?nationalId=${nationalId}`;
+        }
       }
     });
   }
