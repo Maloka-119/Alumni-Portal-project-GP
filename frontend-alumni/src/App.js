@@ -57,9 +57,10 @@ function App() {
             {/* LinkedIn routes */}
             <Route path="/helwan-alumni-portal/auth/linkedin/signup" element={<LinkedInSignUp />} />
             <Route
-              path="/helwan-alumni-portal/auth/linkedin/callback"
-              element={<LinkedInCallback setUser={setUser} />}
-            />
+  path="/auth/linkedin/callback"
+  element={<LinkedInCallback setUser={setUser} />}
+/>
+
 
             {/* صفحات محمية */}
             <Route
