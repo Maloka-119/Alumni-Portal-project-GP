@@ -10,6 +10,7 @@ import Swal from "sweetalert2";
 import "../components/Header.css";
 import "../components/Footer.css";
 import "./Login.css";
+import NewBg from '../Newbg.jpg'
 
 function Login({ setUser }) {
   const { t } = useTranslation();
@@ -262,7 +263,9 @@ const handleGoogleLogin = async () => {
 
 
   return (
-    <div className="login-container" style={{ backgroundImage: `url(${Unibackground})` }}>
+    // <div className="login-container" style={{ backgroundImage: `url(${Unibackground})` }}>
+     <div className="login-container" style={{ backgroundImage: `url(${NewBg})` }}>
+
       <Header />
 
       <div className="wrapperr">

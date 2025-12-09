@@ -9,6 +9,7 @@ import API from "../services/api";
 import Swal from "sweetalert2";
 import { useTranslation } from "react-i18next";
 import "./Register.css";
+import NewBg from '../Newbg.jpg'
 
 const Register = ({ setUser }) => {
   const { t } = useTranslation();
@@ -181,7 +182,9 @@ const handleSubmit = async (e) => {
     );
   }
   return (
-    <div className="recontainer" style={{ backgroundImage: `url(${Unibackground})` }}>
+    // <div className="recontainer" style={{ backgroundImage: `url(${Unibackground})` }}>
+     <div className="recontainer" style={{ backgroundImage: `url(${NewBg})` }}>
+
       <Header />
 
       <div className="wrapper">

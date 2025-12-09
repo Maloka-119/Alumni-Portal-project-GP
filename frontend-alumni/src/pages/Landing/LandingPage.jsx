@@ -16,6 +16,7 @@ import TypingText from "../../components/TypingText";
 import API from "../../services/api";
 import HelwanLogo from "./logo-white-deskt-min.png";
 import NewLogo from '../../capital-uni-logo.png'
+import NewBg from '../../Newbg.jpg'
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -75,7 +76,9 @@ export default function LandingPage() {
   return (
     <div
       className="landing-container"
-      style={{ backgroundImage: `url(${Unibackground})` }}
+      // style={{ backgroundImage: `url(${Unibackground})` }}
+      // style={{ backgroundImage: `url(${NewBg})` }}
+      
     >
       {/* <img src={HelwanLogo} alt="جامعة حلوان" className="hero-logo" /> */}
       <img src={NewLogo} alt="جامعة العاصمه" className="hero-logo" />

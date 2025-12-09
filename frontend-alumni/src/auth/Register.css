@@ -13,7 +13,13 @@
   width: 100%;
   padding-top: 80px;
 }
-
+.recontainer::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(180deg, rgba(6, 34, 68, 0.308) 0%, rgba(6, 34, 68, 0.288) 100%);
+  z-index:-1;
+}
 .wrapper {
   max-width: 1200px;
   width: 100%;
