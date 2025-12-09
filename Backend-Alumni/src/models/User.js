@@ -10,7 +10,7 @@ const User = sequelize.define(
     "national-id": { type: DataTypes.STRING, unique: true },
     email: { type: DataTypes.STRING, unique: true },
     "phone-number": { type: DataTypes.STRING },
-    "hashed-password": { type: DataTypes.STRING },
+    "hashed-password": { type: DataTypes.STRING, allowNull: true }, // Allow null for OAuth users
     "birth-date": { type: DataTypes.DATE },
     "user-type": { type: DataTypes.ENUM("graduate", "staff", "admin") },
     "verification-code": { type: DataTypes.STRING, allowNull: true },
@@ -31,6 +31,7 @@ const User = sequelize.define(
     linkedin_profile_url: { type: DataTypes.STRING, allowNull: true },
     linkedin_headline: { type: DataTypes.TEXT, allowNull: true },
     linkedin_location: { type: DataTypes.STRING, allowNull: true },
+    is_linkedin_verified: { type: DataTypes.BOOLEAN, defaultValue: false },
 
     profile_picture_url: { type: DataTypes.STRING, allowNull: true },
     auth_provider: { type: DataTypes.ENUM("local", "linkedin", "google"), defaultValue: "local" },

@@ -17,6 +17,7 @@ require("./models/associations");
 
 const {
   authLimiter,
+  oauthLimiter,
   generalLimiter,
   helmetConfig,
   hppProtection,
@@ -56,7 +57,12 @@ app.use(session({
   secret: process.env.SESSION_SECRET || "mysecret",
   resave: false,
   saveUninitialized: true,
-  cookie: { maxAge: 60000 * 60 } // ساعة
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: true,
+    sameSite: 'lax', // Allows cross-site requests for OAuth
+    secure: process.env.NODE_ENV === "production"
+  }
 }));
 
 
@@ -83,28 +89,6 @@ app.get("/health/detailed", async (req, res) => {
 // ==================================================
 // ⚙️ الإعدادات الأساسية للتطبيق
 // ==================================================
-
-app.use(
-  cors({
-    origin: "http://localhost:3000",
-    credentials: true,
-  })
-);
-
-app.use(morgan("dev"));
-
-// Session configuration
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "your-session-secret-key",
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 24 * 60 * 60 * 1000,
-    },
-  })
-);
 
 
 // ==================================================
@@ -172,7 +156,7 @@ const reportsRoutes = require("./routes/reports.route");
 app.use("/alumni-portal", reportsRoutes);
 
 const linkedinAuthRoutes = require("./routes/linkedinAuth.route");
-app.use("/alumni-portal/auth/linkedin", authLimiter, linkedinAuthRoutes);
+app.use("/alumni-portal/auth/linkedin", oauthLimiter, linkedinAuthRoutes);
 
 const notificationRoutes = require("./routes/notification.route");
 app.use("/alumni-portal/notifications", notificationRoutes);

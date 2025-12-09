@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 import GoogleLoginButton from "../components/GoogleLoginButton";
+import LinkedInLoginButton from "../components/LinkedInLoginButton";
 import Unibackground from "./Unibackground.jpeg";
 import { useTranslation } from "react-i18next";
 import API from "../services/api";
@@ -42,8 +43,9 @@ useEffect(() => {
     });
   }
 
-  // Request National ID for first-time Google login
+  // Request National ID for first-time OAuth login (Google or LinkedIn)
   const requireNid = params.get("require_nid");
+  const provider = params.get("provider") || "google"; // Default to google for backward compatibility
   if (requireNid === "true") {
     Swal.fire({
       icon: "info",
@@ -64,7 +66,33 @@ useEffect(() => {
     }).then((result) => {
       if (result.isConfirmed) {
         const nationalId = result.value;
-        window.location.href = `http://localhost:5005/alumni-portal/auth/google?nationalId=${nationalId}`;
+        if (provider === "linkedin") {
+          // For LinkedIn, get auth URL with National ID
+          fetch(`http://localhost:5005/alumni-portal/auth/linkedin?nationalId=${nationalId}`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.status === "success" && data.data?.authUrl) {
+                window.location.href = data.data.authUrl;
+              } else {
+                Swal.fire({
+                  icon: "error",
+                  title: "Error",
+                  text: "Failed to get LinkedIn authentication URL. Please try again.",
+                });
+              }
+            })
+            .catch(err => {
+              console.error("LinkedIn auth URL error:", err);
+              Swal.fire({
+                icon: "error",
+                title: "Error",
+                text: "An error occurred. Please try again.",
+              });
+            });
+        } else {
+          // For Google
+          window.location.href = `http://localhost:5005/alumni-portal/auth/google?nationalId=${nationalId}`;
+        }
       }
     });
   }
@@ -194,7 +222,7 @@ const handleLogin = async () => {
   const handleResetPassword = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/forgotpassword", { email });
+      await API.post("/forgot-password", { email });
       Swal.fire({
         icon: "info",
         title: t("resetCodeSent"),
@@ -227,7 +255,7 @@ const handleLogin = async () => {
   const handleNewPassword = async (e) => {
     e.preventDefault();
     try {
-      await API.post("/resetpassword", {
+      await API.post("/reset-password", {
         email,
         code,
         newPassword: newPass,
@@ -257,6 +285,41 @@ const handleGoogleLogin = async () => {
       icon: "error",
       title: "Error",
       text: err.message || "Something went wrong"
+    });
+  }
+};
+
+const handleLinkedInLogin = async () => {
+  try {
+    console.log("Initiating LinkedIn login (no National ID required for existing users)");
+    
+    // Get LinkedIn auth URL without National ID (for login)
+    const res = await fetch(`http://localhost:5005/alumni-portal/auth/linkedin`);
+    const data = await res.json();
+
+    console.log("LinkedIn login auth URL response:", data);
+
+    if (data.status === "success" && data.data?.authUrl) {
+      console.log("Redirecting to LinkedIn for login:", data.data.authUrl);
+      // Clear any existing tokens to ensure fresh login
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      // Redirect to LinkedIn OAuth
+      window.location.href = data.data.authUrl;
+    } else {
+      console.error("LinkedIn login auth URL request failed:", data);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to get LinkedIn authentication URL. Please try again.",
+      });
+    }
+  } catch (err) {
+    console.error("LinkedIn login error:", err);
+    Swal.fire({
+      icon: "error",
+      title: "Error",
+      text: err.message || "An error occurred while connecting to LinkedIn. Please try again."
     });
   }
 };
@@ -311,6 +374,11 @@ const handleGoogleLogin = async () => {
               </p>
             </form>
             <hr className="form-divider" />
+            {/* زر LinkedIn login تحت الفورم */}
+            <LinkedInLoginButton
+              onClick={handleLinkedInLogin}
+              text={t("signInWithLinkedIn") || "Sign in with LinkedIn"}
+            />
             {/* زر Google login تحت الفورم */}
             <GoogleLoginButton
               onClick={handleGoogleLogin}

@@ -5,7 +5,7 @@ import axios from "axios";
 import "./Notification.css";
 import { Check, X } from "lucide-react";
 
-const NotificationsPage = ({ openChat }) => {
+const NotificationsPage = ({ openChat, setUnreadCount }) => {
   const { t, i18n } = useTranslation();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -27,6 +27,8 @@ const NotificationsPage = ({ openChat }) => {
         headers: getAuthHeaders(),
       });
       setNotifications(res.data.data);
+      const unread = res.data.data.filter(n => !n.isRead).length;
+      setUnreadCount && setUnreadCount(unread);
     } catch (err) {
       console.error("Error fetching notifications:", err);
     } finally {
@@ -44,18 +46,7 @@ const NotificationsPage = ({ openChat }) => {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const deleteNotification = async (id) => {
-    try {
-      await axios.delete(
-        `http://localhost:5005/alumni-portal/notifications/${id}`,
-        { headers: getAuthHeaders() }
-      );
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      setUnreadCount && setUnreadCount(prev => Math.max(prev - 1, 0));
     } catch (err) {
       console.error(err);
     }
@@ -68,14 +59,29 @@ const NotificationsPage = ({ openChat }) => {
         {},
         { headers: getAuthHeaders() }
       );
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount && setUnreadCount(0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const deleteNotification = async (id) => {
+    try {
+      await axios.delete(
+        `http://localhost:5005/alumni-portal/notifications/${id}`,
+        { headers: getAuthHeaders() }
+      );
+      setNotifications(prev => prev.filter(n => n.id !== id));
+      const unread = notifications.filter(n => n.id !== id && !n.isRead).length;
+      setUnreadCount && setUnreadCount(unread);
     } catch (err) {
       console.error(err);
     }
   };
 
   const handleNotificationClick = async (notification) => {
-    if (!notification.isRead) markAsRead(notification.id);
+    if (!notification.isRead) await markAsRead(notification.id);
 
     const nav = notification.navigation;
     if (!nav) return;
@@ -118,30 +124,25 @@ const NotificationsPage = ({ openChat }) => {
         console.warn("Unknown notification screen:", nav.screen);
     }
   };
+
   const fetchInvitations = async () => {
     try {
       const res = await axios.get(
         "http://localhost:5005/alumni-portal/invitations/received",
         { headers: getAuthHeaders() }
       );
-      // console.log("Invitations data:", res.data);
       setInvitations(res.data);
+      const unreadInvs = res.data.filter(inv => inv.status === "pending").length;
+      setUnreadCount && setUnreadCount(prev => (prev || 0) + unreadInvs);
     } catch (err) {
       console.error("Error fetching invitations:", err);
     }
   };
 
-
   useEffect(() => {
     fetchNotifications();
     fetchInvitations();
   }, []);
-  
-
-  if (loading)
-    return <div className="notifications-container">{t("Loading notifications...")}</div>;
-
-  const filteredNotifications = notifications.filter((n) => n.type !== "delete_comment");
 
   const acceptInvitation = async (invitationId) => {
     if (!invitationId) return console.error("Invitation id is missing");
@@ -152,11 +153,12 @@ const NotificationsPage = ({ openChat }) => {
         { headers: getAuthHeaders() }
       );
       setInvitations(prev => prev.filter(inv => inv.invitationId !== invitationId));
+      setUnreadCount && setUnreadCount(prev => Math.max(prev - 1, 0));
     } catch (err) {
       console.error("Axios accept error:", err);
     }
   };
-  
+
   const rejectInvitation = async (invitationId) => {
     if (!invitationId) return console.error("Invitation id is missing");
     try {
@@ -165,13 +167,16 @@ const NotificationsPage = ({ openChat }) => {
         { headers: getAuthHeaders() }
       );
       setInvitations(prev => prev.filter(inv => inv.invitationId !== invitationId));
+      setUnreadCount && setUnreadCount(prev => Math.max(prev - 1, 0));
     } catch (err) {
       console.error("Axios reject error:", err);
     }
   };
-  
 
-  
+  if (loading)
+    return <div className="notifications-container">{t("Loading notifications...")}</div>;
+
+  const filteredNotifications = notifications.filter((n) => n.type !== "delete_comment");
 
   return (
     <div className="notifications-container">
@@ -182,100 +187,96 @@ const NotificationsPage = ({ openChat }) => {
       </button>
 
       <div className="notifications-list">
-  {filteredNotifications.length === 0 && invitations.length === 0 ? (
-    <div className="empty">{t("No notifications")}</div>
-  ) : (
-    <>
-      {filteredNotifications.map((n) => (
-        <div
-          key={`notif-${n.id}`}
-          className={`notification-item ${n.isRead ? "" : "unread"}`}
-          onClick={() => handleNotificationClick(n)}
-        >
-          <div className="notif-content">
-            <p>{n.message}</p>
-            <span className="time">
-              {new Intl.DateTimeFormat(
-                i18n.language === "ar" ? "ar-EG" : "en-US",
-                {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                }
-              ).format(new Date(n.createdAt))}
-            </span>
-          </div>
-
-          <div className="notif-actions" onClick={(e) => e.stopPropagation()}>
-            {!n.isRead && (
-              <button
-                className="delete-btn"
-                onClick={() => markAsRead(n.id)}
-                style={{ backgroundColor: "transparent" }}
+        {filteredNotifications.length === 0 && invitations.length === 0 ? (
+          <div className="empty">{t("No notifications")}</div>
+        ) : (
+          <>
+            {filteredNotifications.map((n) => (
+              <div
+                key={`notif-${n.id}`}
+                className={`notification-item ${n.isRead ? "" : "unread"}`}
+                onClick={() => handleNotificationClick(n)}
               >
-                <Check size={20} color="#1089b9" />
-              </button>
-            )}
-            <button
-              className="delete-btn"
-              onClick={() => deleteNotification(n.id)}
-              style={{ backgroundColor: "transparent" }}
-            >
-              <X size={20} color="#ff4d4f" />
-            </button>
-          </div>
-        </div>
-      ))}
+                <div className="notif-content">
+                  <p>{n.message}</p>
+                  <span className="time">
+                    {new Intl.DateTimeFormat(
+                      i18n.language === "ar" ? "ar-EG" : "en-US",
+                      {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    ).format(new Date(n.createdAt))}
+                  </span>
+                </div>
 
-{invitations.map((inv) => (
-  <div
-    key={`inv-${inv.invitationId}`}
-    className={`notification-item ${inv.status === "pending" ? "unread" : ""}`}
-  >
-    <div className="notif-content">
-      <p>{inv.senderFullName} - {t("invitationMessage")}- {inv.groupName}</p>
-      <span className="time">
-  {new Intl.DateTimeFormat(
-    i18n.language === "ar" ? "ar-EG" : "en-US",
-    {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    }
-  ).format(new Date(inv.sent_date))}
-</span>
+                <div className="notif-actions" onClick={(e) => e.stopPropagation()}>
+                  {!n.isRead && (
+                    <button
+                      className="delete-btn"
+                      onClick={() => markAsRead(n.id)}
+                      style={{ backgroundColor: "transparent" }}
+                    >
+                      <Check size={20} color="#1089b9" />
+                    </button>
+                  )}
+                  <button
+                    className="delete-btn"
+                    onClick={() => deleteNotification(n.id)}
+                    style={{ backgroundColor: "transparent" }}
+                  >
+                    <X size={20} color="#ff4d4f" />
+                  </button>
+                </div>
+              </div>
+            ))}
 
-    </div>
+            {invitations.map((inv) => (
+              <div
+                key={`inv-${inv.invitationId}`}
+                className={`notification-item ${inv.status === "pending" ? "unread" : ""}`}
+              >
+                <div className="notif-content">
+                  <p>{inv.senderFullName} - {t("invitationMessage")}- {inv.groupName}</p>
+                  <span className="time">
+                    {new Intl.DateTimeFormat(
+                      i18n.language === "ar" ? "ar-EG" : "en-US",
+                      {
+                        weekday: "long",
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    ).format(new Date(inv.sent_date))}
+                  </span>
+                </div>
 
-    <div className="notif-actions" onClick={(e) => e.stopPropagation()}>
-      <button
-        onClick={() => acceptInvitation(inv.invitationId)}
-        className="accept-invv"
-      >
-        {t("Accept")}
-      </button>
-      <button
-        onClick={() => rejectInvitation(inv.invitationId)}
-        className="delete-btn"
-      >
-        {t("Reject")}
-      </button>
-    </div>
-  </div>
-))}
+                <div className="notif-actions" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => acceptInvitation(inv.invitationId)}
+                    className="accept-invv"
+                  >
+                    {t("Accept")}
+                  </button>
+                  <button
+                    onClick={() => rejectInvitation(inv.invitationId)}
+                    className="delete-btn"
+                  >
+                    {t("Reject")}
+                  </button>
+                </div>
+              </div>
+            ))}
 
-    </>
-  )}
-</div>
-
-      
-
+          </>
+        )}
+      </div>
     </div>
   );
 };

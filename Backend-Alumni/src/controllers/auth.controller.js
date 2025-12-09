@@ -43,11 +43,21 @@ async function isNIDRegistered(nid) {
   return !!user;
 }
 
-// Send verification email
+// Send verification email via Gmail
 async function sendVerificationEmail(email, code) {
+  // Enhanced Gmail configuration
   const transporter = nodemailer.createTransport({
     service: "gmail",
-    auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false, // true for 465, false for other ports
+    auth: { 
+      user: process.env.EMAIL_USER, 
+      pass: process.env.EMAIL_PASS // Should be Gmail App Password
+    },
+    tls: {
+      rejectUnauthorized: false // Allow self-signed certificates if needed
+    }
   });
 
   const mailOptions = {
@@ -69,7 +79,15 @@ async function sendVerificationEmail(email, code) {
     `,
   };
 
-  await transporter.sendMail(mailOptions);
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`✅ Verification code sent successfully to ${email}`);
+    console.log(`📧 Message ID: ${info.messageId}`);
+    return info;
+  } catch (error) {
+    console.error("❌ Error sending verification email:", error);
+    throw new Error(`Failed to send verification email: ${error.message}`);
+  }
 }
 
 // ======== Controller Functions ========
@@ -181,7 +199,22 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ where: { email } });
 
-  if (!user || !(await bcrypt.compare(password, user["hashed-password"]))) {
+  if (!user) {
+    return res.status(401).json({ error: "Invalid email or password" });
+  }
+
+  // Check if user is OAuth-only (no password set)
+  if (!user["hashed-password"]) {
+    const authProvider = user["auth_provider"] || "OAuth";
+    return res.status(401).json({ 
+      error: `This account was created using ${authProvider} authentication. Please use the "${authProvider} Login" button to sign in.`,
+      requiresOAuth: true,
+      authProvider: authProvider
+    });
+  }
+
+  // Verify password for regular users
+  if (!(await bcrypt.compare(password, user["hashed-password"]))) {
     return res.status(401).json({ error: "Invalid email or password" });
   }
 

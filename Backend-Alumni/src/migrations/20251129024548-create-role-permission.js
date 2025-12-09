@@ -5,6 +5,7 @@ module.exports = {
     await queryInterface.createTable('RolePermission', {
       role_id: {
         type: Sequelize.INTEGER,
+        primaryKey: true,
         references: {
           model: 'Role',
           key: 'id'
@@ -14,6 +15,7 @@ module.exports = {
       },
       permission_id: {
         type: Sequelize.INTEGER,
+        primaryKey: true,
         references: {
           model: 'Permission',
           key: 'id'
@@ -45,11 +47,6 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW
       }
-    });
-
-    await queryInterface.addConstraint('RolePermission', {
-      fields: ['role_id', 'permission_id'],
-      type: 'primary key'
     });
   },
 
