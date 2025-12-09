@@ -4,6 +4,7 @@ import './Header.css';
 import { Globe, LogIn,Home ,DoorOpen} from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import NewLogo from '../capital-uni-logo.png'
 
 const Header = () => {
   const navigate = useNavigate();
@@ -23,8 +24,10 @@ const Header = () => {
   return (
     <header className="page-header">
       <div className="header-left">
-        <img src={UniLogo} alt="University Logo" className="logoo-placeholder" />
-        <h1 className="portal-name">Helwan ALUMNI Portal</h1>
+        {/* <img src={UniLogo} alt="University Logo" className="logoo-placeholder" />
+        <h1 className="portal-name">Helwan ALUMNI Portal</h1> */}
+        <img src={NewLogo} alt="University Logo" className="logoo-placeholder" />
+        <h1 className="portal-name">{t("Capital Alumni Portal")}</h1>
       </div>
       <div className="header-right">
         <button className="lang-btn" onClick={toggleLanguage}>

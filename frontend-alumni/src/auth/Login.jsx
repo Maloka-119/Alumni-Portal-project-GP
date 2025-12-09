@@ -268,7 +268,9 @@ const handleGoogleLogin = async () => {
       <div className="wrapperr">
         <div className="login-content">
           <h1 className="login-title">{t("welcomePortal")}</h1>
-          <h4 className="login-subtitle">{t("helwanUniversity")}</h4>
+          {/* <h4 className="login-subtitle">{t("helwanUniversity")}</h4> */}
+          <h4 className="login-subtitle">{t("capitalUniversity")}</h4>
+
 
           <div className="login-form-container">
             <form className="login-form" onSubmit={(e) => e.preventDefault()}>

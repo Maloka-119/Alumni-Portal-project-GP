@@ -189,7 +189,8 @@ const handleSubmit = async (e) => {
 
           <form onSubmit={handleSubmit}>
             <h2 className="main-title">{t("createAccount")}</h2>
-            <p className="subtitle">{t("helwan")}</p>
+            {/* <p className="subtitle">{t("helwan")}</p> */}
+            <p className="subtitle">{t("capitalUniversity")}</p>
             <br />
 
             <div className="form-grid">
@@ -220,6 +221,14 @@ const handleSubmit = async (e) => {
                 {loading ? t("registering") : t("register")}
               </button>
             </div>
+
+            <p
+ className="dont-have-account"
+  onClick={() => navigate("/helwan-alumni-portal/login")}
+>
+  {t("alreadyHaveAccount")}
+</p>
+
           </form>
 
           <hr className="form-divider" />

@@ -15,6 +15,7 @@ import Unibackground from "./Unibackgroundcr.jpeg";
 import TypingText from "../../components/TypingText";
 import API from "../../services/api";
 import HelwanLogo from "./logo-white-deskt-min.png";
+import NewLogo from '../../capital-uni-logo.png'
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -76,7 +77,9 @@ export default function LandingPage() {
       className="landing-container"
       style={{ backgroundImage: `url(${Unibackground})` }}
     >
-      <img src={HelwanLogo} alt="جامعة حلوان" className="hero-logo" />
+      {/* <img src={HelwanLogo} alt="جامعة حلوان" className="hero-logo" /> */}
+      <img src={NewLogo} alt="جامعة العاصمه" className="hero-logo" />
+
       <button onClick={scrollToFooter} className="contactt-btn">
         Contact Us / اتصل بنا
       </button>
@@ -85,16 +88,27 @@ export default function LandingPage() {
         <section className="hero-section">
           <div className="hero-text">
             <TypingText
+              // lines={[
+              //   "Welcome to Helwan University Alumni Portal",
+              //   "مرحبا بكم في بوابة خريجي جامعة حلوان",
+              // ]}
               lines={[
-                "Welcome to Helwan University Alumni Portal",
-                "مرحبا بكم في بوابة خريجي جامعة حلوان",
+                "Welcome to Capital University Alumni Portal",
+                "مرحبا بكم في بوابة خريجي جامعة العاصمه",
               ]}
             />
-            <p style={{ color: "white" }}>
+            {/* <p style={{ color: "white" }}>
               The Alumni Portal connects graduates of Helwan University to share
               knowledge, find jobs, and stay in touch.
               <br />
               تربط بوابة الخريجين خريجي جامعة حلوان لتبادل المعرفة والفرص
+              والبقاء على تواصل.
+            </p> */}
+            <p style={{ color: "white" }}>
+              The Alumni Portal connects graduates of Capital University "Helwan University" to share
+              knowledge, find jobs, and stay in touch.
+              <br />
+              تربط بوابة الخريجين خريجي جامعة العاصمه "جامعه حلوان " لتبادل المعرفة والفرص
               والبقاء على تواصل.
             </p>
 

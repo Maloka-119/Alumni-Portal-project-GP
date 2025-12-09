@@ -281,7 +281,7 @@ import {
 
 import './AlumniPortal.css';
 import UniLogo from '../../components/logo-white-deskt-min.png';
-
+import NewLogo from '../../capital-uni-logo.png'
 import AlumniAdminPosts from './AlumniAdminPosts';
 import PostsAlumni from './PostsAlumni';
 import HomeAlumni from './HomeAlumni';
@@ -463,8 +463,10 @@ const Dashboard = ({ setUser }) => {
           <button className="alumni-menu-btn" onClick={() => setIsOpen(!isOpen)}>
             {isOpen ? <X size={24}/> : <Menu size={24}/>}
           </button>
-          <img src={UniLogo} alt="University Logo" className="logoo-placeholder" />
-          <h1 className="portal-name">Helwan Alumni Portal</h1>
+          {/* <img src={UniLogo} alt="University Logo" className="logoo-placeholder" />
+          <h1 className="portal-name">Helwan Alumni Portal</h1> */}
+          <img src={NewLogo} alt="University Logo" className="logoo-placeholder" />
+          <h1 className="portal-name">{t("Capital Alumni Portal")}</h1>
         </div>
 
         <div className="alumni-header-right">

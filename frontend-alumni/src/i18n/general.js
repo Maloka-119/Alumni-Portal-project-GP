@@ -54,12 +54,20 @@ const general = {
       "signUpWithGoogle": "Sign Up with Google",
 
        "move_to_landing": "Move to landing",
+       "Capital Alumni Portal":"Capital Alumni Portal",
+       "Helwan Alumni Portal":"Helwan Alumni Portal",
+       "capitalUniversity":"Capital University",
+       "alreadyHaveAccount": "Already have an account? Login",
 
       
       }
     },
     ar: {
       translation: {
+        "alreadyHaveAccount_ar": "لديك حساب بالفعل؟ تسجيل الدخول",
+        "capitalUniversity":"جامعه العاصمه",
+        "Capital Alumni Portal": "بوابه خريجين جامعه العاصمه",
+        "Helwan Alumni Portal":"بوابه خريجين جامعه حلوان",
          "move_to_landing": "الانتقال للصفحة الرئيسية",
 
         "signUpWithGoogle": "إنشاء حساب عبر جوجل",
