@@ -1,4 +1,4 @@
-const { User } = require("../models");
+const { User, Staff, Graduate } = require("../models");
 const axios = require("axios");
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
@@ -11,9 +11,14 @@ const { logger, securityLogger } = require("../utils/logger");
 const LINKEDIN_CLIENT_ID = process.env.LINKEDIN_CLIENT_ID;
 const LINKEDIN_CLIENT_SECRET = process.env.LINKEDIN_CLIENT_SECRET;
 const LINKEDIN_REDIRECT_URI =
+  process.env.LINKEDIN_CALLBACK_URL ||
   process.env.LINKEDIN_REDIRECT_URI ||
-  "http://localhost:3000/helwan-alumni-portal/auth/linkedin/callback";
+  "http://localhost:5005/alumni-portal/auth/linkedin/callback";
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+
+// In-memory state store for OAuth (fallback if session doesn't work)
+const stateStore = new Map();
+const STATE_EXPIRY = 10 * 60 * 1000; // 10 minutes
 
 /**
  * Generate JWT token for user
@@ -41,8 +46,15 @@ const getLinkedInAuthUrl = asyncHandler(async (req, res) => {
 
     const state = Math.random().toString(36).substring(2, 15);
 
-    // Store state in session or database for security
-    req.session.linkedinState = state;
+    // Store state in session and in-memory store (fallback)
+    if (req.session) {
+      req.session.linkedinState = state;
+    }
+    // Also store in memory as fallback
+    stateStore.set(state, {
+      timestamp: Date.now(),
+      ip: req.ip
+    });
 
     // LinkedIn OAuth 2.0 scopes - Using OpenID Connect
     const scope = "openid profile email";
@@ -105,20 +117,37 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     // 🔴 END OF LOGGING
 
     // Verify state parameter for security
-    if (!req.session || state !== req.session.linkedinState) {
+    // Check both session and in-memory store
+    const sessionState = req.session?.linkedinState;
+    const memoryState = stateStore.get(state);
+    
+    // Clean up expired states
+    if (memoryState && Date.now() - memoryState.timestamp > STATE_EXPIRY) {
+      stateStore.delete(state);
+    }
+    
+    const isValidState = state === sessionState || (memoryState && Date.now() - memoryState.timestamp <= STATE_EXPIRY);
+    
+    if (!isValidState) {
       // 🔴 START OF LOGGING - ADDED THIS
       securityLogger.warn("LinkedIn state mismatch detected", {
         receivedState: state,
-        expectedState: req.session?.linkedinState,
+        expectedState: sessionState,
         hasSession: !!req.session,
+        hasMemoryState: !!memoryState,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
       // 🔴 END OF LOGGING
-      return res.status(400).json({
-        status: "error",
-        message: "Invalid state parameter",
-      });
+      return res.redirect(
+        "http://localhost:3000/helwan-alumni-portal/login?error=" +
+        encodeURIComponent("Invalid state parameter")
+      );
+    }
+    
+    // Clean up the state after validation
+    if (memoryState) {
+      stateStore.delete(state);
     }
 
     if (!code) {
@@ -129,10 +158,10 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         timestamp: new Date().toISOString(),
       });
       // 🔴 END OF LOGGING
-      return res.status(400).json({
-        status: "error",
-        message: "Authorization code not provided",
-      });
+      return res.redirect(
+        "http://localhost:3000/helwan-alumni-portal/login?error=" +
+        encodeURIComponent("Authorization code not provided")
+      );
     }
 
     // Exchange authorization code for access token
@@ -184,12 +213,13 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         "LinkedIn token exchange error:",
         tokenError.response?.data || tokenError.message
       );
-      return res.status(400).json({
-        status: "error",
-        message: "Failed to exchange authorization code for access token",
-        error:
-          tokenError.response?.data?.error_description || tokenError.message,
-      });
+      const errorMessage = tokenError.response?.data?.error_description ||
+        tokenError.message ||
+        "Failed to exchange authorization code for access token";
+      return res.redirect(
+        "http://localhost:3000/helwan-alumni-portal/login?error=" +
+        encodeURIComponent(errorMessage)
+      );
     }
 
     const { access_token, expires_in } = tokenResponse.data;
@@ -218,14 +248,29 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       });
       // 🔴 END OF LOGGING
 
-      userInfoResponse = await axios.get(
-        "https://api.linkedin.com/v2/userinfo",
-        {
-          headers: {
-            Authorization: `Bearer ${access_token}`,
-          },
-        }
-      );
+      // Try OpenID Connect userinfo endpoint first
+      try {
+        userInfoResponse = await axios.get(
+          "https://api.linkedin.com/v2/userinfo",
+          {
+            headers: {
+              Authorization: `Bearer ${access_token}`,
+              "Content-Type": "application/json",
+            },
+            timeout: 10000, // 10 second timeout
+          }
+        );
+      } catch (userInfoError) {
+        // If v2/userinfo fails, try the legacy endpoint
+        logger.warn("LinkedIn v2/userinfo failed, trying alternative endpoint", {
+          error: userInfoError.response?.data || userInfoError.message,
+          ip: req.ip,
+        });
+        
+        // Try alternative: use token response data if available, or try legacy endpoint
+        // For now, we'll extract what we can from the token response
+        throw userInfoError; // Re-throw to be caught by outer catch
+      }
 
       // 🔴 START OF LOGGING - ADDED THIS
       logger.debug("LinkedIn user info fetched successfully", {
@@ -240,6 +285,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       logger.error("LinkedIn user info fetch failed", {
         error: userInfoError.response?.data?.error || userInfoError.message,
         statusCode: userInfoError.response?.status,
+        errorData: userInfoError.response?.data,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
@@ -248,13 +294,15 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         "LinkedIn userinfo error:",
         userInfoError.response?.data || userInfoError.message
       );
-      return res.status(400).json({
-        status: "error",
-        message: "Failed to fetch user profile from LinkedIn",
-        error:
-          userInfoError.response?.data?.error_description ||
-          userInfoError.message,
-      });
+      
+      // Redirect to frontend with error message
+      const errorMessage = userInfoError.response?.data?.error_description ||
+        userInfoError.message ||
+        "Failed to fetch user profile from LinkedIn";
+      return res.redirect(
+        "http://localhost:3000/helwan-alumni-portal/login?error=" +
+        encodeURIComponent(errorMessage)
+      );
     }
 
     const userInfo = userInfoResponse.data;
@@ -339,10 +387,10 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         timestamp: new Date().toISOString(),
       });
       // 🔴 END OF LOGGING
-      return res.status(400).json({
-        status: "error",
-        message: "Could not retrieve email from LinkedIn",
-      });
+      return res.redirect(
+        "http://localhost:3000/helwan-alumni-portal/login?error=" +
+        encodeURIComponent("Could not retrieve email from LinkedIn. Please ensure your LinkedIn account has a verified email address.")
+      );
     }
 
     // Check if user already exists
@@ -441,11 +489,58 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       });
     }
 
+    // Create Graduate record if user is a graduate and doesn't have one
+    if (user["user-type"] === "graduate") {
+      const existingGraduate = await Graduate.findOne({ where: { graduate_id: user.id } });
+      if (!existingGraduate) {
+        // 🔴 START OF LOGGING - ADDED THIS
+        logger.info("Creating Graduate record for LinkedIn user", {
+          userId: user.id,
+          email: email.substring(0, 3) + "***",
+          isNewUser: !user.createdAt || (Date.now() - new Date(user.createdAt).getTime()) < 5000,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        });
+        // 🔴 END OF LOGGING
+
+        await Graduate.create({
+          graduate_id: user.id,
+          "status-to-login": "pending", // Requires admin approval
+          bio: headline || null, // Use LinkedIn headline as initial bio
+          "profile-picture-url": profilePictureUrl || null,
+        });
+      }
+    }
+
+    // Check status for staff (if existing user)
+    if (user["user-type"] === "staff") {
+      const staffRecord = await Staff.findOne({ where: { staff_id: user.id } });
+      if (staffRecord && staffRecord["status-to-login"] !== "active") {
+        return res.redirect(
+          "http://localhost:3000/helwan-alumni-portal/login?error=" +
+          encodeURIComponent("Your account is not activated yet. Please wait for admin approval.")
+        );
+      }
+    }
+
+    // Check status for graduate
+    if (user["user-type"] === "graduate") {
+      const graduateRecord = await Graduate.findOne({ where: { graduate_id: user.id } });
+      if (graduateRecord && graduateRecord["status-to-login"] !== "accepted") {
+        return res.redirect(
+          "http://localhost:3000/helwan-alumni-portal/login?error=" +
+          encodeURIComponent("Your account is under review. Please wait for admin approval to access the dashboard.")
+        );
+      }
+    }
+
     // Generate JWT token
     const token = generateToken(user.id);
 
-    // Clear the state from session
-    delete req.session.linkedinState;
+    // Clear the state from session and memory
+    if (req.session) {
+      delete req.session.linkedinState;
+    }
 
     // 🔴 START OF LOGGING - ADDED THIS
     logger.info("LinkedIn authentication successful", {
@@ -458,26 +553,16 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     });
     // 🔴 END OF LOGGING
 
-    res.status(200).json({
-      status: "success",
-      message: "LinkedIn authentication successful",
-      data: {
-        user: {
-          id: user.id,
-          "first-name": user["first-name"],
-          "last-name": user["last-name"],
-          email: user.email,
-          "user-type": user["user-type"],
-          profile_picture_url: user.profile_picture_url,
-          linkedin_profile_url: user.linkedin_profile_url,
-          linkedin_headline: user.linkedin_headline,
-          linkedin_location: user.linkedin_location,
-          auth_provider: user.auth_provider,
-          is_linkedin_verified: user.is_linkedin_verified,
-        },
-        token,
-      },
-    });
+    // Redirect to frontend with token (similar to Google OAuth)
+    const redirectUrl = new URL("http://localhost:3000/auth/linkedin/callback");
+    redirectUrl.searchParams.set("token", token);
+    redirectUrl.searchParams.set("id", user.id);
+    redirectUrl.searchParams.set("email", user.email);
+    redirectUrl.searchParams.set("userType", user["user-type"]);
+    redirectUrl.searchParams.set("firstName", user["first-name"]);
+    redirectUrl.searchParams.set("lastName", user["last-name"]);
+    
+    return res.redirect(redirectUrl.toString());
   } catch (error) {
     // 🔴 START OF LOGGING - ADDED THIS
     logger.error("LinkedIn callback processing failed", {
@@ -489,11 +574,13 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     // 🔴 END OF LOGGING
     console.error("LinkedIn callback error:", error);
     console.error("Error stack:", error.stack);
-    res.status(500).json({
-      status: "error",
-      message: "LinkedIn authentication failed",
-      error: error.message,
-    });
+    
+    // Redirect to frontend with error message
+    const errorMessage = error.message || "LinkedIn authentication failed";
+    return res.redirect(
+      "http://localhost:3000/helwan-alumni-portal/login?error=" +
+      encodeURIComponent(errorMessage)
+    );
   }
 });
 

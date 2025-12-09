@@ -181,7 +181,22 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const user = await User.findOne({ where: { email } });
 
-  if (!user || !(await bcrypt.compare(password, user["hashed-password"]))) {
+  if (!user) {
+    return res.status(401).json({ error: "Invalid email or password" });
+  }
+
+  // Check if user is OAuth-only (no password set)
+  if (!user["hashed-password"]) {
+    const authProvider = user["auth_provider"] || "OAuth";
+    return res.status(401).json({ 
+      error: `This account was created using ${authProvider} authentication. Please use the "${authProvider} Login" button to sign in.`,
+      requiresOAuth: true,
+      authProvider: authProvider
+    });
+  }
+
+  // Verify password for regular users
+  if (!(await bcrypt.compare(password, user["hashed-password"]))) {
     return res.status(401).json({ error: "Invalid email or password" });
   }
 

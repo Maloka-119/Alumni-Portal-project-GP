@@ -10,7 +10,7 @@ const { securityLogger, logger } = require("../utils/logger");
 // Limits login attempts to prevent brute force attacks
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
-  max: 4, // Allow maximum 5 failed login attempts
+  max: 4, // Allow maximum 4 failed login attempts
   message: {
     error: "Too many login attempts, please try again after 5 minutes.",
   },
@@ -22,6 +22,27 @@ const authLimiter = rateLimit({
       ip: req.ip, 
       url: req.originalUrl,
       type: 'auth',
+      timestamp: new Date().toISOString()
+    });
+    res.status(options.statusCode).json(options.message);
+  }
+});
+
+// More lenient rate limiter for OAuth endpoints (callback can be called multiple times)
+const oauthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Allow more requests for OAuth flow
+  message: {
+    error: "Too many OAuth requests, please try again after 15 minutes.",
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skipSuccessfulRequests: true, // Only count failed requests
+  handler: (req, res, next, options) => {
+    logger.warn("Rate limit exceeded - OAuth", { 
+      ip: req.ip, 
+      url: req.originalUrl,
+      type: 'oauth',
       timestamp: new Date().toISOString()
     });
     res.status(options.statusCode).json(options.message);
@@ -356,6 +377,7 @@ const hppProtection = hpp({
 // Export all security functions
 module.exports = {
   authLimiter,
+  oauthLimiter,
   generalLimiter,
   helmetConfig,
   hppProtection,

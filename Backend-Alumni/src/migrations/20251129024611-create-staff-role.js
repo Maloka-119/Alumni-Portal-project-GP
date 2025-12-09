@@ -5,6 +5,7 @@ module.exports = {
     await queryInterface.createTable('StaffRole', {
       staff_id: {
         type: Sequelize.INTEGER,
+        primaryKey: true,
         references: {
           model: 'Staff',
           key: 'staff_id'
@@ -14,6 +15,7 @@ module.exports = {
       },
       role_id: {
         type: Sequelize.INTEGER,
+        primaryKey: true,
         references: {
           model: 'Role',
           key: 'id'
@@ -29,11 +31,6 @@ module.exports = {
         type: Sequelize.DATE,
         defaultValue: Sequelize.NOW
       }
-    });
-
-    await queryInterface.addConstraint('StaffRole', {
-      fields: ['staff_id', 'role_id'],
-      type: 'primary key'
     });
   },
 

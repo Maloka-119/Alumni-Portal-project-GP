@@ -53,6 +53,14 @@ if (process.env.NODE_ENV !== "production") {
 
 // دوال مساعدة للتسجيل
 const securityLogger = {
+  // Add this method
+  warn: (message, meta = {}) => {
+    logger.warn(message, {
+      ...meta,
+      timestamp: new Date().toISOString()
+    });
+  },
+
   failedLogin: (ip, email, reason = "Invalid credentials") => {
     logger.warn("Failed login attempt", { 
       ip, 
