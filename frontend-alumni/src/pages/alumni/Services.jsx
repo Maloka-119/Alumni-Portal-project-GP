@@ -86,6 +86,7 @@ import { useTranslation } from "react-i18next";
 import API from "../../services/api";
 import { BookOpen, Book, X } from "lucide-react";
 import "./Services.css";
+import {  BookMarked, FileText, Archive } from "lucide-react";
 
 const Services = () => {
   const { t, i18n } = useTranslation();
@@ -107,14 +108,15 @@ const Services = () => {
       });
   }, []);
 
-  const getIcon = (pref) => {
-    switch (pref) {
-      case "e-library":
-        return <BookOpen size={40} />;
-      default:
-        return <Book size={40} />;
-    }
-  };
+
+
+const icons = [BookOpen, Book, BookMarked, FileText, Archive];
+
+const getRandomIcon = () => {
+  const Icon = icons[Math.floor(Math.random() * icons.length)];
+  return <Icon size={30} />;
+};
+
 
   if (loading) return <p>{t("loading")}...</p>;
 
@@ -128,7 +130,7 @@ const Services = () => {
         {services.map((service) => (
           <div className="service-card">
           <div className="service-card-content">
-            {getIcon(service.pref)}
+          {getRandomIcon()}
             <h3>{service.title}</h3>
             <span className="service-subtitle">{service.pref}</span>
           </div>
