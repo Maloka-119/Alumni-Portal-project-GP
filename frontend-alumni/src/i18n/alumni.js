@@ -2,6 +2,7 @@ const alumni = {
   en: {
     translation: {
       // ===== Main navigation =====
+      "uniservices":"University Services",
       "uniOpportunities": "University Opportunities",
       "filterByType": "Filter by type",
       "all": "All",
@@ -264,13 +265,19 @@ const alumni = {
             "loginFailed":"loginFailed",
             "Opportunities":"Opportunities",
               "All":"All",
+              "loading": "Loading",
+  "universityServices": "University Services",
            
 
   },
 
   ar: {
     translation: {
+
+      "loading": "جاري التحميل",
+  "universityServices": "الخدمات الجامعية",
       // ===== Main navigation =====
+      "uniservices":" خدمات الجامعة",
       "uniOpportunities": "فرص الجامعة",
       "filterByType": "تصفية حسب النوع",
       "all": "الكل",

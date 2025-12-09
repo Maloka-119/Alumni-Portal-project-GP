@@ -301,6 +301,7 @@ import FeedbackPage from './FeedbackPage.jsx';
 import PostSingle from './PostSingle.jsx';
 import ChatBox from './ChatBox.jsx';
 import Swal from "sweetalert2";
+import Services from './Services.jsx';
 
 const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
 
@@ -327,9 +328,9 @@ const sidebarSections = (darkMode, t) => [
     title: t("servicesSupport"),
     items: [
       { name: t("documentRequests"), key: "documents", icon: <File size={18}/> },
-      { name: t("consultations"), key: "consultations", icon: <MessageSquare size={18}/> },
+      { name: t("uniservices"), key: "uniservices", icon: < Clipboard size={18}/> },
       { name: t("faqHelp"), key: "faq", icon: <HelpCircle size={18}/> },
-      { name: t("feedbackSuggestions"), key: "feedback", icon: <Clipboard size={18}/> }
+      { name: t("feedbackSuggestions"), key: "feedback", icon: < MessageSquare size={18}/> }
     ]
   },
   {
@@ -563,7 +564,7 @@ const Dashboard = ({ setUser }) => {
             <Route path="friends/:userId" element={<Accountgrad darkMode={darkMode}/>} />
             <Route path="posts/:postId" element={<PostSingle />} />
             <Route path="documents" element={<EmptyPage title="Document Requests" />} />
-            <Route path="consultations" element={<EmptyPage title="Consultation Requests" />} />
+            <Route path="uniservices" element={<Services />} />
             <Route path="feedback" element={<FeedbackPage darkMode={darkMode}/>} />
 
             {/* Chat Page Wrapper */}
