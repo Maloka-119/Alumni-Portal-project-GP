@@ -116,8 +116,8 @@ const UniversityServicesAdmin = ({ currentUser }) => {
 
   return (
     <div className="usp-manage">
-      <div className="usp-header">
-        <h2 className="page-title">{t("University Services")}</h2>
+      <div className="faq-header-top">
+        <h1 className="page-title">{t("University Services")}</h1>
         {perm.canAdd && (
           <button className="add-btn" onClick={() => setFormOpen(!formOpen)}>
           {formOpen ? <X size={18} /> : <Plus size={18} />}
