@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import API from "../services/api";
 import './ResetPassword.css'
 
 export default function ResetPassword() {
@@ -12,10 +12,10 @@ export default function ResetPassword() {
     e.preventDefault();
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/reset-password", {
+      const res = await API.post("/reset-password", {
         email,
-        emailCode: code,
-        password: newPassword,
+        code,
+        newPassword,
       });
 
       setMessage("Password updated successfully!");
