@@ -6,16 +6,17 @@ const Role = require("../models/Role");
 const Permission = require("../models/Permission");
 const RolePermission = require("../models/RolePermission");
 const checkStaffPermission = require("../utils/permissionChecker");
-const aes = require("../utils/aes"); 
+const aes = require("../utils/aes");
 
 const { logger, securityLogger } = require("../utils/logger");
-
 
 // get all staff with roles
 const getAllStaff = async (req, res) => {
   logger.info("🟢 ----- [getAllStaff] START -----", {
     timestamp: new Date().toISOString(),
-    user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined",
+    user: req.user
+      ? { id: req.user.id, type: req.user["user-type"] }
+      : "undefined",
   });
 
   try {
@@ -86,7 +87,9 @@ const getAllStaff = async (req, res) => {
       const obj = s.toJSON();
 
       if (obj.User?.["national-id"]) {
-        obj.User["national-id"] = aes.decryptNationalId(obj.User["national-id"]);
+        obj.User["national-id"] = aes.decryptNationalId(
+          obj.User["national-id"]
+        );
       }
 
       return obj;
@@ -109,7 +112,9 @@ const getAllStaff = async (req, res) => {
     logger.error("❌ [getAllStaff] Unexpected Error", {
       error: err.message,
       stack: err.stack.substring(0, 200),
-      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined",
+      user: req.user
+        ? { id: req.user.id, type: req.user["user-type"] }
+        : "undefined",
     });
 
     console.error(err);
@@ -279,12 +284,13 @@ const updateStaffStatus = async (req, res) => {
   }
 };
 
-
 // get staff profile (staff can only access their own profile)
 const getStaffProfile = async (req, res) => {
   logger.info("----- [getStaffProfile] START -----", {
     timestamp: new Date().toISOString(),
-    user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined",
+    user: req.user
+      ? { id: req.user.id, type: req.user["user-type"] }
+      : "undefined",
   });
 
   try {
@@ -310,11 +316,17 @@ const getStaffProfile = async (req, res) => {
 
     // Staff يشوف بروفايله الشخصي فقط (بدون صلاحية)
     if (req.user["user-type"] === "staff") {
-      logger.info("Staff accessing own profile (no permission needed)", { userId });
+      logger.info("Staff accessing own profile (no permission needed)", {
+        userId,
+      });
     }
     // Admin يحتاج صلاحية
     else if (req.user["user-type"] === "admin") {
-      const hasPermission = await checkStaffPermission(req.user.id, "Staff management", "view");
+      const hasPermission = await checkStaffPermission(
+        req.user.id,
+        "Staff management",
+        "view"
+      );
       if (!hasPermission) {
         logger.warn("ADMIN PERMISSION DENIED in getStaffProfile", {
           userId: req.user.id,
@@ -322,7 +334,8 @@ const getStaffProfile = async (req, res) => {
         });
         return res.status(403).json({
           status: "error",
-          message: "Access denied. You don't have permission to view staff profiles.",
+          message:
+            "Access denied. You don't have permission to view staff profiles.",
         });
       }
       logger.info("Admin permission check passed", { userId: req.user.id });
@@ -337,7 +350,7 @@ const getStaffProfile = async (req, res) => {
             "id",
             "first-name",
             "last-name",
-            "national-id",   // مشفر
+            "national-id", // مشفر
             "email",
             "phone-number",
             "birth-date",
@@ -415,7 +428,10 @@ const getStaffProfile = async (req, res) => {
     logger.info("Staff profile data formatted successfully", {
       userId,
       rolesCount: profileData.roles.length,
-      permissionsCount: profileData.roles.reduce((sum, role) => sum + role.permissions.length, 0),
+      permissionsCount: profileData.roles.reduce(
+        (sum, role) => sum + role.permissions.length,
+        0
+      ),
       nationalIdDecrypted: !!decryptedNationalId, // لا نسجل الرقم نفسه
     });
 
@@ -430,7 +446,9 @@ const getStaffProfile = async (req, res) => {
     logger.error(" [getStaffProfile] Unexpected Error", {
       error: error.message,
       stack: error.stack?.substring(0, 300),
-      user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined",
+      user: req.user
+        ? { id: req.user.id, type: req.user["user-type"] }
+        : "undefined",
     });
 
     console.error("Error fetching staff profile:", error);
@@ -441,5 +459,5 @@ const getStaffProfile = async (req, res) => {
   }
 };
 
-module.exports = { getStaffProfile };
+// module.exports = { getStaffProfile };
 module.exports = { getAllStaff, updateStaffStatus, getStaffProfile };
