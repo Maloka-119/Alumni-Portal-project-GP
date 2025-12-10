@@ -132,6 +132,8 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <div className="page-body">
+
         <section className="about-section">
           <p>
             Connect with graduates, explore opportunities, and stay updated with
@@ -279,8 +281,10 @@ export default function LandingPage() {
             </button>
           </div>
         </div>
+        
 
         <Footer ref={footerRef} />
+        </div>
       </main>
     </div>
   );
