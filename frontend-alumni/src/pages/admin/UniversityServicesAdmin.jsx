@@ -43,10 +43,10 @@ const UniversityServicesAdmin = ({ currentUser }) => {
       let res;
       if (editingId) {
         res = await API.put(`/university-services/${editingId}`, form);
-        console.log("UPDATE service response:", res);
+        // console.log("UPDATE service response:", res);
       } else {
         res = await API.post("/university-services", form);
-        console.log("CREATE service response:", res);
+        // console.log("CREATE service response:", res);
       }
 
       if (res.data.success) {
@@ -61,7 +61,7 @@ const UniversityServicesAdmin = ({ currentUser }) => {
         fetchServices();
       }
     } catch (error) {
-      console.log("SUBMIT service error:", error);
+      // console.log("SUBMIT service error:", error);
       Swal.fire(t("Error!"), t("Something went wrong"), "error");
     }
   };
