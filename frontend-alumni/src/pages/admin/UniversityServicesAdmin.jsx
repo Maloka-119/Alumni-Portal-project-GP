@@ -15,7 +15,8 @@ const UniversityServicesAdmin = ({ currentUser }) => {
 
   const perm = currentUser?.userType === "admin"
     ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
-    : getPermission("consultationManagement", currentUser) || { canView: false, canAdd: false, canEdit: false, canDelete: false };
+    : getPermission("Services management", currentUser) || { canView: false, canAdd: false, canEdit: false, canDelete: false };
+    // console.log("Permissions:", getPermission("servicesManagement", currentUser));
 
   useEffect(() => {
     if (perm.canView) fetchServices();
@@ -24,7 +25,7 @@ const UniversityServicesAdmin = ({ currentUser }) => {
   const fetchServices = async () => {
     try {
       const res = await API.get("/university-services");
-      console.log("GET services response:", res);
+      // console.log("GET services response:", res);
       
       // الوصول للبيانات الحقيقية من داخل res.data.data
       const data = res.data.data;

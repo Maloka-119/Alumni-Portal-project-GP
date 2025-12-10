@@ -103,10 +103,10 @@ export const modulesConfig = [
   { id: 10, nameKey: "documentRequestsManagement", path: "documentManagement", component: () => <EmptyPage title="Document Requests" />, permKey: "Document Requests management", icon: <FileText size={16} /> },
   { 
     id: 11, 
-    nameKey: "consultationManagement", // الاسم في الباك يفضل زي ما هو
+    nameKey: "servicesManagement", // الاسم في الباك يفضل زي ما هو
     path: "universityServices", // المسار الجديد في الفرونت
     component: UniversityServicesAdmin, // الصفحة الجديدة
-    permKey: "University Services management", // صلاحية التحكم
+    permKey: "Services management", // صلاحية التحكم
     icon: <Clipboard size={16} /> // أيقونة مناسبة
   },
   

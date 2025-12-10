@@ -421,6 +421,7 @@ const RolesManagement = ({ currentUser }) => {
         case "FAQ management": return ["view", "add", "edit", "delete"];
         case "Graduates Feedback": return ["view"];
         case "Roles and Permissions Management": return ["view", "add", "edit", "delete"];
+        case "Services management": return ["view", "add", "edit", "delete"];
         default: return ["view"];
       }
     })();

@@ -35,6 +35,7 @@ const toggleLanguage = () => {
         const res = await API.get("/staff/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
+        // console.log("Profile response:", res);
         if (res.data.status === "success") {
           const staffProfile = { ...res.data.data, roles: res.data.data.roles || [] };
           setCurrentUser(staffProfile);
