@@ -1,4 +1,4 @@
-
+import { useNavigate } from "react-router-dom";
 import PROFILE from "./PROFILE.jpeg";
 import React, { useState, useEffect } from 'react';
 import './AdminPostsPage.css';
@@ -12,6 +12,7 @@ import { getPermission } from "../../components/usePermission";
 
 const AdminPostsPage = ({ currentUser }) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
 
   const [posts, setPosts] = useState([]);
   const [types, setTypes] = useState([]);
@@ -442,7 +443,17 @@ cancelButtonText: t("Cancel"),
     />
   
     <div className="comment-text">
-      <strong>{comment.userName}</strong> 
+    <strong
+  style={{ cursor: ["admin", "staff"].includes(comment.author?.["user-type"]) ? "default" : "pointer", color: "#484c50" }}
+  onClick={() => {
+    if (!["admin", "staff"].includes(comment.author?.["user-type"])) {
+      navigate(`/helwan-alumni-portal/admin/dashboard/graduateprofile/${comment.author?.id}`);
+    }
+  }}
+>
+  {comment.userName}
+</strong>
+ 
       {comment.content}
     </div>
   
