@@ -58,12 +58,16 @@ const general = {
        "Helwan Alumni Portal":"Helwan Alumni Portal",
        "capitalUniversity":"Capital University",
        "alreadyHaveAccount": "Already have an account? Login",
+       "Sign up with LinkedIn": "Sign up with LinkedIn",
+  "Sign in with LinkedIn": "Sign in with LinkedIn",
 
       
       }
     },
     ar: {
       translation: {
+        "Sign up with LinkedIn": "التسجيل عبر لينكدإن",
+  "Sign in with LinkedIn": "تسجيل الدخول عبر لينكدإن",
         "alreadyHaveAccount_ar": "لديك حساب بالفعل؟ تسجيل الدخول",
         "capitalUniversity":"جامعه العاصمه",
         "Capital Alumni Portal": "بوابه خريجين جامعه العاصمه",

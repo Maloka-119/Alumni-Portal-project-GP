@@ -5,7 +5,7 @@ import "./LinkedInSignUp.css";
 import "./Register.css"; // Import Register.css for modal styles
 
 const LinkedInSignUp = () => {
-  const { t } = useTranslation();
+  const { t  } = useTranslation();
   const [showNidModal, setShowNidModal] = useState(false);
   const [linkedInNationalId, setLinkedInNationalId] = useState("");
 
@@ -63,7 +63,7 @@ const LinkedInSignUp = () => {
         onClick={handleLinkedInLogin}
       >
         <FaLinkedin size={18} color="#0A66C2" />
-        Sign up with LinkedIn
+        {t("Sign up with LinkedIn")}
       </button>
 
       {/* National ID Modal (same as Google signup) */}
