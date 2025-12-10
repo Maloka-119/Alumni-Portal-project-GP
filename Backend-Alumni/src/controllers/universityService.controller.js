@@ -23,7 +23,9 @@ const getAllServices = asyncHandler(async (req, res) => {
     order: [["title", "ASC"]],
   });
 
-  logger.info("Active university services retrieved", { count: services.length });
+  logger.info("Active university services retrieved", {
+    count: services.length,
+  });
 
   res.status(200).json({
     success: true,
@@ -43,21 +45,24 @@ const getAllServicesAdmin = asyncHandler(async (req, res) => {
     userType: user["user-type"],
   });
 
-  // Staff needs explicit "view" permission
+  // Permission check based on user type
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
-      "University Services",
+      "Services management", // تم التغيير من "University Services" إلى "Services management"
       "view"
     );
 
     if (!hasPermission) {
-      logger.warn("Staff denied access - missing view permission for University Services", {
-        userId: user.id,
-      });
+      logger.warn(
+        "Staff denied access - missing view permission for Services management",
+        {
+          userId: user.id,
+        }
+      );
       return res.status(403).json({
         success: false,
-        message: "You do not have permission to view university services.",
+        message: "You do not have permission to view services.",
       });
     }
   }
@@ -98,16 +103,16 @@ const createService = asyncHandler(async (req, res) => {
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
-      "University Services",
+      "Services management", // تم التغيير
       "add"
     );
     if (!hasPermission) {
-      logger.warn("Staff denied - no add permission for University Services", {
+      logger.warn("Staff denied - no add permission for Services management", {
         userId: user.id,
       });
       return res.status(403).json({
         success: false,
-        message: "You do not have permission to add university services.",
+        message: "You do not have permission to add services.",
       });
     }
   }
@@ -169,16 +174,16 @@ const updateService = asyncHandler(async (req, res) => {
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
-      "University Services",
+      "Services management", // تم التغيير
       "edit"
     );
     if (!hasPermission) {
-      logger.warn("Staff denied - no edit permission for University Services", {
+      logger.warn("Staff denied - no edit permission for Services management", {
         userId: user.id,
       });
       return res.status(403).json({
         success: false,
-        message: "You do not have permission to edit university services.",
+        message: "You do not have permission to edit services.",
       });
     }
   }
@@ -198,8 +203,6 @@ const updateService = asyncHandler(async (req, res) => {
     pref: service.pref,
     details: service.details,
   };
-
-
 
   // Update only provided fields
   if (title !== undefined) service.title = title.trim();
@@ -259,16 +262,19 @@ const deleteService = asyncHandler(async (req, res) => {
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
-      "University Services",
+      "Services management", // تم التغيير
       "delete"
     );
     if (!hasPermission) {
-      logger.warn("Staff denied - no delete permission for University Services", {
-        userId: user.id,
-      });
+      logger.warn(
+        "Staff denied - no delete permission for Services management",
+        {
+          userId: user.id,
+        }
+      );
       return res.status(403).json({
         success: false,
-        message: "You do not have permission to delete university services.",
+        message: "You do not have permission to delete services.",
       });
     }
   }
@@ -304,10 +310,75 @@ const deleteService = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Restore soft deleted service
+// @access  Admin + Staff (with edit permission)
+// @middleware protect
+const restoreService = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const { id } = req.params;
+
+  logger.info("Attempting to restore soft deleted university service", {
+    serviceId: id,
+    userId: user.id,
+    userType: user["user-type"],
+  });
+
+  if (user["user-type"] === "staff") {
+    const hasPermission = await checkStaffPermission(
+      user.id,
+      "Services management",
+      "edit"
+    );
+    if (!hasPermission) {
+      logger.warn("Staff denied - no edit permission for Services management", {
+        userId: user.id,
+      });
+      return res.status(403).json({
+        success: false,
+        message: "You do not have permission to restore services.",
+      });
+    }
+  }
+
+  const service = await UniversityService.findByPk(id, { paranoid: false });
+  if (!service) {
+    logger.warn("University service not found for restoration", {
+      serviceId: id,
+    });
+    return res.status(404).json({
+      success: false,
+      message: "Service not found.",
+    });
+  }
+
+  if (!service.deletedAt) {
+    return res.status(400).json({
+      success: false,
+      message: "Service is not deleted.",
+    });
+  }
+
+  await service.restore();
+
+  logger.info("University service restored successfully", {
+    serviceId: service.id,
+    userId: user.id,
+    userType: user["user-type"],
+    title: service.title,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Service has been successfully restored.",
+    data: service,
+  });
+});
+
 module.exports = {
   getAllServices,
   getAllServicesAdmin,
   createService,
   updateService,
   deleteService,
+  restoreService,
 };

@@ -53,25 +53,25 @@ app.use(xssProtection);
 app.use(sanitizeInput);
 
 // 5) Sessions
-app.use(session({
-  secret: process.env.SESSION_SECRET || "mysecret",
-  resave: false,
-  saveUninitialized: true,
-  cookie: {
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
-    httpOnly: true,
-    sameSite: 'lax', // Allows cross-site requests for OAuth
-    secure: process.env.NODE_ENV === "production"
-  }
-}));
-
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "mysecret",
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      httpOnly: true,
+      sameSite: "lax", // Allows cross-site requests for OAuth
+      secure: process.env.NODE_ENV === "production",
+    },
+  })
+);
 
 // 6) Rate Limiter (General) — هنا المكان الصحيح
 app.use(generalLimiter);
 
 // 7) Logger
 app.use(morgan("dev"));
-
 
 app.get("/health/detailed", async (req, res) => {
   const dbStatus = await checkDatabaseHealth();
@@ -89,7 +89,6 @@ app.get("/health/detailed", async (req, res) => {
 // ==================================================
 // ⚙️ الإعدادات الأساسية للتطبيق
 // ==================================================
-
 
 // ==================================================
 // 🌐 WebSocket setup
@@ -167,7 +166,6 @@ app.use("/alumni-portal/feedbacks", feedbackRoutes);
 const facultiesRoute = require("./routes/faculties.route.js");
 app.use("/alumni-portal/faculties", facultiesRoute);
 
-
 const googleRoute = require("./routes/googleAuth.route.js");
 app.use("/alumni-portal/auth/google", googleRoute);
 
@@ -195,7 +193,7 @@ const ensurePermissionsSeeded = async () => {
     "Graduates posts management",
     "Portal Reports",
     "Document Requests management",
-    "Consultation management",
+    "Services management",
     "FAQ management",
     "Graduates Feedback",
     "Roles and Permissions Management",
