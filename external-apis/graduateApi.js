@@ -107,6 +107,12 @@ const graduates = [
     faculty: "Faculty of Engineering (Helwan)", // English
     "graduation-year": 2020,
   },
+  {
+    nationalId: "30208281234594",
+    "birth-date": "2004-08-28",
+    faculty: "Faculty of Engineering (Helwan)", // English
+    "graduation-year": 2022,
+  },
 ];
 
 // GET graduate by nationalId
