@@ -124,6 +124,8 @@ const DocumentRequest = sequelize.define(
 // العلاقات
 DocumentRequest.belongsTo(Graduate, { foreignKey: "graduate_id" });
 DocumentRequest.belongsTo(Staff, { foreignKey: "staff_id" });
+Graduate.hasMany(DocumentRequest, { foreignKey: "graduate_id" });
+Staff.hasMany(DocumentRequest, { foreignKey: "staff_id" });
 
 // 🔧 هوك قبل الإنشاء علشان نعمل request_number
 DocumentRequest.beforeCreate(async (documentRequest, options) => {
@@ -152,15 +154,20 @@ DocumentRequest.beforeCreate(async (documentRequest, options) => {
   }
 
   // نحسب تاريخ الانتهاء المتوقع
-  const documentType = require("../constants/documentTypes").getDocumentByCode(
-    documentRequest["request-type"]
-  );
-  if (documentType && documentType.base_processing_days) {
-    const expectedDate = new Date();
-    expectedDate.setDate(
-      expectedDate.getDate() + documentType.base_processing_days
+  try {
+    const documentType = require("../constants/documentTypes").getDocumentByCode(
+      documentRequest["request-type"]
     );
-    documentRequest.expected_completion_date = expectedDate;
+    if (documentType && documentType.base_processing_days) {
+      const expectedDate = new Date();
+      expectedDate.setDate(
+        expectedDate.getDate() + documentType.base_processing_days
+      );
+      documentRequest.expected_completion_date = expectedDate;
+    }
+  } catch (err) {
+    console.error("Error in beforeCreate hook when getting document type:", err);
+    // Don't throw - let the request continue, expected_completion_date will be null
   }
 });
 

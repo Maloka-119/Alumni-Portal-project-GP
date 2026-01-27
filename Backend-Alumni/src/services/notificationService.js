@@ -228,6 +228,66 @@ const notifyRoleUpdate = async (receiverId, adminId) => {
   });
 };
 
+/**
+ * Create notification for document request status changes
+ */
+const notifyDocumentRequestStatusChanged = async (graduateId, staffId, requestNumber, oldStatus, newStatus, documentTypeName, notes = null) => {
+  const statusMessages = {
+    'pending': 'pending',
+    'under_review': 'under review',
+    'approved': 'approved',
+    'ready_for_pickup': 'ready for pickup',
+    'completed': 'completed',
+    'cancelled': 'cancelled'
+  };
+
+  const statusMessagesAr = {
+    'pending': 'قيد الانتظار',
+    'under_review': 'قيد المراجعة',
+    'approved': 'مقبول',
+    'ready_for_pickup': 'جاهز للاستلام',
+    'completed': 'تم الاستلام',
+    'cancelled': 'ملغي'
+  };
+
+  const staffName = staffId ? await getSenderName(staffId) : 'System';
+  const statusText = statusMessages[newStatus] || newStatus;
+  const statusTextAr = statusMessagesAr[newStatus] || newStatus;
+  
+  // Create bilingual message
+  const message = notes 
+    ? `Your document request ${requestNumber} (${documentTypeName}) status changed to ${statusText}. Notes: ${notes}`
+    : `Your document request ${requestNumber} (${documentTypeName}) status changed to ${statusText}`;
+  
+  const messageAr = notes
+    ? `تم تغيير حالة طلب الوثيقة ${requestNumber} (${documentTypeName}) إلى ${statusTextAr}. ملاحظات: ${notes}`
+    : `تم تغيير حالة طلب الوثيقة ${requestNumber} (${documentTypeName}) إلى ${statusTextAr}`;
+
+  // Determine notification type based on status
+  let notificationType = 'document_request_status_changed';
+  if (newStatus === 'approved') {
+    notificationType = 'document_request_approved';
+  } else if (newStatus === 'ready_for_pickup') {
+    notificationType = 'document_request_ready';
+  } else if (newStatus === 'completed') {
+    notificationType = 'document_request_completed';
+  } else if (newStatus === 'cancelled') {
+    notificationType = 'document_request_cancelled';
+  }
+
+  return createNotification({
+    receiverId: graduateId,
+    senderId: staffId || null,
+    type: notificationType,
+    message: message, // You can enhance this to support i18n
+    navigation: {
+      screen: 'document-requests',
+      requestId: requestNumber,
+      action: 'view'
+    }
+  });
+};
+
 module.exports = {
   createNotification,
   getSenderName,
@@ -241,6 +301,7 @@ module.exports = {
   notifyCommentDeleted,
   notifyMessageReceived,
   notifyAnnouncement,
-  notifyRoleUpdate
+  notifyRoleUpdate,
+  notifyDocumentRequestStatusChanged
 };
 

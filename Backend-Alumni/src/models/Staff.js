@@ -24,4 +24,7 @@ const Staff = sequelize.define(
 Staff.belongsTo(User, { foreignKey: "staff_id" });
 User.hasOne(Staff, { foreignKey: "staff_id" });
 
+// Add association with DocumentRequest (lazy load to avoid circular dependency)
+// This will be set up when DocumentRequest model is loaded
+
 module.exports = Staff;

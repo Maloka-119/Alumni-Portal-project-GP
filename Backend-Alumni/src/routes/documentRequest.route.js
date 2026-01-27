@@ -18,4 +18,19 @@ router.get(
   documentRequestController.getMyDocumentRequests
 );
 
+// ==================== STAFF/ADMIN ROUTES ====================
+// Get all document requests (Staff/Admin only)
+router.get(
+  "/requests",
+  protect,
+  documentRequestController.getAllDocumentRequests
+);
+
+// Update document request status (Staff/Admin only)
+router.put(
+  "/requests/:requestId/status",
+  protect,
+  documentRequestController.updateDocumentRequestStatus
+);
+
 module.exports = router;

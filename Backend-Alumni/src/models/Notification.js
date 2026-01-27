@@ -28,7 +28,12 @@ const Notification = sequelize.define('Notification', {
       'delete_comment',
       'message',
       'announcement',
-      'role_update'
+      'role_update',
+      'document_request_status_changed',
+      'document_request_approved',
+      'document_request_ready',
+      'document_request_completed',
+      'document_request_cancelled'
     ),
     allowNull: false
   },
