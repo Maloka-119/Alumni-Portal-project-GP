@@ -1,7 +1,0 @@
-{
-    "total_rows": 17971,
-    "training_rows": 14376,
-    "validation_rows": 3595,
-    "features": 12000,
-    "vectorizer_file": "tfidf_vectorizer.joblib"
-}

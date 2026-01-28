@@ -172,11 +172,15 @@ app.use("/alumni-portal/auth/google", googleRoute);
 const serviceRoutes = require("./routes/universityService.route.js");
 app.use("/alumni-portal/university-services", serviceRoutes);
 
+const documentTypeRoutes = require("./routes/documentType.routes.js");
+app.use("/alumni-portal/documents-types", documentTypeRoutes);
 // بعد graduateRoutes
 const documentRequestRoutes = require("./routes/documentRequest.route");
 app.use("/alumni-portal/documents", documentRequestRoutes);
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
+
 
 // Error Handler
 app.use(errorHandler);
