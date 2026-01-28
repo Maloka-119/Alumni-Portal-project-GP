@@ -9,6 +9,7 @@ const PostImage = require("../models/PostImage");
 const Staff = require("../models/Staff");
 const Friendship = require("../models/Friendship");
 const checkStaffPermission = require("../utils/permissionChecker");
+const { isContentBad } = require("../utils/moderation"); 
 
 // 🔴 START OF LOGGER IMPORT - ADDED THIS
 const { logger, securityLogger } = require("../utils/logger");
@@ -68,19 +69,15 @@ const getPostLikeInfo = async (postId, userId = null) => {
     throw error;
   }
 };
-
 const createPost = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
   logger.info("🟢 ----- [createPost] START -----", {
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Request details", {
       contentType: req.headers["content-type"],
       authHeader: req.headers["authorization"] ? "Present" : "Missing",
@@ -88,153 +85,78 @@ const createPost = async (req, res) => {
       body: req.body,
       filesCount: req.files ? req.files.length : 0,
     });
-    // 🔴 END OF LOGGING
 
-    const { category, content, groupId, inLanding, type, postAsAdmin } =
-      req.body;
+    const { category, content, groupId, inLanding, type, postAsAdmin } = req.body;
     const userId = req.user?.id;
 
-    // 🔍 LOG 1: تحقق من وجود req.user أساساً
     if (!req.user) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("CRITICAL: req.user is UNDEFINED in createPost");
-      // 🔴 END OF LOGGING
-      return res.status(403).json({
-        status: "fail",
-        message: "User not authenticated",
-      });
+      return res.status(403).json({ status: "fail", message: "User not authenticated" });
     }
 
-    // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff", "graduate"];
     const userType = req.user["user-type"];
 
-    // 2. لو مش من النوع المسموح → ارفض
     if (!userId || !allowedUserTypes.includes(userType)) {
-      // 🔴 START OF LOGGING - ADDED THIS
-      logger.warn("ACCESS DENIED in createPost", {
-        userId: !!userId,
-        userType: userType,
-        allowedTypes: allowedUserTypes,
-      });
-      // 🔴 END OF LOGGING
-      return res.status(403).json({
-        status: "fail",
-        message: "Access denied. Invalid user type or missing user ID.",
-      });
+      logger.warn("ACCESS DENIED in createPost", { userId: !!userId, userType, allowedTypes: allowedUserTypes });
+      return res.status(403).json({ status: "fail", message: "Access denied. Invalid user type or missing user ID." });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("User type check passed", { userId, userType });
-    // 🔴 END OF LOGGING
 
-    // 3. لو staff → تحقق من الصلاحية
     if (userType === "staff") {
-      const hasPermission = await checkStaffPermission(
-        userId,
-        "Community Post's management",
-        "add"
-      );
-
+      const hasPermission = await checkStaffPermission(userId, "Community Post's management", "add");
       if (!hasPermission) {
-        // 🔴 START OF LOGGING - ADDED THIS
-        logger.warn("STAFF PERMISSION DENIED in createPost", {
-          userId,
-          requiredPermission: "Community Post's management",
-          requiredAction: "add",
-        });
-        // 🔴 END OF LOGGING
-        return res.status(403).json({
-          status: "fail",
-          message: "Access denied. You don't have permission to create posts.",
-        });
+        logger.warn("STAFF PERMISSION DENIED in createPost", { userId });
+        return res.status(403).json({ status: "fail", message: "Access denied. You don't have permission to create posts." });
       }
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.info("Staff permission check passed", { userId });
-      // 🔴 END OF LOGGING
     }
 
-    // 4. لو graduate → تحقق من الحالة
     if (userType === "graduate") {
-      const graduate = await Graduate.findOne({
-        where: { graduate_id: userId },
-      });
-
+      const graduate = await Graduate.findOne({ where: { graduate_id: userId } });
       if (!graduate) {
-        // 🔴 START OF LOGGING - ADDED THIS
         logger.error("GRADUATE RECORD NOT FOUND in createPost", { userId });
-        // 🔴 END OF LOGGING
-        return res.status(404).json({
-          status: "fail",
-          message: "Graduate record not found",
-        });
+        return res.status(404).json({ status: "fail", message: "Graduate record not found" });
       }
-
       if (graduate.status !== "active") {
-        // 🔴 START OF LOGGING - ADDED THIS
-        logger.warn("GRADUATE ACCOUNT INACTIVE in createPost", {
-          userId,
-          currentStatus: graduate.status,
-          requiredStatus: "active",
-        });
-        // 🔴 END OF LOGGING
+        logger.warn("GRADUATE ACCOUNT INACTIVE in createPost", { userId, currentStatus: graduate.status });
         return res.status(403).json({
           status: "fail",
-          message:
-            "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
+          message: "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
         });
       }
-      // 🔴 START OF LOGGING - ADDED THIS
-      logger.info("Graduate status check passed", {
-        userId,
-        status: graduate.status,
+      logger.info("Graduate status check passed", { userId, status: graduate.status });
+    }
+
+    // 🛑 AI Moderation: التحقق من المحتوى قبل الحفظ
+    const flagged = await isContentBad(content);
+    if (flagged) {
+      logger.warn("Post content flagged by AI moderation", { userId, content: content?.substring(0, 100) });
+      return res.status(400).json({
+        status: "fail",
+        message: "Your post contains inappropriate content and cannot be published.",
       });
-      // 🔴 END OF LOGGING
     }
 
     const user = await User.findByPk(userId);
     if (!user) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.error("USER NOT FOUND IN DATABASE in createPost", { userId });
-      // 🔴 END OF LOGGING
-      return res.status(404).json({
-        status: "error",
-        message: "User not found",
-      });
+      return res.status(404).json({ status: "error", message: "User not found" });
     }
 
-    // تحديد author-id بناءً على الصلاحيات
     let authorId = userId;
     if (postAsAdmin && user["user-type"] === "staff") {
-      const adminUser = await User.findOne({
-        where: { "user-type": "admin" },
-        attributes: ["id"],
-      });
-
+      const adminUser = await User.findOne({ where: { "user-type": "admin" }, attributes: ["id"] });
       if (adminUser) {
         authorId = adminUser.id;
-        // 🔴 START OF LOGGING - ADDED THIS
-        logger.info("Staff posting as Admin", {
-          staffId: userId,
-          adminId: authorId,
-        });
-        // 🔴 END OF LOGGING
+        logger.info("Staff posting as Admin", { staffId: userId, adminId: authorId });
       } else {
-        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("No admin user found, posting as staff", { userId });
-        // 🔴 END OF LOGGING
       }
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("Creating post", {
-      authorId,
-      category: category || type || "General",
-      contentLength: content?.length || 0,
-      groupId,
-      inLanding,
-    });
-    // 🔴 END OF LOGGING
+    logger.info("Creating post", { authorId, category: category || type || "General", contentLength: content?.length || 0, groupId, inLanding });
 
     const newPost = await Post.create({
       category: category || type || "General",
@@ -244,70 +166,22 @@ const createPost = async (req, res) => {
       "in-landing": inLanding || false,
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("Post created successfully", {
-      postId: newPost.post_id,
-      authorId,
-    });
-    // 🔴 END OF LOGGING
-
-    // 🖼️ رفع الصور
     if (req.files && Array.isArray(req.files) && req.files.length > 0) {
-      // 🔴 START OF LOGGING - ADDED THIS
-      logger.info(`Processing ${req.files.length} file(s) for post`, {
-        postId: newPost.post_id,
-      });
-      // 🔴 END OF LOGGING
-
-      try {
-        const imagesData = req.files.map((file) => ({
-          "post-id": newPost.post_id,
-          "image-url": file.path || file.url || file.location || null,
-        }));
-
-        await PostImage.bulkCreate(imagesData);
-        // 🔴 START OF LOGGING - ADDED THIS
-        logger.info("Images saved to PostImage table", {
-          postId: newPost.post_id,
-          imagesCount: imagesData.length,
-        });
-        // 🔴 END OF LOGGING
-      } catch (imgErr) {
-        // 🔴 START OF LOGGING - ADDED THIS
-        logger.error("Error saving images to DB", {
-          postId: newPost.post_id,
-          error: imgErr.message,
-        });
-        // 🔴 END OF LOGGING
-      }
+      logger.info(`Processing ${req.files.length} file(s) for post`, { postId: newPost.post_id });
+      const imagesData = req.files.map((file) => ({
+        "post-id": newPost.post_id,
+        "image-url": file.path || file.url || file.location || null,
+      }));
+      await PostImage.bulkCreate(imagesData);
+      logger.info("Images saved to PostImage table", { postId: newPost.post_id, imagesCount: imagesData.length });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [createPost] END SUCCESS -----", {
-      postId: newPost.post_id,
-    });
-    // 🔴 END OF LOGGING
+    logger.info("🟢 ----- [createPost] END SUCCESS -----", { postId: newPost.post_id });
 
-    return res.status(201).json({
-      status: "success",
-      message: "Post created successfully",
-      post: newPost,
-    });
+    return res.status(201).json({ status: "success", message: "Post created successfully", post: newPost });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [createPost] Unexpected Error", {
-      error: error.message,
-      stack: error.stack,
-      user: req.user
-        ? { id: req.user.id, type: req.user["user-type"] }
-        : "undefined",
-    });
-    // 🔴 END OF LOGGING
-
-    return res.status(500).json({
-      status: "error",
-      message: error.message || "Failed to create post",
-    });
+    logger.error("❌ [createPost] Unexpected Error", { error: error.message, stack: error.stack, user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined" });
+    return res.status(500).json({ status: "error", message: error.message || "Failed to create post" });
   }
 };
 
@@ -1783,20 +1657,16 @@ const getMyPosts = async (req, res) => {
 };
 
 const editPost = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
   logger.info("🟢 ----- [editPost] START -----", {
     postId: req.params.postId,
     userId: req.user?.id,
     userType: req.user?.["user-type"],
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { postId } = req.params;
-    const { category, type, content, link, groupId, inLanding, removeImages } =
-      req.body;
+    const { category, type, content, link, groupId, inLanding, removeImages } = req.body;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Editing post", {
       postId,
       userId: req.user?.id,
@@ -1806,19 +1676,11 @@ const editPost = async (req, res) => {
       hasType: !!type,
       removeImagesCount: removeImages?.length || 0,
     });
-    // 🔴 END OF LOGGING
 
-    const post = await Post.findByPk(postId, {
-      include: [{ model: PostImage, attributes: ["image-url"] }],
-    });
-
+    const post = await Post.findByPk(postId, { include: [{ model: PostImage, attributes: ["image-url"] }] });
     if (!post) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Post not found for editing", { postId });
-      // 🔴 END OF LOGGING
-      return res
-        .status(404)
-        .json({ status: "error", message: "Post not found" });
+      return res.status(404).json({ status: "error", message: "Post not found" });
     }
 
     // حفظ المحتوى القديم
@@ -1826,100 +1688,50 @@ const editPost = async (req, res) => {
     const oldCategory = post.category;
     const oldImages = post.PostImages.map((img) => img["image-url"]);
 
-    // تحديث الحقول
+    // 🛑 AI Moderation: تحقق من المحتوى الجديد قبل الحفظ
+    if (content !== undefined) {
+      const flagged = await isContentBad(content);
+      if (flagged) {
+        logger.warn("Edited content flagged by AI moderation", { postId, userId: req.user?.id, content: content?.substring(0, 100) });
+        return res.status(400).json({
+          status: "fail",
+          message: "Edited content contains inappropriate material and cannot be saved.",
+        });
+      }
+      post.content = content;
+    }
+
     if (category !== undefined) post.category = category;
     if (type !== undefined) post.category = type; // لو type معمول له override
-    if (content !== undefined) post.content = content;
     if (link !== undefined) post.link = link;
-    if (groupId !== undefined)
-      post["group-id"] = groupId === null ? null : groupId;
+    if (groupId !== undefined) post["group-id"] = groupId === null ? null : groupId;
     if (inLanding !== undefined) post["in-landing"] = inLanding;
 
     await post.save();
 
-    // حذف الصور المطلوبة
-    if (
-      removeImages &&
-      Array.isArray(removeImages) &&
-      removeImages.length > 0
-    ) {
-      // 🔴 START OF LOGGING - ADDED THIS
-      logger.info("Removing images from post", {
-        postId,
-        imagesToRemove: removeImages,
-      });
-      // 🔴 END OF LOGGING
-      await PostImage.destroy({
-        where: { "post-id": postId, "image-url": removeImages },
-      });
+    if (removeImages && Array.isArray(removeImages) && removeImages.length > 0) {
+      logger.info("Removing images from post", { postId, imagesToRemove: removeImages });
+      await PostImage.destroy({ where: { "post-id": postId, "image-url": removeImages } });
     }
 
-    // إضافة صور جديدة (لو موجودة)
     if (req.files && req.files.length > 0) {
-      // 🔴 START OF LOGGING - ADDED THIS
-      logger.info("Adding new images to post", {
-        postId,
-        newImagesCount: req.files.length,
-      });
-      // 🔴 END OF LOGGING
-      const uploadedImages = req.files.map((file) => ({
-        "post-id": postId,
-        "image-url": file.path || file.url || file.location,
-      }));
+      logger.info("Adding new images to post", { postId, newImagesCount: req.files.length });
+      const uploadedImages = req.files.map((file) => ({ "post-id": postId, "image-url": file.path || file.url || file.location }));
       await PostImage.bulkCreate(uploadedImages);
     }
 
-    // جلب البوست بعد التحديث
-    const updatedPost = await Post.findByPk(postId, {
-      include: [{ model: PostImage, attributes: ["image-url"] }],
-    });
-
+    const updatedPost = await Post.findByPk(postId, { include: [{ model: PostImage, attributes: ["image-url"] }] });
     const newContent = updatedPost.content;
     const newCategory = updatedPost.category;
     const newImages = updatedPost.PostImages.map((img) => img["image-url"]);
-    const imagesChanged =
-      JSON.stringify(oldImages) !== JSON.stringify(newImages);
+    const imagesChanged = JSON.stringify(oldImages) !== JSON.stringify(newImages);
 
-    // تسجيل اللوج قبل وبعد التعديل
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("Post updated details", {
-      postId,
-      oldContent: oldContent.substring(0, 100),
-      newContent: newContent.substring(0, 100),
-      oldCategory,
-      newCategory,
-      oldImagesCount: oldImages.length,
-      newImagesCount: newImages.length,
-      imagesChanged,
-    });
-    // 🔴 END OF LOGGING
-
-    // 🔴 START OF LOGGING - ADDED THIS
+    logger.info("Post updated details", { postId, oldContent: oldContent?.substring(0, 100), newContent: newContent?.substring(0, 100), oldCategory, newCategory, oldImagesCount: oldImages.length, newImagesCount: newImages.length, imagesChanged });
     logger.info("🟢 ----- [editPost] END SUCCESS -----", { postId });
-    // 🔴 END OF LOGGING
 
-    return res.status(200).json({
-      status: "success",
-      message: "Post updated successfully",
-      data: {
-        postId,
-        oldContent,
-        newContent,
-        oldCategory,
-        newCategory,
-        oldImages,
-        newImages,
-        imagesChanged,
-      },
-    });
+    return res.status(200).json({ status: "success", message: "Post updated successfully", data: { postId, oldContent, newContent, oldCategory, newCategory, oldImages, newImages, imagesChanged } });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [editPost] Error", {
-      postId: req.params.postId,
-      error: error.message,
-      stack: error.stack.substring(0, 200),
-    });
-    // 🔴 END OF LOGGING
+    logger.error("❌ [editPost] Error", { postId: req.params.postId, error: error.message, stack: error.stack.substring(0, 200) });
     return res.status(500).json({ status: "error", message: error.message });
   }
 };
