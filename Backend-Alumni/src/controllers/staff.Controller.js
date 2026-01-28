@@ -1,7 +1,7 @@
 // src/controllers/staff.controller.js
 const Staff = require("../models/Staff");
 const User = require("../models/User");
-const HttpStatusHelper = require("../utils/HttpStatuHelper");
+const HttpStatusHelper = require("../utils/HttpStatusHelper").default;
 const Role = require("../models/Role");
 const Permission = require("../models/Permission");
 const RolePermission = require("../models/RolePermission");

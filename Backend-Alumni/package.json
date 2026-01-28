@@ -1,20 +1,22 @@
 {
   "name": "backend-alumni",
   "version": "1.0.0",
+  "type": "commonjs",
   "main": "index.js",
   "scripts": {
     "start": "nodemon src/server.js",
     "dev": "nodemon src/server.js",
     "migration:generate": "sequelize-typescript-migrations --models-dir src/models --migrations-dir migrations --sequelize-config src/config/db.js"
   },
+  
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@xenova/transformers": "^2.17.2",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.12.2",
-    "bad-words": "^3.0.4",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cloudinary": "^1.41.3",
