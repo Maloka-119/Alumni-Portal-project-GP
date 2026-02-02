@@ -36,6 +36,11 @@ const Feedback = sequelize.define(
       allowNull: true,
     },
 
+    attachment: {
+      type: DataTypes.STRING, // secure_url from Cloudinary
+      allowNull: true,
+    },
+
     graduate_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -43,11 +48,12 @@ const Feedback = sequelize.define(
         model: User,
         key: "id",
       },
+      onDelete: "CASCADE",
     },
   },
   {
     tableName: "Feedback",
-    timestamps: false,
+    timestamps: true,
   }
 );
 
