@@ -1,18 +1,29 @@
-// src/utils/moderation.js
-const Filter = require("bad-words"); // commonjs import
+const OpenAI = require("openai");
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 /**
  * ترجع true لو المحتوى سيء، false لو تمام
  */
-function isContentBad(text) {
+async function isContentBad(text) {
   if (!text) return false;
 
   try {
-    const filter = new Filter();
-    return filter.isProfane(text); // true لو المحتوى فيه كلمات سيئة
+    const response = await openai.moderations.create({
+      model: "omni-moderation-latest",
+      input: text,
+    });
+
+    const result = response.results[0]; 
+
+console.log("Moderation result:", result);
+return result.flagged;
+
+    return result.flagged;
   } catch (err) {
-    console.error("Local moderation error:", err);
-    // لو فيه مشكلة نعتبر المحتوى آمن
+    console.error("Moderation API error:", err);
     return false;
   }
 }

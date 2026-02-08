@@ -69,11 +69,12 @@ const getPostLikeInfo = async (postId, userId = null) => {
     throw error;
   }
 };
-
 const createPost = async (req, res) => {
   logger.info("🟢 ----- [createPost] START -----", {
     timestamp: new Date().toISOString(),
-    user: req.user ? { id: req.user.id, type: req.user["user-type"] } : "undefined",
+    user: req.user
+      ? { id: req.user.id, type: req.user["user-type"] }
+      : "undefined",
   });
 
   try {
@@ -120,18 +121,22 @@ const createPost = async (req, res) => {
       }
       if (graduate.status !== "active") {
         logger.warn("GRADUATE ACCOUNT INACTIVE in createPost", { userId, currentStatus: graduate.status });
-        return res.status(403).json({ status: "fail", message: "Your account is inactive, Please contact the Alumni Portal Team to activate your profile." });
+        return res.status(403).json({
+          status: "fail",
+          message: "Your account is inactive, Please contact the Alumni Portal Team to activate your profile.",
+        });
       }
       logger.info("Graduate status check passed", { userId, status: graduate.status });
     }
 
     // 🛑 AI Moderation: التحقق من المحتوى قبل الحفظ
-    if (content) {
-      const flagged = await isContentBad(content);
-      if (flagged) {
-        logger.warn("Post content flagged by AI moderation", { userId, content: content?.substring(0, 100) });
-        return res.status(400).json({ status: "fail", message: "Your post contains inappropriate content and cannot be published." });
-      }
+    const flagged = await isContentBad(content);
+    if (flagged) {
+      logger.warn("Post content flagged by AI moderation", { userId, content: content?.substring(0, 100) });
+      return res.status(400).json({
+        status: "fail",
+        message: "Your post contains inappropriate content and cannot be published.",
+      });
     }
 
     const user = await User.findByPk(userId);
@@ -179,78 +184,6 @@ const createPost = async (req, res) => {
     return res.status(500).json({ status: "error", message: error.message || "Failed to create post" });
   }
 };
-
-const editPost = async (req, res) => {
-  logger.info("🟢 ----- [editPost] START -----", {
-    postId: req.params.postId,
-    userId: req.user?.id,
-    userType: req.user?.["user-type"],
-  });
-
-  try {
-    const { postId } = req.params;
-    const { category, type, content, link, groupId, inLanding, removeImages } = req.body;
-
-    logger.info("Editing post", { postId, userId: req.user?.id, hasContent: !!content, contentLength: content?.length || 0, hasCategory: !!category, hasType: !!type, removeImagesCount: removeImages?.length || 0 });
-
-    const post = await Post.findByPk(postId, { include: [{ model: PostImage, attributes: ["image-url"] }] });
-    if (!post) {
-      logger.warn("Post not found for editing", { postId });
-      return res.status(404).json({ status: "error", message: "Post not found" });
-    }
-
-    // حفظ المحتوى القديم
-    const oldContent = post.content;
-    const oldCategory = post.category;
-    const oldImages = post.PostImages.map((img) => img["image-url"]);
-
-    // 🛑 AI Moderation: تحقق من المحتوى الجديد قبل الحفظ
-    if (content !== undefined) {
-      const flagged = await isContentBad(content);
-      if (flagged) {
-        logger.warn("Edited content flagged by AI moderation", { postId, userId: req.user?.id, content: content?.substring(0, 100) });
-        return res.status(400).json({ status: "fail", message: "Edited content contains inappropriate material and cannot be saved." });
-      }
-      post.content = content;
-    }
-
-    if (category !== undefined) post.category = category;
-    if (type !== undefined) post.category = type; // override لو type موجود
-    if (link !== undefined) post.link = link;
-    if (groupId !== undefined) post["group-id"] = groupId === null ? null : groupId;
-    if (inLanding !== undefined) post["in-landing"] = inLanding;
-
-    await post.save();
-
-    if (removeImages && Array.isArray(removeImages) && removeImages.length > 0) {
-      logger.info("Removing images from post", { postId, imagesToRemove: removeImages });
-      await PostImage.destroy({ where: { "post-id": postId, "image-url": removeImages } });
-    }
-
-    if (req.files && req.files.length > 0) {
-      logger.info("Adding new images to post", { postId, newImagesCount: req.files.length });
-      const uploadedImages = req.files.map((file) => ({ "post-id": postId, "image-url": file.path || file.url || file.location }));
-      await PostImage.bulkCreate(uploadedImages);
-    }
-
-    const updatedPost = await Post.findByPk(postId, { include: [{ model: PostImage, attributes: ["image-url"] }] });
-    const newContent = updatedPost.content;
-    const newCategory = updatedPost.category;
-    const newImages = updatedPost.PostImages.map((img) => img["image-url"]);
-    const imagesChanged = JSON.stringify(oldImages) !== JSON.stringify(newImages);
-
-    logger.info("Post updated details", { postId, oldContent: oldContent?.substring(0, 100), newContent: newContent?.substring(0, 100), oldCategory, newCategory, oldImagesCount: oldImages.length, newImagesCount: newImages.length, imagesChanged });
-    logger.info("🟢 ----- [editPost] END SUCCESS -----", { postId });
-
-    return res.status(200).json({ status: "success", message: "Post updated successfully", data: { postId, oldContent, newContent, oldCategory, newCategory, oldImages, newImages, imagesChanged } });
-  } catch (error) {
-    logger.error("❌ [editPost] Error", { postId: req.params.postId, error: error.message, stack: error.stack.substring(0, 200) });
-    return res.status(500).json({ status: "error", message: error.message });
-  }
-};
-
-module.exports = { createPost, editPost };
-
 
 const getGroupPosts = async (req, res) => {
   // 🔴 START OF LOGGING - ADDED THIS
@@ -1723,7 +1656,85 @@ const getMyPosts = async (req, res) => {
   }
 };
 
+const editPost = async (req, res) => {
+  logger.info("🟢 ----- [editPost] START -----", {
+    postId: req.params.postId,
+    userId: req.user?.id,
+    userType: req.user?.["user-type"],
+  });
 
+  try {
+    const { postId } = req.params;
+    const { category, type, content, link, groupId, inLanding, removeImages } = req.body;
+
+    logger.info("Editing post", {
+      postId,
+      userId: req.user?.id,
+      hasContent: !!content,
+      contentLength: content?.length || 0,
+      hasCategory: !!category,
+      hasType: !!type,
+      removeImagesCount: removeImages?.length || 0,
+    });
+
+    const post = await Post.findByPk(postId, { include: [{ model: PostImage, attributes: ["image-url"] }] });
+    if (!post) {
+      logger.warn("Post not found for editing", { postId });
+      return res.status(404).json({ status: "error", message: "Post not found" });
+    }
+
+    // حفظ المحتوى القديم
+    const oldContent = post.content;
+    const oldCategory = post.category;
+    const oldImages = post.PostImages.map((img) => img["image-url"]);
+
+    // 🛑 AI Moderation: تحقق من المحتوى الجديد قبل الحفظ
+    if (content !== undefined) {
+      const flagged = await isContentBad(content);
+      if (flagged) {
+        logger.warn("Edited content flagged by AI moderation", { postId, userId: req.user?.id, content: content?.substring(0, 100) });
+        return res.status(400).json({
+          status: "fail",
+          message: "Edited content contains inappropriate material and cannot be saved.",
+        });
+      }
+      post.content = content;
+    }
+
+    if (category !== undefined) post.category = category;
+    if (type !== undefined) post.category = type; // لو type معمول له override
+    if (link !== undefined) post.link = link;
+    if (groupId !== undefined) post["group-id"] = groupId === null ? null : groupId;
+    if (inLanding !== undefined) post["in-landing"] = inLanding;
+
+    await post.save();
+
+    if (removeImages && Array.isArray(removeImages) && removeImages.length > 0) {
+      logger.info("Removing images from post", { postId, imagesToRemove: removeImages });
+      await PostImage.destroy({ where: { "post-id": postId, "image-url": removeImages } });
+    }
+
+    if (req.files && req.files.length > 0) {
+      logger.info("Adding new images to post", { postId, newImagesCount: req.files.length });
+      const uploadedImages = req.files.map((file) => ({ "post-id": postId, "image-url": file.path || file.url || file.location }));
+      await PostImage.bulkCreate(uploadedImages);
+    }
+
+    const updatedPost = await Post.findByPk(postId, { include: [{ model: PostImage, attributes: ["image-url"] }] });
+    const newContent = updatedPost.content;
+    const newCategory = updatedPost.category;
+    const newImages = updatedPost.PostImages.map((img) => img["image-url"]);
+    const imagesChanged = JSON.stringify(oldImages) !== JSON.stringify(newImages);
+
+    logger.info("Post updated details", { postId, oldContent: oldContent?.substring(0, 100), newContent: newContent?.substring(0, 100), oldCategory, newCategory, oldImagesCount: oldImages.length, newImagesCount: newImages.length, imagesChanged });
+    logger.info("🟢 ----- [editPost] END SUCCESS -----", { postId });
+
+    return res.status(200).json({ status: "success", message: "Post updated successfully", data: { postId, oldContent, newContent, oldCategory, newCategory, oldImages, newImages, imagesChanged } });
+  } catch (error) {
+    logger.error("❌ [editPost] Error", { postId: req.params.postId, error: error.message, stack: error.stack.substring(0, 200) });
+    return res.status(500).json({ status: "error", message: error.message });
+  }
+};
 
 const likePost = async (req, res) => {
   // 🔴 START OF LOGGING - ADDED THIS
