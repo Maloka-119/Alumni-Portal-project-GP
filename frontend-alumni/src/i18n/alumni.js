@@ -255,19 +255,35 @@ const alumni = {
     "Later": "Later",
     "Suggested for you": "Suggested for you",
 "All communities": "All communities",
-"Batch":"Batch"
-
-    },
-
+"Batch":"Batch",
     "noMorePosts":"noMorePosts",
           "loading":"loading",
           "loginSuccess":"loginSuccess",
             "loginFailed":"loginFailed",
             "Opportunities":"Opportunities",
               "All":"All",
-              "loading": "Loading",
   "universityServices": "University Services",
-           
+   // ===== My Requests =====
+"myRequestsTitle": "My Document Requests",
+"myRequestsSubtitle": "Track and manage your document requests",
+"loadingRequests": "Loading your requests...",
+"noRequestsFound": "No requests found",
+"noRequestsDescription": "You haven't submitted any document requests yet.",
+
+"requestNumber": "Request Number",
+"requestType": "Type",
+"requestStatus": "Status",
+"expectedCompletion": "Expected Completion",
+"createdAt": "Created At",
+"documentNameAr": "Document Name (AR)",
+
+"statusCompleted": "Completed",
+"statusInProgress": "In Progress",
+"statusPending": "Pending",
+"statusUnderReview": "Under Review",
+"mydocumentRequests": "My Requests",
+        
+},
 
   },
 
@@ -534,7 +550,28 @@ const alumni = {
          "loginFailed":"فشل تسجيل الدخول",
                        "My Communities":"مجتمعاتي",
                        "Opportunities":"الفرص",
-                       "All":"الكل"
+                       "All":"الكل",
+    // ===== My Requests =====
+"myRequestsTitle": "طلبات المستندات",
+"myRequestsSubtitle": "تابع وأدر طلبات المستندات الخاصة بك",
+"loadingRequests": "جاري تحميل طلباتك...",
+"noRequestsFound": "لا توجد طلبات",
+"noRequestsDescription": "لم تقم بإرسال أي طلبات مستندات بعد.",
+
+"requestNumber": "رقم الطلب",
+"requestType": "النوع",
+"requestStatus": "الحالة",
+"expectedCompletion": "تاريخ الإنجاز المتوقع",
+"createdAt": "تاريخ الإنشاء",
+"documentNameAr": "اسم المستند",
+
+"statusCompleted": "مكتمل",
+"statusInProgress": "قيد التنفيذ",
+"statusPending": "قيد الانتظار",
+"statusUnderReview": "قيد المراجعة",
+"errorLabel": "خطأ",
+"errorsGeneral": "حدث خطأ ما",
+"mydocumentRequests": "طلباتى ",
 
   
 
