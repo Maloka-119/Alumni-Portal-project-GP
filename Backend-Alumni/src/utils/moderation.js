@@ -1,35 +1,20 @@
 // src/utils/moderation.js
-const { pipeline } = require("@xenova/transformers");
-require("dotenv").config();
+const Filter = require("bad-words"); // commonjs import
 
-let moderationPipeline;
-
-async function initModeration() {
-  if (!moderationPipeline) {
-    moderationPipeline = await pipeline("text-classification", "unitary/toxic-bert", {
-      useAuthToken: process.env.HUGGINGFACE_TOKEN, // ضع توكن حسابك هنا
-    });
-    console.log("⚡️ Toxic-BERT moderation pipeline initialized!");
-  }
-  return moderationPipeline;
-}
-
-async function isContentBad(text) {
+/**
+ * ترجع true لو المحتوى سيء، false لو تمام
+ */
+function isContentBad(text) {
   if (!text) return false;
 
   try {
-    const pipe = await initModeration();
-    const results = await pipe(text);
-
-    const flagged = results.some((r) =>
-      ["toxic", "severe_toxic", "threat", "insult", "identity_hate"].includes(r.label)
-    );
-
-    return flagged;
+    const filter = new Filter();
+    return filter.isProfane(text); // true لو المحتوى فيه كلمات سيئة
   } catch (err) {
-    console.error("Moderation AI error:", err);
+    console.error("Local moderation error:", err);
+    // لو فيه مشكلة نعتبر المحتوى آمن
     return false;
   }
 }
 
-module.exports = { isContentBad, initModeration };
+module.exports = { isContentBad };
