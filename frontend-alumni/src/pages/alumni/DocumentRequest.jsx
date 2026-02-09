@@ -9,15 +9,18 @@ const DocumentRequest = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [showModal, setShowModal] = useState(false); // state للبوب اب
+  const [showModal, setShowModal] = useState(false);
 
-  // Load document types
+  const token = localStorage.getItem("token");
+
+  // ================= Load document types =================
   useEffect(() => {
-    const token = localStorage.getItem("token");
-
     axios
-      .get("http://localhost:5005/alumni-portal/documents-types?language=en", {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      .get("http://localhost:5005/alumni-portal/documents-types", {
+        headers: {
+          Authorization: token ? `Bearer ${token}` : "",
+          "Accept-Language": "en", // ⭐ الحل هنا
+        },
       })
       .then((res) => {
         const alumniDocs = res.data.data.filter(
@@ -26,21 +29,22 @@ const DocumentRequest = () => {
         setDocuments(alumniDocs);
       })
       .catch(() => setError("Failed to load document types"));
-  }, []);
+  }, [token]);
 
   const handleSelect = (doc) => {
     setSelectedDoc(doc);
     setAttachments([]);
     setError("");
     setSuccessMessage("");
-    setShowModal(true); // عرض البوب اب
+    setShowModal(true);
   };
 
+  // ================= Submit request =================
   const handleSubmit = (e) => {
     e.preventDefault();
+    setLoading(true);
     setError("");
     setSuccessMessage("");
-    setLoading(true);
 
     if (!selectedDoc) {
       setError("Please select a document first");
@@ -55,23 +59,24 @@ const DocumentRequest = () => {
       formData.append("attachments", file);
     });
 
-    const token = localStorage.getItem("token");
-
-      axios.post("http://localhost:5005/alumni-portal/documents/requests", formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: token ? `Bearer ${token}` : "",
-        },
-      })
-      
+    axios
+      .post(
+        "http://localhost:5005/alumni-portal/documents/requests",
+        formData,
+        {
+          headers: {
+            Authorization: token ? `Bearer ${token}` : "",
+            "Accept-Language": "en", // ⭐ مهم هنا كمان
+          },
+        }
+      )
       .then(() => {
         setSuccessMessage("Request submitted successfully ✅");
         setSelectedDoc(null);
         setAttachments([]);
-        setShowModal(false); // اغلاق البوب اب بعد الإرسال
+        setShowModal(false);
       })
       .catch((err) => {
-        console.error(err.response || err);
         if (err.response?.status === 401) {
           setError("Unauthorized: Please login first");
         } else {
@@ -84,13 +89,12 @@ const DocumentRequest = () => {
   return (
     <div className="document-wrapper">
       <h2 className="document-header">Alumni Document Requests</h2>
-      <p style={{ textAlign: "center", marginBottom: 20 }}>
-        Request official documents for graduates
-      </p>
 
       {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
       {successMessage && (
-        <p style={{ color: "green", textAlign: "center" }}>{successMessage}</p>
+        <p style={{ color: "green", textAlign: "center" }}>
+          {successMessage}
+        </p>
       )}
 
       <div className="document-grid">
@@ -99,23 +103,21 @@ const DocumentRequest = () => {
             <span className="document-badge">
               {doc.base_processing_days} Days
             </span>
-            <div className="document-card-content">
-              <h3 className="document-title">{doc.name}</h3>
-              <p className="document-desc">{doc.description}</p>
-            </div>
-            <div className="document-actions">
-              <button
-                className="document-btn document-btn-primary"
-                onClick={() => handleSelect(doc)}
-              >
-                Request
-              </button>
-            </div>
+
+            <h3 className="document-title">{doc.name}</h3>
+            <p className="document-desc">{doc.description}</p>
+
+            <button
+              className="document-btn document-btn-primary"
+              onClick={() => handleSelect(doc)}
+            >
+              Request
+            </button>
           </div>
         ))}
       </div>
 
-      {/* ===== Modal Popup ===== */}
+      {/* ================= Modal ================= */}
       {showModal && selectedDoc && (
         <div className="modal-overlay">
           <div className="modal-content">
@@ -128,19 +130,14 @@ const DocumentRequest = () => {
                   type="file"
                   multiple
                   required
-                  onChange={(e) => setAttachments([...e.target.files])}
+                  onChange={(e) =>
+                    setAttachments(Array.from(e.target.files))
+                  }
                 />
-                {attachments.length > 0 && (
-                  <ul style={{ marginTop: 10 }}>
-                    {attachments.map((file, idx) => (
-                      <li key={idx}>{file.name}</li>
-                    ))}
-                  </ul>
-                )}
               </>
             )}
 
-            <div className="document-actions" style={{ marginTop: 15 }}>
+            <div className="document-actions">
               <button
                 className="document-btn document-btn-primary"
                 onClick={handleSubmit}
@@ -148,6 +145,7 @@ const DocumentRequest = () => {
               >
                 {loading ? "Submitting..." : "Submit Request"}
               </button>
+
               <button
                 className="document-btn document-btn-secondary"
                 onClick={() => setShowModal(false)}
