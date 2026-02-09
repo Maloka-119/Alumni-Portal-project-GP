@@ -8,9 +8,23 @@ const Graduate = require("../models/Graduate");
 const Staff = require("../models/Staff");
 const generateToken = require("../utils/generateToken");
 const aes = require("../utils/aes");
-const { normalizeCollegeName, getCollegeNameByCode } = require("../services/facultiesService");
+const {
+  normalizeCollegeName,
+  getCollegeNameByCode,
+} = require("../services/facultiesService");
 const { securityLogger } = require("../utils/logger");
-const { validateEmail, validatePassword, validateNationalId, validatePhoneNumber, sanitizeInput } = require("../middleware/security");
+const {
+  validateEmail,
+  validatePassword,
+  validateNationalId,
+  validatePhoneNumber,
+  sanitizeInput,
+} = require("../middleware/security");
+
+// أضف هذا مع باقي الـ imports في أعلى الملف
+const {
+  sendAutoGroupInvitation,
+} = require("../controllers/invitation.controller"); // أو المسار الصحيح
 
 // ======== Helper Functions ========
 
@@ -30,10 +44,17 @@ function extractDOBFromEgyptianNID(nid) {
   const dd = parseInt(id.substr(5, 2), 10);
 
   const date = new Date(Date.UTC(century + yy, mm - 1, dd));
-  if (date.getUTCFullYear() !== century + yy || date.getUTCMonth() !== mm - 1 || date.getUTCDate() !== dd)
+  if (
+    date.getUTCFullYear() !== century + yy ||
+    date.getUTCMonth() !== mm - 1 ||
+    date.getUTCDate() !== dd
+  )
     throw new Error("Invalid birth date in NID");
 
-  return `${century + yy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(2, "0")}`;
+  return `${century + yy}-${String(mm).padStart(2, "0")}-${String(dd).padStart(
+    2,
+    "0"
+  )}`;
 }
 
 // Check if NID already exists
@@ -51,13 +72,13 @@ async function sendVerificationEmail(email, code) {
     host: "smtp.gmail.com",
     port: 587,
     secure: false, // true for 465, false for other ports
-    auth: { 
-      user: process.env.EMAIL_USER, 
-      pass: process.env.EMAIL_PASS // Should be Gmail App Password
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS, // Should be Gmail App Password
     },
     tls: {
-      rejectUnauthorized: false // Allow self-signed certificates if needed
-    }
+      rejectUnauthorized: false, // Allow self-signed certificates if needed
+    },
   });
 
   const mailOptions = {
@@ -94,17 +115,23 @@ async function sendVerificationEmail(email, code) {
 
 const registerUser = asyncHandler(async (req, res) => {
   sanitizeInput(req, res, () => {});
-  const { firstName, lastName, email, password, nationalId, phoneNumber } = req.body;
+  const { firstName, lastName, email, password, nationalId, phoneNumber } =
+    req.body;
 
   // --- Validation ---
   if (!firstName || !lastName || !email || !password || !nationalId) {
     return res.status(400).json({ error: "All fields are required" });
   }
   if (!validateEmail(email)) {
-    return res.status(400).json({ error: "Please enter a valid email address" });
+    return res
+      .status(400)
+      .json({ error: "Please enter a valid email address" });
   }
   if (!validatePassword(password)) {
-    return res.status(400).json({ error: "Password is too weak. Minimum 8 characters, must include a number and a symbol" });
+    return res.status(400).json({
+      error:
+        "Password is too weak. Minimum 8 characters, must include a number and a symbol",
+    });
   }
   if (!validateNationalId(nationalId)) {
     return res.status(400).json({ error: "Invalid National ID" });
@@ -131,10 +158,17 @@ const registerUser = asyncHandler(async (req, res) => {
   const hashedPassword = await bcrypt.hash(password, 10);
   const encryptedNID = aes.encryptNationalId(nationalId);
 
-  let userType = "graduate", statusToLogin = "pending", externalData = null;
+  let userType = "graduate",
+    statusToLogin = "pending",
+    externalData = null;
 
   try {
-    const staffResp = await axios.get(`${process.env.STAFF_API_URL}?nationalId=${encodeURIComponent(nationalId)}`, { timeout: 8000 });
+    const staffResp = await axios.get(
+      `${process.env.STAFF_API_URL}?nationalId=${encodeURIComponent(
+        nationalId
+      )}`,
+      { timeout: 8000 }
+    );
     if (staffResp.data?.department) {
       userType = "staff";
       statusToLogin = "inactive";
@@ -144,7 +178,12 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (userType === "graduate") {
     try {
-      const gradResp = await axios.get(`${process.env.GRADUATE_API_URL}?nationalId=${encodeURIComponent(nationalId)}`, { timeout: 8000 });
+      const gradResp = await axios.get(
+        `${process.env.GRADUATE_API_URL}?nationalId=${encodeURIComponent(
+          nationalId
+        )}`,
+        { timeout: 8000 }
+      );
       if (gradResp.data?.faculty) {
         statusToLogin = "accepted";
         externalData = gradResp.data;
@@ -172,6 +211,32 @@ const registerUser = asyncHandler(async (req, res) => {
       "graduation-year": externalData?.["graduation-year"] || null,
       "status-to-login": statusToLogin,
     });
+
+    // 🔴🔴🔴 START OF ADDED CODE - Auto Group Invitation 🔴🔴🔴
+    // إرسال دعوة تلقائية للخريج بعد التسجيل
+    (async () => {
+      try {
+        // انتظر قليلاً لضمان حفظ البيانات في قاعدة البيانات
+        await new Promise((resolve) => setTimeout(resolve, 500));
+
+        // استدعاء دالة إرسال الدعوة التلقائية
+        const invitationSent = await sendAutoGroupInvitation(user.id);
+
+        if (invitationSent) {
+          console.log(
+            `✅ Auto invitation sent successfully for user ${user.id}`
+          );
+        } else {
+          console.warn(`⚠️ Failed to send auto invitation for user ${user.id}`);
+        }
+      } catch (error) {
+        console.error(
+          `❌ Error in auto invitation for user ${user.id}:`,
+          error.message
+        );
+      }
+    })();
+    // 🔴🔴🔴 END OF ADDED CODE - Auto Group Invitation 🔴🔴🔴
   }
 
   if (userType === "staff") {
@@ -179,10 +244,13 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   securityLogger.registration(req.ip, email, userType, statusToLogin);
-  res.status(201).json({ id: user.id, email: user.email, userType, token: generateToken(user.id) });
+  res.status(201).json({
+    id: user.id,
+    email: user.email,
+    userType,
+    token: generateToken(user.id),
+  });
 });
-
-
 
 // --- Login User ---
 const loginUser = asyncHandler(async (req, res) => {
@@ -206,10 +274,10 @@ const loginUser = asyncHandler(async (req, res) => {
   // Check if user is OAuth-only (no password set)
   if (!user["hashed-password"]) {
     const authProvider = user["auth_provider"] || "OAuth";
-    return res.status(401).json({ 
+    return res.status(401).json({
       error: `This account was created using ${authProvider} authentication. Please use the "${authProvider} Login" button to sign in.`,
       requiresOAuth: true,
-      authProvider: authProvider
+      authProvider: authProvider,
     });
   }
 
@@ -230,7 +298,9 @@ const loginUser = asyncHandler(async (req, res) => {
   if (user["user-type"] === "graduate") {
     const grad = await Graduate.findOne({ where: { graduate_id: user.id } });
     if (!grad || grad["status-to-login"] !== "accepted") {
-      return res.status(403).json({ error: "Graduate account pending approval" });
+      return res
+        .status(403)
+        .json({ error: "Graduate account pending approval" });
     }
   }
 
@@ -250,11 +320,14 @@ const forgotPassword = asyncHandler(async (req, res) => {
   if (!email || !validateEmail(email)) throw new Error("Valid email required");
 
   const user = await User.findOne({ where: { email } });
-  if (!user) return res.json({ message: "If the email exists, verification code sent" });
+  if (!user)
+    return res.json({ message: "If the email exists, verification code sent" });
 
   const code = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiration = new Date(); expiration.setMinutes(expiration.getMinutes() + 15);
-  user["verification-code"] = code; user["verification-code-expires"] = expiration;
+  const expiration = new Date();
+  expiration.setMinutes(expiration.getMinutes() + 15);
+  user["verification-code"] = code;
+  user["verification-code-expires"] = expiration;
   await user.save();
   await sendVerificationEmail(email, code);
 
@@ -270,8 +343,10 @@ const verifyCode = asyncHandler(async (req, res) => {
   if (!validateEmail(email)) throw new Error("Invalid email");
 
   const user = await User.findOne({ where: { email } });
-  if (!user || !user["verification-code"] || !user["verification-code-expires"]) throw new Error("Invalid or expired code");
-  if (new Date() > user["verification-code-expires"]) throw new Error("Code expired");
+  if (!user || !user["verification-code"] || !user["verification-code-expires"])
+    throw new Error("Invalid or expired code");
+  if (new Date() > user["verification-code-expires"])
+    throw new Error("Code expired");
   if (user["verification-code"] !== code) throw new Error("Invalid code");
 
   res.json({ message: "Code is valid" });
@@ -281,17 +356,21 @@ const verifyCode = asyncHandler(async (req, res) => {
 const resetPassword = asyncHandler(async (req, res) => {
   sanitizeInput(req, res, () => {});
   const { email, code, newPassword } = req.body;
-  if (!email || !code || !newPassword) throw new Error("Email, code & new password required");
+  if (!email || !code || !newPassword)
+    throw new Error("Email, code & new password required");
   if (!validateEmail(email)) throw new Error("Invalid email");
   if (!validatePassword(newPassword)) throw new Error("Weak password");
 
   const user = await User.findOne({ where: { email } });
-  if (!user || !user["verification-code"] || !user["verification-code-expires"]) throw new Error("Invalid or expired code");
-  if (new Date() > user["verification-code-expires"]) throw new Error("Code expired");
+  if (!user || !user["verification-code"] || !user["verification-code-expires"])
+    throw new Error("Invalid or expired code");
+  if (new Date() > user["verification-code-expires"])
+    throw new Error("Code expired");
   if (user["verification-code"] !== code) throw new Error("Invalid code");
 
   user["hashed-password"] = await bcrypt.hash(newPassword, 10);
-  user["verification-code"] = null; user["verification-code-expires"] = null;
+  user["verification-code"] = null;
+  user["verification-code-expires"] = null;
   await user.save();
 
   securityLogger.passwordResetSuccess(req.ip, email);
@@ -300,16 +379,37 @@ const resetPassword = asyncHandler(async (req, res) => {
 
 // --- Get Profile ---
 const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findByPk(req.user.id, { attributes: { exclude: ["hashed-password"] } });
+  const user = await User.findByPk(req.user.id, {
+    attributes: { exclude: ["hashed-password"] },
+  });
   if (!user) throw new Error("User not found");
 
-  let profile = { id: user.id, "first-name": user["first-name"], "last-name": user["last-name"], email: user.email, "phone-number": user["phone-number"], "birth-date": user["birth-date"], "user-type": user["user-type"], "national-id": user["national-id"] };
+  let profile = {
+    id: user.id,
+    "first-name": user["first-name"],
+    "last-name": user["last-name"],
+    email: user.email,
+    "phone-number": user["phone-number"],
+    "birth-date": user["birth-date"],
+    "user-type": user["user-type"],
+    "national-id": user["national-id"],
+  };
 
   if (user["user-type"] === "graduate") {
     const grad = await Graduate.findOne({ where: { graduate_id: user.id } });
     if (grad) {
       const lang = req.headers["accept-language"] || "ar";
-      profile.graduate = { faculty: getCollegeNameByCode(grad.faculty_code, lang), "graduation-year": grad["graduation-year"], bio: grad.bio, skills: grad.skills, "current-job": grad["current-job"], "status-to-login": grad["status-to-login"], "cv-url": grad["cv-url"], "linkedln-link": grad["linkedln-link"], "profile-picture-url": grad["profile-picture-url"] };
+      profile.graduate = {
+        faculty: getCollegeNameByCode(grad.faculty_code, lang),
+        "graduation-year": grad["graduation-year"],
+        bio: grad.bio,
+        skills: grad.skills,
+        "current-job": grad["current-job"],
+        "status-to-login": grad["status-to-login"],
+        "cv-url": grad["cv-url"],
+        "linkedln-link": grad["linkedln-link"],
+        "profile-picture-url": grad["profile-picture-url"],
+      };
     }
   }
   if (user["user-type"] === "staff") {
@@ -327,13 +427,24 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
   sanitizeInput(req, res, () => {});
   const fields = ["first-name", "last-name", "email", "phone-number"];
-  fields.forEach(f => { if (req.body[f] !== undefined) user[f] = validator.escape(req.body[f]); });
+  fields.forEach((f) => {
+    if (req.body[f] !== undefined) user[f] = validator.escape(req.body[f]);
+  });
 
   if (user["user-type"] === "graduate") {
     const grad = await Graduate.findOne({ where: { graduate_id: user.id } });
     if (grad) {
-      if (req.body.faculty) grad.faculty_code = normalizeCollegeName(req.body.faculty);
-      ["graduation-year","bio","skills","current-job","linkedln-link"].forEach(f => { if(req.body[f] !== undefined) grad[f] = req.body[f]; });
+      if (req.body.faculty)
+        grad.faculty_code = normalizeCollegeName(req.body.faculty);
+      [
+        "graduation-year",
+        "bio",
+        "skills",
+        "current-job",
+        "linkedln-link",
+      ].forEach((f) => {
+        if (req.body[f] !== undefined) grad[f] = req.body[f];
+      });
       await grad.save();
     }
   }
@@ -348,4 +459,13 @@ const logoutUser = asyncHandler(async (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
-module.exports = { registerUser, loginUser, forgotPassword, verifyCode, resetPassword, getUserProfile, updateUserProfile, logoutUser };
+module.exports = {
+  registerUser,
+  loginUser,
+  forgotPassword,
+  verifyCode,
+  resetPassword,
+  getUserProfile,
+  updateUserProfile,
+  logoutUser,
+};
