@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import "./documentRequests.css";
+import { useTranslation } from "react-i18next";
 
 const DocumentRequest = () => {
   const [documents, setDocuments] = useState([]);
@@ -11,7 +12,9 @@ const DocumentRequest = () => {
   const [successMessage, setSuccessMessage] = useState("");
   const [showModal, setShowModal] = useState(false);
 
+  const { t, i18n } = useTranslation();
   const token = localStorage.getItem("token");
+  const currentLang = i18n.language || "en";
 
   // ================= Load document types =================
   useEffect(() => {
@@ -19,7 +22,7 @@ const DocumentRequest = () => {
       .get("http://localhost:5005/alumni-portal/documents-types", {
         headers: {
           Authorization: token ? `Bearer ${token}` : "",
-          "Accept-Language": "en", // ⭐ الحل هنا
+          "Accept-Language": currentLang, // ✅ مربوط بالـ i18n
         },
       })
       .then((res) => {
@@ -28,8 +31,8 @@ const DocumentRequest = () => {
         );
         setDocuments(alumniDocs);
       })
-      .catch(() => setError("Failed to load document types"));
-  }, [token]);
+      .catch(() => setError(t("loadDocumentsError")));
+  }, [token, currentLang, t]);
 
   const handleSelect = (doc) => {
     setSelectedDoc(doc);
@@ -47,7 +50,7 @@ const DocumentRequest = () => {
     setSuccessMessage("");
 
     if (!selectedDoc) {
-      setError("Please select a document first");
+      setError(t("errorLabel"));
       setLoading(false);
       return;
     }
@@ -66,21 +69,21 @@ const DocumentRequest = () => {
         {
           headers: {
             Authorization: token ? `Bearer ${token}` : "",
-            "Accept-Language": "en", // ⭐ مهم هنا كمان
+            "Accept-Language": currentLang, // ✅
           },
         }
       )
       .then(() => {
-        setSuccessMessage("Request submitted successfully ✅");
+        setSuccessMessage(t("requestSuccess"));
         setSelectedDoc(null);
         setAttachments([]);
         setShowModal(false);
       })
       .catch((err) => {
         if (err.response?.status === 401) {
-          setError("Unauthorized: Please login first");
+          setError(t("unauthorizedError"));
         } else {
-          setError("Failed to submit request");
+          setError(t("submitRequestError"));
         }
       })
       .finally(() => setLoading(false));
@@ -88,9 +91,18 @@ const DocumentRequest = () => {
 
   return (
     <div className="document-wrapper">
-      <h2 className="document-header">Alumni Document Requests</h2>
+      <h2 className="document-header">
+        {t("documentRequestsTitle")}
+      </h2>
 
-      {error && <p style={{ color: "red", textAlign: "center" }}>{error}</p>}
+      <p style={{ textAlign: "center", marginBottom: 20 }}>
+        {t("documentRequestsSubtitle")}
+      </p>
+
+      {error && (
+        <p style={{ color: "red", textAlign: "center" }}>{error}</p>
+      )}
+
       {successMessage && (
         <p style={{ color: "green", textAlign: "center" }}>
           {successMessage}
@@ -101,7 +113,7 @@ const DocumentRequest = () => {
         {documents.map((doc) => (
           <div key={doc.code} className="document-card">
             <span className="document-badge">
-              {doc.base_processing_days} Days
+              {doc.base_processing_days} {t("days")}
             </span>
 
             <h3 className="document-title">{doc.name}</h3>
@@ -111,7 +123,7 @@ const DocumentRequest = () => {
               className="document-btn document-btn-primary"
               onClick={() => handleSelect(doc)}
             >
-              Request
+              {t("request")}
             </button>
           </div>
         ))}
@@ -121,11 +133,13 @@ const DocumentRequest = () => {
       {showModal && selectedDoc && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Request: {selectedDoc.name}</h3>
+            <h3>
+              {t("request")}: {selectedDoc.name}
+            </h3>
 
             {selectedDoc.requires_attachments && (
               <>
-                <label>Attachments</label>
+                <label>{t("attachments")}</label>
                 <input
                   type="file"
                   multiple
@@ -143,14 +157,14 @@ const DocumentRequest = () => {
                 onClick={handleSubmit}
                 disabled={loading}
               >
-                {loading ? "Submitting..." : "Submit Request"}
+                {loading ? t("submitting") : t("submitRequest")}
               </button>
 
               <button
                 className="document-btn document-btn-secondary"
                 onClick={() => setShowModal(false)}
               >
-                Cancel
+                {t("cancel")}
               </button>
             </div>
           </div>
