@@ -294,7 +294,7 @@ useEffect(() => {
   <span className="req-count">({friendRequests.length})</span>
 </h2>
             {loadingRequests ? (
-              <p>{t("loadingRequests")}</p>
+              <p>{t("loadingfRequests")}</p>
             ) : friendRequests.length === 0 ? (
               <p>{t("noRequests")}</p>
             ) : (
