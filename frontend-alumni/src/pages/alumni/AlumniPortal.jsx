@@ -303,7 +303,7 @@ import PostSingle from './PostSingle.jsx';
 import ChatBox from './ChatBox.jsx';
 import Swal from "sweetalert2";
 import Services from './Services.jsx';
-import MyRequests from './MyRequests.jsx'
+import DocumentRequest from './DocumentRequest.jsx';
 
 const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
 
@@ -616,8 +616,7 @@ const Dashboard = ({ setUser }) => {
             <Route path="friends" element={<FriendshipPage darkMode={darkMode} tab={friendshipTab} userId={friendRequestUserId}/>} />
             <Route path="friends/:userId" element={<Accountgrad darkMode={darkMode}/>} />
             <Route path="posts/:postId" element={<PostSingle />} />
-            <Route path="documents" element={<EmptyPage title="Document Requests" />} />
-            <Route path="myrequests" element={<MyRequests/>} />
+            <Route path="documents" element={<DocumentRequest title="Document Requests" />} />
             <Route path="uniservices" element={<Services />} />
             <Route path="feedback" element={<FeedbackPage darkMode={darkMode}/>} />
 
