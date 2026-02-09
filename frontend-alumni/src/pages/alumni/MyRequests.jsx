@@ -38,7 +38,7 @@ const MyRequests = () => {
     const statusMap = {
       'Completed': 'status-completed',
       'In Progress': 'status-progress',
-      // 'Pending': 'status-pending',
+      'Pending': 'status-pending',
       'Under Review': 'status-review'
     };
     return statusMap[status] || '';
@@ -48,7 +48,7 @@ const MyRequests = () => {
   const statusTranslationMap = {
     'Completed': 'statusCompleted',
     'In Progress': 'statusInProgress',
-    // 'Pending': 'statusPending',
+    'Pending': 'statusPending',
     'Under Review': 'statusUnderReview'
   };
 

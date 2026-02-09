@@ -235,3 +235,111 @@
   background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
   -webkit-background-clip: text;
 }
+
+/* ===== Horizontal Input Style ===== */
+.input-group-horizontal {
+  display: flex;
+  align-items: center; /* ليكون الكلام والانبوت على خط واحد */
+  gap: 15px; /* مسافة بين الكلمة والانبوت */
+  margin-bottom: 20px;
+  direction: inherit;
+}
+
+.input-label-side {
+  flex: 0 0 100px; /* يعطي عرض ثابت للكلمة عشان الانبوتس تبدأ من نفس النقطة */
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #475569;
+  text-align: start;
+}
+
+.form-input-side {
+  flex: 1; /* يخلي الانبوت ياخد باقي المساحة المتوفرة */
+  padding: 10px 14px;
+  border: 1.8px solid #cdd6e0;
+  border-radius: 12px;
+  font-size: 15px;
+  background-color: #f9fafc;
+  outline: none;
+  transition: 0.25s;
+}
+
+.form-input-side:focus {
+  border-color: #3b82f6;
+  background-color: #fff;
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.2);
+}
+
+/* ضبط المسافات في الموبايل عشان ميبقاش ضيق */
+@media (max-width: 480px) {
+  .input-group-horizontal {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .input-label-side {
+    flex: none;
+  }
+}
+
+/* الدارك مود للستايل الجانبي */
+.dark .input-label-side {
+  color: #cbd5e1;
+}
+.dark .form-input-side {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f3f4f6;
+}
+
+/* الحاوية الأساسية */
+.file-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+/* إخفاء الزرار الأصلي بتاع المتصفح */
+.hidden-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* التصميم الجديد لزرار Choose File */
+.custom-file-button {
+  display: block;
+  width: 100%;
+  padding: 12px 15px;
+  background-color: #f8fafc;
+  border: 2px dashed #cbd5e1; /* حدود منقطة تعطي إيحاء بالرفع */
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.custom-file-button:hover {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+/* الدارك مود */
+.dark .custom-file-button {
+  background-color: #1e293b;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+.dark .custom-file-button:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
