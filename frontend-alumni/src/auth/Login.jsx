@@ -124,6 +124,7 @@ useEffect(() => {
 const handleLogin = async () => {
   try {
     const res = await API.post("/login", { email, password });
+    console.log("Login Response Data:", res.data);
     const { id, email: userEmail, userType, token } = res.data;
 
     const user = { id, email: userEmail, userType };
