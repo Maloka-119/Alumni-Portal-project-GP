@@ -85,14 +85,14 @@ const UniversityServicesAdmin = ({ currentUser }) => {
     if (result.isConfirmed) {
       try {
         const res = await API.delete(`/university-services/${id}`);
-        console.log("DELETE service response:", res);
+        // console.log("DELETE service response:", res);
 
         if (res.data.success) {
           Swal.fire(t("Deleted!"), t("Service has been deleted."), "success");
           fetchServices();
         }
       } catch (error) {
-        console.log("DELETE service error:", error);
+        // console.log("DELETE service error:", error);
         Swal.fire(t("Error!"), t("Something went wrong"), "error");
       }
     }

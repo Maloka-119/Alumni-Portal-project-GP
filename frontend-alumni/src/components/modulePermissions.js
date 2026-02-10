@@ -64,7 +64,8 @@ import EmptyPage from "../pages/admin/EmptyPage";
 import FAQManage from "../pages/admin/FAQManage";
 import FeedbackView from "../pages/admin/FeedbackView";
 import RolesManagement from "../pages/admin/RolesManagement";
-import UniversityServicesAdmin from '../pages/admin/UniversityServicesAdmin.jsx'
+import UniversityServicesAdmin from '../pages/admin/UniversityServicesAdmin.jsx';
+import ManageDocs from '../pages/admin/ManageDocs.jsx'
 import { Users, UserCheck, FileText, MessageCircle, Grid, File, Clipboard, Globe, Layers, FileMinus, UserPlus ,BarChart, FilePlus2 ,MessageSquare ,Shield} from "lucide-react";
 
 export const modulesConfig = [
@@ -100,7 +101,7 @@ export const modulesConfig = [
   { id: 7, nameKey: "portalPostsManagement", path: "portalPosts", component: AdminPostsPage, permKey: "Portal posts management", icon: <FilePlus2 size={16} /> },
   { id: 8, nameKey: "graduatesPostsManagement", path: "graduatesPosts", component: UsersPostsPage, permKey: "Graduates posts management", icon: <Grid size={16} /> },
   { id: 9, nameKey: "portalReports", path: "reportsAnalysis", component: AdminDashboard, permKey: "Portal Reports", icon: <BarChart size={16} /> },
-  { id: 10, nameKey: "documentRequestsManagement", path: "documentManagement", component: () => <EmptyPage title="Document Requests" />, permKey: "Document Requests management", icon: <FileText size={16} /> },
+  { id: 10, nameKey: "documentRequestsManagement", path: "documentManagement", component: ManageDocs, permKey: "Document Requests management", icon: <FileText size={16} /> },
   { 
     id: 11, 
     nameKey: "servicesManagement", // الاسم في الباك يفضل زي ما هو

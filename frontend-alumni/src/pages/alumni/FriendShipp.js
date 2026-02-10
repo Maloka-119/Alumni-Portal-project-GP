@@ -177,11 +177,11 @@ useEffect(() => {
 
   // -------------------- Chat Functions --------------------
   const openChat = async (friend) => {
-    console.log("Friend Object Received:", friend);
+    // console.log("Friend Object Received:", friend);
 
     // تأكدي من وجود ID صالح
     const receiverId = friend.friendId || friend.id;
-    console.log("Receiver ID to send:", receiverId);
+    // console.log("Receiver ID to send:", receiverId);
 
     if (!receiverId) {
       console.error("❌ Friend ID is missing. Cannot open chat.", friend);

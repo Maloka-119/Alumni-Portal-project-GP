@@ -75,7 +75,7 @@ function GroupDetail({ group, goBack, updateGroup, perms, currentUserId }) {
 const fetchMembers = async () => {
   try {
     const res = await API.get(`/${group.id}/users`);
-    console.log("Members API response:", res.data); // ◀ للتأكد من البيانات
+    // console.log("Members API response:", res.data); 
     
     const members = (res.data.data || []).map((m) => {
       // البيانات الجديدة قد تأتي بدون Graduate متداخل

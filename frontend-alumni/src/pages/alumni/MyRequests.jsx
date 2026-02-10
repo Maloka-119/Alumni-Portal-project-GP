@@ -19,7 +19,7 @@ const MyRequests = () => {
     const fetchRequests = async () => {
       try {
         const response = await API.get('/documents/requests/my-requests');
-        console.log('📊 Requests Data:', response.data.data);
+        // console.log('📊 Requests Data:', response.data.data);
         setRequests(response.data.data || []);
       } catch (err) {
         console.error('❌ Error:', err);
@@ -41,6 +41,8 @@ const MyRequests = () => {
       'Pending': 'status-pending',
       'Completed': 'status-completed',
       'In Progress': 'status-progress',
+      'approved': 'status-progress',
+      'rejected': 'status-rejected',
       'under_review': 'status-review'
     };
     return statusMap[status] || '';
@@ -54,7 +56,9 @@ const MyRequests = () => {
     'Pending': 'statusPending',
     'Completed': 'statusCompleted',
     'In Progress': 'statusInProgress',
-    'Under Review': 'statusUnderReview'
+     'Approved': 'statusInProgress',
+    'Under Review': 'statusUnderReview',
+    'Rejected': 'statusrejected',
   };
 
   if (loading) {
@@ -79,7 +83,7 @@ const MyRequests = () => {
   }
 
   return (
-    <div className="container">
+    <div className="Rcontainer">
       <div>
         <h1 className="uni-header">{t('myRequestsTitle')}</h1>
         <p className="subtitle">{t('myRequestsSubtitle')}</p>

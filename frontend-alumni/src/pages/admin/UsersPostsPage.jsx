@@ -514,7 +514,7 @@ const navigate = useNavigate();
     setError(null);
     try {
       const res = await API.get('/posts');
-      console.log("Fetch posts response:", res);
+      // console.log("Fetch posts response:", res);
       if (res.data.status === "success") {
         setPosts(formatPosts(res.data.data));
       } else {

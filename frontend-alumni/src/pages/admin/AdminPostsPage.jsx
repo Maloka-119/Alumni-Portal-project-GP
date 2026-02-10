@@ -88,7 +88,7 @@ const AdminPostsPage = ({ currentUser }) => {
     setError(null);
     try {
       const response = await API.get('/posts/admin');
-      console.log(" API response:", response.data);
+      // console.log(" API response:", response.data);
       if (response.data.status === "success") setPosts(formatPosts(response.data.data));
       else setPosts([]);
     } catch (err) {

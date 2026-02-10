@@ -1,0 +1,318 @@
+/* Container & Global Font */
+.adm-docs-container {
+    max-width: 1250px;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+}
+
+/* Header Section */
+.adm-docs-header {
+    margin-bottom: 2rem;
+    /* border-left: 4px solid #3b82f6; */
+    padding-left: 1.25rem;
+}
+
+.adm-docs-title {
+    font-size: 1.85rem;
+    color: rgb(79, 70, 229);
+    font-weight: 600;
+    margin: 0;
+}
+
+.adm-docs-subtitle {
+    color: #64748b;
+    font-size: 1rem;
+    margin-top: 0.25rem;
+}
+
+/* Table Card Styling */
+.adm-table-responsive-wrapper {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    border: 1px solid #f1f5f9;
+}
+
+.adm-main-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+/* Table Header */
+.adm-main-table thead {
+    background-color: #f8fafc;
+}
+
+.adm-main-table th {
+    padding: 1.25rem 1.5rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #64748b;
+    letter-spacing: 0.05em;
+    border-bottom: 2px solid #f1f5f9;
+}
+
+/* Table Body */
+.adm-main-table td {
+    padding: 1.25rem 1.5rem;
+    vertical-align: middle;
+    color: #334155;
+    border-bottom: 1px solid #f8fafc;
+}
+
+.adm-main-table tbody tr:hover {
+    background-color: #f1f5f980;
+}
+
+/* Data Specific Styles */
+.adm-req-num {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #6366f1;
+}
+
+.adm-grad-name {
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.adm-lang-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    background: #e2e8f0;
+    padding: 2px 8px;
+    border-radius: 6px;
+    margin-top: 6px;
+    font-weight: 700;
+}
+
+/* Status Pill Design */
+.adm-status-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* 1. حالة الانتظار - Pending (اللون البرتقالي الهادئ) */
+.status-pending { 
+    background: #fff7ed; 
+    color: #c2410c; 
+    border: 1px solid #ffedd5;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+/* 2. حالة المراجعة - Under Review (اللون الأزرق السماوي) */
+.status-under_review { 
+    background: #f0f9ff; 
+    color: #0369a1; 
+    border: 1px solid #e0f2fe;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+/* 3. حالة الاكتمال - Completed / Approved (اللون الأخضر المريح) */
+.status-approved, .status-completed { 
+    background: #f0fdf4; 
+    color: #15803d; 
+    border: 1px solid #dcfce7;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+/* 4. حالة الرفض - Rejected (اللون الأحمر الهادئ) */
+.status-rejected { 
+    background: #fef2f2; 
+    color: #b91c1c; 
+    border: 1px solid #fee2e2;
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+/* Action Buttons & Icons */
+.adm-action-btns {
+    display: flex;
+    gap: 0.65rem;
+    align-items: center;
+}
+
+.adm-btn-view, .adm-btn-approve, .adm-btn-reject {
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.adm-btn-view { background: #f1f5f9; color: #475569; }
+.adm-btn-approve { background: #f0fdf4; color: #22c55e; }
+.adm-btn-reject { background: #fef2f2; color: #ef4444; }
+
+.adm-btn-view:hover { background: #e2e8f0; transform: translateY(-2px); }
+.adm-btn-approve:hover { background: #dcfce7; transform: translateY(-2px); }
+.adm-btn-reject:hover { background: #fee2e2; transform: translateY(-2px); }
+
+/* Attachments */
+.adm-files-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.adm-file-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #3b82f6;
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.adm-file-link:hover { text-decoration: underline; }
+
+/* Loading state */
+.adm-loading-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6rem;
+    color: #64748b;
+}
+
+.adm-loader-spinner {
+    width: 44px;
+    height: 44px;
+    border: 4px solid #f1f5f9;
+    border-top-color: #6366f1;
+    border-radius: 50%;
+    animation: adm-spin 0.8s ease-in-out infinite;
+    margin-bottom: 1.5rem;
+}
+
+@keyframes adm-spin { to { transform: rotate(360deg); } }
+
+/* Responsive adjustments */
+@media (max-width: 850px) {
+    .adm-main-table thead { display: none; }
+    .adm-main-table tr {
+        display: block;
+        border: 1px solid #f1f5f9;
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+        background: #fff;
+    }
+    .adm-main-table td {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.85rem 1.25rem;
+        border-bottom: 1px solid #f8fafc;
+        text-align: right;
+    }
+    .adm-main-table td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: #94a3b8;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+    }
+    .adm-main-table td:last-child { border-bottom: none; }
+}
+
+
+/* تنعيم النافذة المنبثقة بالكامل */
+.adm-swal-popup-custom {
+    font-family: 'Inter', 'Segoe UI', Roboto, sans-serif !important;
+    border-radius: 20px !important;
+    padding: 1.5rem !important;
+}
+
+.adm-swal-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #1e293b;
+    letter-spacing: -0.02em;
+}
+
+.adm-swal-container {
+    padding: 1rem 0.5rem;
+    text-align: inherit;
+}
+
+/* الصفوف المنظمة بدل الـ <p> العشوائي */
+.adm-swal-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.adm-swal-row .label {
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.adm-swal-row .value {
+    color: #1e293b;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* الملاحظات */
+.adm-swal-notes {
+    margin-top: 1rem;
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 12px;
+}
+
+.notes-text {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: #475569;
+    line-height: 1.6; /* بيخلي قراءة الملاحظات أنعم بكتير */
+}
+
+.adm-swal-footer {
+    margin-top: 1.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+/* تأكيد تنعيم أزرار Swal */
+.swal2-styled.swal2-confirm {
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+}
+.swal2-close {
+    font-size: 24px !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* حل مشكلة طول الـ National ID اللي ظاهر في الصورة */
+.adm-swal-row .value {
+    word-break: break-word;
+    text-align: left;
+    margin-left: 10px;
+}

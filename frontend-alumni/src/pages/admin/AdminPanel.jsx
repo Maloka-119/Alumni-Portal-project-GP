@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import API from '../../services/api'; 
 import FeedbackView from './FeedbackView';
 import ShowAccountgrad from './ShowAccountgrad';
+import ManageDocs from './ManageDocs';
 
 const AdminPanel = ({ setUser }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -145,7 +146,7 @@ const AdminPanel = ({ setUser }) => {
           <Route index element={<EmptyPage title="welcome to admin panel" />} />
           <Route path="reportsAnalysis" element={<AdminDashboard currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="communityManagement" element={<GroupsPage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
-          <Route path="documentManagement" element={<EmptyPage title="Document Management" />} />
+          <Route path="documentManagement" element={<ManageDocs currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="universityServices" element={<UniversityServicesAdmin  currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="alumniManagement" element={<AlumniManagement currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="staffManagement" element={<StaffManagement currentUser={JSON.parse(localStorage.getItem("user"))} />} />
