@@ -10,17 +10,16 @@ const MyRequests = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  //  تغيير الاتجاه حسب اللغة
   useEffect(() => {
     document.documentElement.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = i18n.language;
   }, [i18n.language]);
 
-  //  جلب الطلبات
   useEffect(() => {
     const fetchRequests = async () => {
       try {
         const response = await API.get('/documents/requests/my-requests');
+        console.log('📊 Requests Data:', response.data.data);
         setRequests(response.data.data || []);
       } catch (err) {
         console.error('❌ Error:', err);
@@ -33,26 +32,31 @@ const MyRequests = () => {
     fetchRequests();
   }, [t]);
 
-  //  Status styles
   const getStatusClass = (status) => {
     const statusMap = {
+      'pending': 'status-pending',
+      'completed': 'status-completed',
+      'in progress': 'status-progress',
+      'under review': 'status-review',
+      'Pending': 'status-pending',
       'Completed': 'status-completed',
       'In Progress': 'status-progress',
-      'Pending': 'status-pending',
       'Under Review': 'status-review'
     };
     return statusMap[status] || '';
   };
 
-  //  Status translation keys
   const statusTranslationMap = {
+    'pending': 'statusPending',
+    'completed': 'statusCompleted',
+    'in progress': 'statusInProgress',
+    'under review': 'statusUnderReview',
+    'Pending': 'statusPending',
     'Completed': 'statusCompleted',
     'In Progress': 'statusInProgress',
-    'Pending': 'statusPending',
     'Under Review': 'statusUnderReview'
   };
 
-  //  Loading UI
   if (loading) {
     return (
       <div className="container">
@@ -64,7 +68,6 @@ const MyRequests = () => {
     );
   }
 
-  //  Error UI
   if (error) {
     return (
       <div className="container">
@@ -77,30 +80,28 @@ const MyRequests = () => {
 
   return (
     <div className="container">
-      {/*  Header */}
       <div>
         <h1 className="uni-header">{t('myRequestsTitle')}</h1>
         <p className="subtitle">{t('myRequestsSubtitle')}</p>
       </div>
 
       {requests.length === 0 ? (
-        //  Empty State
         <div className="empty-state">
           <h2>{t('noRequestsFound')}</h2>
           <p>{t('noRequestsDescription')}</p>
         </div>
       ) : (
-        //  Table
         <div className="table-container">
           <table className="requests-table">
             <thead>
               <tr>
                 <th>{t('requestNumber')}</th>
-                <th>{t('requestType')}</th>
+                {/* <th>{t('requestType')}</th> */}
+                <th>{t('createdAt')}</th>
                 <th>{t('requestStatus')}</th>
                 <th>{t('expectedCompletion')}</th>
-                <th>{t('createdAt')}</th>
-                <th>{t('documentNameAr')}</th>
+                
+                <th>{t('documentNameAr')}</th> 
               </tr>
             </thead>
 
@@ -108,21 +109,32 @@ const MyRequests = () => {
               {requests.map((req) => (
                 <tr key={req.document_request_id}>
                   <td className="request-number">{req.request_number}</td>
-                  <td>{req['request-type']}</td>
+                  {/* <td>{req['request-type']}</td> */}
                   <td>
-                    <span
-                      className={`status-badge ${getStatusClass(req.status)}`}
-                    >
+  {req['created-at'] 
+    ? new Date(req['created-at']).toLocaleDateString(
+        i18n.language === 'ar' ? 'ar-EG-u-nu-arab' : 'en-GB',
+        { year: 'numeric', month: 'numeric', day: 'numeric' }
+      ) 
+    : '---'}
+</td>
+                  <td>
+                    <span className={`status-badge ${getStatusClass(req.status)}`}>
                       {t(statusTranslationMap[req.status] || req.status)}
                     </span>
                   </td>
                   <td>
-                    {new Date(req.expected_completion_date).toLocaleDateString()}
+  {req.expected_completion_date 
+    ? new Date(req.expected_completion_date).toLocaleDateString(
+        i18n.language === 'ar' ? 'ar-EG-u-nu-arab' : 'en-GB', 
+        { year: 'numeric', month: 'numeric', day: 'numeric' }
+      ) 
+    : '---'}
+</td>
+
+                  <td className={i18n.language === 'ar' ? 'arabic-text' : ''}>
+                    {i18n.language === 'ar' ? req.document_name_ar : req.document_name_en}
                   </td>
-                  <td>
-                    {new Date(req.created_at).toLocaleDateString()}
-                  </td>
-                  <td className="arabic-text">{req.document_name_ar}</td>
                 </tr>
               ))}
             </tbody>
@@ -134,4 +146,3 @@ const MyRequests = () => {
 };
 
 export default MyRequests;
-

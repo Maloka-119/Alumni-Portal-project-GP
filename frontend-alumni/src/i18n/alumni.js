@@ -243,7 +243,7 @@ const alumni = {
       "requestStatus": "Status",
       "expectedCompletion": "Expected Completion",
       "createdAt": "Created At",
-      "documentNameAr": "Document Name (AR)",
+      "documentNameAr": "Document Name",
       "statusCompleted": "Completed",
       "statusInProgress": "In Progress",
       "statusPending": "Pending",
