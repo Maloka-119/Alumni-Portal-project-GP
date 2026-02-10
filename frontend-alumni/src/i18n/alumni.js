@@ -260,12 +260,18 @@ const alumni = {
       "requestSuccess": "Request submitted successfully ✅",
       "loadDocumentsError": "Failed to load document types",
       "submitRequestError": "Failed to submit request",
-      "unauthorizedError": "Unauthorized: Please login first"
+      "unauthorizedError": "Unauthorized: Please login first",
+      "allowedFilesNote": "Only JPEG, PNG, JPG, and PDF are allowed.",
+      "chooseFile": "Choose File",
+  "filesSelected": "files selected",
     },
   },
 
   ar: {
     translation: {
+      "allowedFilesNote": "الصيغ المسموح بها فقط: JPEG, PNG, JPG, PDF",
+      "chooseFile": "إختر ملف",
+      "filesSelected": "ملفات تم اختيارها",
       "loading": "جاري التحميل",
       "universityServices": "الخدمات الجامعية",
       // ===== Main navigation =====

@@ -131,25 +131,32 @@ const DocumentRequest = () => {
 
             {selectedDoc.requires_attachments && (
               <div className="input-group-horizontal upload-container">
-                <label className="input-label-side">{t("attachments")}</label>
-                <div className="file-input-wrapper">
-                  <input
-                    type="file"
-                    id="file-upload"
-                    className="hidden-file-input"
-                    multiple
-                    onChange={(e) => {
-                        setAttachments(Array.from(e.target.files));
-                        setError(""); // مسح الخطأ بمجرد اختيار ملف
-                    }}
-                  />
-                  <label htmlFor="file-upload" className="custom-file-button">
-                    {attachments.length > 0 
-                      ? `${attachments.length} ${t("filesSelected")}` 
-                      : t("chooseFile")}
-                  </label>
-                </div>
+              <label className="input-label-side">{t("attachments")}</label>
+              <div className="file-input-wrapper">
+                <input
+                  type="file"
+                  id="file-upload"
+                  className="hidden-file-input"
+                  multiple
+                  // إضافة خاصية accept بتخلي المتصفح يفلتر الملفات تلقائياً
+                  accept=".jpeg,.jpg,.png,.pdf" 
+                  onChange={(e) => {
+                    setAttachments(Array.from(e.target.files));
+                    setError(""); 
+                  }}
+                />
+                <label htmlFor="file-upload" className="custom-file-button">
+                  {attachments.length > 0 
+                    ? `${attachments.length} ${t("filesSelected")}` 
+                    : t("chooseFile")}
+                </label>
+                
+                {/* الملاحظة هنا */}
+                <p className="file-instruction-text">
+                {t("allowedFilesNote")}
+                </p>
               </div>
+            </div>
             )}
 
             <div className="document-actions">

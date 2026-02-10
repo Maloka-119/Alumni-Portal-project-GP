@@ -19,7 +19,7 @@ const MyRequests = () => {
     const fetchRequests = async () => {
       try {
         const response = await API.get('/documents/requests/my-requests');
-        // console.log('📊 Requests Data:', response.data.data);
+        console.log('📊 Requests Data:', response.data.data);
         setRequests(response.data.data || []);
       } catch (err) {
         console.error('❌ Error:', err);
@@ -41,7 +41,7 @@ const MyRequests = () => {
       'Pending': 'status-pending',
       'Completed': 'status-completed',
       'In Progress': 'status-progress',
-      'Under Review': 'status-review'
+      'under_review': 'status-review'
     };
     return statusMap[status] || '';
   };
