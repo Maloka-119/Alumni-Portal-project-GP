@@ -11,7 +11,9 @@ const {
   getDocumentName,
 } = require("../constants/documentTypes");
 const { logger } = require("../utils/logger");
-const { notifyDocumentRequestStatusChanged } = require("../services/notificationService");
+const {
+  notifyDocumentRequestStatusChanged,
+} = require("../services/notificationService");
 const { checkStaffPermission } = require("../utils/permissionChecker");
 const aes = require("../utils/aes");
 
@@ -19,8 +21,24 @@ const aes = require("../utils/aes");
 // @route   POST /api/documents/requests
 // @access  Private (Graduates only)
 const createDocumentRequest = asyncHandler(async (req, res) => {
+  console.log("=== CREATE DOCUMENT REQUEST START ===");
+  console.log("🔹 Request body:", JSON.stringify(req.body, null, 2));
+  console.log(
+    "🔹 User from req.user:",
+    req.user
+      ? {
+          id: req.user.id,
+          userType: req.user["user-type"],
+          nationalId: req.user["national-id"]
+            ? "***" + req.user["national-id"].slice(-4)
+            : "null",
+        }
+      : "NO USER IN REQ"
+  );
+
+  // ⬇️ التعديل: نشيل national_id من الـ body
   const user = req.user;
-  const { document_type, language, national_id, attachments } = req.body;
+  const { document_type, language, attachments } = req.body; // ⬅️ شيل national_id
 
   // 📝 Log بداية العملية
   logger.info("Creating new document request", {
@@ -30,8 +48,13 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     language: language || "ar",
   });
 
+  console.log("🔹 Document type:", document_type);
+  console.log("🔹 Language:", language);
+  console.log("🔹 Attachments:", attachments);
+
   // 1️⃣ التحقق: هل المستخدم خريج؟
   if (user["user-type"] !== "graduate") {
+    console.log("❌ User is not a graduate! User type:", user["user-type"]);
     logger.warn("Non-graduate user tried to create document request", {
       userId: user.id,
       userType: user["user-type"],
@@ -42,12 +65,16 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     });
   }
 
-  // 🔧 التعديل هنا: نجيب الـ user من الداتابيز علشان نجيب national-id الصحيح
+  console.log("✅ User is a graduate");
+
+  // 🔧 نجيب الـ user من الداتابيز علشان نجيب national-id
+  console.log("🔹 Fetching user from database with ID:", user.id);
   const dbUser = await User.findByPk(user.id, {
     attributes: ["id", "national-id", "first-name", "last-name"],
   });
 
   if (!dbUser) {
+    console.log("❌ User not found in database! ID:", user.id);
     logger.warn("User not found in database during document request", {
       userId: user.id,
     });
@@ -57,9 +84,26 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     });
   }
 
+  console.log("✅ User found in database");
+  console.log(
+    "🔹 DB User national-id (first 10 chars):",
+    dbUser["national-id"]
+      ? dbUser["national-id"].substring(0, 10) + "..."
+      : "null"
+  );
+
+  // ⬇️ التعديل: نستخدم الـ national-id من الداتابيز
+  const national_id = dbUser["national-id"];
+  console.log(
+    "🔹 Using national_id from database:",
+    national_id ? "***" + national_id.slice(-4) : "null"
+  );
+
   // 2️⃣ التحقق: هل نوع الوثيقة موجود؟
+  console.log("🔹 Checking document type:", document_type);
   const documentType = getDocumentByCode(document_type);
   if (!documentType) {
+    console.log("❌ Invalid document type:", document_type);
     logger.warn("Invalid document type requested", {
       userId: user.id,
       requestedType: document_type,
@@ -70,34 +114,20 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     });
   }
 
-  // 3️⃣ التحقق: هل الرقم القومي صح؟ - فك التشفير أولاً
-  const decryptedNationalId = aes.decryptNationalId(dbUser["national-id"]);
-  if (!decryptedNationalId) {
-    logger.error("Failed to decrypt national ID", {
-      userId: user.id,
-    });
-    return res.status(500).json({
-      success: false,
-      message: "Error validating national ID. Please contact support.",
-    });
-  }
+  console.log("✅ Document type is valid:", documentType.name_ar);
 
-  if (national_id !== decryptedNationalId) {
-    logger.warn("National ID mismatch in document request", {
-      userId: user.id,
-      providedNationalId: national_id,
-      actualNationalId: "***", // Don't log decrypted NID for security
-      dbUserId: dbUser.id,
-    });
-    return res.status(400).json({
-      success: false,
-      message: "National ID does not match your account.",
-    });
-  }
+  // ⬇️ التعديل: ما نعملش validation للـ national-id (مش من الـ body)
+  console.log("✅ National ID from database will be used");
 
-  // 4️⃣ التحقق: هل شهادة التخرج محتاجة مرفقات؟
+  // 3️⃣ التحقق: هل شهادة التخرج محتاجة مرفقات؟
+  console.log("🔹 Checking if document requires attachments...");
   const needsAttachments = requiresAttachments(document_type);
+  console.log("   Needs attachments?", needsAttachments);
+
   if (needsAttachments && (!attachments || attachments.length === 0)) {
+    console.log(
+      "❌ Graduation certificate requires attachments but none provided"
+    );
     logger.warn("Graduation certificate missing attachments", {
       userId: user.id,
       documentType: document_type,
@@ -109,16 +139,37 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     });
   }
 
+  console.log("✅ Attachments check passed");
+
   try {
-    // 5️⃣ إنشاء الطلب
+    console.log("🔹 Attempting to create document request...");
+    console.log("   - graduate_id:", user.id);
+    console.log("   - request-type:", document_type);
+    console.log("   - language:", language || "ar");
+    console.log(
+      "   - national_id (from DB):",
+      national_id ? "***" + national_id.slice(-4) : "null"
+    );
+    console.log(
+      "   - status:",
+      document_type === "GRAD_CERT" ? "under_review" : "pending"
+    );
+    console.log("   - needsAttachments:", needsAttachments);
+
+    // 4️⃣ إنشاء الطلب
     const documentRequest = await DocumentRequest.create({
       graduate_id: user.id,
       "request-type": document_type,
       language: language || "ar",
-      national_id: national_id,
+      national_id: national_id, // ⬅️ من الداتابيز مش من الـ body
       attachments: needsAttachments ? attachments : null,
       status: document_type === "GRAD_CERT" ? "under_review" : "pending",
     });
+
+    console.log("✅ Document request created successfully!");
+    console.log("🔹 Request ID:", documentRequest.document_request_id);
+    console.log("🔹 Request Number:", documentRequest.request_number);
+    console.log("🔹 Status:", documentRequest.status);
 
     // 📝 Log نجاح إنشاء الطلب
     logger.info("Document request created successfully", {
@@ -131,6 +182,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     });
 
     // إرجاع الرد
+    console.log("📤 Sending success response...");
     res.status(201).json({
       success: true,
       message: "Document request created successfully.",
@@ -142,9 +194,11 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
         expected_completion_date: documentRequest.expected_completion_date,
       },
     });
+
+    console.log("=== CREATE DOCUMENT REQUEST END SUCCESS ===");
   } catch (error) {
-    // ❌ Log أي خطأ مع تفاصيل الـ validation
-    console.error("=== SEQUELIZE VALIDATION ERROR ===");
+    console.error("=== CREATE DOCUMENT REQUEST ERROR ===");
+    console.error("❌ Error creating document request");
     console.error("Error name:", error.name);
     console.error("Error message:", error.message);
     console.error("Error stack:", error.stack);
@@ -152,16 +206,13 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     if (error.errors && error.errors.length > 0) {
       console.error("Validation errors:");
       error.errors.forEach((err, index) => {
-        console.error(
-          `  ${index + 1}. Field: ${err.path}, Value: ${err.value}, Message: ${
-            err.message
-          }`
-        );
+        console.error(`  ${index + 1}. Field: ${err.path}`);
+        console.error(`     Value: ${err.value}`);
+        console.error(`     Message: ${err.message}`);
       });
     }
 
-    console.error("Full error:", error);
-
+    // Log to file logger
     logger.error("Error creating document request", {
       userId: user.id,
       error: error.message,
@@ -176,9 +227,10 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
         : null,
     });
 
-    // Always show error details in development, or if NODE_ENV is not production
+    // Always show error details in development
     const isDevelopment = process.env.NODE_ENV !== "production";
 
+    console.log("📤 Sending error response...");
     res.status(500).json({
       success: false,
       message: "Error creating document request.",
@@ -187,11 +239,13 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       validationErrors: error.errors
         ? error.errors.map((e) => ({ field: e.path, message: e.message }))
         : undefined,
-      ...(isDevelopment && { 
+      ...(isDevelopment && {
         stack: error.stack?.substring(0, 500),
-        fullError: error.toString()
+        fullError: error.toString(),
       }),
     });
+
+    console.log("=== CREATE DOCUMENT REQUEST END ERROR ===");
   }
 });
 
@@ -293,7 +347,8 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
           ar: "مقبول",
           en: "Approved",
           description_ar: "تم قبول طلبك وجاري تجهيزه",
-          description_en: "Your request has been approved and is being processed",
+          description_en:
+            "Your request has been approved and is being processed",
         },
         ready_for_pickup: {
           ar: "جاهز للاستلام",
@@ -347,12 +402,13 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
             requestData.status !== "completed" &&
             requestData.status !== "cancelled",
         },
-        assigned_staff: requestData.Staff && requestData.Staff.User
-          ? {
-              id: requestData.Staff.staff_id,
-              name: `${requestData.Staff.User["first-name"]} ${requestData.Staff.User["last-name"]}`,
-            }
-          : null,
+        assigned_staff:
+          requestData.Staff && requestData.Staff.User
+            ? {
+                id: requestData.Staff.staff_id,
+                name: `${requestData.Staff.User["first-name"]} ${requestData.Staff.User["last-name"]}`,
+              }
+            : null,
         // Log information
         log: {
           request_created: requestData["created-at"],
@@ -464,7 +520,12 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
       include: [
         {
           model: Graduate,
-          include: [{ model: User, attributes: ["id", "first-name", "last-name", "email"] }],
+          include: [
+            {
+              model: User,
+              attributes: ["id", "first-name", "last-name", "email"],
+            },
+          ],
         },
       ],
     });
@@ -481,7 +542,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
     }
 
     const oldStatus = documentRequest.status;
-    
+
     // 5️⃣ تحديث الحالة
     documentRequest.status = status;
     if (notes !== undefined) {
@@ -490,7 +551,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
     if (expected_completion_date) {
       documentRequest.expected_completion_date = expected_completion_date;
     }
-    
+
     // إذا كان staff_id null، نضيف staff_id الحالي
     if (!documentRequest.staff_id && user["user-type"] === "staff") {
       const staff = await Staff.findOne({ where: { staff_id: user.id } });
@@ -660,9 +721,10 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
         graduate_name: requestData.Graduate
           ? `${requestData.Graduate.User["first-name"]} ${requestData.Graduate.User["last-name"]}`
           : null,
-        staff_name: requestData.Staff && requestData.Staff.User
-          ? `${requestData.Staff.User["first-name"]} ${requestData.Staff.User["last-name"]}`
-          : null,
+        staff_name:
+          requestData.Staff && requestData.Staff.User
+            ? `${requestData.Staff.User["first-name"]} ${requestData.Staff.User["last-name"]}`
+            : null,
       };
     });
 
