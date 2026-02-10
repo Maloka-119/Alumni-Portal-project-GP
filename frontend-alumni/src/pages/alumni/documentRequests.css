@@ -1,191 +1,345 @@
-/* ===== Wrapper ===== */
+/* ===== Wrapper & Global ===== */
 .document-wrapper {
-    width: 85%;
-    margin: 0 auto;
-    padding: 20px 20px 40px;
-    min-height: 100vh;
-    direction: inherit;
-  }
-  
-  /* ===== Page Header ===== */
-  .document-header {
-    font-weight: 600;
-    margin-bottom: 30px;
-    text-align: center;
-  }
-  
-  /* ===== Grid ===== */
-  .document-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 25px;
-  }
-  
-  /* ===== Card ===== */
-  .document-card {
-    background: #ffffff;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-    transition: transform 0.3s, box-shadow 0.3s;
-    display: flex;
+  width: 90%;
+  max-width: 1300px;
+  margin: 0 auto;
+  padding: 50px 20px;
+  min-height: 100vh;
+  direction: inherit;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #1e293b;
+}
+
+.document-header {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 10px;
+  text-align: center;
+  background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.document-subtitle {
+  text-align: center;
+  color: #64748b;
+  margin-bottom: 40px;
+  font-size: 1.1rem;
+}
+
+/* ===== Status Messages ===== */
+.status-message {
+  text-align: center;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.status-message.error { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; }
+.status-message.success { background: #f0fdf4; color: #22c55e; border: 1px solid #dcfce7; }
+
+/* ===== Grid ===== */
+.document-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+}
+
+/* ===== Card ===== */
+.document-card {
+  background: #ffffff;
+  border-radius: 24px;
+  border: 1px solid #f1f5f9;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.document-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border-color: #3b82f633;
+}
+
+/* ===== Badge ===== */
+.document-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #eff6ff;
+  color: #2563eb;
+  padding: 5px 12px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+[dir="rtl"] .document-badge { right: auto; left: 15px; }
+
+/* ===== Content ===== */
+.document-card-content {
+  padding: 40px 25px 10px;
+  flex-grow: 1;
+  text-align: center;
+}
+
+.document-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  color: #0f172a;
+}
+
+.document-desc {
+  font-size: 0.95rem;
+  color: #64748b;
+  line-height: 1.6;
+}
+
+/* ===== Buttons & Actions ===== */
+.document-actions {
+  padding: 20px 25px 25px;
+  display: flex;
+  gap: 12px;
+}
+
+.document-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  font-size: 0.95rem;
+}
+
+.document-btn-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.document-btn-primary:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: translateY(-2px);
+}
+
+.document-btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.document-btn-secondary:hover {
+  background: #e2e8f0;
+}
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 35px;
+  border-radius: 28px;
+  width: 90%;
+  max-width: 500px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modal-title { font-size: 1.5rem; margin-bottom: 20px; text-align: center; }
+
+.upload-section { margin-bottom: 25px; }
+.upload-label { display: block; margin-bottom: 10px; font-weight: 600; }
+.upload-input {
+  width: 100%;
+  padding: 10px;
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 640px) {
+  .document-grid { grid-template-columns: 1fr; }
+  .document-header { font-size: 1.8rem; }
+}
+
+/* ===== Dark Mode Styles ===== */
+
+/* عندما يكون الكلاس .dark موجوداً في الـ body أو الـ wrapper */
+.dark .document-wrapper {
+  background-color: #0f172a;
+  color: #f8fafc;
+}
+
+.dark .document-card {
+  background: #1e293b;
+  border-color: #334155;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dark .document-card:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.dark .document-title {
+  color: #f8fafc;
+}
+
+.dark .document-desc {
+  color: #94a3b8;
+}
+
+.dark .document-badge {
+  background: rgba(59, 130, 246, 0.2);
+  color: #60a5fa;
+}
+
+.dark .document-btn-secondary {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.dark .document-btn-secondary:hover {
+  background: #475569;
+  color: #ffffff;
+}
+
+.dark .modal-content {
+  background: #1e293b;
+  color: #f8fafc;
+  border: 1px solid #334155;
+}
+
+.dark .upload-input {
+  background: #0f172a;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+/* تدرج لوني مختلف للعنوان في الدارك مود لزيادة الوضوح */
+.dark .document-header {
+  background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+}
+
+/* ===== Horizontal Input Style ===== */
+.input-group-horizontal {
+  display: flex;
+  align-items: center; /* ليكون الكلام والانبوت على خط واحد */
+  gap: 15px; /* مسافة بين الكلمة والانبوت */
+  margin-bottom: 20px;
+  direction: inherit;
+}
+
+.input-label-side {
+  flex: 0 0 100px; /* يعطي عرض ثابت للكلمة عشان الانبوتس تبدأ من نفس النقطة */
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #475569;
+  text-align: start;
+}
+
+.form-input-side {
+  flex: 1; /* يخلي الانبوت ياخد باقي المساحة المتوفرة */
+  padding: 10px 14px;
+  border: 1.8px solid #cdd6e0;
+  border-radius: 12px;
+  font-size: 15px;
+  background-color: #f9fafc;
+  outline: none;
+  transition: 0.25s;
+}
+
+.form-input-side:focus {
+  border-color: #3b82f6;
+  background-color: #fff;
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.2);
+}
+
+/* ضبط المسافات في الموبايل عشان ميبقاش ضيق */
+@media (max-width: 480px) {
+  .input-group-horizontal {
     flex-direction: column;
-    min-height: 230px;
-    position: relative;
+    align-items: flex-start;
+    gap: 8px;
   }
-  
-  .document-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  .input-label-side {
+    flex: none;
   }
-  
-  /* ===== Badge ===== */
-  .document-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    background-color: #2563eb;
-    color: #ffffff;
-    padding: 6px 14px;
-    border-radius: 50px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-    z-index: 2;
-  }
-  
-  /* RTL support */
-  [dir="rtl"] .document-badge {
-    right: auto;
-    left: 12px;
-  }
-  
-  /* ===== Card Content ===== */
-  .document-card-content {
-    padding: 20px 18px 10px;
-    flex: 1;
-    text-align: center;
-  }
-  
-  .document-title {
-    font-size: 1.15rem;
-    font-weight: 700;
-    color: #43454b;
-    margin-bottom: 10px;
-  }
-  
-  .document-desc {
-    font-size: 0.9rem;
-    color: #666;
-    line-height: 1.4;
-  }
-  
-  /* ===== Actions ===== */
-  .document-actions {
-    display: flex;
-    gap: 10px;
-    padding: 15px;
-    direction: inherit;
-  }
-  
-  .document-btn {
-    flex: 1;
-    padding: 10px;
-    border-radius: 12px;
-    border: none;
-    font-weight: 500;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-  
-  /* Primary */
-  .document-btn-primary {
-    background-color: #2563eb;
-    color: white;
-  }
-  
-  .document-btn-primary:hover:not(:disabled) {
-    background-color: #1e3a8a;
-    transform: translateY(-2px);
-  }
-  
-  /* Secondary */
-  .document-btn-secondary {
-    background-color: #b38e19;
-    color: white;
-  }
-  
-  .document-btn-secondary:hover {
-    background-color: #866c14;
-    transform: translateY(-2px);
-  }
-  
-  /* Disabled */
-  .document-btn-disabled,
-  .document-btn:disabled {
-    background: #cbd5e1;
-    color: #475569;
-    cursor: not-allowed;
-  }
-  
-  /* ===== Search ===== */
-  .document-search {
-    width: 100%;
-    max-width: 350px;
-    padding: 10px 14px;
-    margin: 15px auto 30px;
-    display: block;
-    border: 1.8px solid #cdd6e0;
-    border-radius: 15px;
-    font-size: 15px;
-    background-color: #f9fafc;
-    outline: none;
-    transition: 0.25s;
-    direction: inherit;
-  }
-  
-  .document-search:focus {
-    border-color: #37568d;
-    background-color: #fff;
-    box-shadow: 0 0 5px rgba(55, 86, 141, 0.25);
-  }
-  
-  /* ===== Dark Mode ===== */
-  .dark .document-card {
-    background: #1f2937;
-    color: #f3f4f6;
-  }
-  
-  .dark .document-desc {
-    color: #d1d5db;
-  }
-  
-  .dark .document-search {
-    background-color: #1f2937;
-    color: #f3f4f6;
-    border-color: #374151;
-  }
-  
-  /* ===== Responsive ===== */
-  @media (max-width: 1024px) {
-    .document-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
-  }
-  
-  @media (max-width: 768px) {
-    .document-grid {
-      grid-template-columns: 1fr;
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .document-header {
-      font-size: 22px;
-    }
-  
-    .document-desc {
-      font-size: 0.85rem;
-    }
-  }
-  
+}
+
+/* الدارك مود للستايل الجانبي */
+.dark .input-label-side {
+  color: #cbd5e1;
+}
+.dark .form-input-side {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f3f4f6;
+}
+
+/* الحاوية الأساسية */
+.file-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+/* إخفاء الزرار الأصلي بتاع المتصفح */
+.hidden-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+/* التصميم الجديد لزرار Choose File */
+.custom-file-button {
+  display: block;
+  width: 100%;
+  padding: 12px 15px;
+  background-color: #f8fafc;
+  border: 2px dashed #cbd5e1; /* حدود منقطة تعطي إيحاء بالرفع */
+  border-radius: 12px;
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.custom-file-button:hover {
+  background-color: #eff6ff;
+  border-color: #3b82f6;
+  color: #2563eb;
+}
+
+/* الدارك مود */
+.dark .custom-file-button {
+  background-color: #1e293b;
+  border-color: #475569;
+  color: #94a3b8;
+}
+
+.dark .custom-file-button:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: #60a5fa;
+  color: #60a5fa;
+}
