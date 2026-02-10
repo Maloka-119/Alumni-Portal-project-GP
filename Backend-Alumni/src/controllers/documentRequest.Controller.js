@@ -21,169 +21,367 @@ const aes = require("../utils/aes");
 // @route   POST /api/documents/requests
 // @access  Private (Graduates only)
 const createDocumentRequest = asyncHandler(async (req, res) => {
-  console.log("=== CREATE DOCUMENT REQUEST START ===");
-  console.log("🔹 Request body:", JSON.stringify(req.body, null, 2));
+  console.log("\n" + "=".repeat(70));
+  console.log("🚀🚀🚀 CREATE DOCUMENT REQUEST - DEBUG START 🚀🚀🚀");
+  console.log("=".repeat(70));
+
+  // ==================== PHASE 0: DEBUG LOGS ====================
+  console.log("\n🔍 PHASE 0: REQUEST ARRIVED AT CONTROLLER");
+  console.log("   Time:", new Date().toISOString());
+  console.log("   Controller invoked successfully!");
+
+  // ==================== PHASE 1: REQUEST INSPECTION ====================
+  console.log("\n📋 PHASE 1: REQUEST INSPECTION");
+  console.log("   Method:", req.method);
+  console.log("   URL:", req.originalUrl || req.url);
+  console.log("   Headers:");
+  console.log("     - Content-Type:", req.headers["content-type"] || "NOT SET");
+  console.log("     - Content-Length:", req.headers["content-length"] || "0");
   console.log(
-    "🔹 User from req.user:",
-    req.user
-      ? {
-          id: req.user.id,
-          userType: req.user["user-type"],
-          nationalId: req.user["national-id"]
-            ? "***" + req.user["national-id"].slice(-4)
-            : "null",
-        }
-      : "NO USER IN REQ"
+    "     - Authorization:",
+    req.headers["authorization"] ? "PRESENT" : "MISSING"
   );
 
-  // ⬇️ التعديل: نشيل national_id من الـ body
+  // تحقق من req.body بعد multer
+  console.log("\n🔍 BODY PARSER STATUS (AFTER MULTER):");
+  console.log("   req.body exists?", !!req.body);
+  console.log("   Type of req.body:", typeof req.body);
+
+  if (req.body) {
+    console.log("   req.body keys:", Object.keys(req.body));
+
+    // طباعة كل حقول الـ body
+    Object.keys(req.body).forEach((key) => {
+      const value = req.body[key];
+      console.log(
+        `     - ${key}:`,
+        value,
+        `(type: ${typeof value}, length: ${value ? value.length : 0})`
+      );
+    });
+
+    // بحث عن document_type بأي شكل
+    const allKeys = Object.keys(req.body);
+    const possibleDocTypeFields = allKeys.filter(
+      (key) =>
+        key.toLowerCase().includes("document") ||
+        key.toLowerCase().includes("type") ||
+        key.toLowerCase().includes("doc")
+    );
+
+    console.log("   Possible document_type fields:", possibleDocTypeFields);
+
+    if (possibleDocTypeFields.length > 0) {
+      possibleDocTypeFields.forEach((field) => {
+        console.log(`     Checking ${field}:`, req.body[field]);
+      });
+    }
+  } else {
+    console.log("   ⚠️ WARNING: req.body is undefined or null!");
+  }
+
+  // تحقق من الملفات
+  console.log("\n📁 FILES STATUS:");
+  console.log("   req.files exists?", !!req.files);
+  console.log("   req.file exists?", !!req.file);
+
+  if (req.files && Array.isArray(req.files)) {
+    console.log("   Number of files:", req.files.length);
+    req.files.forEach((file, i) => {
+      console.log(`   File ${i + 1}:`);
+      console.log(`     - Fieldname: ${file.fieldname}`);
+      console.log(`     - Original: ${file.originalname}`);
+      console.log(`     - Size: ${file.size} bytes`);
+      console.log(`     - Mimetype: ${file.mimetype}`);
+      console.log(`     - Path: ${file.path}`);
+      console.log(`     - Filename: ${file.filename}`);
+    });
+  } else if (req.file) {
+    console.log("   Single file:");
+    console.log(`     - Fieldname: ${req.file.fieldname}`);
+    console.log(`     - Original: ${req.file.originalname}`);
+    console.log(`     - Path: ${req.file.path}`);
+  } else {
+    console.log("   No files received");
+  }
+
+  // تحقق من الـ user
+  console.log("\n👤 USER AUTH STATUS:");
+  console.log("   req.user exists?", !!req.user);
+  if (req.user) {
+    console.log("   User ID:", req.user.id);
+    console.log("   User Type:", req.user["user-type"]);
+    console.log("   Full user object:", JSON.stringify(req.user, null, 2));
+  } else {
+    console.log("   ❌ ERROR: No user in request!");
+    return res.status(401).json({
+      success: false,
+      message: "Authentication required.",
+      debug: { step: "user_authentication", user: req.user },
+    });
+  }
+
+  // ==================== PHASE 2: SAFE DATA EXTRACTION ====================
+  console.log("\n📦 PHASE 2: SAFE DATA EXTRACTION");
+
+  // استخدام req.body مباشرة (مش محتاج || {} لأن multer هيحط البيانات)
+  const requestBody = req.body || {};
+  const requestFiles = req.files || [];
+
+  console.log("   Using requestBody:", requestBody);
+  console.log(
+    "   Using requestFiles:",
+    requestFiles.length > 0 ? `${requestFiles.length} file(s)` : "none"
+  );
+
+  // البحث عن document_type بكل الطرق الممكنة
+  let document_type = null;
+
+  // قائمة بكل الأسماء المحتملة
+  const possibleNames = [
+    "document_type",
+    "documentType",
+    "document-type",
+    "doc_type",
+    "doctype",
+    "type",
+    "document",
+    "docType",
+    "request_type",
+    "request-type",
+  ];
+
+  console.log("\n🔍 SEARCHING FOR DOCUMENT_TYPE:");
+  for (const name of possibleNames) {
+    if (
+      requestBody[name] !== undefined &&
+      requestBody[name] !== null &&
+      requestBody[name] !== ""
+    ) {
+      document_type = requestBody[name];
+      console.log(`   ✅ Found as '${name}':`, document_type);
+      break;
+    }
+  }
+
+  if (!document_type) {
+    // جرب البحث بأي حقل يحتوي على كلمة document أو type
+    const allBodyKeys = Object.keys(requestBody);
+    for (const key of allBodyKeys) {
+      if (
+        requestBody[key] &&
+        typeof requestBody[key] === "string" &&
+        requestBody[key].trim()
+      ) {
+        const lowerKey = key.toLowerCase();
+        if (lowerKey.includes("doc") || lowerKey.includes("type")) {
+          document_type = requestBody[key];
+          console.log(`   ⚠️ Found in field '${key}':`, document_type);
+          break;
+        }
+      }
+    }
+  }
+
+  const language = requestBody.language || requestBody.lang || "ar";
+
+  // معالجة الملفات
+  let attachments = [];
+  if (requestFiles.length > 0) {
+    attachments = requestFiles.map((file) => ({
+      fieldname: file.fieldname,
+      originalname: file.originalname,
+      filename: file.filename,
+      path: file.path,
+      mimetype: file.mimetype,
+      size: file.size,
+      url: `/uploads/documents/${file.filename}`, // URL للوصول للملف
+    }));
+  } else if (requestBody.attachments) {
+    attachments = Array.isArray(requestBody.attachments)
+      ? requestBody.attachments
+      : [requestBody.attachments];
+  }
+
+  console.log("\n📊 EXTRACTED DATA:");
+  console.log("   document_type:", document_type || "NOT FOUND!");
+  console.log("   language:", language);
+  console.log("   attachments count:", attachments.length);
+
+  if (attachments.length > 0) {
+    console.log("   Attachments details:");
+    attachments.forEach((att, i) => {
+      if (att.originalname) {
+        console.log(`     ${i + 1}. ${att.originalname} (${att.size} bytes)`);
+      } else {
+        console.log(`     ${i + 1}.`, att);
+      }
+    });
+  }
+
+  // ==================== PHASE 3: VALIDATION ====================
+  console.log("\n✅ PHASE 3: VALIDATION");
+
+  // CRITICAL: Check if document_type exists
+  if (!document_type) {
+    console.error("❌❌❌ CRITICAL ERROR: document_type is missing!");
+    console.error("   All body keys:", Object.keys(requestBody));
+    console.error("   Body values:", requestBody);
+    console.error("   Content-Type:", req.headers["content-type"]);
+    console.error("   Request method:", req.method);
+
+    // حاول تجميع كل البيانات المتاحة للمساعدة في التشخيص
+    const debugInfo = {
+      requestMethod: req.method,
+      requestUrl: req.url,
+      contentType: req.headers["content-type"],
+      contentLength: req.headers["content-length"],
+      bodyKeys: Object.keys(requestBody),
+      bodyValues: requestBody,
+      fileCount: requestFiles.length,
+      userAuthenticated: !!req.user,
+      userType: req.user ? req.user["user-type"] : null,
+    };
+
+    return res.status(400).json({
+      success: false,
+      message:
+        "Document type is required. Please send 'document_type' field in your request.",
+      debug: debugInfo,
+      suggestion:
+        "Make sure you're sending form-data with a field named 'document_type'",
+    });
+  }
+
   const user = req.user;
-  const { document_type, language, attachments } = req.body; // ⬅️ شيل national_id
+  console.log("✅ User authenticated:", user.id, `(${user["user-type"]})`);
 
-  // 📝 Log بداية العملية
-  logger.info("Creating new document request", {
-    userId: user.id,
-    userType: user["user-type"],
-    documentType: document_type,
-    language: language || "ar",
-  });
-
-  console.log("🔹 Document type:", document_type);
-  console.log("🔹 Language:", language);
-  console.log("🔹 Attachments:", attachments);
-
-  // 1️⃣ التحقق: هل المستخدم خريج؟
+  // 1️⃣ Check if user is graduate
   if (user["user-type"] !== "graduate") {
     console.log("❌ User is not a graduate! User type:", user["user-type"]);
-    logger.warn("Non-graduate user tried to create document request", {
-      userId: user.id,
-      userType: user["user-type"],
-    });
     return res.status(403).json({
       success: false,
       message: "Only graduates can create document requests.",
     });
   }
-
   console.log("✅ User is a graduate");
 
-  // 🔧 نجيب الـ user من الداتابيز علشان نجيب national-id
-  console.log("🔹 Fetching user from database with ID:", user.id);
-  const dbUser = await User.findByPk(user.id, {
-    attributes: ["id", "national-id", "first-name", "last-name"],
-  });
-
-  if (!dbUser) {
-    console.log("❌ User not found in database! ID:", user.id);
-    logger.warn("User not found in database during document request", {
-      userId: user.id,
-    });
-    return res.status(404).json({
-      success: false,
-      message: "User not found. Please login again.",
-    });
-  }
-
-  console.log("✅ User found in database");
-  console.log(
-    "🔹 DB User national-id (first 10 chars):",
-    dbUser["national-id"]
-      ? dbUser["national-id"].substring(0, 10) + "..."
-      : "null"
-  );
-
-  // ⬇️ التعديل: نستخدم الـ national-id من الداتابيز
-  const national_id = dbUser["national-id"];
-  console.log(
-    "🔹 Using national_id from database:",
-    national_id ? "***" + national_id.slice(-4) : "null"
-  );
-
-  // 2️⃣ التحقق: هل نوع الوثيقة موجود؟
-  console.log("🔹 Checking document type:", document_type);
-  const documentType = getDocumentByCode(document_type);
-  if (!documentType) {
-    console.log("❌ Invalid document type:", document_type);
-    logger.warn("Invalid document type requested", {
-      userId: user.id,
-      requestedType: document_type,
-    });
-    return res.status(400).json({
-      success: false,
-      message: "Invalid document type.",
-    });
-  }
-
-  console.log("✅ Document type is valid:", documentType.name_ar);
-
-  // ⬇️ التعديل: ما نعملش validation للـ national-id (مش من الـ body)
-  console.log("✅ National ID from database will be used");
-
-  // 3️⃣ التحقق: هل شهادة التخرج محتاجة مرفقات؟
-  console.log("🔹 Checking if document requires attachments...");
-  const needsAttachments = requiresAttachments(document_type);
-  console.log("   Needs attachments?", needsAttachments);
-
-  if (needsAttachments && (!attachments || attachments.length === 0)) {
-    console.log(
-      "❌ Graduation certificate requires attachments but none provided"
-    );
-    logger.warn("Graduation certificate missing attachments", {
-      userId: user.id,
-      documentType: document_type,
-    });
-    return res.status(400).json({
-      success: false,
-      message:
-        "This document requires attachments. Please upload required documents.",
-    });
-  }
-
-  console.log("✅ Attachments check passed");
+  // ==================== PHASE 4: DATABASE OPERATIONS ====================
+  console.log("\n💾 PHASE 4: DATABASE OPERATIONS");
 
   try {
-    console.log("🔹 Attempting to create document request...");
-    console.log("   - graduate_id:", user.id);
-    console.log("   - request-type:", document_type);
-    console.log("   - language:", language || "ar");
-    console.log(
-      "   - national_id (from DB):",
-      national_id ? "***" + national_id.slice(-4) : "null"
-    );
-    console.log(
-      "   - status:",
-      document_type === "GRAD_CERT" ? "under_review" : "pending"
-    );
-    console.log("   - needsAttachments:", needsAttachments);
+    console.log("🔍 Fetching user from database with ID:", user.id);
+    const dbUser = await User.findByPk(user.id, {
+      attributes: ["id", "national-id", "first-name", "last-name"],
+    });
 
-    // 4️⃣ إنشاء الطلب
-    const documentRequest = await DocumentRequest.create({
+    if (!dbUser) {
+      console.log("❌ User not found in database!");
+      return res.status(404).json({
+        success: false,
+        message: "User not found. Please login again.",
+      });
+    }
+
+    console.log("✅ User found in database");
+    console.log("   First name:", dbUser["first-name"]);
+    console.log("   Last name:", dbUser["last-name"]);
+    console.log(
+      "   National ID length:",
+      dbUser["national-id"] ? dbUser["national-id"].length : 0
+    );
+    console.log(
+      "   National ID (first 20 chars):",
+      dbUser["national-id"]
+        ? dbUser["national-id"].substring(0, 20) + "..."
+        : "null"
+    );
+
+    const national_id = dbUser["national-id"];
+
+    // Check document type
+    console.log("\n📄 DOCUMENT TYPE VALIDATION:");
+    console.log("   Requested type code:", document_type);
+    const documentType = getDocumentByCode(document_type);
+    if (!documentType) {
+      console.log("❌ Invalid document type!");
+      return res.status(400).json({
+        success: false,
+        message: "Invalid document type. Please select a valid document type.",
+        validTypes: ["GRAD_CERT", "STATUS_STMT", "OTHER"], // ضع الأنواع الصحيحة هنا
+      });
+    }
+    console.log("✅ Document type valid:", documentType.name_ar);
+
+    // Check if needs attachments
+    console.log("\n📎 ATTACHMENTS CHECK:");
+    const needsAttachments = requiresAttachments(document_type);
+    console.log("   Document requires attachments?", needsAttachments);
+    console.log("   Attachments provided:", attachments.length);
+
+    if (needsAttachments && attachments.length === 0) {
+      console.log("❌ Missing required attachments");
+      return res.status(400).json({
+        success: false,
+        message:
+          "This document requires attachments. Please upload required documents.",
+      });
+    }
+    console.log("✅ Attachments check passed");
+
+    // ==================== PHASE 5: CREATE REQUEST ====================
+    console.log("\n🛠️ PHASE 5: CREATING DOCUMENT REQUEST");
+
+    // تحضير بيانات المرفقات للتخزين
+    let attachmentsForDB = null;
+    if (needsAttachments && attachments.length > 0) {
+      attachmentsForDB = attachments.map((att) => ({
+        filename: att.originalname || att.filename,
+        path: att.path,
+        url: att.url,
+        size: att.size,
+        mimetype: att.mimetype,
+      }));
+    }
+
+    const requestData = {
       graduate_id: user.id,
       "request-type": document_type,
-      language: language || "ar",
-      national_id: national_id, // ⬅️ من الداتابيز مش من الـ body
-      attachments: needsAttachments ? attachments : null,
+      language: language,
+      national_id: national_id,
+      attachments: attachmentsForDB ? JSON.stringify(attachmentsForDB) : null,
       status: document_type === "GRAD_CERT" ? "under_review" : "pending",
+    };
+
+    console.log("📦 Request data to save:");
+    Object.keys(requestData).forEach((key) => {
+      let value = requestData[key];
+      let displayValue;
+
+      if (key === "national_id" && value) {
+        displayValue = "***" + value.slice(-4);
+      } else if (key === "attachments" && value) {
+        displayValue = `${attachments.length} attachment(s)`;
+      } else if (value && typeof value === "string" && value.length > 50) {
+        displayValue = value.substring(0, 50) + "...";
+      } else {
+        displayValue = value;
+      }
+
+      console.log(`   ${key}:`, displayValue);
     });
 
-    console.log("✅ Document request created successfully!");
-    console.log("🔹 Request ID:", documentRequest.document_request_id);
-    console.log("🔹 Request Number:", documentRequest.request_number);
-    console.log("🔹 Status:", documentRequest.status);
+    console.log("\n💾 Saving to database...");
+    const documentRequest = await DocumentRequest.create(requestData);
 
-    // 📝 Log نجاح إنشاء الطلب
-    logger.info("Document request created successfully", {
-      requestId: documentRequest.document_request_id,
-      requestNumber: documentRequest.request_number,
-      userId: user.id,
-      documentType: document_type,
-      status: documentRequest.status,
-      hasAttachments: needsAttachments,
-    });
+    console.log("\n🎉 SUCCESS: Document request created!");
+    console.log("   Request ID:", documentRequest.document_request_id);
+    console.log("   Request Number:", documentRequest.request_number);
+    console.log("   Status:", documentRequest.status);
+    console.log("   Created at:", documentRequest["created-at"]);
 
-    // إرجاع الرد
-    console.log("📤 Sending success response...");
-    res.status(201).json({
+    // Response
+    const responseData = {
       success: true,
       message: "Document request created successfully.",
       data: {
@@ -192,60 +390,60 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
         document_type: document_type,
         status: documentRequest.status,
         expected_completion_date: documentRequest.expected_completion_date,
+        has_attachments: attachments.length > 0,
+        attachments_count: attachments.length,
       },
-    });
+    };
 
-    console.log("=== CREATE DOCUMENT REQUEST END SUCCESS ===");
+    console.log("\n" + "=".repeat(70));
+    console.log("✅✅✅ CREATE DOCUMENT REQUEST - DEBUG END SUCCESS ✅✅✅");
+    console.log("=".repeat(70) + "\n");
+
+    res.status(201).json(responseData);
   } catch (error) {
-    console.error("=== CREATE DOCUMENT REQUEST ERROR ===");
-    console.error("❌ Error creating document request");
+    console.error("\n🔥🔥🔥 CREATE DOCUMENT REQUEST - DEBUG END ERROR 🔥🔥🔥");
     console.error("Error name:", error.name);
     console.error("Error message:", error.message);
-    console.error("Error stack:", error.stack);
+    console.error("Error code:", error.code);
 
     if (error.errors && error.errors.length > 0) {
-      console.error("Validation errors:");
+      console.error("Sequelize validation errors:");
       error.errors.forEach((err, index) => {
-        console.error(`  ${index + 1}. Field: ${err.path}`);
-        console.error(`     Value: ${err.value}`);
-        console.error(`     Message: ${err.message}`);
+        console.error(
+          `   ${index + 1}. ${err.path}: ${err.message} (value: ${err.value})`
+        );
       });
     }
 
-    // Log to file logger
-    logger.error("Error creating document request", {
-      userId: user.id,
-      error: error.message,
-      errorName: error.name,
-      errorStack: error.stack?.substring(0, 500),
-      documentType: document_type,
-      validationErrors: error.errors
-        ? error.errors.map((e) => ({
-            field: e.path,
-            message: e.message,
-          }))
-        : null,
-    });
+    console.error("Error stack (first 15 lines):");
+    error.stack
+      ?.split("\n")
+      .slice(0, 15)
+      .forEach((line) => console.error("   ", line));
 
-    // Always show error details in development
-    const isDevelopment = process.env.NODE_ENV !== "production";
-
-    console.log("📤 Sending error response...");
-    res.status(500).json({
+    const errorResponse = {
       success: false,
       message: "Error creating document request.",
       error: error.message,
       errorName: error.name,
-      validationErrors: error.errors
-        ? error.errors.map((e) => ({ field: e.path, message: e.message }))
-        : undefined,
-      ...(isDevelopment && {
-        stack: error.stack?.substring(0, 500),
-        fullError: error.toString(),
-      }),
-    });
+    };
 
-    console.log("=== CREATE DOCUMENT REQUEST END ERROR ===");
+    // إضافة معلومات إضافية للتطوير
+    if (process.env.NODE_ENV !== "production") {
+      errorResponse.debug = {
+        document_type: document_type,
+        userId: user?.id,
+        attachmentsCount: attachments.length,
+      };
+
+      if (error.stack) {
+        errorResponse.stack = error.stack.split("\n").slice(0, 10);
+      }
+    }
+
+    res.status(500).json(errorResponse);
+
+    console.log("=".repeat(70) + "\n");
   }
 });
 
