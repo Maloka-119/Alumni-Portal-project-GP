@@ -330,24 +330,35 @@
 }
 
 /* Status Badges – Dark Friendly */
+
+.dark .status-badge{
+  border: none;
+}
 .dark .status-completed {
   background-color: #064e3b;
   color: #a7f3d0;
+  border: none;
 }
 
 .dark .status-progress {
   background-color: #1e3a8a;
   color: #bfdbfe;
+  border: none;
+
 }
 
 .dark .status-pending {
   background-color: #78350f;
   color: #fde68a;
+  border: none;
+
 }
 
 .dark .status-review {
   background-color: #4c1d95;
   color: #ddd6fe;
+  border: none;
+
 }
 
 /* Mobile Labels */
