@@ -916,9 +916,10 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
         ...requestData,
         document_name_ar: docType ? docType.name_ar : "Unknown",
         document_name_en: docType ? docType.name_en : "Unknown",
-        graduate_name: requestData.Graduate
-          ? `${requestData.Graduate.User["first-name"]} ${requestData.Graduate.User["last-name"]}`
-          : null,
+        graduate_name:
+          requestData.Graduate && requestData.Graduate.User
+            ? `${requestData.Graduate.User["first-name"] || ""} ${requestData.Graduate.User["last-name"] || ""}`.trim()
+            : null,
         staff_name:
           requestData.Staff && requestData.Staff.User
             ? `${requestData.Staff.User["first-name"]} ${requestData.Staff.User["last-name"]}`
