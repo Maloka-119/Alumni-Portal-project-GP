@@ -202,9 +202,7 @@ function ManageDocs({ currentUser }) {
           </table>
         </div>
       ) : (
-        <div className="adm-empty-state">
-          <AlertCircle size={48} />
-          <h2>{t("noData")}</h2>
+        <div className="adm-no-data-simple">
           <p>{t("noRequestsFound")}</p>
         </div>
       )}

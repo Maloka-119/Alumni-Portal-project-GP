@@ -316,3 +316,20 @@
     text-align: left;
     margin-left: 10px;
 }
+
+.adm-no-data-simple {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px;
+    background: #f9fafb; /* لون خلفية هادئ جداً */
+    border-radius: 8px;
+    border: 1px dashed #e5e7eb; /* إطار منقط خفيف */
+    margin-top: 20px;
+  }
+  
+  .adm-no-data-simple p {
+    color: #6b7280; /* لون رمادي للنص */
+    font-size: 1.1rem;
+    margin: 0;
+  }
