@@ -659,6 +659,89 @@ const deleteFriend = async (req, res) => {
   }
 };
 
+/**
+ * Get sent friend requests (people you've sent requests to)
+ * @route GET /api/friends/requests/sent
+ * @access Private (Graduates only)
+ */
+const viewSentRequests = async (req, res) => {
+  try {
+    // Log view sent requests initiation
+    logger.info("View sent friend requests initiated", {
+      userId: req.user?.id,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (!req.user)
+      return res.status(401).json({ message: "User not authenticated" });
+
+    const graduate = await Graduate.findOne({
+      where: { graduate_id: req.user.id },
+    });
+
+    if (!graduate) {
+      logger.warn("Graduate profile not found for viewing sent requests", {
+        userId: req.user.id,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
+      return res.status(401).json({ message: "Graduate profile not found" });
+    }
+
+    const senderId = graduate.graduate_id;
+
+    // Get all pending requests sent by this user
+    const sentRequests = await Friendship.findAll({
+      where: {
+        sender_id: senderId,
+        status: "pending",
+      },
+      include: [
+        {
+          model: Graduate,
+          as: "receiver", // Because in Friendship model, receiver is the person who got the request
+          include: [
+            {
+              model: User,
+              attributes: ["first-name", "last-name"],
+            },
+          ],
+        },
+      ],
+    });
+
+    const formatted = sentRequests.map((request) => ({
+      id: request.id,
+      receiverId: request.receiver_id,
+      fullName: `${request.receiver.User["first-name"]} ${request.receiver.User["last-name"]}`,
+      profilePicture: request.receiver["profile-picture-url"] || null,
+      faculty: request.receiver.faculty,
+      sentAt: request.created_at,
+    }));
+
+    // Log successful retrieval
+    logger.info("Sent friend requests retrieved successfully", {
+      userId: senderId,
+      sentRequestsCount: formatted.length,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+
+    res.json(formatted);
+  } catch (err) {
+    // Log error
+    logger.error("Error viewing sent friend requests", {
+      userId: req.user?.id,
+      error: err.message,
+      stack: err.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+    res.status(500).json({ message: err.message });
+  }
+};
+
 module.exports = {
   viewSuggestions,
   sendRequest,
@@ -668,4 +751,5 @@ module.exports = {
   deleteFromMyRequests,
   viewFriends,
   deleteFriend,
+  viewSentRequests,
 };

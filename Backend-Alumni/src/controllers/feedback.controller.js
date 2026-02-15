@@ -37,30 +37,23 @@ const createFeedback = async (req, res) => {
 
     // Handle file attachment if uploaded
     if (req.file) {
-      // Attachments only allowed for complaints
       if (category !== "Complaint") {
         return res.status(400).json({
           message: "Attachment allowed only for Complaint",
         });
       }
 
-      // Validate file type
       const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
-
       if (!allowedTypes.includes(req.file.mimetype)) {
         return res.status(400).json({
           message: "Invalid file type. Only JPG, PNG, PDF allowed.",
         });
       }
 
-      // Upload to Cloudinary
       const uploadToCloudinary = () =>
         new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
-            {
-              folder: "feedback_attachments",
-              resource_type: "auto",
-            },
+            { folder: "feedback_attachments", resource_type: "auto" },
             (error, result) => {
               if (error) reject(error);
               else resolve(result);
@@ -73,7 +66,6 @@ const createFeedback = async (req, res) => {
       attachmentUrl = result.secure_url;
     }
 
-    // Create feedback record
     const newFeedback = await Feedback.create({
       category,
       title,
@@ -119,7 +111,6 @@ const getAllFeedback = async (req, res) => {
     });
 
     logger.info("Admin fetched all feedbacks", { count: list.length });
-
     res.json(list);
   } catch (error) {
     logger.error("Error fetching all feedback", { error: error.message });
@@ -194,7 +185,6 @@ const getByCategory = async (req, res) => {
   try {
     const { category } = req.params;
 
-    // Validate category
     if (!["Complaint", "Suggestion"].includes(category)) {
       return res.status(400).json({ message: "Invalid category" });
     }
@@ -208,7 +198,6 @@ const getByCategory = async (req, res) => {
       category,
       count: filtered.length,
     });
-
     res.json(filtered);
   } catch (error) {
     logger.error("Error filtering feedback by category", {
@@ -226,7 +215,6 @@ const getByCategory = async (req, res) => {
 const deleteFeedback = async (req, res) => {
   try {
     const { id } = req.params;
-
     const feedback = await Feedback.findByPk(id);
 
     if (!feedback) {
@@ -234,24 +222,17 @@ const deleteFeedback = async (req, res) => {
       return res.status(404).json({ message: "Feedback not found" });
     }
 
-    // Delete attachment from Cloudinary if exists
     if (feedback.attachment) {
       const publicId = feedback.attachment
         .split("/")
         .slice(-2)
         .join("/")
         .split(".")[0];
-
-      await cloudinary.uploader.destroy(publicId, {
-        resource_type: "auto",
-      });
+      await cloudinary.uploader.destroy(publicId, { resource_type: "auto" });
     }
 
-    // Delete feedback record
     await Feedback.destroy({ where: { feedback_id: id } });
-
     logger.info("Feedback deleted", { feedbackId: id });
-
     res.json({ message: "Feedback deleted successfully" });
   } catch (error) {
     logger.error("Error deleting feedback", { error: error.message });
@@ -267,7 +248,6 @@ const deleteFeedback = async (req, res) => {
 const updateFeedback = async (req, res) => {
   try {
     const { id } = req.params;
-
     const feedback = await Feedback.findByPk(id);
 
     if (!feedback) {
@@ -276,12 +256,7 @@ const updateFeedback = async (req, res) => {
     }
 
     const oldData = { ...feedback.dataValues };
-
-    // Update feedback
-    await Feedback.update(req.body, {
-      where: { feedback_id: id },
-    });
-
+    await Feedback.update(req.body, { where: { feedback_id: id } });
     const updatedFeedback = await Feedback.findByPk(id);
 
     logger.info("Feedback updated", {
@@ -289,7 +264,6 @@ const updateFeedback = async (req, res) => {
       oldData,
       newData: updatedFeedback.dataValues,
     });
-
     res.json({
       message: "Feedback updated successfully",
       data: updatedFeedback,
