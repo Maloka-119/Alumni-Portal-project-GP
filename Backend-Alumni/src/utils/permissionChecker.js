@@ -1,6 +1,8 @@
 const Staff = require("../models/Staff");
 const Role = require("../models/Role");
 const Permission = require("../models/Permission");
+// تأكد تحميل العلاقة Staff <-> Role (through StaffRole) عشان الـ include يشتغل
+require("../models/StaffRole");
 
 const checkStaffPermission = async (
   staffId,
@@ -8,6 +10,11 @@ const checkStaffPermission = async (
   requiredAction
 ) => {
   try {
+    if (staffId == null || staffId === undefined) {
+      console.log("❌ checkStaffPermission: staffId is missing");
+      return false;
+    }
+
     console.log(
       `🔍 Checking permission: ${requiredPermission} - ${requiredAction} for staff: ${staffId}`
     );
@@ -34,37 +41,35 @@ const checkStaffPermission = async (
       return false;
     }
 
-    console.log(`📋 Staff has ${staff.Roles ? staff.Roles.length : 0} roles`);
+    // تجنب TypeError لو الـ Roles مش محملة أو مش مصفوفة (مثلاً لو الـ association مش مضبوط)
+    const roles = staff.Roles != null && Array.isArray(staff.Roles) ? staff.Roles : [];
+    console.log(`📋 Staff has ${roles.length} roles`);
 
-    // 2. دور على الصلاحية المطلوبة في كل الـ roles
-    for (const role of staff.Roles) {
-      console.log(`🔹 Checking role: ${role["role-name"]}`);
+    for (const role of roles) {
+      const roleName = role != null ? role["role-name"] : "";
+      console.log(`🔹 Checking role: ${roleName}`);
 
-      for (const perm of role.Permissions) {
+      const permissions = role.Permissions != null && Array.isArray(role.Permissions) ? role.Permissions : [];
+      for (const perm of permissions) {
+        const rp = perm.RolePermission || {};
         console.log(
-          `   Permission: ${perm.name} - view:${perm.RolePermission["can-view"]}, edit:${perm.RolePermission["can-edit"]}`
+          `   Permission: ${perm?.name} - view:${rp["can-view"]}, edit:${rp["can-edit"]}`
         );
 
-        if (perm.name === requiredPermission) {
-          // 3. شوف لو الـ action المطلوب متاح
-          if (requiredAction === "view" && perm.RolePermission["can-view"]) {
+        if (perm && perm.name === requiredPermission) {
+          if (requiredAction === "view" && rp["can-view"]) {
             console.log(`✅ Permission granted: ${requiredPermission} - view`);
             return true;
           }
-          if (requiredAction === "edit" && perm.RolePermission["can-edit"]) {
+          if (requiredAction === "edit" && rp["can-edit"]) {
             console.log(`✅ Permission granted: ${requiredPermission} - edit`);
             return true;
           }
-          if (
-            requiredAction === "delete" &&
-            perm.RolePermission["can-delete"]
-          ) {
-            console.log(
-              `✅ Permission granted: ${requiredPermission} - delete`
-            );
+          if (requiredAction === "delete" && rp["can-delete"]) {
+            console.log(`✅ Permission granted: ${requiredPermission} - delete`);
             return true;
           }
-          if (requiredAction === "add" && perm.RolePermission["can-add"]) {
+          if (requiredAction === "add" && rp["can-add"]) {
             console.log(`✅ Permission granted: ${requiredPermission} - add`);
             return true;
           }
