@@ -830,15 +830,24 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
   const user = req.user;
   const { status, graduate_id, page = 1, limit = 20 } = req.query;
 
+  // تأكد من وجود المستخدم وبياناته (تجنب 500 لو الـ auth فشل أو شكل الـ user مختلف)
+  if (!user || user.id == null || user.id === undefined) {
+    return res.status(401).json({
+      success: false,
+      message: "Not authorized, user not found.",
+    });
+  }
+
+  const userType = user["user-type"];
   // 📝 Log بداية العملية
   logger.info("Fetching all document requests", {
     userId: user.id,
-    userType: user["user-type"],
+    userType: userType,
     filters: { status, graduate_id },
   });
 
   // 1️⃣ التحقق: هل المستخدم staff أو admin؟
-  if (!["staff", "admin"].includes(user["user-type"])) {
+  if (!["staff", "admin"].includes(userType)) {
     logger.warn("Non-staff/admin tried to view all document requests", {
       userId: user.id,
       userType: user["user-type"],
@@ -849,13 +858,25 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
     });
   }
 
-  // 2️⃣ التحقق من الصلاحيات للـ staff
-  if (user["user-type"] === "staff") {
-    const hasPermission = await checkStaffPermission(
-      user.id,
-      "Document Requests management",
-      "view"
-    );
+  // 2️⃣ التحقق من الصلاحيات للـ staff فقط (الـ admin مفيش عليه فلتر صلاحيات هنا)
+  if (userType === "staff") {
+    let hasPermission = false;
+    try {
+      hasPermission = await checkStaffPermission(
+        user.id,
+        "Document Requests management",
+        "view"
+      );
+    } catch (permErr) {
+      logger.error("Error in staff permission check", {
+        userId: user.id,
+        error: permErr?.message || String(permErr),
+      });
+      return res.status(500).json({
+        success: false,
+        message: "Permission check failed. Please try again.",
+      });
+    }
     if (!hasPermission) {
       logger.warn("Staff permission denied for viewing document requests", {
         userId: user.id,
@@ -922,7 +943,7 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
             : null,
         staff_name:
           requestData.Staff && requestData.Staff.User
-            ? `${requestData.Staff.User["first-name"]} ${requestData.Staff.User["last-name"]}`
+            ? `${requestData.Staff.User["first-name"] || ""} ${requestData.Staff.User["last-name"] || ""}`.trim()
             : null,
       };
     });
@@ -946,14 +967,15 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     logger.error("Error fetching all document requests", {
-      userId: user.id,
-      error: error.message,
+      userId: user?.id,
+      error: error?.message,
+      stack: process.env.NODE_ENV === "development" ? error?.stack : undefined,
     });
 
     res.status(500).json({
       success: false,
       message: "Error fetching document requests.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      error: process.env.NODE_ENV === "development" ? error?.message : undefined,
     });
   }
 });
