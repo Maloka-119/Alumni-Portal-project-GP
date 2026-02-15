@@ -8,71 +8,53 @@ const User = require("../models/User");
 const { Op } = require("sequelize");
 const { notifyRoleUpdate } = require("../services/notificationService");
 
-// 🔴 START OF LOGGER IMPORT - ADDED THIS
 const { logger, securityLogger } = require("../utils/logger");
-// 🔴 END OF LOGGER IMPORT
 
-// 🟢 إنشاء رول جديدة وربطها ببعض البرميشنز
 const createRole = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [createRole] START -----", {
+  logger.info("----- [createRole] START -----", {
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { roleName, permissions } = req.body;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Create role request details", {
       roleName,
       permissionsCount: permissions?.length || 0,
       user: req.user,
     });
-    // 🔴 END OF LOGGING
 
     if (!roleName) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Missing role name in createRole");
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "Role name is required",
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Creating new role", { roleName });
-    // 🔴 END OF LOGGING
 
-    // 1️⃣ إنشاء رول جديد
     const role = await Role.create({ "role-name": roleName });
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Role created successfully", { roleId: role.id, roleName });
-    // 🔴 END OF LOGGING
 
-    // 2️⃣ جلب جميع البيرميشن من الداتابيز
     const allPermissions = await Permission.findAll();
 
-    // 3️⃣ دمج القيم المرسلة مع الافتراضية + فلترة الـ Reports
     const updatedPermissions = allPermissions.map((perm) => {
       const matched = permissions?.find((p) => p.permission_id === perm.id);
 
-      // القيم الافتراضية
       let canView = matched ? matched["can-view"] : false;
       let canEdit = matched ? matched["can-edit"] : false;
       let canDelete = matched ? matched["can-delete"] : false;
-      let canAdd = matched ? matched["can-add"] : false; // ✅ الحقل الجديد
+      let canAdd = matched ? matched["can-add"] : false;
 
-      // 🚫 لو البيرميشن اسمه Reports → نسمح بس بالـ view
       if (perm.name === "Reports") {
         canEdit = false;
         canDelete = false;
-        canAdd = false; // ✅ إضافة الحقل الجديد هنا كمان
+        canAdd = false;
       }
 
       return {
@@ -81,18 +63,15 @@ const createRole = async (req, res) => {
         "can-view": canView,
         "can-edit": canEdit,
         "can-delete": canDelete,
-        "can-add": canAdd, // ✅ الحقل الجديد
+        "can-add": canAdd,
       };
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Processing permissions for role", {
       roleId: role.id,
       totalPermissions: updatedPermissions.length,
     });
-    // 🔴 END OF LOGGING
 
-    // 4️⃣ حفظ العلاقة في RolePermission
     await Promise.all(
       updatedPermissions.map(async (perm) => {
         await RolePermission.create({
@@ -101,22 +80,17 @@ const createRole = async (req, res) => {
           "can-view": perm["can-view"],
           "can-edit": perm["can-edit"],
           "can-delete": perm["can-delete"],
-          "can-add": perm["can-add"], // ✅ الحقل الجديد
+          "can-add": perm["can-add"],
         });
       })
     );
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Role permissions created successfully", { roleId: role.id });
-    // 🔴 END OF LOGGING
 
-    // ✅ رجّع الريسبونس بكل التفاصيل
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [createRole] END SUCCESS -----", {
+    logger.info("----- [createRole] END SUCCESS -----", {
       roleId: role.id,
       roleName,
     });
-    // 🔴 END OF LOGGING
 
     return res.status(201).json({
       status: "success",
@@ -128,8 +102,7 @@ const createRole = async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [createRole] Unexpected Error", {
+    logger.error("----- [createRole] Unexpected Error", {
       error: error.message,
       stack: error.stack.substring(0, 200),
       roleName: req.body.roleName,
@@ -137,9 +110,8 @@ const createRole = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error creating role:", error);
+    console.error("Error creating role:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to create role",
@@ -148,37 +120,30 @@ const createRole = async (req, res) => {
   }
 };
 
-// 🟢 عرض كل الرولز مع البرميشنز المرتبطة بيها
 const getAllRolesWithPermissions = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [getAllRolesWithPermissions] START -----", {
+  logger.info("----- [getAllRolesWithPermissions] START -----", {
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Fetching all roles with permissions");
-    // 🔴 END OF LOGGING
 
     const roles = await Role.findAll({
       include: [
         {
           model: Permission,
           through: {
-            attributes: ["can-view", "can-edit", "can-delete", "can-add"], // ✅ يرجع كل الحقول
+            attributes: ["can-view", "can-edit", "can-delete", "can-add"],
           },
         },
       ],
     });
 
     if (!roles || roles.length === 0) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("No roles found in getAllRolesWithPermissions");
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "No roles found",
@@ -186,15 +151,11 @@ const getAllRolesWithPermissions = async (req, res) => {
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Roles fetched successfully", { rolesCount: roles.length });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [getAllRolesWithPermissions] END SUCCESS -----", {
+    logger.info("----- [getAllRolesWithPermissions] END SUCCESS -----", {
       rolesCount: roles.length,
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -202,15 +163,13 @@ const getAllRolesWithPermissions = async (req, res) => {
       data: roles,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [getAllRolesWithPermissions] Error", {
+    logger.error("----- [getAllRolesWithPermissions] Error", {
       error: err.message,
       stack: err.stack.substring(0, 200),
       user: req.user
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
     console.error("Error fetching roles:", err);
     return res.status(500).json({
@@ -222,34 +181,28 @@ const getAllRolesWithPermissions = async (req, res) => {
 };
 
 const assignRoleToStaff = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [assignRoleToStaff] START -----", {
+  logger.info("----- [assignRoleToStaff] START -----", {
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { staffId, roles } = req.body;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Assign role to staff request", {
       staffId,
       roles: roles || [],
       rolesCount: roles?.length || 0,
     });
-    // 🔴 END OF LOGGING
 
     if (!staffId || !roles || !Array.isArray(roles)) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Invalid request in assignRoleToStaff", {
         hasStaffId: !!staffId,
         hasRoles: !!roles,
         isArray: Array.isArray(roles),
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "staffId and roles array are required",
@@ -264,55 +217,44 @@ const assignRoleToStaff = async (req, res) => {
     });
 
     if (!staff) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Staff not found in assignRoleToStaff", { staffId });
-      // 🔴 END OF LOGGING
       return res
         .status(404)
         .json({ status: "error", message: "Staff not found" });
     }
 
-    // جلب الـ Roles الصحيحة
     const validRoles = await Role.findAll({ where: { id: roles } });
 
     if (validRoles.length === 0) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("No valid roles found in assignRoleToStaff", {
         requestedRoles: roles,
         foundRoles: validRoles.length,
       });
-      // 🔴 END OF LOGGING
       return res
         .status(404)
         .json({ status: "error", message: "No valid roles found" });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Valid roles found", {
       staffId,
       validRolesCount: validRoles.length,
       validRoleNames: validRoles.map((r) => r["role-name"]),
     });
-    // 🔴 END OF LOGGING
 
-    // جلب الـ Roles الحالية للـ Staff
     const existingStaffRoles = await StaffRole.findAll({
       where: { staff_id: staffId },
     });
 
-    // تحديد Roles جديدة فقط
     const rolesToAdd = validRoles.filter(
       (r) => !existingStaffRoles.some((er) => er.role_id === r.id)
     );
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Roles to assign", {
       staffId,
       rolesToAddCount: rolesToAdd.length,
       rolesToAddNames: rolesToAdd.map((r) => r["role-name"]),
       existingRolesCount: existingStaffRoles.length,
     });
-    // 🔴 END OF LOGGING
 
     await Promise.all(
       rolesToAdd.map((role) =>
@@ -320,12 +262,10 @@ const assignRoleToStaff = async (req, res) => {
       )
     );
 
-    // Create notification for the staff member when roles are assigned
     if (rolesToAdd.length > 0 && req.user) {
       await notifyRoleUpdate(staffId, req.user.id);
     }
 
-    // جلب جميع الـ Roles النهائية للـ Staff مع Permissions
     const updatedStaffRoles = await StaffRole.findAll({
       where: { staff_id: staffId },
       include: [
@@ -350,20 +290,16 @@ const assignRoleToStaff = async (req, res) => {
       ],
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Roles assigned successfully", {
       staffId,
       staffName: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
       totalAssignedRoles: updatedStaffRoles.length,
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [assignRoleToStaff] END SUCCESS -----", {
+    logger.info("----- [assignRoleToStaff] END SUCCESS -----", {
       staffId,
       rolesAssigned: rolesToAdd.length,
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -376,13 +312,12 @@ const assignRoleToStaff = async (req, res) => {
         roles: updatedStaffRoles.map((r) => ({
           role_id: r.Role.id,
           role_name: r.Role["role-name"],
-          permissions: r.Role.Permissions || [], // لكل role الصلاحيات بما فيها can-add
+          permissions: r.Role.Permissions || [],
         })),
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [assignRoleToStaff] Unexpected Error", {
+    logger.error("----- [assignRoleToStaff] Unexpected Error", {
       error: error.message,
       stack: error.stack.substring(0, 200),
       staffId: req.body.staffId,
@@ -390,9 +325,8 @@ const assignRoleToStaff = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error assigning roles:", error);
+    console.error("Error assigning roles:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to assign roles",
@@ -402,26 +336,21 @@ const assignRoleToStaff = async (req, res) => {
 };
 
 const viewEmployeesByRole = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [viewEmployeesByRole] START -----", {
+  logger.info("----- [viewEmployeesByRole] START -----", {
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Fetching employees grouped by roles");
-    // 🔴 END OF LOGGING
 
-    // نجيب كل الـ Roles مع الموظفين المرتبطين بيها
     const roles = await Role.findAll({
       include: [
         {
           model: Staff,
-          through: { attributes: [] }, // علشان ميرجعش بيانات الجدول الوسيط
+          through: { attributes: [] },
           include: [
             {
               model: User,
@@ -439,18 +368,14 @@ const viewEmployeesByRole = async (req, res) => {
       ],
     });
 
-    // لو مفيش roles
     if (!roles || roles.length === 0) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("No roles found in viewEmployeesByRole");
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "No roles found",
       });
     }
 
-    // ترتيب الداتا بشكل منظم
     const result = roles.map((role) => ({
       role_id: role.id,
       role_name: role["role-name"],
@@ -464,7 +389,6 @@ const viewEmployeesByRole = async (req, res) => {
       })),
     }));
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Employees by role fetched successfully", {
       rolesCount: result.length,
       totalEmployees: result.reduce(
@@ -472,13 +396,10 @@ const viewEmployeesByRole = async (req, res) => {
         0
       ),
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [viewEmployeesByRole] END SUCCESS -----", {
+    logger.info("----- [viewEmployeesByRole] END SUCCESS -----", {
       rolesCount: result.length,
     });
-    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: "success",
@@ -486,15 +407,13 @@ const viewEmployeesByRole = async (req, res) => {
       data: result,
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [viewEmployeesByRole] Error", {
+    logger.error("----- [viewEmployeesByRole] Error", {
       error: error.message,
       stack: error.stack.substring(0, 200),
       user: req.user
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
     console.error("Error fetching employees by role:", error);
     res.status(500).json({
@@ -506,32 +425,26 @@ const viewEmployeesByRole = async (req, res) => {
 };
 
 const updateRole = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [updateRole] START -----", {
+  logger.info("----- [updateRole] START -----", {
     roleId: req.params.roleId,
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
-    const { roleId } = req.params; // ✅ ناخد roleId من URL مش من body
+    const { roleId } = req.params;
     const { roleName, permissions } = req.body;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Update role request details", {
       roleId,
       roleName,
       permissionsCount: permissions?.length || 0,
     });
-    // 🔴 END OF LOGGING
 
     if (!roleId) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Missing roleId in updateRole");
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "Role ID is required",
@@ -539,63 +452,49 @@ const updateRole = async (req, res) => {
     }
 
     if (!roleName) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Missing roleName in updateRole", { roleId });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "Role name is required",
       });
     }
 
-    // ✅ تحقق إن الرول موجود
     const role = await Role.findByPk(roleId);
     if (!role) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Role not found in updateRole", { roleId });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Role not found",
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Updating role", {
       roleId,
       oldRoleName: role["role-name"],
       newRoleName: roleName,
     });
-    // 🔴 END OF LOGGING
 
-    // ✅ عدل اسم الرول
     role["role-name"] = roleName;
     await role.save();
 
-    // ✅ احذف البيرميشن القديمة
     await RolePermission.destroy({ where: { role_id: roleId } });
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Old permissions deleted for role", { roleId });
-    // 🔴 END OF LOGGING
 
-    // ✅ كل البيرميشن الموجودة
     const allPermissions = await Permission.findAll();
 
-    // ✅ جهز القيم الجديدة
     const updatedPermissions = allPermissions.map((perm) => {
       const matched = permissions?.find((p) => p.permission_id === perm.id);
 
       let canView = matched ? matched["can-view"] : false;
       let canEdit = matched ? matched["can-edit"] : false;
       let canDelete = matched ? matched["can-delete"] : false;
-      let canAdd = matched ? matched["can-add"] : false; // ✅ الحقل الجديد
+      let canAdd = matched ? matched["can-add"] : false;
 
-      // 🚫 Reports بس لها view فقط
       if (perm.name === "Reports") {
         canEdit = false;
         canDelete = false;
-        canAdd = false; // ✅ إضافة الحقل الجديد هنا كمان
+        canAdd = false;
       }
 
       return {
@@ -604,18 +503,15 @@ const updateRole = async (req, res) => {
         "can-view": canView,
         "can-edit": canEdit,
         "can-delete": canDelete,
-        "can-add": canAdd, // ✅ الحقل الجديد
+        "can-add": canAdd,
       };
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Creating new permissions for role", {
       roleId,
       permissionsCount: updatedPermissions.length,
     });
-    // 🔴 END OF LOGGING
 
-    // ✅ أعد إنشاء العلاقات
     await Promise.all(
       updatedPermissions.map(async (perm) => {
         await RolePermission.create({
@@ -624,24 +520,21 @@ const updateRole = async (req, res) => {
           "can-view": perm["can-view"],
           "can-edit": perm["can-edit"],
           "can-delete": perm["can-delete"],
-          "can-add": perm["can-add"], // ✅ الحقل الجديد
+          "can-add": perm["can-add"],
         });
       })
     );
 
-    // Notify all staff members who have this role
     if (req.user) {
       const staffWithRole = await StaffRole.findAll({
         where: { role_id: roleId },
         include: [{ model: Staff, attributes: ["staff_id"] }],
       });
 
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.info("Sending notifications to staff with role", {
         roleId,
         staffCount: staffWithRole.length,
       });
-      // 🔴 END OF LOGGING
 
       await Promise.all(
         staffWithRole.map(async (staffRole) => {
@@ -650,18 +543,13 @@ const updateRole = async (req, res) => {
       );
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Role updated successfully", { roleId, roleName });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [updateRole] END SUCCESS -----", {
+    logger.info("----- [updateRole] END SUCCESS -----", {
       roleId,
       roleName,
     });
-    // 🔴 END OF LOGGING
 
-    // ✅ رجع الريسبونس النهائي
     return res.status(200).json({
       status: "success",
       message: "Role updated successfully",
@@ -672,8 +560,7 @@ const updateRole = async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [updateRole] Unexpected Error", {
+    logger.error("----- [updateRole] Unexpected Error", {
       roleId: req.params.roleId,
       error: error.message,
       stack: error.stack.substring(0, 200),
@@ -681,9 +568,8 @@ const updateRole = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error updating role:", error);
+    console.error("Error updating role:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to update role",
@@ -693,73 +579,55 @@ const updateRole = async (req, res) => {
 };
 
 const deleteRole = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [deleteRole] START -----", {
+  logger.info("----- [deleteRole] START -----", {
     roleId: req.params.roleId,
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { roleId } = req.params;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Delete role request", { roleId });
-    // 🔴 END OF LOGGING
 
     if (!roleId) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Missing roleId in deleteRole");
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "Role ID is required",
       });
     }
 
-    // ✅ تحقق أن الرول موجود
     const role = await Role.findByPk(roleId);
     if (!role) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Role not found for deletion", { roleId });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Role not found",
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Deleting role and related data", {
       roleId,
       roleName: role["role-name"],
     });
-    // 🔴 END OF LOGGING
 
-    // 🧹 احذف كل العلاقات الخاصة بالرول:
     await Promise.all([
-      RolePermission.destroy({ where: { role_id: roleId } }), // يحذف صلاحيات الرول
-      StaffRole.destroy({ where: { role_id: roleId } }), // يحذف الرول من كل الموظفين
+      RolePermission.destroy({ where: { role_id: roleId } }),
+      StaffRole.destroy({ where: { role_id: roleId } }),
     ]);
 
-    // 🗑️ احذف الرول نفسه
     await role.destroy();
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Role deleted successfully", {
       roleId,
       roleName: role["role-name"],
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [deleteRole] END SUCCESS -----", { roleId });
-    // 🔴 END OF LOGGING
+    logger.info("----- [deleteRole] END SUCCESS -----", { roleId });
 
-    // ✅ الريسبونس النهائي
     return res.status(200).json({
       status: "success",
       message: "Role deleted successfully and removed from all staff",
@@ -769,8 +637,7 @@ const deleteRole = async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [deleteRole] Unexpected Error", {
+    logger.error("----- [deleteRole] Unexpected Error", {
       roleId: req.params.roleId,
       error: error.message,
       stack: error.stack.substring(0, 200),
@@ -778,9 +645,8 @@ const deleteRole = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error deleting role:", error);
+    console.error("Error deleting role:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to delete role",
@@ -790,8 +656,7 @@ const deleteRole = async (req, res) => {
 };
 
 const deleteRoleFromStaff = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [deleteRoleFromStaff] START -----", {
+  logger.info("----- [deleteRoleFromStaff] START -----", {
     staffId: req.params.staffId,
     roleId: req.params.roleId,
     timestamp: new Date().toISOString(),
@@ -799,72 +664,57 @@ const deleteRoleFromStaff = async (req, res) => {
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { staffId, roleId } = req.params;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Delete role from staff request", { staffId, roleId });
-    // 🔴 END OF LOGGING
 
     if (!staffId || !roleId) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Missing parameters in deleteRoleFromStaff", {
         hasStaffId: !!staffId,
         hasRoleId: !!roleId,
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "staffId and roleId are required",
       });
     }
 
-    // ✅ تحقق أن الموظف موجود
     const staff = await Staff.findByPk(staffId);
     if (!staff) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Staff not found in deleteRoleFromStaff", { staffId });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Staff not found",
       });
     }
 
-    // ✅ تحقق أن الرول موجود
     const role = await Role.findByPk(roleId);
     if (!role) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Role not found in deleteRoleFromStaff", { roleId });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Role not found",
       });
     }
 
-    // 🔍 تحقق أن العلاقة موجودة أصلًا
     const existing = await StaffRole.findOne({
       where: { staff_id: staffId, role_id: roleId },
     });
 
     if (!existing) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Role not assigned to staff in deleteRoleFromStaff", {
         staffId,
         roleId,
         roleName: role["role-name"],
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "This role is not assigned to this staff",
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Removing role from staff", {
       staffId,
       roleId,
@@ -875,27 +725,20 @@ const deleteRoleFromStaff = async (req, res) => {
           : "Unknown"
       }`,
     });
-    // 🔴 END OF LOGGING
 
-    // 🗑️ احذف العلاقة فقط من StaffRole
     await StaffRole.destroy({ where: { staff_id: staffId, role_id: roleId } });
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Role removed from staff successfully", {
       staffId,
       roleId,
       roleName: role["role-name"],
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [deleteRoleFromStaff] END SUCCESS -----", {
+    logger.info("----- [deleteRoleFromStaff] END SUCCESS -----", {
       staffId,
       roleId,
     });
-    // 🔴 END OF LOGGING
 
-    // ✅ الريسبونس النهائي
     return res.status(200).json({
       status: "success",
       message: `Role '${role["role-name"]}' removed from staff successfully`,
@@ -909,8 +752,7 @@ const deleteRoleFromStaff = async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [deleteRoleFromStaff] Unexpected Error", {
+    logger.error("----- [deleteRoleFromStaff] Unexpected Error", {
       staffId: req.params.staffId,
       roleId: req.params.roleId,
       error: error.message,
@@ -919,9 +761,8 @@ const deleteRoleFromStaff = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error deleting role from staff:", error);
+    console.error("Error deleting role from staff:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to remove role from staff",
@@ -931,45 +772,36 @@ const deleteRoleFromStaff = async (req, res) => {
 };
 
 const getAllRoles = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [getAllRoles] START -----", {
+  logger.info("----- [getAllRoles] START -----", {
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Fetching all roles");
-    // 🔴 END OF LOGGING
 
-    // ✅ جلب كل الرولز مع البيرميشنز المرتبطة
     const roles = await Role.findAll({
       include: [
         {
           model: Permission,
           as: "Permissions",
           through: {
-            attributes: ["can-view", "can-edit", "can-delete", "can-add"], // ✅ أضفنا can-add هنا
+            attributes: ["can-view", "can-edit", "can-delete", "can-add"],
           },
         },
       ],
     });
 
-    // ✅ لو مفيش أي رولز
     if (!roles || roles.length === 0) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("No roles found in getAllRoles");
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "No roles found in the system",
       });
     }
 
-    // ✅ تنسيق الريسبونس
     const formattedRoles = roles.map((role) => ({
       id: role.id,
       "role-name": role["role-name"],
@@ -979,40 +811,33 @@ const getAllRoles = async (req, res) => {
         "can-view": perm.RolePermission["can-view"],
         "can-edit": perm.RolePermission["can-edit"],
         "can-delete": perm.RolePermission["can-delete"],
-        "can-add": perm.RolePermission["can-add"], // ✅ الحقل الجديد
+        "can-add": perm.RolePermission["can-add"],
       })),
     }));
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("All roles fetched successfully", {
       rolesCount: formattedRoles.length,
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [getAllRoles] END SUCCESS -----", {
+    logger.info("----- [getAllRoles] END SUCCESS -----", {
       rolesCount: formattedRoles.length,
     });
-    // 🔴 END OF LOGGING
 
-    // ✅ الريسبونس النهائي
     return res.status(200).json({
       status: "success",
       message: "All roles fetched successfully",
       roles: formattedRoles,
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [getAllRoles] Unexpected Error", {
+    logger.error("----- [getAllRoles] Unexpected Error", {
       error: error.message,
       stack: error.stack.substring(0, 200),
       user: req.user
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error fetching all roles:", error);
+    console.error("Error fetching all roles:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to fetch roles",
@@ -1022,24 +847,19 @@ const getAllRoles = async (req, res) => {
 };
 
 const getRoleDetails = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [getRoleDetails] START -----", {
+  logger.info("----- [getRoleDetails] START -----", {
     roleId: req.params.roleId,
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { roleId } = req.params;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Fetching role details", { roleId });
-    // 🔴 END OF LOGGING
 
-    // ✅ جلب الرول مع كل البرميشنز المرتبطة بيها
     const role = await Role.findByPk(roleId, {
       include: [
         {
@@ -1053,7 +873,7 @@ const getRoleDetails = async (req, res) => {
         },
         {
           model: Staff,
-          through: { model: StaffRole, attributes: [] }, // يجيب العلاقة بدون بيانات اضافية
+          through: { model: StaffRole, attributes: [] },
           include: [
             {
               model: User,
@@ -1065,26 +885,22 @@ const getRoleDetails = async (req, res) => {
     });
 
     if (!role) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Role not found in getRoleDetails", { roleId });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Role not found",
       });
     }
 
-    // 🔹 تجهيز البرميشنز
     const permissions = role.RolePermissions.map((rp) => ({
       id: rp.Permission.id,
       name: rp.Permission.name,
       "can-view": rp["can-view"],
       "can-edit": rp["can-edit"],
       "can-delete": rp["can-delete"],
-      "can-add": rp["can-add"], // ✅ الحقل الجديد
+      "can-add": rp["can-add"],
     }));
 
-    // 🔹 تجهيز الستاف
     const staff = role.Staffs.map((s) => ({
       staff_id: s.staff_id,
       full_name: `${s.User["first-name"]} ${s.User["last-name"]}`,
@@ -1092,21 +908,17 @@ const getRoleDetails = async (req, res) => {
       "status-to-login": s["status-to-login"],
     }));
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Role details fetched successfully", {
       roleId,
       roleName: role["role-name"],
       permissionsCount: permissions.length,
       staffCount: staff.length,
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [getRoleDetails] END SUCCESS -----", {
+    logger.info("----- [getRoleDetails] END SUCCESS -----", {
       roleId,
       roleName: role["role-name"],
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -1119,8 +931,7 @@ const getRoleDetails = async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [getRoleDetails] Unexpected Error", {
+    logger.error("----- [getRoleDetails] Unexpected Error", {
       roleId: req.params.roleId,
       error: error.message,
       stack: error.stack.substring(0, 200),
@@ -1128,9 +939,8 @@ const getRoleDetails = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error fetching role details:", error);
+    console.error("Error fetching role details:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to fetch role details",
@@ -1140,57 +950,45 @@ const getRoleDetails = async (req, res) => {
 };
 
 const getStaffByRoleId = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [getStaffByRoleId] START -----", {
+  logger.info("----- [getStaffByRoleId] START -----", {
     roleId: req.params.roleId,
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { roleId } = req.params;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Fetching staff by role", { roleId });
-    // 🔴 END OF LOGGING
 
     if (!roleId) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Missing roleId in getStaffByRoleId");
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "roleId is required",
       });
     }
 
-    // نجيب الرول أولاً ونتأكد إنه موجود
     const role = await Role.findByPk(roleId);
     if (!role) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Role not found in getStaffByRoleId", { roleId });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Role not found",
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Role found", { roleId, roleName: role["role-name"] });
-    // 🔴 END OF LOGGING
 
-    // نجيب كل الـ Staff المرتبطين بالرول ده
     const staffList = await Staff.findAll({
       include: [
         {
           model: Role,
           where: { id: roleId },
           attributes: ["id", "role-name"],
-          through: { attributes: [] }, // عشان ما يجيبش بيانات StaffRole
+          through: { attributes: [] },
         },
         {
           model: User,
@@ -1199,19 +997,15 @@ const getStaffByRoleId = async (req, res) => {
       ],
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Staff list fetched", {
       roleId,
       staffCount: staffList.length,
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [getStaffByRoleId] END SUCCESS -----", {
+    logger.info("----- [getStaffByRoleId] END SUCCESS -----", {
       roleId,
       staffCount: staffList.length,
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -1228,8 +1022,7 @@ const getStaffByRoleId = async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [getStaffByRoleId] Unexpected Error", {
+    logger.error("----- [getStaffByRoleId] Unexpected Error", {
       roleId: req.params.roleId,
       error: error.message,
       stack: error.stack.substring(0, 200),
@@ -1237,9 +1030,8 @@ const getStaffByRoleId = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error fetching staff by role:", error);
+    console.error("Error fetching staff by role:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to fetch staff by role",
@@ -1249,71 +1041,55 @@ const getStaffByRoleId = async (req, res) => {
 };
 
 const updateRoleName = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [updateRoleName] START -----", {
+  logger.info("----- [updateRoleName] START -----", {
     roleId: req.params.roleId,
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { roleId } = req.params;
     const { roleName } = req.body;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Update role name request", { roleId, newRoleName: roleName });
-    // 🔴 END OF LOGGING
 
     if (!roleId || !roleName) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Missing parameters in updateRoleName", {
         hasRoleId: !!roleId,
         hasRoleName: !!roleName,
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "roleId and new roleName are required",
       });
     }
 
-    // نجيب الرول للتأكد إنه موجود
     const role = await Role.findByPk(roleId);
     if (!role) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Role not found in updateRoleName", { roleId });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Role not found",
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Updating role name", {
       roleId,
       oldRoleName: role["role-name"],
       newRoleName: roleName,
     });
-    // 🔴 END OF LOGGING
 
-    // تحديث اسم الرول فقط
     role["role-name"] = roleName;
     await role.save();
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Role name updated successfully", { roleId, roleName });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [updateRoleName] END SUCCESS -----", {
+    logger.info("----- [updateRoleName] END SUCCESS -----", {
       roleId,
       roleName,
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -1324,8 +1100,7 @@ const updateRoleName = async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [updateRoleName] Unexpected Error", {
+    logger.error("----- [updateRoleName] Unexpected Error", {
       roleId: req.params.roleId,
       error: error.message,
       stack: error.stack.substring(0, 200),
@@ -1333,9 +1108,8 @@ const updateRoleName = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error updating role name:", error);
+    console.error("Error updating role name:", error);
     return res.status(500).json({
       status: "error",
       message: "Failed to update role name",
@@ -1345,24 +1119,19 @@ const updateRoleName = async (req, res) => {
 };
 
 const getAvailableStaffForRole = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [getAvailableStaffForRole] START -----", {
+  logger.info("----- [getAvailableStaffForRole] START -----", {
     roleId: req.params.roleId,
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { roleId } = req.params;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Fetching available staff for role", { roleId });
-    // 🔴 END OF LOGGING
 
-    // 1️⃣ هات الـ staff اللي معاهم الرول ده
     const assignedStaff = await StaffRole.findAll({
       where: { role_id: roleId },
       attributes: ["staff_id"],
@@ -1370,14 +1139,11 @@ const getAvailableStaffForRole = async (req, res) => {
 
     const assignedStaffIds = assignedStaff.map((sr) => sr.staff_id);
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Assigned staff IDs found", {
       roleId,
       assignedStaffCount: assignedStaffIds.length,
     });
-    // 🔴 END OF LOGGING
 
-    // 2️⃣ هات الناس اللي مش معاهم الرول ده
     const availableStaff = await Staff.findAll({
       where: {
         staff_id: {
@@ -1392,29 +1158,23 @@ const getAvailableStaffForRole = async (req, res) => {
       ],
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Available staff fetched", {
       roleId,
       availableStaffCount: availableStaff.length,
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [getAvailableStaffForRole] END SUCCESS -----", {
+    logger.info("----- [getAvailableStaffForRole] END SUCCESS -----", {
       roleId,
       availableStaffCount: availableStaff.length,
     });
-    // 🔴 END OF LOGGING
 
-    // 3️⃣ رجعهم في الريسبونس
     res.status(200).json({
       status: "success",
       message: "Available staff fetched successfully",
       data: availableStaff,
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [getAvailableStaffForRole] Unexpected Error", {
+    logger.error("----- [getAvailableStaffForRole] Unexpected Error", {
       roleId: req.params.roleId,
       error: error.message,
       stack: error.stack.substring(0, 200),
@@ -1422,9 +1182,8 @@ const getAvailableStaffForRole = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
-    console.error("❌ Error fetching available staff:", error);
+    console.error("Error fetching available staff:", error);
     res.status(500).json({
       status: "error",
       message: "Failed to fetch available staff",

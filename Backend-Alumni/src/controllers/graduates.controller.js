@@ -19,20 +19,23 @@ const { generateQRToken, verifyQRToken } = require("../utils/qrTokenService");
 const QRCode = require("qrcode");
 const aes = require("../utils/aes");
 
-// 🔴 START OF LOGGER IMPORT - ADDED THIS
+// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
-// 🔴 END OF LOGGER IMPORT
 
+/**
+ * Get all graduates (Admin only)
+ * @route GET /api/graduates/all
+ * @access Private (Admin only)
+ */
 const getAllGraduates = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Get all graduates request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const graduates = await Graduate.findAll({
       include: {
@@ -58,14 +61,13 @@ const getAllGraduates = async (req, res) => {
       faculty: getCollegeNameByCode(g.faculty_code, lang),
     }));
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("All graduates retrieved successfully", {
       userId: req.user?.id,
       graduateCount: graduatesWithFaculty.length,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -73,7 +75,7 @@ const getAllGraduates = async (req, res) => {
       data: graduatesWithFaculty,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error fetching all graduates", {
       userId: req.user?.id,
       error: err.message,
@@ -81,7 +83,6 @@ const getAllGraduates = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error(err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
@@ -91,28 +92,30 @@ const getAllGraduates = async (req, res) => {
   }
 };
 
-// Get active graduates (GraduatesInPortal) - Admin & Staff only
+/**
+ * Get active graduates (GraduatesInPortal) - Admin & Staff only
+ * @route GET /api/graduates/active
+ * @access Private (Admin & Staff only)
+ */
 const getGraduatesInPortal = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Get graduates in portal request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const allowedUserTypes = ["admin", "staff"];
     if (!allowedUserTypes.includes(req.user["user-type"])) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized access
       logger.warn("Unauthorized access to graduates in portal", {
         userId: req.user?.id,
         userType: req.user?.["user-type"],
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
         message: "Access denied.",
@@ -127,14 +130,13 @@ const getGraduatesInPortal = async (req, res) => {
         "view"
       );
       if (!hasPermission) {
-        // 🔴 START OF LOGGING - ADDED THIS
+        // Log permission denied
         logger.warn("Staff permission denied for viewing graduates", {
           userId: req.user.id,
           permission: "Graduate management",
           ip: req.ip,
           timestamp: new Date().toISOString(),
         });
-        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: HttpStatusHelper.ERROR,
           message:
@@ -167,7 +169,7 @@ const getGraduatesInPortal = async (req, res) => {
     const graduatesWithFaculty = graduates.map((g) => {
       const obj = g.toJSON();
 
-      // ديكريبشن للـ National ID
+      // Decrypt National ID
       if (obj.User?.nationalId) {
         obj.User.nationalId = aes.decryptNationalId(obj.User.nationalId);
       }
@@ -178,7 +180,7 @@ const getGraduatesInPortal = async (req, res) => {
       };
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Graduates in portal retrieved successfully", {
       userId: req.user.id,
       userType: req.user["user-type"],
@@ -186,7 +188,6 @@ const getGraduatesInPortal = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -194,7 +195,7 @@ const getGraduatesInPortal = async (req, res) => {
       data: graduatesWithFaculty,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error fetching graduates in portal", {
       userId: req.user?.id,
       error: err.message,
@@ -202,7 +203,6 @@ const getGraduatesInPortal = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("Error fetching graduates:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
@@ -212,28 +212,30 @@ const getGraduatesInPortal = async (req, res) => {
   }
 };
 
-// Get inactive graduates (requested to join) - Admin only
+/**
+ * Get inactive graduates (requested to join) - Admin only
+ * @route GET /api/graduates/requested
+ * @access Private (Admin only)
+ */
 const getRequestedGraduates = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Get requested graduates request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const allowedUserTypes = ["admin", "staff"];
     if (!allowedUserTypes.includes(req.user["user-type"])) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized access
       logger.warn("Unauthorized access to requested graduates", {
         userId: req.user?.id,
         userType: req.user?.["user-type"],
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
         message: "Access denied.",
@@ -255,7 +257,7 @@ const getRequestedGraduates = async (req, res) => {
       );
 
       if (!hasGraduatePermission && !hasRequestsPermission) {
-        // 🔴 START OF LOGGING - ADDED THIS
+        // Log permission denied
         logger.warn("Staff permission denied for viewing requested graduates", {
           userId: req.user.id,
           requiredPermissions: [
@@ -265,7 +267,6 @@ const getRequestedGraduates = async (req, res) => {
           ip: req.ip,
           timestamp: new Date().toISOString(),
         });
-        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: HttpStatusHelper.ERROR,
           message:
@@ -298,7 +299,7 @@ const getRequestedGraduates = async (req, res) => {
     const graduatesWithFaculty = graduates.map((g) => {
       const obj = g.toJSON();
 
-      // ديكريبشن للـ National ID
+      // Decrypt National ID
       if (obj.User?.nationalId) {
         obj.User.nationalId = aes.decryptNationalId(obj.User.nationalId);
       }
@@ -309,7 +310,7 @@ const getRequestedGraduates = async (req, res) => {
       };
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Requested graduates retrieved successfully", {
       userId: req.user.id,
       userType: req.user["user-type"],
@@ -317,7 +318,6 @@ const getRequestedGraduates = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: HttpStatusHelper.SUCCESS,
@@ -325,7 +325,7 @@ const getRequestedGraduates = async (req, res) => {
       data: graduatesWithFaculty,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error fetching requested graduates", {
       userId: req.user?.id,
       error: err.message,
@@ -333,7 +333,6 @@ const getRequestedGraduates = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error(err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
@@ -343,10 +342,14 @@ const getRequestedGraduates = async (req, res) => {
   }
 };
 
-//reject graduate by admin
+/**
+ * Reject graduate by admin
+ * @route PUT /api/graduates/:id/reject
+ * @access Private (Admin only)
+ */
 const rejectGraduate = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Reject graduate request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
@@ -354,11 +357,10 @@ const rejectGraduate = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const allowedUserTypes = ["admin", "staff"];
     if (!allowedUserTypes.includes(req.user["user-type"])) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized access
       logger.warn("Unauthorized access to reject graduate", {
         userId: req.user?.id,
         userType: req.user?.["user-type"],
@@ -366,7 +368,6 @@ const rejectGraduate = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -381,7 +382,7 @@ const rejectGraduate = async (req, res) => {
       );
 
       if (!hasPermission) {
-        // 🔴 START OF LOGGING - ADDED THIS
+        // Log permission denied
         logger.warn("Staff permission denied for rejecting graduate", {
           userId: req.user.id,
           permission: "Others Requests management",
@@ -389,7 +390,6 @@ const rejectGraduate = async (req, res) => {
           ip: req.ip,
           timestamp: new Date().toISOString(),
         });
-        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
           message:
@@ -404,14 +404,13 @@ const rejectGraduate = async (req, res) => {
     });
 
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for rejection", {
         graduateId,
         userId: req.user.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "Graduate not found",
@@ -425,7 +424,7 @@ const rejectGraduate = async (req, res) => {
     const lang = req.headers["accept-language"] || req.user.language || "ar";
     const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful rejection
     logger.info("Graduate rejected successfully", {
       graduateId,
       userId: req.user.id,
@@ -436,7 +435,6 @@ const rejectGraduate = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       status: "success",
@@ -447,7 +445,7 @@ const rejectGraduate = async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error rejecting graduate", {
       userId: req.user?.id,
       graduateId: req.params.id,
@@ -456,7 +454,6 @@ const rejectGraduate = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error(" Error rejecting graduate:", error);
     return res.status(500).json({
       status: "error",
@@ -466,16 +463,18 @@ const rejectGraduate = async (req, res) => {
   }
 };
 
-//get digital id
-// Helper function to fetch student data from external API and format it
+/**
+ * Helper function to fetch student data from external API
+ * @param {string} nationalId - Egyptian National ID
+ * @returns {Promise<Object>} External data or error
+ */
 const fetchStudentDataFromExternal = async (nationalId) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log API call attempt (partial NID for security)
     logger.debug("Fetching student data from external API", {
       nationalId: nationalId.substring(0, 3) + "***", // Partial logging for security
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     // Check if GRADUATE_API_URL is configured
     if (!process.env.GRADUATE_API_URL) {
@@ -484,12 +483,11 @@ const fetchStudentDataFromExternal = async (nationalId) => {
       );
       error.code = "CONFIG_ERROR";
 
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log configuration error
       logger.error("Configuration error for external API", {
         error: error.message,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       throw error;
     }
@@ -506,13 +504,12 @@ const fetchStudentDataFromExternal = async (nationalId) => {
 
     // Check if response is successful
     if (response.status === 200 && response.data) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log successful response
       logger.debug("External API response received successfully", {
         status: response.status,
         hasData: !!response.data,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return { data: response.data, error: null };
     } else if (response.status === 404) {
       const error = new Error(
@@ -521,13 +518,12 @@ const fetchStudentDataFromExternal = async (nationalId) => {
       error.code = "NOT_FOUND";
       error.status = 404;
 
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Student not found in external system", {
         nationalId: nationalId.substring(0, 3) + "***",
         status: response.status,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       return { data: null, error };
     } else {
@@ -537,13 +533,12 @@ const fetchStudentDataFromExternal = async (nationalId) => {
       error.code = "API_ERROR";
       error.status = response.status;
 
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log API error
       logger.error("External API returned error status", {
         status: response.status,
         error: error.message,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       return { data: null, error };
     }
@@ -556,46 +551,42 @@ const fetchStudentDataFromExternal = async (nationalId) => {
       errorMessage =
         "External API is not running. Please start the external API service on port 5001";
       errorCode = "CONNECTION_REFUSED";
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log connection refused
       logger.error("External API connection refused", {
         error: error.message,
         code: error.code,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
     } else if (error.code === "ETIMEDOUT") {
       errorMessage =
         "External API request timed out. The service may be slow or unavailable";
       errorCode = "TIMEOUT";
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log timeout
       logger.error("External API request timed out", {
         error: error.message,
         code: error.code,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
     } else if (error.code === "CONFIG_ERROR") {
       errorMessage = error.message;
       errorCode = "CONFIG_ERROR";
     } else if (error.response) {
       errorMessage = `External API error: ${error.response.status} - ${error.response.statusText}`;
       errorCode = "API_ERROR";
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log response error
       logger.error("External API response error", {
         status: error.response.status,
         error: error.response.statusText,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
     } else {
       errorMessage = `Error fetching from external API: ${error.message}`;
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unexpected error
       logger.error("Unexpected error fetching from external API", {
         error: error.message,
         code: error.code,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
     }
 
     const apiError = new Error(errorMessage);
@@ -605,7 +596,11 @@ const fetchStudentDataFromExternal = async (nationalId) => {
   }
 };
 
-// Helper function to sanitize data - remove all IDs
+/**
+ * Helper function to sanitize data - remove all IDs
+ * @param {Object} data - Data object to sanitize
+ * @returns {Object} Sanitized data without ID fields
+ */
 const sanitizeDigitalIDData = (data) => {
   const sanitized = { ...data };
   // Remove all ID fields
@@ -620,24 +615,27 @@ const sanitizeDigitalIDData = (data) => {
   return sanitized;
 };
 
+/**
+ * Get digital ID for authenticated graduate
+ * @route GET /api/graduates/digital-id
+ * @access Private (Graduates only)
+ */
 const getDigitalID = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Digital ID request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user || !req.user.id) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized
       logger.warn("Unauthorized digital ID request", {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({
         status: HttpStatusHelper.FAIL,
         message: "Not authorized or user not found",
@@ -655,13 +653,12 @@ const getDigitalID = async (req, res) => {
     });
 
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for digital ID", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -672,14 +669,13 @@ const getDigitalID = async (req, res) => {
 
     const user = graduate.User;
     if (!user) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log user not found
       logger.error("User not found for graduate in digital ID", {
         graduateId: graduate.graduate_id,
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "User details not found for this graduate",
@@ -688,14 +684,13 @@ const getDigitalID = async (req, res) => {
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log found graduate and user
     logger.debug("Graduate and User found for digital ID", {
       userId,
       graduateId: graduate.graduate_id,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     // Decrypt national ID before using it
     let nationalIdToUse = null;
@@ -713,13 +708,12 @@ const getDigitalID = async (req, res) => {
     }
 
     if (!nationalIdToUse) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log decryption failure
       logger.error("National ID decryption failed for digital ID", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: HttpStatusHelper.ERROR,
         message: "National ID not found or could not be decrypted",
@@ -738,7 +732,7 @@ const getDigitalID = async (req, res) => {
         externalError?.message ||
         "Failed to fetch student data from external system";
 
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log external API failure
       logger.error("External API failed for digital ID", {
         userId,
         error: errorMessage,
@@ -746,7 +740,6 @@ const getDigitalID = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       return res.status(statusCode).json({
         status: HttpStatusHelper.ERROR,
@@ -808,22 +801,20 @@ const getDigitalID = async (req, res) => {
         margin: 1,
         width: 300,
       });
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log QR generation success
       logger.debug("QR code generated successfully", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
     } catch (qrError) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log QR generation error
       logger.error("Error generating QR code", {
         userId,
         error: qrError.message,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       console.error("Error generating QR code:", qrError);
       qrCodeDataURL = null;
     }
@@ -863,7 +854,7 @@ const getDigitalID = async (req, res) => {
     delete digitalID.id;
     delete digitalID.digitalID;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Digital ID retrieved successfully", {
       userId,
       hasPersonalPicture: !!digitalID.personalPicture,
@@ -872,7 +863,6 @@ const getDigitalID = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -880,7 +870,7 @@ const getDigitalID = async (req, res) => {
       data: digitalID,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log unexpected error
     logger.error("Unexpected error in getDigitalID", {
       userId: req.user?.id,
       error: err.message,
@@ -888,7 +878,6 @@ const getDigitalID = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
       message: err.message || "Internal server error",
@@ -905,25 +894,27 @@ const getDigitalID = async (req, res) => {
   }
 };
 
-// Generate QR code for Digital ID
+/**
+ * Generate QR code for Digital ID
+ * @route POST /api/graduates/digital-id/qr/generate
+ * @access Private (Graduates only)
+ */
 const generateDigitalIDQR = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Generate Digital ID QR request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user || !req.user.id) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized
       logger.warn("Unauthorized QR generation request", {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({
         status: HttpStatusHelper.FAIL,
         message: "Not authorized or user not found",
@@ -937,13 +928,12 @@ const generateDigitalIDQR = async (req, res) => {
     });
 
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for QR generation", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -976,7 +966,7 @@ const generateDigitalIDQR = async (req, res) => {
       width: 300,
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful generation
     logger.info("QR code generated successfully", {
       userId,
       useFrontend,
@@ -984,7 +974,6 @@ const generateDigitalIDQR = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -996,7 +985,7 @@ const generateDigitalIDQR = async (req, res) => {
       },
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error generating Digital ID QR", {
       userId: req.user?.id,
       error: err.message,
@@ -1004,7 +993,6 @@ const generateDigitalIDQR = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("generateDigitalIDQR error:", err.message);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
@@ -1014,26 +1002,28 @@ const generateDigitalIDQR = async (req, res) => {
   }
 };
 
-// Verify QR token and return Digital ID data
+/**
+ * Verify QR token and return Digital ID data
+ * @route GET /api/graduates/digital-id/verify/:token
+ * @access Public (with valid token)
+ */
 const verifyDigitalIDQR = async (req, res) => {
   try {
     const { token } = req.params;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Verify Digital ID QR request initiated", {
       tokenLength: token?.length || 0,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!token) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing token
       logger.warn("Missing token for QR verification", {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: HttpStatusHelper.FAIL,
         message: "Token is required",
@@ -1044,13 +1034,12 @@ const verifyDigitalIDQR = async (req, res) => {
     // Verify token
     const decoded = verifyQRToken(token);
     if (!decoded || !decoded.userId) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log invalid token
       logger.warn("Invalid or expired QR token", {
         tokenLength: token.length,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({
         status: HttpStatusHelper.FAIL,
         message: "Invalid or expired token",
@@ -1068,13 +1057,12 @@ const verifyDigitalIDQR = async (req, res) => {
     });
 
     if (!graduate || !graduate.User) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for QR verification", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -1099,13 +1087,12 @@ const verifyDigitalIDQR = async (req, res) => {
     }
 
     if (!nationalIdToUse) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log decryption failure
       logger.error("National ID decryption failed for QR verification", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: HttpStatusHelper.ERROR,
         message: "National ID not found or could not be decrypted",
@@ -1123,7 +1110,7 @@ const verifyDigitalIDQR = async (req, res) => {
         externalError?.message ||
         "Failed to fetch student data from external system";
 
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log external API failure
       logger.error("External API failed for QR verification", {
         userId,
         error: errorMessage,
@@ -1131,7 +1118,6 @@ const verifyDigitalIDQR = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       return res.status(statusCode).json({
         status: HttpStatusHelper.ERROR,
@@ -1194,14 +1180,13 @@ const verifyDigitalIDQR = async (req, res) => {
         width: 300,
       });
     } catch (qrError) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log QR generation error
       logger.error("Error generating QR code for verification", {
         userId,
         error: qrError.message,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       console.error("Error generating QR code:", qrError);
       qrCodeDataURL = null;
     }
@@ -1239,14 +1224,13 @@ const verifyDigitalIDQR = async (req, res) => {
     delete digitalID.id;
     delete digitalID.digitalID;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful verification
     logger.info("QR verification successful", {
       userId,
       faculty: facultyName,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -1254,14 +1238,13 @@ const verifyDigitalIDQR = async (req, res) => {
       data: digitalID,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error verifying Digital ID QR", {
       error: err.message,
       stack: err.stack.substring(0, 200),
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("verifyDigitalIDQR error:", err.message);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
@@ -1271,13 +1254,17 @@ const verifyDigitalIDQR = async (req, res) => {
   }
 };
 
-// Approve Graduate by admin
+/**
+ * Approve Graduate by admin
+ * @route PUT /api/graduates/:id/approve
+ * @access Private (Admin only)
+ */
 const approveGraduate = async (req, res) => {
   try {
     const { id } = req.params;
     const { faculty, graduationYear } = req.body;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Approve graduate request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
@@ -1287,11 +1274,10 @@ const approveGraduate = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const allowedUserTypes = ["admin", "staff"];
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized access
       logger.warn("Unauthorized access to approve graduate", {
         userId: req.user?.id,
         userType: req.user?.["user-type"],
@@ -1299,7 +1285,6 @@ const approveGraduate = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(403).json({ message: "Access denied." });
     }
 
@@ -1310,7 +1295,7 @@ const approveGraduate = async (req, res) => {
         "edit"
       );
       if (!hasPermission) {
-        // 🔴 START OF LOGGING - ADDED THIS
+        // Log permission denied
         logger.warn("Staff permission denied for approving graduate", {
           userId: req.user.id,
           permission: "Others Requests management",
@@ -1318,7 +1303,6 @@ const approveGraduate = async (req, res) => {
           ip: req.ip,
           timestamp: new Date().toISOString(),
         });
-        // 🔴 END OF LOGGING
         return res.status(403).json({
           message:
             "Access denied. You don't have permission to approve graduates.",
@@ -1327,7 +1311,7 @@ const approveGraduate = async (req, res) => {
     }
 
     if (!faculty || !graduationYear) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing fields
       logger.warn("Missing required fields for approving graduate", {
         graduateId: id,
         hasFaculty: !!faculty,
@@ -1335,7 +1319,6 @@ const approveGraduate = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res
         .status(400)
         .json({ message: "Faculty and graduationYear are required." });
@@ -1343,14 +1326,13 @@ const approveGraduate = async (req, res) => {
 
     const facultyCode = normalizeCollegeName(faculty);
     if (!facultyCode) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log invalid faculty
       logger.warn("Invalid faculty name for approval", {
         graduateId: id,
         faculty,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({ message: "Invalid faculty name." });
     }
 
@@ -1359,13 +1341,12 @@ const approveGraduate = async (req, res) => {
       attributes: { exclude: ["faculty"] },
     });
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for approval", {
         graduateId: id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({ message: "Graduate not found." });
     }
 
@@ -1379,7 +1360,7 @@ const approveGraduate = async (req, res) => {
     const lang = req.headers["accept-language"] || req.user.language || "ar";
     const facultyName = getCollegeNameByCode(facultyCode, lang);
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful approval
     logger.info("Graduate approved successfully", {
       graduateId: id,
       userId: req.user.id,
@@ -1392,7 +1373,6 @@ const approveGraduate = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.status(200).json({
       message: "Graduate approved successfully.",
@@ -1401,7 +1381,7 @@ const approveGraduate = async (req, res) => {
       facultyName: facultyName,
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error approving graduate", {
       userId: req.user?.id,
       graduateId: req.params.id,
@@ -1410,7 +1390,6 @@ const approveGraduate = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("Error approving graduate:", error.message);
     return res.status(500).json({
       message: "Server error while approving graduate.",
@@ -1419,12 +1398,16 @@ const approveGraduate = async (req, res) => {
   }
 };
 
-// GET Graduate Profile for admin
+/**
+ * GET Graduate Profile for admin
+ * @route GET /api/graduates/profile/:id
+ * @access Private (Admin only)
+ */
 const getGraduateProfile = async (req, res) => {
   try {
     const graduateId = req.params.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Get graduate profile request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
@@ -1432,7 +1415,6 @@ const getGraduateProfile = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const graduate = await Graduate.findByPk(graduateId, {
       include: [{ model: User }],
@@ -1440,14 +1422,13 @@ const getGraduateProfile = async (req, res) => {
     });
 
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for profile", {
         graduateId,
         userId: req.user?.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -1478,7 +1459,7 @@ const getGraduateProfile = async (req, res) => {
       phoneNumber: user.phoneNumber,
     };
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Graduate profile retrieved successfully", {
       graduateId,
       userId: req.user?.id,
@@ -1487,7 +1468,6 @@ const getGraduateProfile = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -1495,7 +1475,7 @@ const getGraduateProfile = async (req, res) => {
       data: graduateProfile,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error getting graduate profile", {
       userId: req.user?.id,
       graduateId: req.params.id,
@@ -1504,7 +1484,6 @@ const getGraduateProfile = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("Error in getGraduateProfile:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
@@ -1514,12 +1493,16 @@ const getGraduateProfile = async (req, res) => {
   }
 };
 
-//update profile
+/**
+ * Update graduate profile
+ * @route PUT /api/graduates/profile/update
+ * @access Private (Graduates only)
+ */
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Update graduate profile request initiated", {
       userId,
       updateFields: Object.keys(req.body),
@@ -1530,7 +1513,6 @@ const updateProfile = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const graduate = await Graduate.findByPk(userId, {
       include: [{ model: User }],
@@ -1538,13 +1520,12 @@ const updateProfile = async (req, res) => {
     });
 
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for profile update", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -1554,7 +1535,7 @@ const updateProfile = async (req, res) => {
 
     const user = graduate.User;
 
-    // تحديث بيانات User
+    // Update User fields
     const userFields = ["firstName", "lastName", "phoneNumber"];
     userFields.forEach((field) => {
       if (req.body[field] !== undefined) {
@@ -1564,7 +1545,7 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    // تحديث بيانات Graduate مع تحويل اسم الكلية إلى كود
+    // Update Graduate fields with conversion from body key to DB key
     const graduateFields = [
       { bodyKey: "bio", dbKey: "bio" },
       { bodyKey: "skills", dbKey: "skills" },
@@ -1579,7 +1560,7 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    // تحديث faculty_code إذا تم إرسال faculty
+    // Update faculty_code if faculty is provided
     if (req.body.faculty !== undefined) {
       const facultyCode = normalizeCollegeName(req.body.faculty);
       if (facultyCode) {
@@ -1587,25 +1568,24 @@ const updateProfile = async (req, res) => {
       }
     }
 
-    // تحديث إعدادات الخصوصية
+    // Update privacy settings
     if (req.body.showCV !== undefined) graduate.show_cv = req.body.showCV;
     if (req.body.showLinkedIn !== undefined)
       graduate.show_linkedin = req.body.showLinkedIn;
     if (req.body.showPhone !== undefined) user.show_phone = req.body.showPhone;
 
-    // معالجة صورة البروفايل
+    // Handle profile picture upload
     if (req.files?.profilePicture?.[0]) {
       const profilePic = req.files.profilePicture[0];
       graduate["profile-picture-url"] = profilePic.path || profilePic.url;
       graduate["profile-picture-public-id"] =
         profilePic.filename || profilePic.public_id;
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log profile picture update
       logger.debug("Profile picture updated", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
     }
 
     if (req.body.removeProfilePicture) {
@@ -1614,23 +1594,21 @@ const updateProfile = async (req, res) => {
           await cloudinary.uploader.destroy(
             graduate["profile-picture-public-id"]
           );
-          // 🔴 START OF LOGGING - ADDED THIS
+          // Log deletion
           logger.debug("Old profile picture deleted from Cloudinary", {
             userId,
             publicId: graduate["profile-picture-public-id"],
             ip: req.ip,
             timestamp: new Date().toISOString(),
           });
-          // 🔴 END OF LOGGING
         } catch (err) {
-          // 🔴 START OF LOGGING - ADDED THIS
+          // Log deletion failure
           logger.warn("Failed to delete profile picture from Cloudinary", {
             userId,
             error: err.message,
             ip: req.ip,
             timestamp: new Date().toISOString(),
           });
-          // 🔴 END OF LOGGING
           console.warn("Failed to delete profile picture:", err.message);
         }
       }
@@ -1638,7 +1616,7 @@ const updateProfile = async (req, res) => {
       graduate["profile-picture-public-id"] = null;
     }
 
-    // معالجة CV
+    // Handle CV upload
     if (req.files?.cv?.[0]) {
       const cvFile = req.files.cv[0];
       if (graduate.cv_public_id) {
@@ -1646,36 +1624,33 @@ const updateProfile = async (req, res) => {
           await cloudinary.uploader.destroy(graduate.cv_public_id, {
             resource_type: "raw",
           });
-          // 🔴 START OF LOGGING - ADDED THIS
+          // Log deletion
           logger.debug("Old CV deleted from Cloudinary", {
             userId,
             publicId: graduate.cv_public_id,
             ip: req.ip,
             timestamp: new Date().toISOString(),
           });
-          // 🔴 END OF LOGGING
         } catch (deleteErr) {
-          // 🔴 START OF LOGGING - ADDED THIS
+          // Log deletion failure
           logger.warn("Failed to delete old CV from Cloudinary", {
             userId,
             error: deleteErr.message,
             ip: req.ip,
             timestamp: new Date().toISOString(),
           });
-          // 🔴 END OF LOGGING
           console.warn("Failed to delete old CV:", deleteErr.message);
         }
       }
 
       graduate["cv-url"] = cvFile.path || cvFile.url;
       graduate.cv_public_id = cvFile.filename || cvFile.public_id;
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log CV update
       logger.debug("CV updated", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
     }
 
     if (req.body.removeCV) {
@@ -1684,23 +1659,21 @@ const updateProfile = async (req, res) => {
           await cloudinary.uploader.destroy(graduate.cv_public_id, {
             resource_type: "raw",
           });
-          // 🔴 START OF LOGGING - ADDED THIS
+          // Log deletion
           logger.debug("CV deleted from Cloudinary", {
             userId,
             publicId: graduate.cv_public_id,
             ip: req.ip,
             timestamp: new Date().toISOString(),
           });
-          // 🔴 END OF LOGGING
         } catch (err) {
-          // 🔴 START OF LOGGING - ADDED THIS
+          // Log deletion failure
           logger.warn("Failed to delete CV from Cloudinary", {
             userId,
             error: err.message,
             ip: req.ip,
             timestamp: new Date().toISOString(),
           });
-          // 🔴 END OF LOGGING
           console.warn("Failed to delete CV:", err.message);
         }
       }
@@ -1730,14 +1703,13 @@ const updateProfile = async (req, res) => {
       phoneNumber: user.phoneNumber,
     };
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful update
     logger.info("Graduate profile updated successfully", {
       userId,
       faculty: facultyName,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -1745,7 +1717,7 @@ const updateProfile = async (req, res) => {
       data: graduateProfile,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error updating graduate profile", {
       userId: req.user?.id,
       error: err.message,
@@ -1753,7 +1725,6 @@ const updateProfile = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("Error in updateProfile:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
@@ -1763,26 +1734,29 @@ const updateProfile = async (req, res) => {
   }
 };
 
-//download cv
+/**
+ * Download CV for a graduate
+ * @route GET /api/graduates/:id/cv/download
+ * @access Private
+ */
 const downloadCv = async (req, res) => {
   try {
     const graduateId = req.params.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Download CV request initiated", {
       userId: req.user?.id,
       graduateId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const graduate = await Graduate.findByPk(graduateId, {
       attributes: { exclude: ["faculty"] },
     });
 
     if (!graduate || !graduate["cv-url"]) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("CV not found for download", {
         graduateId,
         hasCV: !!graduate?.["cv-url"],
@@ -1790,7 +1764,6 @@ const downloadCv = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: "error",
         message: "CV not found",
@@ -1812,7 +1785,7 @@ const downloadCv = async (req, res) => {
     );
     res.setHeader("Content-Type", response.headers["content-type"]);
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful download initiation
     logger.info("CV download initiated", {
       graduateId,
       fileName: graduate["cv-url"].split("/").pop(),
@@ -1820,11 +1793,10 @@ const downloadCv = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     response.data.pipe(res);
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error downloading CV", {
       userId: req.user?.id,
       graduateId: req.params.id,
@@ -1833,7 +1805,6 @@ const downloadCv = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("Error downloading CV:", err);
     res.status(500).json({
       status: "error",
@@ -1843,13 +1814,17 @@ const downloadCv = async (req, res) => {
   }
 };
 
-// Activate / Inactivate Graduate
+/**
+ * Activate / Inactivate Graduate
+ * @route PUT /api/graduates/:id/status
+ * @access Private (Admin only)
+ */
 const updateGraduateStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Update graduate status request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
@@ -1858,11 +1833,10 @@ const updateGraduateStatus = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const allowedUserTypes = ["admin", "staff"];
     if (!allowedUserTypes.includes(req.user["user-type"])) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized access
       logger.warn("Unauthorized access to update graduate status", {
         userId: req.user?.id,
         userType: req.user?.["user-type"],
@@ -1870,7 +1844,6 @@ const updateGraduateStatus = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: HttpStatusHelper.ERROR,
         message: "Access denied.",
@@ -1886,7 +1859,7 @@ const updateGraduateStatus = async (req, res) => {
       );
 
       if (!hasPermission) {
-        // 🔴 START OF LOGGING - ADDED THIS
+        // Log permission denied
         logger.warn("Staff permission denied for updating graduate status", {
           userId: req.user.id,
           permission: "Graduate management",
@@ -1894,7 +1867,6 @@ const updateGraduateStatus = async (req, res) => {
           ip: req.ip,
           timestamp: new Date().toISOString(),
         });
-        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: HttpStatusHelper.ERROR,
           message:
@@ -1905,14 +1877,13 @@ const updateGraduateStatus = async (req, res) => {
     }
 
     if (!["active", "inactive"].includes(status)) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log invalid status
       logger.warn("Invalid status value for graduate update", {
         graduateId: id,
         status,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: HttpStatusHelper.FAIL,
         message: "Invalid status value. Use 'active' or 'inactive'.",
@@ -1926,13 +1897,12 @@ const updateGraduateStatus = async (req, res) => {
     });
 
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for status update", {
         graduateId: id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -1947,7 +1917,7 @@ const updateGraduateStatus = async (req, res) => {
     const lang = req.headers["accept-language"] || req.user.language || "ar";
     const facultyName = getCollegeNameByCode(graduate.faculty_code, lang);
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful update
     logger.info("Graduate status updated successfully", {
       graduateId: graduate.graduate_id,
       userId: req.user.id,
@@ -1957,7 +1927,6 @@ const updateGraduateStatus = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -1970,7 +1939,7 @@ const updateGraduateStatus = async (req, res) => {
       },
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error updating graduate status", {
       userId: req.user?.id,
       graduateId: req.params.id,
@@ -1979,7 +1948,6 @@ const updateGraduateStatus = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
       message: err.message,
@@ -1988,11 +1956,16 @@ const updateGraduateStatus = async (req, res) => {
   }
 };
 
+/**
+ * Search graduates by faculty and graduation year
+ * @route GET /api/graduates/search
+ * @access Private
+ */
 const searchGraduates = async (req, res) => {
   try {
     const { faculty, "graduation-year": graduationYear } = req.query;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Search graduates request initiated", {
       userId: req.user?.id,
       faculty,
@@ -2000,11 +1973,10 @@ const searchGraduates = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const whereClause = {};
 
-    // البحث باستخدام faculty_code بدلاً من faculty
+    // Search using faculty_code instead of faculty
     if (faculty) {
       const facultyCode = normalizeCollegeName(faculty);
       if (facultyCode) {
@@ -2032,7 +2004,7 @@ const searchGraduates = async (req, res) => {
       faculty: getCollegeNameByCode(g.faculty_code, lang),
     }));
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful search
     logger.info("Graduate search completed successfully", {
       userId: req.user?.id,
       resultCount: graduatesWithFaculty.length,
@@ -2041,14 +2013,13 @@ const searchGraduates = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json({
       status: "success",
       data: graduatesWithFaculty,
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error searching graduates", {
       userId: req.user?.id,
       faculty: req.query.faculty,
@@ -2058,7 +2029,6 @@ const searchGraduates = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("Error searching graduates:", error);
     res.status(500).json({
       status: "error",
@@ -2068,20 +2038,22 @@ const searchGraduates = async (req, res) => {
   }
 };
 
-// Get public graduate profile (new endpoint)
-// Returns: Full name, Faculty, Department, Graduation year, Image
+/**
+ * Get public graduate profile (limited public data)
+ * @route GET /api/graduates/public/:id
+ * @access Public
+ */
 const getPublicGraduateProfile = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Get public graduate profile request initiated", {
       userId: req.user?.id,
       graduateId: id,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const graduate = await Graduate.findByPk(id, {
       include: [{ model: User }],
@@ -2089,14 +2061,13 @@ const getPublicGraduateProfile = async (req, res) => {
     });
 
     if (!graduate || !graduate.User) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for public profile", {
         graduateId: id,
         userId: req.user?.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -2135,7 +2106,7 @@ const getPublicGraduateProfile = async (req, res) => {
         image: graduate["profile-picture-url"] || null,
       };
 
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log successful retrieval (using local data)
       logger.info("Public graduate profile retrieved (using local data)", {
         graduateId: id,
         hasNationalId: false,
@@ -2143,7 +2114,6 @@ const getPublicGraduateProfile = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       return res.json({
         status: HttpStatusHelper.SUCCESS,
@@ -2163,7 +2133,7 @@ const getPublicGraduateProfile = async (req, res) => {
         externalError?.message ||
         "Failed to fetch student data from external system";
 
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log external API failure
       logger.error("External API failed for public profile", {
         graduateId: id,
         error: errorMessage,
@@ -2171,7 +2141,6 @@ const getPublicGraduateProfile = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       return res.status(statusCode).json({
         status: HttpStatusHelper.ERROR,
@@ -2236,14 +2205,13 @@ const getPublicGraduateProfile = async (req, res) => {
       image: graduate["profile-picture-url"] || null,
     };
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Public graduate profile retrieved successfully", {
       graduateId: id,
       faculty: facultyName,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -2251,7 +2219,7 @@ const getPublicGraduateProfile = async (req, res) => {
       data: publicProfile,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error getting public graduate profile", {
       userId: req.user?.id,
       graduateId: req.params.id,
@@ -2260,7 +2228,6 @@ const getPublicGraduateProfile = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("getPublicGraduateProfile error:", err.message);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,
@@ -2270,31 +2237,34 @@ const getPublicGraduateProfile = async (req, res) => {
   }
 };
 
-// get graduate profile for user
+/**
+ * Get graduate profile for another user (with friendship status)
+ * @route GET /api/graduates/profile/user/:identifier
+ * @access Private
+ */
 const getGraduateProfileForUser = async (req, res) => {
   try {
     const { identifier } = req.params;
     const currentUserId = req.user.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Get graduate profile for user request initiated", {
       currentUserId,
       identifier,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     let graduate;
 
-    // البحث عن الخريج بالإيدي
+    // Search by ID
     if (!isNaN(identifier)) {
       graduate = await Graduate.findByPk(identifier, {
         include: [{ model: User }],
         attributes: { exclude: ["faculty"] },
       });
     } else {
-      // البحث بالإيميل
+      // Search by email
       const userByEmail = await User.findOne({
         where: { email: identifier },
         include: [{ model: Graduate }],
@@ -2303,7 +2273,7 @@ const getGraduateProfileForUser = async (req, res) => {
       if (userByEmail) {
         graduate = userByEmail.Graduate;
       } else {
-        // البحث بالاسم
+        // Search by name
         const usersByName = await User.findAll({
           where: {
             [Op.or]: [
@@ -2324,14 +2294,13 @@ const getGraduateProfileForUser = async (req, res) => {
     }
 
     if (!graduate || !graduate.User) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Graduate not found for user profile", {
         currentUserId,
         identifier,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Graduate not found",
@@ -2339,7 +2308,7 @@ const getGraduateProfileForUser = async (req, res) => {
       });
     }
 
-    // تحديد حالة الصداقة
+    // Determine friendship status
     let friendshipStatus = "no_relation";
 
     const existingFriendshipRequest = await Friendship.findOne({
@@ -2371,7 +2340,7 @@ const getGraduateProfileForUser = async (req, res) => {
 
     if (friendship) friendshipStatus = "friends";
 
-    // جلب بوستات الخريج
+    // Fetch graduate posts
     const posts = await Post.findAll({
       where: {
         "author-id": graduate.graduate_id,
@@ -2416,7 +2385,7 @@ const getGraduateProfileForUser = async (req, res) => {
       order: [["created-at", "DESC"]],
     });
 
-    // تجهيز بيانات البوستات
+    // Format posts data
     const postsData = posts.map((post) => {
       const authorUser = post.User;
 
@@ -2505,7 +2474,7 @@ const getGraduateProfileForUser = async (req, res) => {
       profile.linkedlnLink = graduate["linkedln-link"];
     if (userData.show_phone) profile.phoneNumber = userData.phoneNumber;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Graduate profile for user retrieved successfully", {
       currentUserId,
       graduateId: graduate.graduate_id,
@@ -2516,7 +2485,6 @@ const getGraduateProfileForUser = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -2524,7 +2492,7 @@ const getGraduateProfileForUser = async (req, res) => {
       data: profile,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error getting graduate profile for user", {
       userId: req.user?.id,
       identifier: req.params.identifier,
@@ -2533,7 +2501,6 @@ const getGraduateProfileForUser = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("❌ خطأ في الفانكشن:", err);
     return res.status(500).json({
       status: HttpStatusHelper.ERROR,

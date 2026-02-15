@@ -21,14 +21,19 @@ const {
   sanitizeInput,
 } = require("../middleware/security");
 
-// أضف هذا مع باقي الـ imports في أعلى الملف
+// Import invitation controller
 const {
   sendAutoGroupInvitation,
-} = require("../controllers/invitation.controller"); // أو المسار الصحيح
+} = require("../controllers/invitation.controller");
 
 // ======== Helper Functions ========
 
-// Extract DOB from Egyptian NID
+/**
+ * Extract date of birth from Egyptian National ID (NID)
+ * @param {string} nid - Egyptian National ID (14 digits)
+ * @returns {string} Formatted date string (YYYY-MM-DD)
+ * @throws {Error} If NID format is invalid
+ */
 function extractDOBFromEgyptianNID(nid) {
   const id = nid.trim();
   if (!validateNationalId(id)) throw new Error("Invalid NID format");
@@ -57,14 +62,24 @@ function extractDOBFromEgyptianNID(nid) {
   )}`;
 }
 
-// Check if NID already exists
+/**
+ * Check if National ID is already registered
+ * @param {string} nid - Egyptian National ID
+ * @returns {Promise<boolean>} True if NID exists in database
+ */
 async function isNIDRegistered(nid) {
   const encryptedNid = aes.encryptNationalId(nid);
   const user = await User.findOne({ where: { "national-id": encryptedNid } });
   return !!user;
 }
 
-// Send verification email via Gmail
+/**
+ * Send password reset verification email via Gmail SMTP
+ * @param {string} email - Recipient email address
+ * @param {string} code - 6-digit verification code
+ * @returns {Promise<Object>} Nodemailer send info
+ * @throws {Error} If email sending fails
+ */
 async function sendVerificationEmail(email, code) {
   // Enhanced Gmail configuration
   const transporter = nodemailer.createTransport({
@@ -113,6 +128,11 @@ async function sendVerificationEmail(email, code) {
 
 // ======== Controller Functions ========
 
+/**
+ * Register a new user (graduate or staff)
+ * @route POST /api/users/register
+ * @access Public
+ */
 const registerUser = asyncHandler(async (req, res) => {
   sanitizeInput(req, res, () => {});
   const { firstName, lastName, email, password, nationalId, phoneNumber } =
@@ -212,14 +232,13 @@ const registerUser = asyncHandler(async (req, res) => {
       "status-to-login": statusToLogin,
     });
 
-    // 🔴🔴🔴 START OF ADDED CODE - Auto Group Invitation 🔴🔴🔴
-    // إرسال دعوة تلقائية للخريج بعد التسجيل
+    // Auto Group Invitation for new graduates
     (async () => {
       try {
-        // انتظر قليلاً لضمان حفظ البيانات في قاعدة البيانات
+        // Short delay to ensure database persistence
         await new Promise((resolve) => setTimeout(resolve, 500));
 
-        // استدعاء دالة إرسال الدعوة التلقائية
+        // Send automatic group invitation
         const invitationSent = await sendAutoGroupInvitation(user.id);
 
         if (invitationSent) {
@@ -236,7 +255,6 @@ const registerUser = asyncHandler(async (req, res) => {
         );
       }
     })();
-    // 🔴🔴🔴 END OF ADDED CODE - Auto Group Invitation 🔴🔴🔴
   }
 
   if (userType === "staff") {
@@ -252,7 +270,11 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 });
 
-// --- Login User ---
+/**
+ * Authenticate user and generate JWT token
+ * @route POST /api/users/login
+ * @access Public
+ */
 const loginUser = asyncHandler(async (req, res) => {
   sanitizeInput(req, res, () => {});
   const { email, password } = req.body;
@@ -313,7 +335,11 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 
-// --- Forgot Password ---
+/**
+ * Send password reset verification code to email
+ * @route POST /api/users/forgot-password
+ * @access Public
+ */
 const forgotPassword = asyncHandler(async (req, res) => {
   sanitizeInput(req, res, () => {});
   const { email } = req.body;
@@ -335,7 +361,11 @@ const forgotPassword = asyncHandler(async (req, res) => {
   res.json({ message: "If the email exists, verification code sent" });
 });
 
-// --- Verify Code ---
+/**
+ * Verify password reset code
+ * @route POST /api/users/verify-code
+ * @access Public
+ */
 const verifyCode = asyncHandler(async (req, res) => {
   sanitizeInput(req, res, () => {});
   const { email, code } = req.body;
@@ -352,7 +382,11 @@ const verifyCode = asyncHandler(async (req, res) => {
   res.json({ message: "Code is valid" });
 });
 
-// --- Reset Password ---
+/**
+ * Reset user password with verification code
+ * @route POST /api/users/reset-password
+ * @access Public
+ */
 const resetPassword = asyncHandler(async (req, res) => {
   sanitizeInput(req, res, () => {});
   const { email, code, newPassword } = req.body;
@@ -377,7 +411,11 @@ const resetPassword = asyncHandler(async (req, res) => {
   res.json({ message: "Password reset successfully" });
 });
 
-// --- Get Profile ---
+/**
+ * Get authenticated user profile with related data
+ * @route GET /api/users/profile
+ * @access Private
+ */
 const getUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findByPk(req.user.id, {
     attributes: { exclude: ["hashed-password"] },
@@ -420,7 +458,11 @@ const getUserProfile = asyncHandler(async (req, res) => {
   res.json(profile);
 });
 
-// --- Update Profile ---
+/**
+ * Update authenticated user profile
+ * @route PUT /api/users/profile
+ * @access Private
+ */
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findByPk(req.user.id);
   if (!user) throw new Error("User not found");
@@ -453,7 +495,11 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   res.json({ message: "Profile updated successfully" });
 });
 
-// --- Logout ---
+/**
+ * Logout user by clearing JWT cookie
+ * @route POST /api/users/logout
+ * @access Private
+ */
 const logoutUser = asyncHandler(async (req, res) => {
   res.cookie("jwt", "", { httpOnly: true, expires: new Date(0) });
   res.json({ message: "Logged out successfully" });

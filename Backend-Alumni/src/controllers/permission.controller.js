@@ -2,26 +2,29 @@ const Permission = require("../models/Permission");
 const RolePermission = require("../models/RolePermission");
 const Role = require("../models/Role");
 
-// 🔴 START OF LOGGER IMPORT - ADDED THIS
+// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
-// 🔴 END OF LOGGER IMPORT
 
+/**
+ * Get all permissions with their details
+ * @route GET /api/permissions
+ * @access Private (Admin only)
+ */
 const getAllPermissions = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Get all permissions request initiated", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     console.log("🔹 Fetching all permissions...");
 
     const permissions = await Permission.findAll();
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Permissions retrieved successfully", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
@@ -29,7 +32,6 @@ const getAllPermissions = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     console.log(`🔹 Total permissions fetched: ${permissions.length}`);
 
@@ -40,7 +42,6 @@ const getAllPermissions = async (req, res) => {
       );
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
     // Log permission summary for security monitoring
     const permissionSummary = permissions.map((p) => ({
       name: p.name,
@@ -56,7 +57,6 @@ const getAllPermissions = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: "success",
@@ -64,7 +64,7 @@ const getAllPermissions = async (req, res) => {
       data: permissions,
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error fetching permissions", {
       userId: req.user?.id,
       userType: req.user?.["user-type"],
@@ -73,7 +73,6 @@ const getAllPermissions = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     console.error("❌ Error fetching permissions:", error);
     return res.status(500).json({

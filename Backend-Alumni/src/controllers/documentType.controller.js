@@ -1,12 +1,17 @@
 const DocumentType = require("../models/DocumentType");
-
 const { DOCUMENT_TYPES } = require("../constants/documentTypes");
 
+/**
+ * Get all available document types with localized names and descriptions
+ * @route GET /api/documents/types
+ * @access Public
+ */
 const getAllDocuments = (req, res) => {
-  // 🌐 ناخد اللغة من الهيدرز بدل query
+  // Extract language preference from Accept-Language header
   const langHeader = req.headers["accept-language"];
   const lang = langHeader && langHeader.toLowerCase() === "en" ? "en" : "ar";
 
+  // Format document types with localized fields based on language preference
   const formattedDocuments = Object.values(DOCUMENT_TYPES).map((doc) => ({
     code: doc.code,
     name: lang === "ar" ? doc.name_ar : doc.name_en,
@@ -25,4 +30,3 @@ const getAllDocuments = (req, res) => {
 };
 
 module.exports = { getAllDocuments };
-

@@ -7,11 +7,13 @@ const { Chat, UserBlock } = require("../models");
 const { Op } = require("sequelize");
 const asyncHandler = require("express-async-handler");
 
-// 🔴 START OF LOGGER IMPORT - ADDED THIS
+// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
-// 🔴 END OF LOGGER IMPORT
 
-// Configure multer for file uploads
+/**
+ * Configure multer storage for Cloudinary
+ * Stores files in 'chat-attachments' folder with automatic transformation
+ */
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -23,7 +25,12 @@ const storage = new CloudinaryStorage({
   },
 });
 
-// File filter function
+/**
+ * File filter function to validate uploaded file types
+ * @param {Object} req - Express request object
+ * @param {Object} file - Multer file object
+ * @param {Function} cb - Callback function
+ */
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
     "image/jpeg",
@@ -40,13 +47,12 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log invalid file type attempts
     logger.warn("Invalid file type attempted", {
       mimetype: file.mimetype,
       originalname: file.originalname,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     cb(
       new Error(
         "Invalid file type. Only images, PDFs, and documents are allowed."
@@ -56,6 +62,9 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+/**
+ * Configure multer with storage, file filter, and limits
+ */
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
@@ -65,21 +74,22 @@ const upload = multer({
   },
 });
 
-// @desc    Upload file attachment for chat
-// @route   POST /alumni-portal/chat/:chatId/upload
-// @access  Private
+/**
+ * Upload file attachment for chat
+ * @route POST /alumni-portal/chat/:chatId/upload
+ * @access Private
+ */
 const uploadChatFile = asyncHandler(async (req, res) => {
   const { chatId } = req.params;
   const senderId = req.user.id;
 
-  // 🔴 START OF LOGGING - ADDED THIS
+  // Log upload attempt initiation
   logger.info("Chat file upload attempt initiated", {
     chatId,
     senderId,
     ip: req.ip,
     timestamp: new Date().toISOString(),
   });
-  // 🔴 END OF LOGGING
 
   // Verify chat access
   const chat = await Chat.findOne({
@@ -90,14 +100,13 @@ const uploadChatFile = asyncHandler(async (req, res) => {
   });
 
   if (!chat) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log access denial
     logger.warn("Chat access denied or not found", {
       chatId,
       senderId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     return res.status(404).json({
       status: "error",
       message: "Chat not found or access denied",
@@ -114,7 +123,7 @@ const uploadChatFile = asyncHandler(async (req, res) => {
   });
 
   if (isBlocked) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log security event for blocked user attempt
     securityLogger.warn("User blocked - file upload prevented", {
       senderId,
       receiverId,
@@ -122,7 +131,6 @@ const uploadChatFile = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     return res.status(403).json({
       status: "error",
       message: "Cannot send files to this user",
@@ -132,7 +140,7 @@ const uploadChatFile = asyncHandler(async (req, res) => {
   // Handle file upload
   upload.single("file")(req, res, async (err) => {
     if (err) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log upload error
       logger.error("File upload error occurred", {
         chatId,
         senderId,
@@ -142,7 +150,6 @@ const uploadChatFile = asyncHandler(async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       if (err instanceof multer.MulterError) {
         if (err.code === "LIMIT_FILE_SIZE") {
@@ -165,14 +172,13 @@ const uploadChatFile = asyncHandler(async (req, res) => {
     }
 
     if (!req.file) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing file
       logger.warn("No file uploaded in request", {
         chatId,
         senderId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: "error",
         message: "No file uploaded",
@@ -189,7 +195,7 @@ const uploadChatFile = asyncHandler(async (req, res) => {
         publicId: req.file.filename,
       };
 
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log successful upload
       logger.info("Chat file uploaded successfully", {
         chatId,
         senderId,
@@ -204,7 +210,6 @@ const uploadChatFile = asyncHandler(async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       // Return file information
       res.status(200).json({
@@ -222,7 +227,7 @@ const uploadChatFile = asyncHandler(async (req, res) => {
         },
       });
     } catch (error) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log error during file processing
       logger.error("Error processing file upload after validation", {
         chatId,
         senderId,
@@ -231,7 +236,6 @@ const uploadChatFile = asyncHandler(async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
 
       console.error("Error processing file upload:", error);
       res.status(500).json({
@@ -242,41 +246,41 @@ const uploadChatFile = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Delete uploaded file
-// @route   DELETE /alumni-portal/chat/files/:publicId
-// @access  Private
+/**
+ * Delete uploaded file from Cloudinary
+ * @route DELETE /alumni-portal/chat/files/:publicId
+ * @access Private
+ */
 const deleteChatFile = asyncHandler(async (req, res) => {
   const { publicId } = req.params;
   const userId = req.user.id;
 
-  // 🔴 START OF LOGGING - ADDED THIS
+  // Log deletion request
   logger.info("Chat file deletion request initiated", {
     publicId,
     userId,
     ip: req.ip,
     timestamp: new Date().toISOString(),
   });
-  // 🔴 END OF LOGGING
 
   try {
     // Delete from Cloudinary
     await cloudinary.uploader.destroy(`chat-attachments/${publicId}`);
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful deletion
     logger.info("Chat file deleted successfully from Cloudinary", {
       publicId,
       userId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: "success",
       message: "File deleted successfully",
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log deletion error
     logger.error("Error deleting chat file from Cloudinary", {
       publicId,
       userId,
@@ -285,7 +289,6 @@ const deleteChatFile = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     console.error("Error deleting file:", error);
     res.status(500).json({
@@ -295,21 +298,22 @@ const deleteChatFile = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get file info
-// @route   GET /alumni-portal/chat/files/:publicId/info
-// @access  Private
+/**
+ * Get file information from Cloudinary
+ * @route GET /alumni-portal/chat/files/:publicId/info
+ * @access Private
+ */
 const getFileInfo = asyncHandler(async (req, res) => {
   const { publicId } = req.params;
   const userId = req.user?.id; // Optional for authenticated users
 
-  // 🔴 START OF LOGGING - ADDED THIS
+  // Log file info request
   logger.info("File info request initiated", {
     publicId,
     userId: userId || "anonymous",
     ip: req.ip,
     timestamp: new Date().toISOString(),
   });
-  // 🔴 END OF LOGGING
 
   try {
     // Get file info from Cloudinary
@@ -317,7 +321,7 @@ const getFileInfo = asyncHandler(async (req, res) => {
       `chat-attachments/${publicId}`
     );
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("File info retrieved successfully from Cloudinary", {
       publicId,
       fileSize: result.bytes,
@@ -327,7 +331,6 @@ const getFileInfo = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.status(200).json({
       status: "success",
@@ -342,7 +345,7 @@ const getFileInfo = asyncHandler(async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error retrieving file info
     logger.error("Error getting file info from Cloudinary", {
       publicId,
       userId: userId || "anonymous",
@@ -351,7 +354,6 @@ const getFileInfo = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     console.error("Error getting file info:", error);
     res.status(404).json({
@@ -361,9 +363,15 @@ const getFileInfo = asyncHandler(async (req, res) => {
   }
 });
 
-// Middleware to handle file upload errors
+/**
+ * Middleware to handle file upload errors
+ * @param {Error} error - Error object
+ * @param {Object} req - Express request object
+ * @param {Object} res - Express response object
+ * @param {Function} next - Express next function
+ */
 const handleUploadError = (error, req, res, next) => {
-  // 🔴 START OF LOGGING - ADDED THIS
+  // Log upload middleware error
   logger.error("File upload middleware error", {
     error: error.message,
     errorCode: error.code,
@@ -373,7 +381,6 @@ const handleUploadError = (error, req, res, next) => {
     path: req.path,
     method: req.method,
   });
-  // 🔴 END OF LOGGING
 
   if (error instanceof multer.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {

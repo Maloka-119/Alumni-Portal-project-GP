@@ -3,8 +3,11 @@ const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 const { logger, securityLogger } = require("../utils/logger");
 
-
-// 1️⃣ إضافة Feedback جديد
+/**
+ * Create new feedback submission
+ * @route POST /api/feedback
+ * @access Private (Graduates only)
+ */
 const createFeedback = async (req, res) => {
   try {
     const graduate_id = req.user?.id;
@@ -16,12 +19,14 @@ const createFeedback = async (req, res) => {
 
     const { category, title, details, phone, email } = req.body;
 
+    // Validate required fields
     if (!category || !title || !details) {
       return res.status(400).json({
         message: "Category, title and details are required",
       });
     }
 
+    // Validate category value
     if (!["Complaint", "Suggestion"].includes(category)) {
       return res.status(400).json({
         message: "Invalid category value",
@@ -30,14 +35,16 @@ const createFeedback = async (req, res) => {
 
     let attachmentUrl = null;
 
-    // 📌 لو في ملف مرفوع
+    // Handle file attachment if uploaded
     if (req.file) {
+      // Attachments only allowed for complaints
       if (category !== "Complaint") {
         return res.status(400).json({
           message: "Attachment allowed only for Complaint",
         });
       }
 
+      // Validate file type
       const allowedTypes = ["image/jpeg", "image/png", "application/pdf"];
 
       if (!allowedTypes.includes(req.file.mimetype)) {
@@ -46,7 +53,7 @@ const createFeedback = async (req, res) => {
         });
       }
 
-      // رفع على Cloudinary
+      // Upload to Cloudinary
       const uploadToCloudinary = () =>
         new Promise((resolve, reject) => {
           const stream = cloudinary.uploader.upload_stream(
@@ -66,6 +73,7 @@ const createFeedback = async (req, res) => {
       attachmentUrl = result.secure_url;
     }
 
+    // Create feedback record
     const newFeedback = await Feedback.create({
       category,
       title,
@@ -87,7 +95,6 @@ const createFeedback = async (req, res) => {
       message: "Feedback submitted successfully",
       data: newFeedback,
     });
-
   } catch (error) {
     logger.error("Error creating feedback", {
       error: error.message,
@@ -97,15 +104,18 @@ const createFeedback = async (req, res) => {
   }
 };
 
-
-// 2️⃣ جلب كل Feedback (Admin)
+/**
+ * Get all feedback submissions (Admin only)
+ * @route GET /api/feedback/all
+ * @access Private (Admin only)
+ */
 const getAllFeedback = async (req, res) => {
   try {
     const list = await Feedback.findAll({
       include: [
-        { model: User, attributes: ["first-name", "last-name", "email"] }
+        { model: User, attributes: ["first-name", "last-name", "email"] },
       ],
-      order: [["createdAt", "DESC"]],
+      order: [["created_at", "DESC"]],
     });
 
     logger.info("Admin fetched all feedbacks", { count: list.length });
@@ -117,8 +127,11 @@ const getAllFeedback = async (req, res) => {
   }
 };
 
-
-// 3️⃣ جلب Feedback الخاص بالمستخدم الحالي
+/**
+ * Get feedback for the authenticated user
+ * @route GET /api/feedback/my-feedback
+ * @access Private
+ */
 const getMyFeedback = async (req, res) => {
   try {
     if (!req.user) {
@@ -129,9 +142,9 @@ const getMyFeedback = async (req, res) => {
     const myList = await Feedback.findAll({
       where: { graduate_id: req.user.id },
       include: [
-        { model: User, attributes: ["first-name", "last-name", "email"] }
+        { model: User, attributes: ["first-name", "last-name", "email"] },
       ],
-      order: [["createdAt", "DESC"]],
+      order: [["created_at", "DESC"]],
     });
 
     logger.info("User fetched their feedback list", {
@@ -146,15 +159,18 @@ const getMyFeedback = async (req, res) => {
   }
 };
 
-
-// 4️⃣ جلب Feedback لخريج معيّن (Admin)
+/**
+ * Get feedback for a specific graduate (Admin only)
+ * @route GET /api/feedback/graduate/:id
+ * @access Private (Admin only)
+ */
 const getGraduateFeedback = async (req, res) => {
   try {
     const { id } = req.params;
 
     const feedbacks = await Feedback.findAll({
       where: { graduate_id: id },
-      order: [["createdAt", "DESC"]],
+      order: [["created_at", "DESC"]],
     });
 
     logger.info("Admin fetched feedbacks for graduate", {
@@ -163,26 +179,29 @@ const getGraduateFeedback = async (req, res) => {
     });
 
     res.json(feedbacks);
-
   } catch (error) {
     logger.error("Error fetching graduate feedback", { error: error.message });
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
-// 5️⃣ فلترة حسب النوع
+/**
+ * Filter feedback by category
+ * @route GET /api/feedback/category/:category
+ * @access Private (Admin only)
+ */
 const getByCategory = async (req, res) => {
   try {
     const { category } = req.params;
 
+    // Validate category
     if (!["Complaint", "Suggestion"].includes(category)) {
       return res.status(400).json({ message: "Invalid category" });
     }
 
     const filtered = await Feedback.findAll({
       where: { category },
-      order: [["createdAt", "DESC"]],
+      order: [["created_at", "DESC"]],
     });
 
     logger.info("Feedback filtered by category", {
@@ -191,15 +210,19 @@ const getByCategory = async (req, res) => {
     });
 
     res.json(filtered);
-
   } catch (error) {
-    logger.error("Error filtering feedback by category", { error: error.message });
+    logger.error("Error filtering feedback by category", {
+      error: error.message,
+    });
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
-// 6️⃣ حذف Feedback (مع حذف الملف من Cloudinary)
+/**
+ * Delete feedback and associated attachment (Admin only)
+ * @route DELETE /api/feedback/:id
+ * @access Private (Admin only)
+ */
 const deleteFeedback = async (req, res) => {
   try {
     const { id } = req.params;
@@ -211,7 +234,7 @@ const deleteFeedback = async (req, res) => {
       return res.status(404).json({ message: "Feedback not found" });
     }
 
-    // لو في attachment نحذفه من Cloudinary
+    // Delete attachment from Cloudinary if exists
     if (feedback.attachment) {
       const publicId = feedback.attachment
         .split("/")
@@ -224,20 +247,23 @@ const deleteFeedback = async (req, res) => {
       });
     }
 
+    // Delete feedback record
     await Feedback.destroy({ where: { feedback_id: id } });
 
     logger.info("Feedback deleted", { feedbackId: id });
 
     res.json({ message: "Feedback deleted successfully" });
-
   } catch (error) {
     logger.error("Error deleting feedback", { error: error.message });
     res.status(500).json({ message: "Server error" });
   }
 };
 
-
-// 7️⃣ تعديل Feedback
+/**
+ * Update feedback (Admin only)
+ * @route PUT /api/feedback/:id
+ * @access Private (Admin only)
+ */
 const updateFeedback = async (req, res) => {
   try {
     const { id } = req.params;
@@ -251,6 +277,7 @@ const updateFeedback = async (req, res) => {
 
     const oldData = { ...feedback.dataValues };
 
+    // Update feedback
     await Feedback.update(req.body, {
       where: { feedback_id: id },
     });
@@ -267,13 +294,11 @@ const updateFeedback = async (req, res) => {
       message: "Feedback updated successfully",
       data: updatedFeedback,
     });
-
   } catch (error) {
     logger.error("Error updating feedback", { error: error.message });
     res.status(500).json({ message: "Server error" });
   }
 };
-
 
 module.exports = {
   createFeedback,

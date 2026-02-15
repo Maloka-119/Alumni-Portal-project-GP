@@ -125,6 +125,12 @@ const graduates = [
     faculty: "Faculty of Engineering (Helwan)", // English
     "graduation-year": 2022,
   },
+  {
+    nationalId: "30208281234597",
+    "birth-date": "2004-08-28",
+    faculty: "Faculty of Engineering (Helwan)", // English
+    "graduation-year": 2022,
+  },
 ];
 
 // GET graduate by nationalId

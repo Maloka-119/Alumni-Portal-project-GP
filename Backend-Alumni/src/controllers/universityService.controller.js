@@ -4,14 +4,11 @@ const { Op } = require("sequelize");
 const checkStaffPermission = require("../utils/permissionChecker");
 const { logger } = require("../utils/logger");
 
-// Helper to truncate long text in logs
 const truncateText = (text, maxLength = 300) => {
   if (!text || text.length <= maxLength) return text;
   return text.substring(0, maxLength) + "...";
 };
 
-// @desc    Get all active university services (Public + Graduates)
-// @access  Public
 const getAllServices = asyncHandler(async (req, res) => {
   logger.info("Fetching all active university services (public)", {
     ip: req.ip,
@@ -34,9 +31,6 @@ const getAllServices = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get all services including soft-deleted ones (Admin panel)
-// @access  Admin + Staff (with view permission)
-// @middleware protect
 const getAllServicesAdmin = asyncHandler(async (req, res) => {
   const user = req.user;
 
@@ -45,11 +39,10 @@ const getAllServicesAdmin = asyncHandler(async (req, res) => {
     userType: user["user-type"],
   });
 
-  // Permission check based on user type
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
-      "Services management", // تم التغيير من "University Services" إلى "Services management"
+      "Services management",
       "view"
     );
 
@@ -68,7 +61,7 @@ const getAllServicesAdmin = asyncHandler(async (req, res) => {
   }
 
   const services = await UniversityService.findAll({
-    paranoid: false, // includes soft-deleted records
+    paranoid: false,
     order: [["title", "ASC"]],
   });
 
@@ -85,9 +78,6 @@ const getAllServicesAdmin = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Create a new university service
-// @access  Admin + Staff (with add permission)
-// @middleware protect
 const createService = asyncHandler(async (req, res) => {
   const user = req.user;
   const { title, pref, details } = req.body;
@@ -99,11 +89,10 @@ const createService = asyncHandler(async (req, res) => {
     pref,
   });
 
-  // Permission check for staff
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
-      "Services management", // تم التغيير
+      "Services management",
       "add"
     );
     if (!hasPermission) {
@@ -117,7 +106,6 @@ const createService = asyncHandler(async (req, res) => {
     }
   }
 
-  // Validation
   if (!title || !pref) {
     return res.status(400).json({
       success: false,
@@ -155,9 +143,6 @@ const createService = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Update an existing university service
-// @access  Admin + Staff (with edit permission)
-// @middleware protect
 const updateService = asyncHandler(async (req, res) => {
   const user = req.user;
   const { id } = req.params;
@@ -174,7 +159,7 @@ const updateService = asyncHandler(async (req, res) => {
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
-      "Services management", // تم التغيير
+      "Services management",
       "edit"
     );
     if (!hasPermission) {
@@ -197,14 +182,12 @@ const updateService = asyncHandler(async (req, res) => {
     });
   }
 
-  // Store old data for logging
   const oldData = {
     title: service.title,
     pref: service.pref,
     details: service.details,
   };
 
-  // Update only provided fields
   if (title !== undefined) service.title = title.trim();
   if (pref !== undefined) {
     const exists = await UniversityService.findOne({
@@ -246,9 +229,6 @@ const updateService = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Soft delete a university service
-// @access  Admin + Staff (with delete permission)
-// @middleware protect
 const deleteService = asyncHandler(async (req, res) => {
   const user = req.user;
   const { id } = req.params;
@@ -262,7 +242,7 @@ const deleteService = asyncHandler(async (req, res) => {
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
-      "Services management", // تم التغيير
+      "Services management",
       "delete"
     );
     if (!hasPermission) {
@@ -294,7 +274,7 @@ const deleteService = asyncHandler(async (req, res) => {
     details: service.details,
   };
 
-  await service.destroy(); // Soft delete (paranoid mode)
+  await service.destroy();
 
   logger.info("University service soft deleted successfully", {
     ...deletedData,
@@ -310,9 +290,6 @@ const deleteService = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Restore soft deleted service
-// @access  Admin + Staff (with edit permission)
-// @middleware protect
 const restoreService = asyncHandler(async (req, res) => {
   const user = req.user;
   const { id } = req.params;

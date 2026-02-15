@@ -7,20 +7,22 @@ const {
   notifyRequestAccepted,
 } = require("../services/notificationService");
 
-// 🔴 START OF LOGGER IMPORT - ADDED THIS
+// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
-// 🔴 END OF LOGGER IMPORT
 
-//1- View Suggestions
+/**
+ * Get friend suggestions for authenticated user
+ * @route GET /api/friends/suggestions
+ * @access Private (Graduates only)
+ */
 const viewSuggestions = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log suggestion view initiation
     logger.info("View friend suggestions initiated", {
       userId: req.user?.id,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
@@ -57,18 +59,17 @@ const viewSuggestions = async (req, res) => {
       "profile-picture-url": g["profile-picture-url"],
     }));
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Friend suggestions retrieved successfully", {
       userId,
       suggestionCount: formatted.length,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json(formatted);
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error viewing friend suggestions", {
       userId: req.user?.id,
       error: err.message,
@@ -76,22 +77,24 @@ const viewSuggestions = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ message: err.message });
   }
 };
 
-//2- Send Friend Request
+/**
+ * Send friend request to another graduate
+ * @route POST /api/friends/request/:receiverId
+ * @access Private (Graduates only)
+ */
 const sendRequest = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Send friend request initiated", {
       userId: req.user?.id,
       receiverId: req.params.receiverId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
@@ -100,13 +103,12 @@ const sendRequest = async (req, res) => {
       where: { graduate_id: req.user.id },
     });
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing graduate profile
       logger.warn("No graduate profile found for user", {
         userId: req.user.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({ message: "No graduate profile found" });
     }
 
@@ -114,13 +116,12 @@ const sendRequest = async (req, res) => {
     const { receiverId } = req.params;
 
     if (senderId == receiverId) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log security event for self-friending attempt
       securityLogger.warn("User attempted to add themselves as friend", {
         userId: senderId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({ message: "You cannot add yourself" });
     }
 
@@ -134,7 +135,7 @@ const sendRequest = async (req, res) => {
     });
 
     if (existing) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log existing request
       logger.warn("Friend request already exists", {
         senderId,
         receiverId,
@@ -142,7 +143,6 @@ const sendRequest = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({ message: "Friend request already exists" });
     }
 
@@ -160,7 +160,7 @@ const sendRequest = async (req, res) => {
     // Create notification for the receiver
     await notifyUserAdded(receiverId, senderId);
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful request
     logger.info("Friend request sent successfully", {
       senderId,
       receiverId,
@@ -169,14 +169,13 @@ const sendRequest = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json({
       message: "Request sent successfully",
       receiverFullName: `${receiverGraduate.User["first-name"]} ${receiverGraduate.User["last-name"]}`,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error sending friend request", {
       userId: req.user?.id,
       receiverId: req.params.receiverId,
@@ -185,22 +184,24 @@ const sendRequest = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ message: err.message });
   }
 };
 
-//3- Cancel Sent Request
+/**
+ * Cancel a pending friend request sent by user
+ * @route DELETE /api/friends/request/cancel/:receiverId
+ * @access Private (Graduates only)
+ */
 const cancelRequest = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log cancellation initiation
     logger.info("Cancel friend request initiated", {
       userId: req.user?.id,
       receiverId: req.params.receiverId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
@@ -209,13 +210,12 @@ const cancelRequest = async (req, res) => {
       where: { graduate_id: req.user.id },
     });
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing graduate profile
       logger.warn("Graduate profile not found for cancellation", {
         userId: req.user.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({ message: "Graduate profile not found" });
     }
 
@@ -230,7 +230,7 @@ const cancelRequest = async (req, res) => {
       },
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log cancellation result
     if (result > 0) {
       logger.info("Friend request canceled successfully", {
         senderId,
@@ -246,11 +246,10 @@ const cancelRequest = async (req, res) => {
         timestamp: new Date().toISOString(),
       });
     }
-    // 🔴 END OF LOGGING
 
     res.json({ message: "Request canceled" });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error canceling friend request", {
       userId: req.user?.id,
       receiverId: req.params.receiverId,
@@ -259,21 +258,23 @@ const cancelRequest = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ message: err.message });
   }
 };
 
-//4- View Friend Requests
+/**
+ * View all pending friend requests for authenticated user
+ * @route GET /api/friends/requests
+ * @access Private (Graduates only)
+ */
 const viewRequests = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log view requests initiation
     logger.info("View friend requests initiated", {
       userId: req.user?.id,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
@@ -282,13 +283,12 @@ const viewRequests = async (req, res) => {
       where: { graduate_id: req.user.id },
     });
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing graduate profile
       logger.warn("Graduate profile not found for viewing requests", {
         userId: req.user.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({ message: "Graduate profile not found" });
     }
 
@@ -316,18 +316,17 @@ const viewRequests = async (req, res) => {
       profilePicture: r.sender["profile-picture-url"] || null,
     }));
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Friend requests retrieved successfully", {
       userId,
       requestCount: formatted.length,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json(formatted);
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error viewing friend requests", {
       userId: req.user?.id,
       error: err.message,
@@ -335,22 +334,24 @@ const viewRequests = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ message: err.message });
   }
 };
 
-//5- Confirm Friend Request
+/**
+ * Confirm a pending friend request
+ * @route PUT /api/friends/request/confirm/:senderId
+ * @access Private (Graduates only)
+ */
 const confirmRequest = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log confirmation initiation
     logger.info("Confirm friend request initiated", {
       userId: req.user?.id,
       senderId: req.params.senderId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
@@ -359,13 +360,12 @@ const confirmRequest = async (req, res) => {
       where: { graduate_id: req.user.id },
     });
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing graduate profile
       logger.warn("Graduate profile not found for confirming request", {
         userId: req.user.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({ message: "Graduate profile not found" });
     }
 
@@ -381,14 +381,13 @@ const confirmRequest = async (req, res) => {
     });
 
     if (!request) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log request not found
       logger.warn("Friend request not found for confirmation", {
         senderId,
         receiverId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({ message: "Request not found" });
     }
 
@@ -404,7 +403,7 @@ const confirmRequest = async (req, res) => {
     // Create notification for the sender (who sent the original request)
     await notifyRequestAccepted(senderId, receiverId);
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful confirmation
     logger.info("Friend request confirmed successfully", {
       senderId,
       receiverId,
@@ -413,14 +412,13 @@ const confirmRequest = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json({
       message: "Friend request accepted",
       friendFullName: `${senderGraduate.User["first-name"]} ${senderGraduate.User["last-name"]}`,
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error confirming friend request", {
       userId: req.user?.id,
       senderId: req.params.senderId,
@@ -429,22 +427,24 @@ const confirmRequest = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ message: err.message });
   }
 };
 
-//6- Delete From My Requests
+/**
+ * Hide a friend request (soft delete for receiver)
+ * @route DELETE /api/friends/request/hide/:senderId
+ * @access Private (Graduates only)
+ */
 const deleteFromMyRequests = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log hide initiation
     logger.info("Delete from my requests initiated", {
       userId: req.user?.id,
       senderId: req.params.senderId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
@@ -453,13 +453,12 @@ const deleteFromMyRequests = async (req, res) => {
       where: { graduate_id: req.user.id },
     });
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing graduate profile
       logger.warn("Graduate profile not found for deleting request", {
         userId: req.user.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({ message: "Graduate profile not found" });
     }
 
@@ -477,7 +476,7 @@ const deleteFromMyRequests = async (req, res) => {
       }
     );
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log hide result
     if (result[0] > 0) {
       logger.info("Friend request hidden successfully", {
         senderId,
@@ -493,11 +492,10 @@ const deleteFromMyRequests = async (req, res) => {
         timestamp: new Date().toISOString(),
       });
     }
-    // 🔴 END OF LOGGING
 
     res.json({ message: "Request hidden for receiver" });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error hiding friend request", {
       userId: req.user?.id,
       senderId: req.params.senderId,
@@ -506,21 +504,23 @@ const deleteFromMyRequests = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ message: err.message });
   }
 };
 
-//7- View My Friends
+/**
+ * View all confirmed friends for authenticated user
+ * @route GET /api/friends/list
+ * @access Private (Graduates only)
+ */
 const viewFriends = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log view friends initiation
     logger.info("View friends initiated", {
       userId: req.user?.id,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
@@ -529,13 +529,12 @@ const viewFriends = async (req, res) => {
       where: { graduate_id: req.user.id },
     });
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing graduate profile
       logger.warn("Graduate profile not found for viewing friends", {
         userId: req.user.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({ message: "Graduate profile not found" });
     }
 
@@ -562,18 +561,17 @@ const viewFriends = async (req, res) => {
       };
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Friends list retrieved successfully", {
       userId,
       friendCount: formatted.length,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json(formatted);
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error viewing friends", {
       userId: req.user?.id,
       error: err.message,
@@ -581,22 +579,24 @@ const viewFriends = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ message: err.message });
   }
 };
 
-//8- Delete From My Friends
+/**
+ * Remove a friend from friends list
+ * @route DELETE /api/friends/:friendId
+ * @access Private (Graduates only)
+ */
 const deleteFriend = async (req, res) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log delete friend initiation
     logger.info("Delete friend initiated", {
       userId: req.user?.id,
       friendId: req.params.friendId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!req.user)
       return res.status(401).json({ message: "User not authenticated" });
@@ -605,13 +605,12 @@ const deleteFriend = async (req, res) => {
       where: { graduate_id: req.user.id },
     });
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing graduate profile
       logger.warn("Graduate profile not found for deleting friend", {
         userId: req.user.id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(401).json({ message: "Graduate profile not found" });
     }
 
@@ -628,7 +627,7 @@ const deleteFriend = async (req, res) => {
       },
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log delete result
     if (result > 0) {
       logger.info("Friend deleted successfully", {
         userId,
@@ -644,11 +643,10 @@ const deleteFriend = async (req, res) => {
         timestamp: new Date().toISOString(),
       });
     }
-    // 🔴 END OF LOGGING
 
     res.json({ message: "Friend deleted successfully" });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error deleting friend", {
       userId: req.user?.id,
       friendId: req.params.friendId,
@@ -657,7 +655,6 @@ const deleteFriend = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ message: err.message });
   }
 };

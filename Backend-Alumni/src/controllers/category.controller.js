@@ -1,64 +1,70 @@
-const { PostCategory, Post } = require('../models');
-const asyncHandler = require('express-async-handler');
-const { Op } = require('sequelize');
+const { PostCategory, Post } = require("../models");
+const asyncHandler = require("express-async-handler");
+const { Op } = require("sequelize");
 
-// @desc    Get all post categories
-// @route   GET /alumni-portal/admin/categories
-// @access  Admin
+/**
+ * Get all post categories
+ * @route GET /alumni-portal/admin/categories
+ * @access Admin
+ */
 const getAllCategories = asyncHandler(async (req, res) => {
   const categories = await PostCategory.findAll({
-    order: [['name', 'ASC']]
+    order: [["name", "ASC"]],
   });
 
   res.status(200).json({
     success: true,
     count: categories.length,
-    data: categories
+    data: categories,
   });
 });
 
-// @desc    Get single post category
-// @route   GET /alumni-portal/admin/categories/:id
-// @access  Admin
+/**
+ * Get single post category by ID
+ * @route GET /alumni-portal/admin/categories/:id
+ * @access Admin
+ */
 const getCategory = asyncHandler(async (req, res) => {
   const category = await PostCategory.findByPk(req.params.id);
 
   if (!category) {
     return res.status(404).json({
       success: false,
-      message: 'Category not found'
+      message: "Category not found",
     });
   }
 
   res.status(200).json({
     success: true,
-    data: category
+    data: category,
   });
 });
 
-// @desc    Create new post category
-// @route   POST /alumni-portal/admin/categories
-// @access  Admin
+/**
+ * Create new post category
+ * @route POST /alumni-portal/admin/categories
+ * @access Admin
+ */
 const createCategory = asyncHandler(async (req, res) => {
   const { name, description, is_default } = req.body;
 
   // Validate required fields
-  if (!name || name.trim() === '') {
+  if (!name || name.trim() === "") {
     return res.status(400).json({
       success: false,
-      message: 'Category name is required'
+      message: "Category name is required",
     });
   }
 
   // Check if category name already exists
   const existingCategory = await PostCategory.findOne({
-    where: { name: name.trim() }
+    where: { name: name.trim() },
   });
 
   if (existingCategory) {
     return res.status(400).json({
       success: false,
-      message: 'Category name already exists'
+      message: "Category name already exists",
     });
   }
 
@@ -73,18 +79,20 @@ const createCategory = asyncHandler(async (req, res) => {
   const category = await PostCategory.create({
     name: name.trim(),
     description: description?.trim() || null,
-    is_default: is_default || false
+    is_default: is_default || false,
   });
 
   res.status(201).json({
     success: true,
-    data: category
+    data: category,
   });
 });
 
-// @desc    Update post category
-// @route   PUT /alumni-portal/admin/categories/:id
-// @access  Admin
+/**
+ * Update existing post category
+ * @route PUT /alumni-portal/admin/categories/:id
+ * @access Admin
+ */
 const updateCategory = asyncHandler(async (req, res) => {
   const { name, description, is_default } = req.body;
 
@@ -93,30 +101,30 @@ const updateCategory = asyncHandler(async (req, res) => {
   if (!category) {
     return res.status(404).json({
       success: false,
-      message: 'Category not found'
+      message: "Category not found",
     });
   }
 
   // Validate required fields
-  if (!name || name.trim() === '') {
+  if (!name || name.trim() === "") {
     return res.status(400).json({
       success: false,
-      message: 'Category name is required'
+      message: "Category name is required",
     });
   }
 
   // Check if category name already exists (excluding current category)
   const existingCategory = await PostCategory.findOne({
-    where: { 
+    where: {
       name: name.trim(),
-      category_id: { [Op.ne]: req.params.id }
-    }
+      category_id: { [Op.ne]: req.params.id },
+    },
   });
 
   if (existingCategory) {
     return res.status(400).json({
       success: false,
-      message: 'Category name already exists'
+      message: "Category name already exists",
     });
   }
 
@@ -133,25 +141,27 @@ const updateCategory = asyncHandler(async (req, res) => {
     name: name.trim(),
     description: description?.trim() || null,
     is_default: is_default || false,
-    'updated-at': new Date()
+    "updated-at": new Date(),
   });
 
   res.status(200).json({
     success: true,
-    data: category
+    data: category,
   });
 });
 
-// @desc    Delete post category
-// @route   DELETE /alumni-portal/admin/categories/:id
-// @access  Admin
+/**
+ * Delete post category and reassign posts to default category
+ * @route DELETE /alumni-portal/admin/categories/:id
+ * @access Admin
+ */
 const deleteCategory = asyncHandler(async (req, res) => {
   const category = await PostCategory.findByPk(req.params.id);
 
   if (!category) {
     return res.status(404).json({
       success: false,
-      message: 'Category not found'
+      message: "Category not found",
     });
   }
 
@@ -159,25 +169,25 @@ const deleteCategory = asyncHandler(async (req, res) => {
   if (category.is_default) {
     return res.status(400).json({
       success: false,
-      message: 'Cannot delete the default category'
+      message: "Cannot delete the default category",
     });
   }
 
   // Count posts using this category
   const postCount = await Post.count({
-    where: { category_id: req.params.id }
+    where: { category_id: req.params.id },
   });
 
   if (postCount > 0) {
     // Get the default category
     const defaultCategory = await PostCategory.findOne({
-      where: { is_default: true }
+      where: { is_default: true },
     });
 
     if (!defaultCategory) {
       return res.status(400).json({
         success: false,
-        message: 'No default category found. Cannot reassign posts.'
+        message: "No default category found. Cannot reassign posts.",
       });
     }
 
@@ -193,33 +203,35 @@ const deleteCategory = asyncHandler(async (req, res) => {
 
   res.status(200).json({
     success: true,
-    message: `Category deleted successfully. ${postCount} posts were reassigned to the default category.`
+    message: `Category deleted successfully. ${postCount} posts were reassigned to the default category.`,
   });
 });
 
-// @desc    Get category statistics
-// @route   GET /alumni-portal/admin/categories/:id/stats
-// @access  Admin
+/**
+ * Get category statistics including post count
+ * @route GET /alumni-portal/admin/categories/:id/stats
+ * @access Admin
+ */
 const getCategoryStats = asyncHandler(async (req, res) => {
   const category = await PostCategory.findByPk(req.params.id);
 
   if (!category) {
     return res.status(404).json({
       success: false,
-      message: 'Category not found'
+      message: "Category not found",
     });
   }
 
   const postCount = await Post.count({
-    where: { category_id: req.params.id }
+    where: { category_id: req.params.id },
   });
 
   res.status(200).json({
     success: true,
     data: {
       category: category,
-      post_count: postCount
-    }
+      post_count: postCount,
+    },
   });
 });
 
@@ -229,5 +241,5 @@ module.exports = {
   createCategory,
   updateCategory,
   deleteCategory,
-  getCategoryStats
+  getCategoryStats,
 };

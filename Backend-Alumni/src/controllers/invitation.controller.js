@@ -9,17 +9,20 @@ const { findMatchingGroup } = require("../utils/groupUtils");
 const sequelize = require("../config/db");
 const { getCollegeNameByCode } = require("../services/facultiesService");
 
-// 🔴 START OF LOGGER IMPORT - ADDED THIS
+// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
-// 🔴 END OF LOGGER IMPORT
 
-// send invitation
+/**
+ * Send a group invitation
+ * @route POST /api/invitations
+ * @access Private (Group members only)
+ */
 const sendInvitation = async (req, res) => {
   try {
-    const sender_id = req.user.id; // الشخص اللي بيبعت الدعوة
-    const { receiver_id, group_id } = req.body; // الشخص المستلم والجروب
+    const sender_id = req.user.id;
+    const { receiver_id, group_id } = req.body;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Send invitation request initiated", {
       sender_id,
       receiver_id,
@@ -27,10 +30,9 @@ const sendInvitation = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     if (!receiver_id || !group_id) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log missing fields
       logger.warn("Missing required fields for sending invitation", {
         sender_id,
         hasReceiverId: !!receiver_id,
@@ -38,39 +40,37 @@ const sendInvitation = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res
         .status(400)
         .json({ message: "receiver_id and group_id are required" });
     }
 
-    //check sender is member
+    // Check if sender is a group member
     const isMember = await GroupMember.findOne({
       where: { "group-id": group_id, "user-id": sender_id },
     });
 
     if (!isMember) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log non-member attempt
       logger.warn("Sender not a member of group for invitation", {
         sender_id,
         group_id,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res
         .status(403)
         .json({ message: "You are not a member of this group" });
     }
 
-    // create invitation
+    // Create invitation
     const invitation = await Invitation.create({
       sender_id,
       receiver_id,
       group_id,
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful creation
     logger.info("Invitation sent successfully", {
       invitationId: invitation.id,
       sender_id,
@@ -79,11 +79,10 @@ const sendInvitation = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.status(201).json(invitation);
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error sending invitation", {
       sender_id: req.user?.id,
       receiver_id: req.body.receiver_id,
@@ -93,42 +92,43 @@ const sendInvitation = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ error: err.message });
   }
 };
 
-// accept invitation
+/**
+ * Accept a group invitation
+ * @route PUT /api/invitations/:id/accept
+ * @access Private (Invitation receiver only)
+ */
 const acceptInvitation = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Accept invitation request initiated", {
       userId,
       invitationId: id,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const invitation = await Invitation.findByPk(id);
     if (!invitation) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Invitation not found for acceptance", {
         invitationId: id,
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({ message: "Invitation not found" });
     }
 
     // Verify that the current user is the receiver
     if (invitation.receiver_id !== userId) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized attempt
       securityLogger.warn("Unauthorized invitation acceptance attempt", {
         userId,
         invitationReceiverId: invitation.receiver_id,
@@ -136,7 +136,6 @@ const acceptInvitation = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res
         .status(403)
         .json({ message: "Not authorized to accept this invitation" });
@@ -146,13 +145,13 @@ const acceptInvitation = async (req, res) => {
     invitation.status = "accepted";
     await invitation.save();
 
-    // add member to group
+    // Add member to group
     await GroupMember.create({
       "group-id": invitation.group_id,
       "user-id": invitation.receiver_id,
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful acceptance
     logger.info("Invitation accepted successfully", {
       invitationId: id,
       userId,
@@ -162,11 +161,10 @@ const acceptInvitation = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json(invitation);
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error accepting invitation", {
       userId: req.user?.id,
       invitationId: req.params.id,
@@ -175,42 +173,43 @@ const acceptInvitation = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ error: err.message });
   }
 };
 
-// delete invitation by reciever
+/**
+ * Delete invitation by receiver (soft delete)
+ * @route DELETE /api/invitations/:id
+ * @access Private (Invitation receiver only)
+ */
 const deleteInvitation = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Delete invitation request initiated", {
       userId,
       invitationId: id,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const invitation = await Invitation.findByPk(id);
     if (!invitation) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Invitation not found for deletion", {
         invitationId: id,
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({ message: "Invitation not found" });
     }
 
     // Verify that the current user is the receiver
     if (invitation.receiver_id !== userId) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized attempt
       securityLogger.warn("Unauthorized invitation deletion attempt", {
         userId,
         invitationReceiverId: invitation.receiver_id,
@@ -218,7 +217,6 @@ const deleteInvitation = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res
         .status(403)
         .json({ message: "Not authorized to delete this invitation" });
@@ -234,7 +232,7 @@ const deleteInvitation = async (req, res) => {
 
     await invitation.destroy();
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful deletion
     logger.info("Invitation deleted by receiver", {
       invitationId: id,
       userId,
@@ -242,11 +240,10 @@ const deleteInvitation = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json({ message: "Invitation deleted from your side" });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error deleting invitation", {
       userId: req.user?.id,
       invitationId: req.params.id,
@@ -255,42 +252,43 @@ const deleteInvitation = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ error: err.message });
   }
 };
 
-//(cancel) by sender
+/**
+ * Cancel invitation by sender
+ * @route DELETE /api/invitations/:id/cancel
+ * @access Private (Invitation sender only)
+ */
 const cancelInvitation = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Cancel invitation request initiated", {
       userId,
       invitationId: id,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const invitation = await Invitation.findByPk(id);
     if (!invitation) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log not found
       logger.warn("Invitation not found for cancellation", {
         invitationId: id,
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res.status(404).json({ message: "Invitation not found" });
     }
 
     // Verify that the current user is the sender
     if (invitation.sender_id !== userId) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log unauthorized attempt
       securityLogger.warn("Unauthorized invitation cancellation attempt", {
         userId,
         invitationSenderId: invitation.sender_id,
@@ -298,7 +296,6 @@ const cancelInvitation = async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return res
         .status(403)
         .json({ message: "Not authorized to cancel this invitation" });
@@ -314,7 +311,7 @@ const cancelInvitation = async (req, res) => {
 
     await invitation.destroy();
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful cancellation
     logger.info("Invitation cancelled by sender", {
       invitationId: id,
       userId,
@@ -322,11 +319,10 @@ const cancelInvitation = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json({ message: "Invitation cancelled successfully" });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error cancelling invitation", {
       userId: req.user?.id,
       invitationId: req.params.id,
@@ -335,25 +331,27 @@ const cancelInvitation = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     res.status(500).json({ error: err.message });
   }
 };
 
-//view Invitations
+/**
+ * Get all pending invitations received by the user
+ * @route GET /api/invitations/received
+ * @access Private
+ */
 const getReceivedInvitations = async (req, res) => {
   try {
     const receiver_id = req.user.id;
     const lang = req.headers["accept-language"] || req.user?.language || "ar";
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Get received invitations request initiated", {
       receiver_id,
       lang,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const invitations = await Invitation.findAll({
       where: { receiver_id, status: "pending" },
@@ -389,13 +387,13 @@ const getReceivedInvitations = async (req, res) => {
       ],
     });
 
-    // تنسيق النتيجة مع تحويل faculty_code إلى اسم الكلية
+    // Format result with faculty name from code
     const result = invitations.map((inv) => {
       const firstName = inv.sender?.["first-name"] || "";
       const lastName = inv.sender?.["last-name"] || "";
       const fullName = `${firstName} ${lastName}`.trim();
 
-      // تحويل faculty_code إلى اسم الكلية
+      // Convert faculty_code to faculty name
       const facultyName = getCollegeNameByCode(
         inv.sender?.Graduate?.faculty_code,
         lang
@@ -418,18 +416,17 @@ const getReceivedInvitations = async (req, res) => {
       };
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Received invitations retrieved successfully", {
       receiver_id,
       invitationsCount: result.length,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json(result);
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error getting received invitations", {
       receiver_id: req.user?.id,
       error: err.message,
@@ -437,26 +434,28 @@ const getReceivedInvitations = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("Error in getReceivedInvitations:", err);
     res.status(500).json({ error: err.message });
   }
 };
 
-// ⬅️ دالة جديدة للحصول على الدعوات المرسلة
+/**
+ * Get all pending invitations sent by the user
+ * @route GET /api/invitations/sent
+ * @access Private
+ */
 const getSentInvitations = async (req, res) => {
   try {
     const sender_id = req.user.id;
     const lang = req.headers["accept-language"] || req.user?.language || "ar";
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log request initiation
     logger.info("Get sent invitations request initiated", {
       sender_id,
       lang,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     const invitations = await Invitation.findAll({
       where: { sender_id, status: "pending" },
@@ -491,13 +490,13 @@ const getSentInvitations = async (req, res) => {
       ],
     });
 
-    // تنسيق النتيجة مع تحويل faculty_code إلى اسم الكلية
+    // Format result with faculty name from code
     const result = invitations.map((inv) => {
       const firstName = inv.receiver?.["first-name"] || "";
       const lastName = inv.receiver?.["last-name"] || "";
       const fullName = `${firstName} ${lastName}`.trim();
 
-      // تحويل faculty_code إلى اسم الكلية
+      // Convert faculty_code to faculty name
       const facultyName = getCollegeNameByCode(
         inv.receiver?.Graduate?.faculty_code,
         lang
@@ -520,18 +519,17 @@ const getSentInvitations = async (req, res) => {
       };
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful retrieval
     logger.info("Sent invitations retrieved successfully", {
       sender_id,
       invitationsCount: result.length,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     res.json(result);
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error getting sent invitations", {
       sender_id: req.user?.id,
       error: err.message,
@@ -539,25 +537,25 @@ const getSentInvitations = async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("Error in getSentInvitations:", err);
     res.status(500).json({ error: err.message });
   }
 };
 
-// بعد كل الـ functions الموجودة، قبل module.exports
-
-// Auto-send group invitation after registration
+/**
+ * Auto-send group invitation after graduate registration
+ * @param {number} userId - Graduate user ID
+ * @returns {Promise<boolean>} Success status
+ */
 const sendAutoGroupInvitation = async (userId) => {
   try {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log process start
     logger.info("Auto group invitation process started", {
       userId,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
-    // 1. نجيب بيانات الخريج
+    // 1. Get graduate data
     const graduate = await Graduate.findOne({
       where: { graduate_id: userId },
       include: [
@@ -569,43 +567,40 @@ const sendAutoGroupInvitation = async (userId) => {
     });
 
     if (!graduate) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log graduate not found
       logger.warn("Graduate not found for auto invitation", {
         userId,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return false;
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log graduate found
     logger.debug("Graduate found for auto invitation", {
       userId,
       facultyCode: graduate.faculty_code,
       graduationYear: graduate["graduation-year"],
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
-    // 2. بنبحث عن الجروب المناسب باستخدام الدالة المساعدة
+    // 2. Find matching group
     const matchingGroup = await findMatchingGroup(
       graduate.faculty_code,
       graduate["graduation-year"]
     );
 
     if (!matchingGroup) {
-      // 🔴 START OF LOGGING - ADDED THIS
+      // Log no matching group
       logger.info("No matching group found for auto invitation", {
         userId,
         facultyCode: graduate.faculty_code,
         graduationYear: graduate["graduation-year"],
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
       return false;
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log group found
     logger.debug("Matching group found for auto invitation", {
       userId,
       groupId: matchingGroup.id,
@@ -614,26 +609,24 @@ const sendAutoGroupInvitation = async (userId) => {
       graduationYear: graduate["graduation-year"],
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
-    // 3. نبعت Invitation
+    // 3. Create invitation
     const invitation = await Invitation.create({
-      sender_id: 1, // الـ Admin
+      sender_id: 1, // Admin user ID
       receiver_id: userId,
       group_id: matchingGroup.id,
       status: "pending",
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log invitation created
     logger.debug("Auto invitation created", {
       userId,
       invitationId: invitation.id,
       groupId: matchingGroup.id,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
-    // 4. نبعت Notification
+    // 4. Create notification
     await Notification.create({
       receiverId: userId,
       type: "added_to_group",
@@ -645,7 +638,7 @@ const sendAutoGroupInvitation = async (userId) => {
       },
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log successful auto invitation
     logger.info("Auto group invitation sent successfully", {
       userId,
       invitationId: invitation.id,
@@ -653,28 +646,36 @@ const sendAutoGroupInvitation = async (userId) => {
       groupName: matchingGroup["group-name"],
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
 
     return true;
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    // Log error
     logger.error("Error in sendAutoGroupInvitation", {
       userId,
       error: error.message,
       stack: error.stack.substring(0, 200),
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
     console.error("Error in sendAutoGroupInvitation:", error);
     return false;
   }
 };
 
-
-
+/**
+ * Check if auto-sent invitation exists for current user
+ * @route GET /api/invitations/auto-sent
+ * @access Private
+ */
 const getAutoSentInvitation = async (req, res) => {
   try {
-    // جلب الدعوة من admin (id=1) للمستخدم الحالي
+    // Log request initiation
+    logger.info("Get auto-sent invitation request initiated", {
+      userId: req.user.id,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
+
+    // Get invitation from admin (id=1) to current user
     const invitation = await Invitation.findOne({
       where: {
         sender_id: 1,
@@ -683,27 +684,49 @@ const getAutoSentInvitation = async (req, res) => {
       include: [
         {
           model: Group,
-          attributes: ["id", "group-name"], // ممكن تضيفي description لو حابة
-        }
-      ]
+          attributes: ["id", "group-name"], // Add description if needed
+        },
+      ],
     });
 
     if (!invitation) {
+      // Log no invitation found
+      logger.debug("No auto-sent invitation found", {
+        userId: req.user.id,
+        ip: req.ip,
+        timestamp: new Date().toISOString(),
+      });
       return res.json({ invited: false, invitation: null });
     }
+
+    // Log successful retrieval
+    logger.info("Auto-sent invitation found", {
+      userId: req.user.id,
+      invitationId: invitation.id,
+      groupId: invitation.group_id,
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
 
     res.json({
       invited: true,
       invitation: invitation,
     });
   } catch (error) {
+    // Log error
+    logger.error("Error fetching auto-sent invitation", {
+      userId: req.user?.id,
+      error: error.message,
+      stack: error.stack.substring(0, 200),
+      ip: req.ip,
+      timestamp: new Date().toISOString(),
+    });
     console.error("Error fetching auto-sent invitation:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-
-// export all at once
+// Export all functions
 module.exports = {
   sendInvitation,
   acceptInvitation,
@@ -712,5 +735,5 @@ module.exports = {
   getReceivedInvitations,
   sendAutoGroupInvitation,
   getSentInvitations,
-getAutoSentInvitation
+  getAutoSentInvitation,
 };

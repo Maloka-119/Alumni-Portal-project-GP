@@ -10,9 +10,8 @@ const aes = require("../utils/aes");
 
 const { logger, securityLogger } = require("../utils/logger");
 
-// get all staff with roles
 const getAllStaff = async (req, res) => {
-  logger.info("🟢 ----- [getAllStaff] START -----", {
+  logger.info("----- [getAllStaff] START -----", {
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
@@ -82,7 +81,6 @@ const getAllStaff = async (req, res) => {
       ],
     });
 
-    // فك تشفير الرقم القومي لكل staff
     const staffWithDecryptedId = staff.map((s) => {
       const obj = s.toJSON();
 
@@ -99,7 +97,7 @@ const getAllStaff = async (req, res) => {
       staffCount: staff.length,
       userType: req.user["user-type"],
     });
-    logger.info("🟢 ----- [getAllStaff] END SUCCESS -----", {
+    logger.info("----- [getAllStaff] END SUCCESS -----", {
       staffCount: staff.length,
     });
 
@@ -109,7 +107,7 @@ const getAllStaff = async (req, res) => {
       data: staffWithDecryptedId,
     });
   } catch (err) {
-    logger.error("❌ [getAllStaff] Unexpected Error", {
+    logger.error("----- [getAllStaff] Unexpected Error", {
       error: err.message,
       stack: err.stack.substring(0, 200),
       user: req.user
@@ -126,41 +124,32 @@ const getAllStaff = async (req, res) => {
   }
 };
 
-// suspend/activate staff
 const updateStaffStatus = async (req, res) => {
-  // 🔴 START OF LOGGING - ADDED THIS
-  logger.info("🟢 ----- [updateStaffStatus] START -----", {
+  logger.info("----- [updateStaffStatus] START -----", {
     staffId: req.params.id,
     timestamp: new Date().toISOString(),
     user: req.user
       ? { id: req.user.id, type: req.user["user-type"] }
       : "undefined",
   });
-  // 🔴 END OF LOGGING
 
   try {
     const { id } = req.params;
     const { status } = req.body;
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.debug("Update staff status request", {
       staffId: id,
       newStatus: status,
       userType: req.user?.["user-type"],
     });
-    // 🔴 END OF LOGGING
 
-    // 1. تحديد اليوزر types المسموح لهم
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. لو مش من النوع المسموح → ارفض
     if (!allowedUserTypes.includes(req.user["user-type"])) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("ACCESS DENIED in updateStaffStatus", {
         userType: req.user["user-type"],
         allowedUserTypes,
       });
-      // 🔴 END OF LOGGING
       return res.status(403).json({
         status: "error",
         message: "Access denied.",
@@ -168,7 +157,6 @@ const updateStaffStatus = async (req, res) => {
       });
     }
 
-    // 3. لو staff → تحقق من الصلاحية
     if (req.user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
@@ -177,13 +165,11 @@ const updateStaffStatus = async (req, res) => {
       );
 
       if (!hasPermission) {
-        // 🔴 START OF LOGGING - ADDED THIS
         logger.warn("STAFF PERMISSION DENIED in updateStaffStatus", {
           userId: req.user.id,
           staffId: id,
           requiredPermission: "Staff management",
         });
-        // 🔴 END OF LOGGING
         return res.status(403).json({
           status: "error",
           message:
@@ -191,21 +177,15 @@ const updateStaffStatus = async (req, res) => {
           data: null,
         });
       }
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.info("Staff permission check passed", { userId: req.user.id });
-      // 🔴 END OF LOGGING
     }
 
-    // 4. لو admin أو staff مع صلاحية → اتركه يكمل
-    // validate
     if (!["active", "inactive"].includes(status)) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Invalid status value in updateStaffStatus", {
         staffId: id,
         status,
         validStatuses: ["active", "inactive"],
       });
-      // 🔴 END OF LOGGING
       return res.status(400).json({
         status: HttpStatusHelper.FAIL,
         message: "Invalid status value. Must be 'active' or 'inactive'.",
@@ -213,13 +193,10 @@ const updateStaffStatus = async (req, res) => {
       });
     }
 
-    // find staff
     const staff = await Staff.findByPk(id, { include: [{ model: User }] });
 
     if (!staff) {
-      // 🔴 START OF LOGGING - ADDED THIS
       logger.warn("Staff not found in updateStaffStatus", { staffId: id });
-      // 🔴 END OF LOGGING
       return res.status(404).json({
         status: HttpStatusHelper.FAIL,
         message: "Staff not found",
@@ -227,33 +204,26 @@ const updateStaffStatus = async (req, res) => {
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Staff found, updating status", {
       staffId: id,
       staffName: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
       oldStatus: staff["status-to-login"],
       newStatus: status,
     });
-    // 🔴 END OF LOGGING
 
-    // update status
     staff["status-to-login"] = status;
     await staff.save();
 
-    // 🔴 START OF LOGGING - ADDED THIS
     logger.info("Staff status updated successfully", {
       staffId: id,
       staffName: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
       newStatus: status,
     });
-    // 🔴 END OF LOGGING
 
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.info("🟢 ----- [updateStaffStatus] END SUCCESS -----", {
+    logger.info("----- [updateStaffStatus] END SUCCESS -----", {
       staffId: id,
       status,
     });
-    // 🔴 END OF LOGGING
 
     return res.json({
       status: HttpStatusHelper.SUCCESS,
@@ -265,8 +235,7 @@ const updateStaffStatus = async (req, res) => {
       },
     });
   } catch (err) {
-    // 🔴 START OF LOGGING - ADDED THIS
-    logger.error("❌ [updateStaffStatus] Unexpected Error", {
+    logger.error("----- [updateStaffStatus] Unexpected Error", {
       staffId: req.params.id,
       error: err.message,
       stack: err.stack.substring(0, 200),
@@ -274,7 +243,6 @@ const updateStaffStatus = async (req, res) => {
         ? { id: req.user.id, type: req.user["user-type"] }
         : "undefined",
     });
-    // 🔴 END OF LOGGING
 
     return res.status(500).json({
       status: HttpStatusHelper.ERROR || "error",
@@ -284,7 +252,6 @@ const updateStaffStatus = async (req, res) => {
   }
 };
 
-// get staff profile (staff can only access their own profile)
 const getStaffProfile = async (req, res) => {
   logger.info("----- [getStaffProfile] START -----", {
     timestamp: new Date().toISOString(),
@@ -314,14 +281,11 @@ const getStaffProfile = async (req, res) => {
       });
     }
 
-    // Staff يشوف بروفايله الشخصي فقط (بدون صلاحية)
     if (req.user["user-type"] === "staff") {
       logger.info("Staff accessing own profile (no permission needed)", {
         userId,
       });
-    }
-    // Admin يحتاج صلاحية
-    else if (req.user["user-type"] === "admin") {
+    } else if (req.user["user-type"] === "admin") {
       const hasPermission = await checkStaffPermission(
         req.user.id,
         "Staff management",
@@ -341,7 +305,6 @@ const getStaffProfile = async (req, res) => {
       logger.info("Admin permission check passed", { userId: req.user.id });
     }
 
-    // جلب بيانات الـ Staff مع الـ User
     const staff = await Staff.findByPk(userId, {
       include: [
         {
@@ -350,7 +313,7 @@ const getStaffProfile = async (req, res) => {
             "id",
             "first-name",
             "last-name",
-            "national-id", // مشفر
+            "national-id",
             "email",
             "phone-number",
             "birth-date",
@@ -390,7 +353,6 @@ const getStaffProfile = async (req, res) => {
       rolesCount: staff.Roles.length,
     });
 
-    // فك تشفير الرقم القومي قبل إرجاعه
     let decryptedNationalId = null;
     if (staff.User["national-id"]) {
       try {
@@ -400,13 +362,13 @@ const getStaffProfile = async (req, res) => {
           userId,
           error: decryptError.message,
         });
-        decryptedNationalId = "**************"; // إخفاء في حالة الفشل
+        decryptedNationalId = "**************";
       }
     }
 
     const profileData = {
       fullName: `${staff.User["first-name"]} ${staff.User["last-name"]}`,
-      nationalId: decryptedNationalId, // الرقم القومي مفكوك التشفير
+      nationalId: decryptedNationalId,
       email: staff.User.email,
       phoneNumber: staff.User["phone-number"],
       birthDate: staff.User["birth-date"],
@@ -432,7 +394,7 @@ const getStaffProfile = async (req, res) => {
         (sum, role) => sum + role.permissions.length,
         0
       ),
-      nationalIdDecrypted: !!decryptedNationalId, // لا نسجل الرقم نفسه
+      nationalIdDecrypted: !!decryptedNationalId,
     });
 
     logger.info("----- [getStaffProfile] END SUCCESS -----", { userId });
@@ -459,5 +421,4 @@ const getStaffProfile = async (req, res) => {
   }
 };
 
-// module.exports = { getStaffProfile };
 module.exports = { getAllStaff, updateStaffStatus, getStaffProfile };

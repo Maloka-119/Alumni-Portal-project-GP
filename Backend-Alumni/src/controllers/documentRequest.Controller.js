@@ -1,4 +1,4 @@
-// 📄 File: src/controllers/documentRequestController.js
+// File: src/controllers/documentRequestController.js
 const asyncHandler = require("express-async-handler");
 const { Op } = require("sequelize");
 const DocumentRequest = require("../models/DocumentRequest");
@@ -14,24 +14,26 @@ const { logger } = require("../utils/logger");
 const {
   notifyDocumentRequestStatusChanged,
 } = require("../services/notificationService");
-const { checkStaffPermission } = require("../utils/permissionChecker");
+const checkStaffPermission = require("../utils/permissionChecker");
 const aes = require("../utils/aes");
 
-// @desc    عمل طلب وثيقة جديد (للخريج)
-// @route   POST /api/documents/requests
-// @access  Private (Graduates only)
+/**
+ * Create a new document request (Graduates only)
+ * @route POST /api/documents/requests
+ * @access Private (Graduates only)
+ */
 const createDocumentRequest = asyncHandler(async (req, res) => {
   console.log("\n" + "=".repeat(70));
-  console.log("🚀🚀🚀 CREATE DOCUMENT REQUEST - DEBUG START 🚀🚀🚀");
+  console.log("CREATE DOCUMENT REQUEST - DEBUG START");
   console.log("=".repeat(70));
 
   // ==================== PHASE 0: DEBUG LOGS ====================
-  console.log("\n🔍 PHASE 0: REQUEST ARRIVED AT CONTROLLER");
+  console.log("\nPHASE 0: REQUEST ARRIVED AT CONTROLLER");
   console.log("   Time:", new Date().toISOString());
   console.log("   Controller invoked successfully!");
 
   // ==================== PHASE 1: REQUEST INSPECTION ====================
-  console.log("\n📋 PHASE 1: REQUEST INSPECTION");
+  console.log("\nPHASE 1: REQUEST INSPECTION");
   console.log("   Method:", req.method);
   console.log("   URL:", req.originalUrl || req.url);
   console.log("   Headers:");
@@ -42,15 +44,15 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     req.headers["authorization"] ? "PRESENT" : "MISSING"
   );
 
-  // تحقق من req.body بعد multer
-  console.log("\n🔍 BODY PARSER STATUS (AFTER MULTER):");
+  // Check req.body after multer
+  console.log("\nBODY PARSER STATUS (AFTER MULTER):");
   console.log("   req.body exists?", !!req.body);
   console.log("   Type of req.body:", typeof req.body);
 
   if (req.body) {
     console.log("   req.body keys:", Object.keys(req.body));
 
-    // طباعة كل حقول الـ body
+    // Log all body fields
     Object.keys(req.body).forEach((key) => {
       const value = req.body[key];
       console.log(
@@ -60,7 +62,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       );
     });
 
-    // بحث عن document_type بأي شكل
+    // Search for document_type in any form
     const allKeys = Object.keys(req.body);
     const possibleDocTypeFields = allKeys.filter(
       (key) =>
@@ -77,11 +79,11 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       });
     }
   } else {
-    console.log("   ⚠️ WARNING: req.body is undefined or null!");
+    console.log("   WARNING: req.body is undefined or null!");
   }
 
-  // تحقق من الملفات
-  console.log("\n📁 FILES STATUS:");
+  // Check files
+  console.log("\nFILES STATUS:");
   console.log("   req.files exists?", !!req.files);
   console.log("   req.file exists?", !!req.file);
 
@@ -105,15 +107,15 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     console.log("   No files received");
   }
 
-  // تحقق من الـ user
-  console.log("\n👤 USER AUTH STATUS:");
+  // Check user authentication
+  console.log("\nUSER AUTH STATUS:");
   console.log("   req.user exists?", !!req.user);
   if (req.user) {
     console.log("   User ID:", req.user.id);
     console.log("   User Type:", req.user["user-type"]);
     console.log("   Full user object:", JSON.stringify(req.user, null, 2));
   } else {
-    console.log("   ❌ ERROR: No user in request!");
+    console.log("   ERROR: No user in request!");
     return res.status(401).json({
       success: false,
       message: "Authentication required.",
@@ -122,9 +124,9 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
   }
 
   // ==================== PHASE 2: SAFE DATA EXTRACTION ====================
-  console.log("\n📦 PHASE 2: SAFE DATA EXTRACTION");
+  console.log("\nPHASE 2: SAFE DATA EXTRACTION");
 
-  // استخدام req.body مباشرة (مش محتاج || {} لأن multer هيحط البيانات)
+  // Use req.body directly (multer will handle the data)
   const requestBody = req.body || {};
   const requestFiles = req.files || [];
 
@@ -134,10 +136,10 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     requestFiles.length > 0 ? `${requestFiles.length} file(s)` : "none"
   );
 
-  // البحث عن document_type بكل الطرق الممكنة
+  // Search for document_type in all possible field names
   let document_type = null;
 
-  // قائمة بكل الأسماء المحتملة
+  // List of all possible field names
   const possibleNames = [
     "document_type",
     "documentType",
@@ -151,7 +153,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     "request-type",
   ];
 
-  console.log("\n🔍 SEARCHING FOR DOCUMENT_TYPE:");
+  console.log("\nSEARCHING FOR DOCUMENT_TYPE:");
   for (const name of possibleNames) {
     if (
       requestBody[name] !== undefined &&
@@ -159,13 +161,13 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       requestBody[name] !== ""
     ) {
       document_type = requestBody[name];
-      console.log(`   ✅ Found as '${name}':`, document_type);
+      console.log(`   Found as '${name}':`, document_type);
       break;
     }
   }
 
   if (!document_type) {
-    // جرب البحث بأي حقل يحتوي على كلمة document أو type
+    // Try searching any field containing 'doc' or 'type'
     const allBodyKeys = Object.keys(requestBody);
     for (const key of allBodyKeys) {
       if (
@@ -176,7 +178,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
         const lowerKey = key.toLowerCase();
         if (lowerKey.includes("doc") || lowerKey.includes("type")) {
           document_type = requestBody[key];
-          console.log(`   ⚠️ Found in field '${key}':`, document_type);
+          console.log(`   Found in field '${key}':`, document_type);
           break;
         }
       }
@@ -185,7 +187,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
 
   const language = requestBody.language || requestBody.lang || "ar";
 
-  // معالجة الملفات
+  // Process files
   let attachments = [];
   if (requestFiles.length > 0) {
     attachments = requestFiles.map((file) => ({
@@ -195,7 +197,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       path: file.path,
       mimetype: file.mimetype,
       size: file.size,
-      url: `/uploads/documents/${file.filename}`, // URL للوصول للملف
+      url: `/uploads/documents/${file.filename}`, // URL for file access
     }));
   } else if (requestBody.attachments) {
     attachments = Array.isArray(requestBody.attachments)
@@ -203,7 +205,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       : [requestBody.attachments];
   }
 
-  console.log("\n📊 EXTRACTED DATA:");
+  console.log("\nEXTRACTED DATA:");
   console.log("   document_type:", document_type || "NOT FOUND!");
   console.log("   language:", language);
   console.log("   attachments count:", attachments.length);
@@ -220,17 +222,17 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
   }
 
   // ==================== PHASE 3: VALIDATION ====================
-  console.log("\n✅ PHASE 3: VALIDATION");
+  console.log("\nPHASE 3: VALIDATION");
 
   // CRITICAL: Check if document_type exists
   if (!document_type) {
-    console.error("❌❌❌ CRITICAL ERROR: document_type is missing!");
+    console.error("CRITICAL ERROR: document_type is missing!");
     console.error("   All body keys:", Object.keys(requestBody));
     console.error("   Body values:", requestBody);
     console.error("   Content-Type:", req.headers["content-type"]);
     console.error("   Request method:", req.method);
 
-    // حاول تجميع كل البيانات المتاحة للمساعدة في التشخيص
+    // Collect all available data for debugging
     const debugInfo = {
       requestMethod: req.method,
       requestUrl: req.url,
@@ -254,36 +256,36 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
   }
 
   const user = req.user;
-  console.log("✅ User authenticated:", user.id, `(${user["user-type"]})`);
+  console.log("User authenticated:", user.id, `(${user["user-type"]})`);
 
   // 1️⃣ Check if user is graduate
   if (user["user-type"] !== "graduate") {
-    console.log("❌ User is not a graduate! User type:", user["user-type"]);
+    console.log("User is not a graduate! User type:", user["user-type"]);
     return res.status(403).json({
       success: false,
       message: "Only graduates can create document requests.",
     });
   }
-  console.log("✅ User is a graduate");
+  console.log("User is a graduate");
 
   // ==================== PHASE 4: DATABASE OPERATIONS ====================
-  console.log("\n💾 PHASE 4: DATABASE OPERATIONS");
+  console.log("\nPHASE 4: DATABASE OPERATIONS");
 
   try {
-    console.log("🔍 Fetching user from database with ID:", user.id);
+    console.log("Fetching user from database with ID:", user.id);
     const dbUser = await User.findByPk(user.id, {
       attributes: ["id", "national-id", "first-name", "last-name"],
     });
 
     if (!dbUser) {
-      console.log("❌ User not found in database!");
+      console.log("User not found in database!");
       return res.status(404).json({
         success: false,
         message: "User not found. Please login again.",
       });
     }
 
-    console.log("✅ User found in database");
+    console.log("User found in database");
     console.log("   First name:", dbUser["first-name"]);
     console.log("   Last name:", dbUser["last-name"]);
     console.log(
@@ -300,39 +302,39 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     const national_id = dbUser["national-id"];
 
     // Check document type
-    console.log("\n📄 DOCUMENT TYPE VALIDATION:");
+    console.log("\nDOCUMENT TYPE VALIDATION:");
     console.log("   Requested type code:", document_type);
     const documentType = getDocumentByCode(document_type);
     if (!documentType) {
-      console.log("❌ Invalid document type!");
+      console.log("Invalid document type!");
       return res.status(400).json({
         success: false,
         message: "Invalid document type. Please select a valid document type.",
-        validTypes: ["GRAD_CERT", "STATUS_STMT", "OTHER"], // ضع الأنواع الصحيحة هنا
+        validTypes: ["GRAD_CERT", "STATUS_STMT", "OTHER"], // Add correct types here
       });
     }
-    console.log("✅ Document type valid:", documentType.name_ar);
+    console.log("Document type valid:", documentType.name_ar);
 
     // Check if needs attachments
-    console.log("\n📎 ATTACHMENTS CHECK:");
+    console.log("\nATTACHMENTS CHECK:");
     const needsAttachments = requiresAttachments(document_type);
     console.log("   Document requires attachments?", needsAttachments);
     console.log("   Attachments provided:", attachments.length);
 
     if (needsAttachments && attachments.length === 0) {
-      console.log("❌ Missing required attachments");
+      console.log("Missing required attachments");
       return res.status(400).json({
         success: false,
         message:
           "This document requires attachments. Please upload required documents.",
       });
     }
-    console.log("✅ Attachments check passed");
+    console.log("Attachments check passed");
 
     // ==================== PHASE 5: CREATE REQUEST ====================
-    console.log("\n🛠️ PHASE 5: CREATING DOCUMENT REQUEST");
+    console.log("\nPHASE 5: CREATING DOCUMENT REQUEST");
 
-    // تحضير بيانات المرفقات للتخزين
+    // Prepare attachments for storage
     let attachmentsForDB = null;
     if (needsAttachments && attachments.length > 0) {
       attachmentsForDB = attachments.map((att) => ({
@@ -353,7 +355,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       status: document_type === "GRAD_CERT" ? "under_review" : "pending",
     };
 
-    console.log("📦 Request data to save:");
+    console.log("Request data to save:");
     Object.keys(requestData).forEach((key) => {
       let value = requestData[key];
       let displayValue;
@@ -371,10 +373,10 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       console.log(`   ${key}:`, displayValue);
     });
 
-    console.log("\n💾 Saving to database...");
+    console.log("\nSaving to database...");
     const documentRequest = await DocumentRequest.create(requestData);
 
-    console.log("\n🎉 SUCCESS: Document request created!");
+    console.log("\nSUCCESS: Document request created!");
     console.log("   Request ID:", documentRequest.document_request_id);
     console.log("   Request Number:", documentRequest.request_number);
     console.log("   Status:", documentRequest.status);
@@ -396,12 +398,12 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     };
 
     console.log("\n" + "=".repeat(70));
-    console.log("✅✅✅ CREATE DOCUMENT REQUEST - DEBUG END SUCCESS ✅✅✅");
+    console.log("CREATE DOCUMENT REQUEST - DEBUG END SUCCESS");
     console.log("=".repeat(70) + "\n");
 
     res.status(201).json(responseData);
   } catch (error) {
-    console.error("\n🔥🔥🔥 CREATE DOCUMENT REQUEST - DEBUG END ERROR 🔥🔥🔥");
+    console.error("\nCREATE DOCUMENT REQUEST - DEBUG END ERROR");
     console.error("Error name:", error.name);
     console.error("Error message:", error.message);
     console.error("Error code:", error.code);
@@ -428,7 +430,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       errorName: error.name,
     };
 
-    // إضافة معلومات إضافية للتطوير
+    // Add debug information for development
     if (process.env.NODE_ENV !== "production") {
       errorResponse.debug = {
         document_type: document_type,
@@ -447,19 +449,21 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    جلب جميع طلبات وثائق الخريج
-// @route   GET /api/documents/requests/my-requests
-// @access  Private (Graduates only)
+/**
+ * Get all document requests for the authenticated graduate
+ * @route GET /api/documents/requests/my-requests
+ * @access Private (Graduates only)
+ */
 const getMyDocumentRequests = asyncHandler(async (req, res) => {
   const user = req.user;
 
-  // 📝 Log بداية العملية
+  // Log operation start
   logger.info("Fetching document requests for graduate", {
     userId: user.id,
     userType: user["user-type"],
   });
 
-  // 1️⃣ التحقق: هل المستخدم خريج؟
+  // 1️⃣ Verify user is a graduate
   if (user["user-type"] !== "graduate") {
     logger.warn("Non-graduate tried to access graduate document requests", {
       userId: user.id,
@@ -472,7 +476,7 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
   }
 
   try {
-    // 2️⃣ جلب طلبات الخريج مع معلومات إضافية
+    // 2️⃣ Fetch graduate requests with additional information
     const requests = await DocumentRequest.findAll({
       where: {
         graduate_id: user.id,
@@ -489,7 +493,7 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
           required: false,
         },
       ],
-      order: [["created-at", "DESC"]], // أحدث الطلبات أولاً
+      order: [["created-at", "DESC"]], // Most recent first
       attributes: [
         "document_request_id",
         "request_number",
@@ -505,18 +509,18 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
       ],
     });
 
-    // 📝 Log نجاح العملية
+    // Log successful retrieval
     logger.info("Graduate document requests retrieved successfully", {
       userId: user.id,
       requestCount: requests.length,
     });
 
-    // 3️⃣ تحسين البيانات قبل إرجاعها مع معلومات السجل
+    // 3️⃣ Enhance data before returning with timeline information
     const enhancedRequests = requests.map((request) => {
       const requestData = request.toJSON();
       const docType = getDocumentByCode(requestData["request-type"]);
 
-      // حساب الوقت المنقضي
+      // Calculate elapsed time
       const createdAt = new Date(requestData["created-at"]);
       const updatedAt = new Date(requestData.updated_at);
       const now = new Date();
@@ -527,7 +531,7 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
         (now - updatedAt) / (1000 * 60 * 60 * 24)
       );
 
-      // معلومات الحالة
+      // Status information
       const statusInfo = {
         pending: {
           ar: "قيد الانتظار",
@@ -622,14 +626,14 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
       };
     });
 
-    // 4️⃣ إرجاع النتيجة
+    // 4️⃣ Return result
     res.status(200).json({
       success: true,
       count: enhancedRequests.length,
       data: enhancedRequests,
     });
   } catch (error) {
-    // ❌ Log أي خطأ
+    // Log any error
     logger.error("Error fetching graduate document requests", {
       userId: user.id,
       error: error.message,
@@ -643,15 +647,17 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Update document request status (Staff/Admin only)
-// @route   PUT /api/documents/requests/:requestId/status
-// @access  Private (Staff/Admin only)
+/**
+ * Update document request status (Staff/Admin only)
+ * @route PUT /api/documents/requests/:requestId/status
+ * @access Private (Staff/Admin only)
+ */
 const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
   const user = req.user;
   const { requestId } = req.params;
   const { status, notes, expected_completion_date } = req.body;
 
-  // 📝 Log بداية العملية
+  // Log operation start
   logger.info("Updating document request status", {
     userId: user.id,
     userType: user["user-type"],
@@ -659,7 +665,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
     newStatus: status,
   });
 
-  // 1️⃣ التحقق: هل المستخدم staff أو admin؟
+  // 1️⃣ Verify user is staff or admin
   if (!["staff", "admin"].includes(user["user-type"])) {
     logger.warn("Non-staff/admin tried to update document request status", {
       userId: user.id,
@@ -672,7 +678,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
     });
   }
 
-  // 2️⃣ التحقق من الصلاحيات للـ staff
+  // 2️⃣ Check staff permissions
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
@@ -691,7 +697,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
     }
   }
 
-  // 3️⃣ التحقق من صحة الحالة
+  // 3️⃣ Validate status value
   const validStatuses = [
     "pending",
     "under_review",
@@ -713,7 +719,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
   }
 
   try {
-    // 4️⃣ جلب الطلب
+    // 4️⃣ Fetch the request
     const documentRequest = await DocumentRequest.findByPk(requestId, {
       include: [
         {
@@ -741,7 +747,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
 
     const oldStatus = documentRequest.status;
 
-    // 5️⃣ تحديث الحالة
+    // 5️⃣ Update status
     documentRequest.status = status;
     if (notes !== undefined) {
       documentRequest.notes = notes;
@@ -750,7 +756,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
       documentRequest.expected_completion_date = expected_completion_date;
     }
 
-    // إذا كان staff_id null، نضيف staff_id الحالي
+    // Add staff_id if null and user is staff
     if (!documentRequest.staff_id && user["user-type"] === "staff") {
       const staff = await Staff.findOne({ where: { staff_id: user.id } });
       if (staff) {
@@ -758,14 +764,14 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
       }
     }
 
-    // إذا كانت الحالة completed، نضيف actual_completion_date
+    // Add actual completion date if status is completed
     if (status === "completed" && !documentRequest.actual_completion_date) {
       documentRequest.actual_completion_date = new Date();
     }
 
     await documentRequest.save();
 
-    // 6️⃣ إرسال إشعار للخريج
+    // 6️⃣ Send notification to graduate
     const documentType = getDocumentByCode(documentRequest["request-type"]);
     const documentTypeName = documentType
       ? documentType.name_en
@@ -781,7 +787,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
       notes
     );
 
-    // 📝 Log تغيير الحالة
+    // Log status change
     logger.info("Document request status updated successfully", {
       requestId: documentRequest.document_request_id,
       requestNumber: documentRequest.request_number,
@@ -792,7 +798,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
       userType: user["user-type"],
     });
 
-    // 7️⃣ إرجاع النتيجة
+    // 7️⃣ Return result
     res.status(200).json({
       success: true,
       message: "Document request status updated successfully.",
@@ -823,43 +829,58 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Get all document requests (Staff/Admin only)
-// @route   GET /api/documents/requests
-// @access  Private (Staff/Admin only)
+/**
+ * Get all document requests (Staff/Admin only)
+ * @route GET /api/documents/requests
+ * @access Private (Staff/Admin only)
+ */
 const getAllDocumentRequests = asyncHandler(async (req, res) => {
   const user = req.user;
   const { status, graduate_id, page = 1, limit = 20 } = req.query;
 
-  // 📝 Log بداية العملية
-  logger.info("Fetching all document requests", {
-    userId: user.id,
-    userType: user["user-type"],
-    filters: { status, graduate_id },
-  });
+  console.log(
+    "\n================ GET ALL DOCUMENT REQUESTS DEBUG ================"
+  );
+  console.log("User ID:", user.id);
+  console.log("User Type:", user["user-type"]);
 
-  // 1️⃣ التحقق: هل المستخدم staff أو admin؟
+  // 1️⃣ Authorization
   if (!["staff", "admin"].includes(user["user-type"])) {
-    logger.warn("Non-staff/admin tried to view all document requests", {
-      userId: user.id,
-      userType: user["user-type"],
-    });
+    console.log("Unauthorized user type");
     return res.status(403).json({
       success: false,
       message: "Only staff and admin can view all document requests.",
     });
   }
 
-  // 2️⃣ التحقق من الصلاحيات للـ staff
+  // 2️⃣ Staff permission check
   if (user["user-type"] === "staff") {
-    const hasPermission = await checkStaffPermission(
-      user.id,
-      "Document Requests management",
-      "view"
-    );
-    if (!hasPermission) {
-      logger.warn("Staff permission denied for viewing document requests", {
-        userId: user.id,
+    console.log("Checking staff permission...");
+
+    let hasPermission = false;
+
+    try {
+      hasPermission = await checkStaffPermission(
+        user.id,
+        "Document Requests management",
+        "view"
+      );
+
+      console.log("Permission result:", hasPermission);
+    } catch (permError) {
+      console.log("PERMISSION FUNCTION ERROR");
+      console.log("Message:", permError.message);
+      console.log("Stack:", permError.stack);
+
+      return res.status(500).json({
+        success: false,
+        message: "Permission check failed",
+        error: permError.message,
       });
+    }
+
+    if (!hasPermission) {
+      console.log("Staff has no permission");
       return res.status(403).json({
         success: false,
         message: "You don't have permission to view document requests.",
@@ -868,17 +889,18 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
   }
 
   try {
-    // 3️⃣ بناء where clause
-    const whereClause = {};
-    if (status) {
-      whereClause.status = status;
-    }
-    if (graduate_id) {
-      whereClause.graduate_id = graduate_id;
-    }
+    console.log("\n--- BUILD WHERE CLAUSE ---");
 
-    // 4️⃣ جلب الطلبات مع pagination
+    const whereClause = {};
+    if (status) whereClause.status = status;
+    if (graduate_id) whereClause.graduate_id = graduate_id;
+
+    console.log("whereClause:", whereClause);
+
     const offset = (parseInt(page) - 1) * parseInt(limit);
+
+    console.log("\n--- DB QUERY START ---");
+
     const { count, rows: requests } = await DocumentRequest.findAndCountAll({
       where: whereClause,
       include: [
@@ -907,34 +929,33 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
       offset: offset,
     });
 
-    // 5️⃣ تحسين البيانات
+    console.log("DB RESULT COUNT:", count);
+    console.log("ROWS:", requests.length);
+
     const enhancedRequests = requests.map((request) => {
       const requestData = request.toJSON();
       const docType = getDocumentByCode(requestData["request-type"]);
+
+      const gradUser = requestData.Graduate?.User || null;
+      const staffUser = requestData.Staff?.User || null;
 
       return {
         ...requestData,
         document_name_ar: docType ? docType.name_ar : "Unknown",
         document_name_en: docType ? docType.name_en : "Unknown",
-        graduate_name: requestData.Graduate
-          ? `${requestData.Graduate.User["first-name"]} ${requestData.Graduate.User["last-name"]}`
+
+        graduate_name: gradUser
+          ? `${gradUser["first-name"]} ${gradUser["last-name"]}`
           : null,
-        staff_name:
-          requestData.Staff && requestData.Staff.User
-            ? `${requestData.Staff.User["first-name"]} ${requestData.Staff.User["last-name"]}`
-            : null,
+
+        staff_name: staffUser
+          ? `${staffUser["first-name"]} ${staffUser["last-name"]}`
+          : null,
       };
     });
 
-    // 📝 Log نجاح العملية
-    logger.info("All document requests retrieved successfully", {
-      userId: user.id,
-      requestCount: count,
-      page: page,
-      limit: limit,
-    });
+    console.log("SUCCESS RETURN");
 
-    // 6️⃣ إرجاع النتيجة
     res.status(200).json({
       success: true,
       count: count,
@@ -944,15 +965,14 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
       data: enhancedRequests,
     });
   } catch (error) {
-    logger.error("Error fetching all document requests", {
-      userId: user.id,
-      error: error.message,
-    });
+    console.log("\nDB OR MAPPING ERROR");
+    console.log("Message:", error.message);
+    console.log("Stack:", error.stack);
 
     res.status(500).json({
       success: false,
       message: "Error fetching document requests.",
-      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+      error: error.message,
     });
   }
 });
