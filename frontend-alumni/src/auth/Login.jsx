@@ -347,7 +347,7 @@ const handleLinkedInLogin = async () => {
                 <label className="form-label">{t("email")}</label>
                 <input
                   placeholder={t("enterYourEmail")}
-                  className="form-inputre"
+                  className="form-input"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
