@@ -12,12 +12,14 @@ import "../components/Header.css";
 import "../components/Footer.css";
 import "./Login.css";
 import NewBg from '../Newbg.jpg'
+import { FiEye, FiEyeOff } from "react-icons/fi";
+
 
 function Login({ setUser }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const location = useLocation();
-
+  const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showReset, setShowReset] = useState(false);
@@ -353,13 +355,25 @@ const handleLinkedInLogin = async () => {
 
               <div className="form-group">
                 <label className="form-label">{t("password")}</label>
-                <input
-                  className="form-inputre"
-                  type="password"
-                  placeholder={t("enterYourPassword")}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
+                <div className="password-field">
+  <input
+    type={showPassword ? "text" : "password"}
+    className="form-input"
+    placeholder={t("enterYourPassword")}
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+  />
+
+  <span
+    className="eye-icon"
+    onClick={() => setShowPassword(!showPassword)}
+  >
+    {showPassword ? <FiEyeOff /> : <FiEye />}
+  </span>
+</div>
+
+
+
               </div>
 
               <button type="button" className="login-button" onClick={handleLogin}>
