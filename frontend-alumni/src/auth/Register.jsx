@@ -9,10 +9,15 @@ import API from "../services/api";
 import Swal from "sweetalert2";
 import { useTranslation } from "react-i18next";
 import "./Register.css";
+import { FiEye, FiEyeOff } from "react-icons/fi";
+
 import NewBg from '../Newbg.jpg'
 
 const Register = ({ setUser }) => {
   const { t } = useTranslation();
+  const [showPassword, setShowPassword] = useState(false);
+const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
   const navigate = useNavigate();
 
   const [showNidModal, setShowNidModal] = useState(false);
@@ -197,27 +202,57 @@ const handleSubmit = async (e) => {
             <br />
 
             <div className="form-grid">
-              {[
-                { name: "nationalId", type: "text" },
-                { name: "email", type: "email" },
-                { name: "firstName", type: "text" },
-                { name: "lastName", type: "text" },
-                { name: "password", type: "password" },
-                { name: "confirmPassword", type: "password" },
-                { name: "phoneNumber", type: "tel", className: "phone-center" }
-              ].map((field) => (
-                <div className={`form-group ${field.className || ""}`} key={field.name}>
-                  <label className="form-label">{t(field.name)}</label>
-                  <input
-                    type={field.type}
-                    name={field.name}
-                    value={formData[field.name]}
-                    onChange={handleInputChange}
-                    className="form-inputre"
-                  />
-                </div>
-              ))}
-            </div>
+  {[
+    { name: "nationalId", type: "text" },
+    { name: "email", type: "email" },
+    { name: "firstName", type: "text" },
+    { name: "lastName", type: "text" },
+    { name: "password", type: "password" },
+    { name: "confirmPassword", type: "password" },
+    { name: "phoneNumber", type: "tel", className: "phone-center" }
+  ].map((field) => (
+    <div className={`form-group ${field.className || ""}`} key={field.name}>
+      <label className="form-label">{t(field.name)}</label>
+
+      {(field.name === "password" || field.name === "confirmPassword") ? (
+        <div className="password-field">
+          <input
+            type={
+              field.name === "password"
+                ? showPassword ? "text" : "password"
+                : showConfirmPassword ? "text" : "password"
+            }
+            name={field.name}
+            value={formData[field.name]}
+            onChange={handleInputChange}
+            className="form-inputre"
+          />
+          <span
+            className="eye-icon"
+            onClick={() =>
+              field.name === "password"
+                ? setShowPassword(!showPassword)
+                : setShowConfirmPassword(!showConfirmPassword)
+            }
+          >
+            {field.name === "password"
+              ? showPassword ? <FiEyeOff /> : <FiEye />
+              : showConfirmPassword ? <FiEyeOff /> : <FiEye />}
+          </span>
+        </div>
+      ) : (
+        <input
+          type={field.type}
+          name={field.name}
+          value={formData[field.name]}
+          onChange={handleInputChange}
+          className="form-inputre"
+        />
+      )}
+    </div>
+  ))}
+</div>
+
 
             <div className="submit-section">
               <button type="submit" className="register-btn" disabled={loading}>
