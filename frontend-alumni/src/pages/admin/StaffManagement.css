@@ -1,0 +1,156 @@
+/* زرار الفتح الأساسي */
+.stf-adm-trigger-btn {
+    background-color: #1e3a8a;
+    color: white;
+    padding: 10px 24px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background 0.3s;
+}
+
+/* الـ Overlay خلفية المودال */
+.stf-adm-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+/* جسم المودال */
+.stf-adm-modal-box {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    width: 90%;
+    max-width: 850px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.stf-adm-title {
+    color: #1e3a8a;
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stf-adm-subtitle {
+    color: #6b7280;
+    margin-bottom: 30px;
+}
+
+/* تقسيم الفورم */
+.stf-adm-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px 30px;
+}
+
+.stf-adm-input-group {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+}
+
+.stf-adm-input-group label {
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-bottom: 8px;
+}
+
+/* شكل الـ Input زي الصورة */
+.stf-adm-input-group input {
+    border: 1.5px solid #1e3a8a;
+    border-radius: 12px;
+    padding: 12px 15px;
+    outline: none;
+    font-size: 16px;
+    transition: box-shadow 0.2s;
+}
+
+.stf-adm-input-group input:focus {
+    box-shadow: 0 0 5px rgba(30, 58, 138, 0.3);
+}
+
+.stf-adm-full-width {
+    grid-column: span 2;
+    width: 50%;
+    margin: 20px auto 0;
+}
+
+/* الأزرار */
+.stf-adm-actions {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.stf-adm-btn-save {
+    background-color: #1e3a8a;
+    color: white;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.stf-adm-btn-cancel {
+    background-color: #e5e7eb;
+    color: #374151;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* تحويل الجريد ليكون أريح للعين */
+.stf-adm-grid-compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+    margin-top: 20px;
+}
+
+/* حاوية الباسورد عشان العين */
+.stf-adm-pass-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.stf-adm-pass-container input {
+    width: 100%;
+    padding-right: 45px; /* مسافة للأيقونة */
+}
+
+.stf-adm-eye-btn {
+    position: absolute;
+    right: 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    color: #1e3a8a;
+}
+
+/* تنسيق إضافي لزرار الحفظ ليكون أوضح */
+.stf-adm-btn-save {
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b5998 100%);
+    box-shadow: 0 4px 15px rgba(30, 58, 138, 0.2);
+    transition: transform 0.2s;
+}
+
+.stf-adm-btn-save:hover {
+    transform: translateY(-2px);
+}
