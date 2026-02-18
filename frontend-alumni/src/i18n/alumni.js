@@ -264,11 +264,21 @@ const alumni = {
       "allowedFilesNote": "Only JPEG, PNG, JPG, and PDF are allowed.",
       "chooseFile": "Choose File",
   "filesSelected": "files selected",
+  "graduation_requirements_title": "Required Documents to Upload:",
+"req_fees": "Proof of payment for all academic years",
+"req_military": "Military training certificate",
+"req_clearance": "College clearance (No pending items)",
+"error_select_files": "Please attach the required documents"
     },
   },
 
   ar: {
     translation: {
+      "graduation_requirements_title": "الأوراق المطلوبة للرفع:",
+"req_fees": "إثبات سداد الرسوم لكل الفرق الدراسية",
+"req_military": "شهادة تأدية التربية العسكرية",
+"req_clearance": "إخلاء طرف من الكلية (عدم وجود عهدة)",
+"error_select_files": "يرجى إرفاق المستندات المطلوبة",
       "allowedFilesNote": "الصيغ المسموح بها فقط: JPEG, PNG, JPG, PDF",
       "chooseFile": "إختر ملف",
       "filesSelected": "ملفات تم اختيارها",
