@@ -32,7 +32,7 @@ const AdminPostcard = ({
           <div className="post-header-info">
             <strong
               style={{ cursor: "pointer" }}
-              onClick={() => navigate(`/helwan-alumni-portal/admin/dashboard/graduateprofile/${post.author.id}`)}
+              onClick={() => navigate(`/admin/dashboard/graduateprofile/${post.author.id}`)}
             >
               {post.author?.name || 'Unknown'}
             </strong>
@@ -109,7 +109,7 @@ const AdminPostcard = ({
                 <div className="comment-text">
                   <strong
                     style={{ cursor: "pointer", color: "#007bff" }}
-                    onClick={() => navigate(`/helwan-alumni-portal/admin/dashboard/graduateprofile/${comment.author?.id}`)}
+                    onClick={() => navigate(`/admin/dashboard/graduateprofile/${comment.author?.id}`)}
                   >
                     {comment.userName}
                   </strong>

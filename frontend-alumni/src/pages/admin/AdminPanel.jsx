@@ -37,7 +37,7 @@ const AdminPanel = ({ setUser }) => {
       localStorage.removeItem("user");
       localStorage.removeItem("token");
       setUser(null); 
-      navigate("/helwan-alumni-portal/login", { replace: true });
+      navigate("/login", { replace: true });
     } catch (err) {
       console.error("Logout failed:", err);
     }
@@ -77,7 +77,7 @@ const AdminPanel = ({ setUser }) => {
   ];
 
   const handleMenuClick = (key) => {
-    navigate(`/helwan-alumni-portal/admin/dashboard/${key}`);
+    navigate(`/admin/dashboard/${key}`);
   };
 
   const getActiveKey = () => {

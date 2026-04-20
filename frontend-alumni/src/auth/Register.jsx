@@ -65,7 +65,7 @@ const handleSubmit = async (e) => {
         timer: 2000,
         showConfirmButton: false
       });
-      setTimeout(() => navigate("/helwan-alumni-portal/login"), 2000);
+      setTimeout(() => navigate("/login"), 2000);
     } 
     else {
       Swal.fire({
@@ -262,7 +262,7 @@ const handleSubmit = async (e) => {
 
             <p
  className="dont-have-account"
-  onClick={() => navigate("/helwan-alumni-portal/login")}
+  onClick={() => navigate("/login")}
 >
   {t("alreadyHaveAccount")}
 </p>

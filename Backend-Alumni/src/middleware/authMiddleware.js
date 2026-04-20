@@ -8,7 +8,10 @@ const Staff = require("../models/Staff");
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
-  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith("Bearer")
+  ) {
     try {
       token = req.headers.authorization.split(" ")[1];
       const secret = process.env.JWT_SECRET || "your_jwt_secret_key_here";
@@ -26,7 +29,9 @@ const protect = asyncHandler(async (req, res, next) => {
       }
 
       if (!user) {
-        return res.status(401).json({ message: "Not authorized, user not found" });
+        return res
+          .status(401)
+          .json({ message: "Not authorized, user not found" });
       }
 
       req.user = user; // خزّن بيانات اليوزر في request
@@ -59,11 +64,15 @@ const staff = asyncHandler(async (req, res, next) => {
 
 const staffTypeOnly = (staffType) => {
   return asyncHandler(async (req, res, next) => {
-    const staffProfile = await Staff.findOne({ where: { staff_id: req.user.id } });
+    const staffProfile = await Staff.findOne({
+      where: { staff_id: req.user.id },
+    });
     if (staffProfile && staffProfile.staffType === staffType) {
       next();
     } else {
-      return res.status(403).json({ message: `Not authorized as ${staffType} staff` });
+      return res
+        .status(403)
+        .json({ message: `Not authorized as ${staffType} staff` });
     }
   });
 };

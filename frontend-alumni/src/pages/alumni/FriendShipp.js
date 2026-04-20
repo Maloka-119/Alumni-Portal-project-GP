@@ -11,8 +11,8 @@ import { useLocation } from "react-router-dom";
 function FriendshipPage() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  
-const location = useLocation();
+
+  const location = useLocation();
   const [currentTab, setCurrentTab] = useState("friends");
 
   const [friends, setFriends] = useState([]);
@@ -28,18 +28,17 @@ const location = useLocation();
   const [chatId, setChatId] = useState(null);
 
   // ضبط اتجاه النص حسب اللغة
-// ضبط اتجاه الصفحة حسب اللغة (أفضل حل)
-useEffect(() => {
-  const dir = i18n.language === "ar" ? "rtl" : "ltr";
-  document.documentElement.setAttribute("dir", dir);
-  document.documentElement.setAttribute("lang", i18n.language);
-}, [i18n.language]);
-useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const tab = params.get("tab");
-  if(tab) setCurrentTab(tab);
-}, [location.search]);
-
+  // ضبط اتجاه الصفحة حسب اللغة (أفضل حل)
+  useEffect(() => {
+    const dir = i18n.language === "ar" ? "rtl" : "ltr";
+    document.documentElement.setAttribute("dir", dir);
+    document.documentElement.setAttribute("lang", i18n.language);
+  }, [i18n.language]);
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get("tab");
+    if (tab) setCurrentTab(tab);
+  }, [location.search]);
 
   // -------------------- Fetch Functions --------------------
   const fetchFriends = async () => {
@@ -232,13 +231,13 @@ useEffect(() => {
       case "friends":
         return (
           <>
-<h2
-  className="Title"
-  style={{ textAlign: i18n.language === "ar" ? "right" : "left" }}
->
-  {t("friendsList")}{" "}
-  <span className="req-count">({friends.length})</span>
-</h2>
+            <h2
+              className="Title"
+              style={{ textAlign: i18n.language === "ar" ? "right" : "left" }}
+            >
+              {t("friendsList")}{" "}
+              <span className="req-count">({friends.length})</span>
+            </h2>
 
             {loadingFriends ? (
               <p>{t("loadingFriends")}</p>
@@ -253,10 +252,10 @@ useEffect(() => {
                       className="user-name"
                       onClick={() => {
                         const profileId = f.friendId || f.senderId || f.id;
-                        if(profileId) navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${profileId}`);
+                        if (profileId)
+                          navigate(`/graduate/dashboard/friends/${profileId}`);
                         else console.warn("No valid id for navigation", f);
                       }}
-                      
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
                       {f.userName}
@@ -270,12 +269,11 @@ useEffect(() => {
                       <MessageCircle size={18} />
                     </button>
                     <button
-  className="Removebutton"
-  onClick={() => unfriendFriend(f.friendId)}
->
-  {t("unfriend")}
-</button>
-
+                      className="Removebutton"
+                      onClick={() => unfriendFriend(f.friendId)}
+                    >
+                      {t("unfriend")}
+                    </button>
                   </div>
                 </div>
               ))
@@ -286,13 +284,13 @@ useEffect(() => {
       case "requests":
         return (
           <>
-<h2
-  className="Title"
-  style={{ textAlign: i18n.language === "ar" ? "right" : "left" }}
->
-  {t("friendRequests")}{" "}
-  <span className="req-count">({friendRequests.length})</span>
-</h2>
+            <h2
+              className="Title"
+              style={{ textAlign: i18n.language === "ar" ? "right" : "left" }}
+            >
+              {t("friendRequests")}{" "}
+              <span className="req-count">({friendRequests.length})</span>
+            </h2>
             {loadingRequests ? (
               <p>{t("loadingfRequests")}</p>
             ) : friendRequests.length === 0 ? (
@@ -306,10 +304,10 @@ useEffect(() => {
                       className="user-name"
                       onClick={() => {
                         const profileId = f.friendId || f.senderId || f.id;
-                        if(profileId) navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${profileId}`);
+                        if (profileId)
+                          navigate(`/graduate/dashboard/friends/${profileId}`);
                         else console.warn("No valid id for navigation", f);
                       }}
-                      
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
                       {f.userName}
@@ -339,12 +337,12 @@ useEffect(() => {
       case "suggestions":
         return (
           <>
-           <h2
-  className="Title"
-  style={{ textAlign: i18n.language === "ar" ? "right" : "left" }}
->
-  {t("suggestedFriends")}
-</h2>
+            <h2
+              className="Title"
+              style={{ textAlign: i18n.language === "ar" ? "right" : "left" }}
+            >
+              {t("suggestedFriends")}
+            </h2>
 
             <div className="friendship-search">
               <input
@@ -367,34 +365,37 @@ useEffect(() => {
                       className="user-name"
                       onClick={() => {
                         const profileId = f.friendId || f.senderId || f.id;
-                        if(profileId) navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${profileId}`);
+                        if (profileId)
+                          navigate(`/graduate/dashboard/friends/${profileId}`);
                         else console.warn("No valid id for navigation", f);
                       }}
-                      
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
                       {f.userName}
                     </span>
                   </div>
-                  <div className={`friend-actions ${i18n.language === "ar" ? "rtl" : "ltr"}`}>
-  {!f.added ? (
-    <button
-      className="button"
-      onClick={() => toggleRequest(f.id, f.added)}
-    >
-      {t("addFriend")}
-    </button>
-  ) : (
-    <button
-      className="button"
-      onClick={() => toggleRequest(f.id, f.added)}
-      style={{ backgroundColor: "red", color: "white" }}
-    >
-      {t("cancelRequest")}
-    </button>
-  )}
-</div>
-
+                  <div
+                    className={`friend-actions ${
+                      i18n.language === "ar" ? "rtl" : "ltr"
+                    }`}
+                  >
+                    {!f.added ? (
+                      <button
+                        className="button"
+                        onClick={() => toggleRequest(f.id, f.added)}
+                      >
+                        {t("addFriend")}
+                      </button>
+                    ) : (
+                      <button
+                        className="button"
+                        onClick={() => toggleRequest(f.id, f.added)}
+                        style={{ backgroundColor: "red", color: "white" }}
+                      >
+                        {t("cancelRequest")}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))
             )}

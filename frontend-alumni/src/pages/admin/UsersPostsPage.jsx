@@ -293,7 +293,7 @@ const navigate = useNavigate();
     <div className="post-header-info">
     <strong
   style={{ cursor: "pointer" , color:"#484c50" }}
-  onClick={() => navigate(`/helwan-alumni-portal/admin/dashboard/graduateprofile/${post.author.id}`)}
+  onClick={() => navigate(`/admin/dashboard/graduateprofile/${post.author.id}`)}
 >
   {post.author?.name || t('unknown')}
 </strong>
@@ -693,7 +693,7 @@ export default UsersPostsPage;
 //     <div className="post-header-info">
 //     <strong
 //   style={{ cursor: "pointer" , color:"#484c50" }}
-//   onClick={() => navigate(`/helwan-alumni-portal/admin/dashboard/graduateprofile/${post.author.id}`)}
+//   onClick={() => navigate(`/admin/dashboard/graduateprofile/${post.author.id}`)}
 // >
 //   {post.author?.name || t('unknown')}
 // </strong>
@@ -792,7 +792,7 @@ export default UsersPostsPage;
 //  style={{ cursor: ["admin", "staff"].includes(comment.author?.["user-type"]) ? "default" : "pointer", color: "#484c50" }}
 //  onClick={() => {
 //    if (!["admin", "staff"].includes(comment.author?.["user-type"])) {
-//      navigate(`/helwan-alumni-portal/admin/dashboard/graduateprofile/${comment.author?.id}`);
+//      navigate(`/admin/dashboard/graduateprofile/${comment.author?.id}`);
 //    }
 //  }}
 // >

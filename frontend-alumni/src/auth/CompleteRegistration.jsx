@@ -38,7 +38,7 @@ const CompleteRegistration = () => {
         });
 
         // بعد إكمال البيانات، توجيه المستخدم للـ login
-        navigate("/helwan-alumni-portal/login", { replace: true });
+        navigate("/login", { replace: true });
       }
     } catch (err) {
       Swal.fire({

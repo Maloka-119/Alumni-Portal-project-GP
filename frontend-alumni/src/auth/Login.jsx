@@ -112,11 +112,11 @@ useEffect(() => {
     setUser(user);
 
     if (userType === "admin") {
-      navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
+      navigate("/admin/dashboard", { replace: true });
     } else if (userType === "graduate") {
-      navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
+      navigate("/graduate/dashboard", { replace: true });
     } else if (userType === "staff") {
-      navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
+      navigate("/staff/dashboard", { replace: true });
     }
   }
 }, [location.search, navigate, setUser]);
@@ -143,11 +143,11 @@ const handleLogin = async () => {
     });
 
     if (userType === "admin") {
-      navigate("/helwan-alumni-portal/admin/dashboard", { replace: true });
+      navigate("/admin/dashboard", { replace: true });
     } else if (userType === "graduate") {
-      navigate("/helwan-alumni-portal/graduate/dashboard", { replace: true });
+      navigate("/graduate/dashboard", { replace: true });
     } else if (userType === "staff") {
-      navigate("/helwan-alumni-portal/staff/dashboard", { replace: true });
+      navigate("/staff/dashboard", { replace: true });
     }
 
   } catch (err) {
@@ -384,7 +384,7 @@ const handleLinkedInLogin = async () => {
                 {t("forgotPassword")}
               </p>
 
-              <p className="dont-have-account" onClick={() => navigate("/helwan-alumni-portal/register")}>
+              <p className="dont-have-account" onClick={() => navigate("/register")}>
                 {t("dontHaveAccount")}
               </p>
             </form>

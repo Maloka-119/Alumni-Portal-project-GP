@@ -6,12 +6,12 @@ const ProtectedRoute = ({ user, requiredRole, children }) => {
   // console.log("requiredRole:", requiredRole);
 
   if (!user) {
-    return <Navigate to="/helwan-alumni-portal/login" replace />;
+    return <Navigate to="/alumni-portal/login" replace />;
   }
 
   if (requiredRole && user.userType !== requiredRole) {
     console.warn("Role mismatch -> redirecting to login");
-    return <Navigate to="/helwan-alumni-portal/login" replace />;
+    return <Navigate to="/alumni-portal/login" replace />;
   }
 
   return children;

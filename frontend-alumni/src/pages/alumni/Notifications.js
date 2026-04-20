@@ -23,11 +23,14 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
 
   const fetchNotifications = async () => {
     try {
-      const res = await axios.get("http://localhost:5005/alumni-portal/notifications", {
-        headers: getAuthHeaders(),
-      });
+      const res = await axios.get(
+        "http://localhost:5005/alumni-portal/notifications",
+        {
+          headers: getAuthHeaders(),
+        }
+      );
       setNotifications(res.data.data);
-      const unread = res.data.data.filter(n => !n.isRead).length;
+      const unread = res.data.data.filter((n) => !n.isRead).length;
       setUnreadCount && setUnreadCount(unread);
     } catch (err) {
       console.error("Error fetching notifications:", err);
@@ -46,7 +49,7 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
       setNotifications((prev) =>
         prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
       );
-      setUnreadCount && setUnreadCount(prev => Math.max(prev - 1, 0));
+      setUnreadCount && setUnreadCount((prev) => Math.max(prev - 1, 0));
     } catch (err) {
       console.error(err);
     }
@@ -59,7 +62,7 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
         {},
         { headers: getAuthHeaders() }
       );
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
       setUnreadCount && setUnreadCount(0);
     } catch (err) {
       console.error(err);
@@ -72,8 +75,10 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
         `http://localhost:5005/alumni-portal/notifications/${id}`,
         { headers: getAuthHeaders() }
       );
-      setNotifications(prev => prev.filter(n => n.id !== id));
-      const unread = notifications.filter(n => n.id !== id && !n.isRead).length;
+      setNotifications((prev) => prev.filter((n) => n.id !== id));
+      const unread = notifications.filter(
+        (n) => n.id !== id && !n.isRead
+      ).length;
       setUnreadCount && setUnreadCount(unread);
     } catch (err) {
       console.error(err);
@@ -89,7 +94,11 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
     switch (nav.screen) {
       case "chat":
         if (nav.chatId && openChat) {
-          const sender = notification.sender || { id: null, fullName: "Unknown", email: "" };
+          const sender = notification.sender || {
+            id: null,
+            fullName: "Unknown",
+            email: "",
+          };
           openChat(nav.chatId, {
             id: sender.id,
             fullName: sender.fullName,
@@ -99,23 +108,23 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
         break;
 
       case "friend-requests":
-        navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=requests");
+        navigate("/graduate/dashboard/friends?tab=requests");
         break;
 
       case "profile":
       case "accept":
-        navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=friends");
+        navigate("/graduate/dashboard/friends?tab=friends");
         break;
 
       case "user":
-        if (nav.userId) navigate(`/helwan-alumni-portal/graduate/dashboard/profile/${nav.userId}`);
+        if (nav.userId) navigate(`/graduate/dashboard/profile/${nav.userId}`);
         break;
 
       case "post":
         if (nav.postId) {
           const path = nav.commentId
-            ? `/helwan-alumni-portal/graduate/dashboard/posts/${nav.postId}?comment=${nav.commentId}`
-            : `/helwan-alumni-portal/graduate/dashboard/posts/${nav.postId}`;
+            ? `/graduate/dashboard/posts/${nav.postId}?comment=${nav.commentId}`
+            : `/graduate/dashboard/posts/${nav.postId}`;
           navigate(path);
         }
         break;
@@ -132,8 +141,10 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
         { headers: getAuthHeaders() }
       );
       setInvitations(res.data);
-      const unreadInvs = res.data.filter(inv => inv.status === "pending").length;
-      setUnreadCount && setUnreadCount(prev => (prev || 0) + unreadInvs);
+      const unreadInvs = res.data.filter(
+        (inv) => inv.status === "pending"
+      ).length;
+      setUnreadCount && setUnreadCount((prev) => (prev || 0) + unreadInvs);
     } catch (err) {
       console.error("Error fetching invitations:", err);
     }
@@ -152,8 +163,10 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
         {},
         { headers: getAuthHeaders() }
       );
-      setInvitations(prev => prev.filter(inv => inv.invitationId !== invitationId));
-      setUnreadCount && setUnreadCount(prev => Math.max(prev - 1, 0));
+      setInvitations((prev) =>
+        prev.filter((inv) => inv.invitationId !== invitationId)
+      );
+      setUnreadCount && setUnreadCount((prev) => Math.max(prev - 1, 0));
     } catch (err) {
       console.error("Axios accept error:", err);
     }
@@ -166,17 +179,25 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
         `http://localhost:5005/alumni-portal/invitations/${invitationId}`,
         { headers: getAuthHeaders() }
       );
-      setInvitations(prev => prev.filter(inv => inv.invitationId !== invitationId));
-      setUnreadCount && setUnreadCount(prev => Math.max(prev - 1, 0));
+      setInvitations((prev) =>
+        prev.filter((inv) => inv.invitationId !== invitationId)
+      );
+      setUnreadCount && setUnreadCount((prev) => Math.max(prev - 1, 0));
     } catch (err) {
       console.error("Axios reject error:", err);
     }
   };
 
   if (loading)
-    return <div className="notifications-container">{t("Loading notifications...")}</div>;
+    return (
+      <div className="notifications-container">
+        {t("Loading notifications...")}
+      </div>
+    );
 
-  const filteredNotifications = notifications.filter((n) => n.type !== "delete_comment");
+  const filteredNotifications = notifications.filter(
+    (n) => n.type !== "delete_comment"
+  );
 
   return (
     <div className="notifications-container">
@@ -214,7 +235,10 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
                   </span>
                 </div>
 
-                <div className="notif-actions" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="notif-actions"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {!n.isRead && (
                     <button
                       className="delete-btn"
@@ -238,10 +262,15 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
             {invitations.map((inv) => (
               <div
                 key={`inv-${inv.invitationId}`}
-                className={`notification-item ${inv.status === "pending" ? "unread" : ""}`}
+                className={`notification-item ${
+                  inv.status === "pending" ? "unread" : ""
+                }`}
               >
                 <div className="notif-content">
-                  <p>{inv.senderFullName} - {t("invitationMessage")}- {inv.groupName}</p>
+                  <p>
+                    {inv.senderFullName} - {t("invitationMessage")}-{" "}
+                    {inv.groupName}
+                  </p>
                   <span className="time">
                     {new Intl.DateTimeFormat(
                       i18n.language === "ar" ? "ar-EG" : "en-US",
@@ -257,7 +286,10 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
                   </span>
                 </div>
 
-                <div className="notif-actions" onClick={(e) => e.stopPropagation()}>
+                <div
+                  className="notif-actions"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <button
                     onClick={() => acceptInvitation(inv.invitationId)}
                     className="accept-invv"
@@ -273,7 +305,6 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
                 </div>
               </div>
             ))}
-
           </>
         )}
       </div>
@@ -282,7 +313,6 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
 };
 
 export default NotificationsPage;
-
 
 // import React, { useEffect, useState } from "react";
 // import { useTranslation } from "react-i18next";
@@ -378,23 +408,23 @@ export default NotificationsPage;
 //         break;
 
 //       case "friend-requests":
-//         navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=requests");
+//         navigate("/graduate/dashboard/friends?tab=requests");
 //         break;
 
 //       case "profile":
 //       case "accept":
-//         navigate("/helwan-alumni-portal/graduate/dashboard/friends?tab=friends");
+//         navigate("/graduate/dashboard/friends?tab=friends");
 //         break;
 
 //       case "user":
-//         if (nav.userId) navigate(`/helwan-alumni-portal/graduate/dashboard/profile/${nav.userId}`);
+//         if (nav.userId) navigate(`/graduate/dashboard/profile/${nav.userId}`);
 //         break;
 
 //       case "post":
 //         if (nav.postId) {
 //           const path = nav.commentId
-//             ? `/helwan-alumni-portal/graduate/dashboard/posts/${nav.postId}?comment=${nav.commentId}`
-//             : `/helwan-alumni-portal/graduate/dashboard/posts/${nav.postId}`;
+//             ? `/graduate/dashboard/posts/${nav.postId}?comment=${nav.commentId}`
+//             : `/graduate/dashboard/posts/${nav.postId}`;
 //           navigate(path);
 //         }
 //         break;
@@ -475,4 +505,3 @@ export default NotificationsPage;
 // };
 
 // export default NotificationsPage;
-

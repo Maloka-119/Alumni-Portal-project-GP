@@ -55,7 +55,7 @@ const toggleLanguage = () => {
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("currentUser");
-    navigate("/helwan-alumni-portal/login");
+    navigate("/login");
   };
 
   if (loading) return <div className="dashboard-root"><p>{t("loadingProfile")}</p></div>;
@@ -72,7 +72,7 @@ const toggleLanguage = () => {
         <div key={module.path} className="sidebar-module">
           <button
             className={`sidebar-link ${activePath === module.path ? "active" : ""}`}
-            onClick={() => navigate(`/helwan-alumni-portal/staff/dashboard/${module.path}`, { replace: true })}
+            onClick={() => navigate(`/staff/dashboard/${module.path}`, { replace: true })}
           >
             {module.icon && <span className="sidebar-icon">{module.icon}</span>}
             <span>{t(module.nameKey)}</span>
@@ -85,7 +85,7 @@ const toggleLanguage = () => {
               <button
                 key={child.path}
                 className={`sidebar-link child-link ${activePath === child.path ? "active" : ""}`}
-                onClick={() => navigate(`/helwan-alumni-portal/staff/dashboard/${module.path}/${child.path}`, { replace: true })}
+                onClick={() => navigate(`/staff/dashboard/${module.path}/${child.path}`, { replace: true })}
               >
                 {child.icon && <span className="sidebar-icon">{child.icon}</span>}
                 <span>{t(child.nameKey)}</span>

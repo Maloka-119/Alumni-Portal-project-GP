@@ -322,11 +322,11 @@ const PostCard = ({ post, onEdit, onDelete, highlightCommentId }) => {
   
     const authorName = author.fullName || author["full-name"] || author.name;
     if (authorName === "Alumni Portal - Helwan University") {
-      navigate(`/helwan-alumni-portal/graduate/dashboard/opportunities`);
+      navigate(`/graduate/dashboard/opportunities`);
     } else {
       const profileId = author.id;
       if (profileId) {
-        navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${profileId}`);
+        navigate(`/graduate/dashboard/friends/${profileId}`);
       } else {
         console.warn("No valid ID for navigation", author);
       }

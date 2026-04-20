@@ -138,7 +138,7 @@ exports.loginWithGoogle = (req, res, next) => {
   // Validate National ID if provided
   if (nationalId && !validateNationalId(nationalId)) {
     return res.redirect(
-      `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent(
+      `http://localhost:3000/login?error=${encodeURIComponent(
         "Invalid National ID"
       )}`
     );
@@ -169,7 +169,7 @@ exports.googleCallback = (req, res, next) => {
 
       if (err || !googleUser) {
         return res.redirect(
-          `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent(
+          `http://localhost:3000/login?error=${encodeURIComponent(
             "Google authentication failed"
           )}`
         );
@@ -199,7 +199,7 @@ exports.googleCallback = (req, res, next) => {
               (await Staff.findOne({ where: { staff_id: user.id } }));
             if (staffRecord && staffRecord["status-to-login"] !== "active") {
               return res.redirect(
-                "http://localhost:3000/helwan-alumni-portal/login?error=" +
+                "http://localhost:3000/login?error=" +
                   encodeURIComponent(
                     "Your account is not activated yet. Please wait for admin approval."
                   )
@@ -217,7 +217,7 @@ exports.googleCallback = (req, res, next) => {
               graduateRecord["status-to-login"] !== "accepted"
             ) {
               return res.redirect(
-                "http://localhost:3000/helwan-alumni-portal/login?error=" +
+                "http://localhost:3000/login?error=" +
                   encodeURIComponent(
                     "Your account is under review. Please wait for admin approval to access the dashboard."
                   )
@@ -227,9 +227,7 @@ exports.googleCallback = (req, res, next) => {
 
           // User is fully authorized → generate token and redirect
           const token = generateToken(user.id);
-          const redirectUrl = new URL(
-            "http://localhost:3000/helwan-alumni-portal/login"
-          );
+          const redirectUrl = new URL("http://localhost:3000/login");
           redirectUrl.searchParams.set("token", token);
           redirectUrl.searchParams.set("id", user.id);
           redirectUrl.searchParams.set("email", user.email);
@@ -253,9 +251,7 @@ exports.googleCallback = (req, res, next) => {
             profile_picture_url: googleUser.profile_picture_url,
           };
           req.session.save(() => {
-            return res.redirect(
-              "http://localhost:3000/helwan-alumni-portal/login?require_nid=true"
-            );
+            return res.redirect("http://localhost:3000/login?require_nid=true");
           });
           return;
         }
@@ -366,7 +362,7 @@ exports.googleCallback = (req, res, next) => {
           );
 
           return res.redirect(
-            "http://localhost:3000/helwan-alumni-portal/login?success=" +
+            "http://localhost:3000/login?success=" +
               encodeURIComponent(
                 "Staff account created successfully. Your account is pending admin activation."
               )
@@ -379,9 +375,7 @@ exports.googleCallback = (req, res, next) => {
         if (statusToLogin === "accepted") {
           // Auto-login graduates confirmed by API
           const token = generateToken(newUser.id);
-          const redirectUrl = new URL(
-            "http://localhost:3000/helwan-alumni-portal/login"
-          );
+          const redirectUrl = new URL("http://localhost:3000/login");
           redirectUrl.searchParams.set("token", token);
           redirectUrl.searchParams.set("id", newUser.id);
           redirectUrl.searchParams.set("email", newUser.email);
@@ -400,7 +394,7 @@ exports.googleCallback = (req, res, next) => {
           req.session.save();
 
           return res.redirect(
-            "http://localhost:3000/helwan-alumni-portal/login?success=" +
+            "http://localhost:3000/login?success=" +
               encodeURIComponent(
                 "Account created successfully. Your graduation data is under review. You will be able to log in once approved."
               )
@@ -409,7 +403,7 @@ exports.googleCallback = (req, res, next) => {
       } catch (error) {
         console.error("Google OAuth Error:", error);
         return res.redirect(
-          `http://localhost:3000/helwan-alumni-portal/login?error=${encodeURIComponent(
+          `http://localhost:3000/login?error=${encodeURIComponent(
             "Registration failed. Please try again later."
           )}`
         );

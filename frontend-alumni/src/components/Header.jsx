@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import UniLogo from './logo-white-deskt-min.png';
 import './Header.css';
-import { Globe, LogIn,Home ,DoorOpen} from 'lucide-react';
+import { Globe,Home } from 'lucide-react';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import NewLogo from '../capital-uni-logo.png'
+import {CAPITAL_UNI_LOGO} from "../constants/image-pathes.constants"
 
 const Header = () => {
   const navigate = useNavigate();
@@ -26,7 +25,8 @@ const Header = () => {
       <div className="header-left">
         {/* <img src={UniLogo} alt="University Logo" className="logoo-placeholder" />
         <h1 className="portal-name">Helwan ALUMNI Portal</h1> */}
-        <img src={NewLogo} alt="University Logo" className="logoo-placeholder" />
+        
+        <img src={CAPITAL_UNI_LOGO} alt="University Logo" className="logoo-placeholder" />
         <h1 className="portal-name">{t("Capital Alumni Portal")}</h1>
       </div>
       <div className="header-right">
@@ -37,7 +37,7 @@ const Header = () => {
         <button
   className="login-btn"
   title={t("move_to_landing")}
-  onClick={() => navigate("/helwan-alumni-portal")}
+  onClick={() => navigate("/")}
 >
   {/* <DoorOpen size={20} /> */}
   <Home size={20} />

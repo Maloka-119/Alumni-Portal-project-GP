@@ -4,6 +4,25 @@ const router = express.Router();
 const staffController = require("../controllers/staff.Controller");
 const authMiddleware = require("../middleware/authMiddleware");
 
+// POST /alumni-portal/staff/create
+// POST /alumni-portal/staff/create
+router.post(
+  "/create",
+  authMiddleware.protect,
+  (req, res, next) => {
+    // التحقق من أن المستخدم Admin
+    if (req.user && req.user["user-type"] === "admin") {
+      next();
+    } else {
+      return res.status(403).json({
+        status: "error",
+        message: "Access denied. Admin only.",
+      });
+    }
+  },
+  staffController.createStaff
+);
+
 // GET /alumni-portal/staff/profile
 router.get("/profile", authMiddleware.protect, staffController.getStaffProfile);
 

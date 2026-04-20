@@ -13,6 +13,8 @@ const {
   getCollegeNameByCode,
 } = require("../services/facultiesService");
 const { securityLogger } = require("../utils/logger");
+// أضف هذا السطر 👇
+const logger = require("../utils/logger");  // هذا هو السطر المهم!
 const {
   validateEmail,
   validatePassword,
@@ -143,9 +145,7 @@ const registerUser = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: "All fields are required" });
   }
   if (!validateEmail(email)) {
-    return res
-      .status(400)
-      .json({ error: "Please enter a valid email address" });
+    return res.status(400).json({ error: "Please enter a valid email address" });
   }
   if (!validatePassword(password)) {
     return res.status(400).json({
@@ -160,7 +160,7 @@ const registerUser = asyncHandler(async (req, res) => {
     return res.status(400).json({ error: "Invalid phone number" });
   }
 
-  // --- Check for duplicates ---
+  // --- Check duplicates ---
   if (await User.findOne({ where: { email } })) {
     return res.status(409).json({ error: "Email already registered" });
   }
@@ -173,29 +173,32 @@ const registerUser = asyncHandler(async (req, res) => {
     }
   }
 
-  // --- Create user ---
+  // --- Prepare ---
   const birthDate = extractDOBFromEgyptianNID(nationalId);
   const hashedPassword = await bcrypt.hash(password, 10);
   const encryptedNID = aes.encryptNationalId(nationalId);
 
-  let userType = "graduate",
-    statusToLogin = "pending",
-    externalData = null;
+  let userType = "graduate";
+  let statusToLogin = "pending"; // default
+  let externalData = null;
 
+  // --- Staff check ---
   try {
     const staffResp = await axios.get(
-      `${process.env.STAFF_API_URL}?nationalId=${encodeURIComponent(
-        nationalId
-      )}`,
+      `${process.env.STAFF_API_URL}?nationalId=${encodeURIComponent(nationalId)}`,
       { timeout: 8000 }
     );
+
     if (staffResp.data?.department) {
       userType = "staff";
-      statusToLogin = "inactive";
+      statusToLogin = "inactive"; // staff محتاج تفعيل الأدمن
       externalData = staffResp.data;
     }
-  } catch {}
+  } catch (e) {
+    console.log("Staff API check failed:", e.message);
+  }
 
+  // --- Graduate check ---
   if (userType === "graduate") {
     try {
       const gradResp = await axios.get(
@@ -204,13 +207,23 @@ const registerUser = asyncHandler(async (req, res) => {
         )}`,
         { timeout: 8000 }
       );
+
       if (gradResp.data?.faculty) {
+        // موجود في system2 → accepted
         statusToLogin = "accepted";
         externalData = gradResp.data;
+      } else {
+        // مش موجود → نعتبره accepted تلقائياً
+        statusToLogin = "accepted";
       }
-    } catch {}
+    } catch (e) {
+      console.log("Graduate API check failed:", e.message);
+      // لو API رجع error → نعتبر المستخدم accepted
+      statusToLogin = "accepted";
+    }
   }
 
+  // --- Create user ---
   const user = await User.create({
     "first-name": validator.escape(firstName),
     "last-name": validator.escape(lastName),
@@ -222,9 +235,11 @@ const registerUser = asyncHandler(async (req, res) => {
     "national-id": encryptedNID,
   });
 
+  // --- Create role record ---
   if (userType === "graduate") {
     const facultyName = externalData?.faculty || null;
     const facultyCode = facultyName ? normalizeCollegeName(facultyName) : null;
+
     await Graduate.create({
       graduate_id: user.id,
       faculty_code: facultyCode,
@@ -232,44 +247,46 @@ const registerUser = asyncHandler(async (req, res) => {
       "status-to-login": statusToLogin,
     });
 
-    // Auto Group Invitation for new graduates
-    (async () => {
-      try {
-        // Short delay to ensure database persistence
-        await new Promise((resolve) => setTimeout(resolve, 500));
-
-        // Send automatic group invitation
-        const invitationSent = await sendAutoGroupInvitation(user.id);
-
-        if (invitationSent) {
-          console.log(
-            `✅ Auto invitation sent successfully for user ${user.id}`
-          );
-        } else {
-          console.warn(`⚠️ Failed to send auto invitation for user ${user.id}`);
+    // Auto invite only if accepted
+    if (statusToLogin === "accepted") {
+      setTimeout(async () => {
+        try {
+          await sendAutoGroupInvitation(user.id);
+        } catch (e) {
+          console.log("Auto invite error:", e.message);
         }
-      } catch (error) {
-        console.error(
-          `❌ Error in auto invitation for user ${user.id}:`,
-          error.message
-        );
-      }
-    })();
+      }, 500);
+    }
   }
 
   if (userType === "staff") {
-    await Staff.create({ staff_id: user.id, "status-to-login": statusToLogin });
+    await Staff.create({
+      staff_id: user.id,
+      "status-to-login": statusToLogin,
+    });
   }
 
   securityLogger.registration(req.ip, email, userType, statusToLogin);
+
+  // --- Response consistent with login ---
   res.status(201).json({
     id: user.id,
     email: user.email,
     userType,
-    token: generateToken(user.id),
+    status: statusToLogin,
+    message:
+      statusToLogin === "accepted"
+        ? "Registration successful! You can login now."
+        : userType === "graduate"
+        ? "Registration successful! Please wait for admin approval."
+        : "Staff registration submitted. Contact admin for activation.",
   });
 });
-
+/**
+ * Authenticate user and generate JWT token
+ * @route POST /api/users/login
+ * @access Public
+ */
 /**
  * Authenticate user and generate JWT token
  * @route POST /api/users/login
@@ -293,48 +310,294 @@ const loginUser = asyncHandler(async (req, res) => {
     return res.status(401).json({ error: "Invalid email or password" });
   }
 
-  // Check if user is OAuth-only (no password set)
+  // OAuth-only check
   if (!user["hashed-password"]) {
     const authProvider = user["auth_provider"] || "OAuth";
     return res.status(401).json({
-      error: `This account was created using ${authProvider} authentication. Please use the "${authProvider} Login" button to sign in.`,
+      error: `This account uses ${authProvider} login`,
       requiresOAuth: true,
-      authProvider: authProvider,
+      authProvider,
     });
   }
 
-  // Verify password for regular users
-  if (!(await bcrypt.compare(password, user["hashed-password"]))) {
+  // Password check
+  const validPass = await bcrypt.compare(password, user["hashed-password"]);
+  if (!validPass) {
     return res.status(401).json({ error: "Invalid email or password" });
   }
 
-  // Check status for staff
-  if (user["user-type"] === "staff") {
-    const staff = await Staff.findOne({ where: { staff_id: user.id } });
-    if (!staff || staff["status-to-login"] !== "active") {
-      return res.status(403).json({ error: "Staff account not active" });
+  // ============================================
+  // 🔄 SYNC GRADUATE DATA FROM EXTERNAL SYSTEM ON LOGIN
+  // ============================================
+  console.log("\n🔄 CHECKING GRADUATE DATA ON LOGIN:");
+  console.log(`   - User ID: ${user.id}`);
+  console.log(`   - User Type: ${user["user-type"]}`);
+  console.log(`   - Email: ${user.email}`);
+
+  let dataUpdated = false; // متغير لنتتبع إذا حصل تحديث للبيانات
+  let graduate = null;
+
+  if (user["user-type"] === "graduate") {
+    // جلب الـ graduate record
+    graduate = await Graduate.findOne({
+      where: { graduate_id: user.id },
+    });
+
+    if (graduate) {
+      console.log("   - ✅ Graduate record found");
+      console.log(
+        `      - Current faculty_code: ${graduate.faculty_code || "missing"}`
+      );
+      console.log(
+        `      - Current graduation-year: ${
+          graduate["graduation-year"] || "missing"
+        }`
+      );
+      console.log(`      - Current skills: ${graduate.skills || "missing"}`);
+
+      // لو الفاكولتي أو سنة التخرج ناقصة
+      if (!graduate.faculty_code || !graduate["graduation-year"]) {
+        console.log(
+          "   - ⚠️ Missing faculty or graduation year, fetching from external system..."
+        );
+
+        // فك تشفير الرقم القومي
+        let nationalId = null;
+        if (user["national-id"]) {
+          // محاولة فك التشفير
+          const decrypted = aes.decryptNationalId(user["national-id"]);
+          if (decrypted) {
+            nationalId = decrypted;
+            console.log(
+              "   - ✅ Decrypted national ID:",
+              nationalId.substring(0, 6) + "****"
+            );
+          } else {
+            // لو فك التشفير فشل، جرب استخدام القيمة كـ plain text لو كانت 14 رقم
+            const rawNid = String(user["national-id"]).trim();
+            if (/^\d{14}$/.test(rawNid)) {
+              nationalId = rawNid;
+              console.log(
+                "   - Using raw national ID (unencrypted):",
+                nationalId.substring(0, 6) + "****"
+              );
+            } else {
+              console.log(
+                "   - ❌ Could not decrypt national ID and raw value is not valid"
+              );
+            }
+          }
+        } else {
+          console.log("   - ❌ No national ID found for user");
+        }
+
+        if (nationalId) {
+          try {
+            // ✅ التعديل هنا: غيرنا الرابط
+            const externalApiUrl = `http://localhost:5155/api/details/${nationalId}`;
+            console.log(`   - Calling external API: ${externalApiUrl}`);
+
+            const externalResponse = await axios.get(externalApiUrl, {
+              timeout: 5000,
+              headers: { Accept: "application/json" },
+            });
+
+            if (externalResponse.data) {
+              const externalData = externalResponse.data;
+              console.log("   - ✅ External data received:");
+              console.log(`      - Full Name: ${externalData.fullName}`);
+              console.log(`      - Faculty: ${externalData.faculty}`);
+              console.log(`      - Department: ${externalData.department}`);
+              console.log(
+                `      - Graduation Year: ${externalData.graduationYear}`
+              );
+
+              let updated = false;
+
+              // تحديث faculty_code
+              if (externalData.faculty && !graduate.faculty_code) {
+                const facultyCode = normalizeCollegeName(externalData.faculty);
+                if (facultyCode) {
+                  graduate.faculty_code = facultyCode;
+                  console.log(
+                    `      - ✅ Updated faculty_code to: ${facultyCode}`
+                  );
+                  updated = true;
+                } else {
+                  console.log(
+                    `      - ⚠️ Could not normalize faculty: ${externalData.faculty}`
+                  );
+                  // If normalization fails, store the original
+                  graduate.faculty_code = externalData.faculty;
+                  updated = true;
+                }
+              }
+
+              // تحديث سنة التخرج
+              if (externalData.graduationYear && !graduate["graduation-year"]) {
+                const year = parseInt(externalData.graduationYear);
+                if (!isNaN(year) && year > 1900 && year < 2100) {
+                  graduate["graduation-year"] = year;
+                  console.log(`      - ✅ Updated graduation year to: ${year}`);
+                  updated = true;
+                } else {
+                  console.log(
+                    `      - ⚠️ Invalid graduation year: ${externalData.graduationYear}`
+                  );
+                }
+              }
+
+              // تحديث skills من department لو skills فاضية
+              if (externalData.department && !graduate.skills) {
+                graduate.skills = externalData.department;
+                console.log(
+                  `      - ✅ Updated skills/department to: ${externalData.department}`
+                );
+                updated = true;
+              }
+
+              if (updated) {
+                await graduate.save();
+                console.log(
+                  "   - ✅ Graduate data synced and saved successfully"
+                );
+                dataUpdated = true; // ✅ تم تحديث البيانات
+              } else {
+                console.log("   - No updates needed");
+              }
+            }
+          } catch (error) {
+            console.log("   - ❌ Failed to fetch external data:");
+            console.log(`      - Error message: ${error.message}`);
+            console.log(`      - Error code: ${error.code || "N/A"}`);
+
+            if (error.response) {
+              console.log(`      - Response status: ${error.response.status}`);
+              console.log(`      - Response data:`, error.response.data);
+            } else if (error.code === "ECONNREFUSED") {
+              console.log(
+                "      - ⚠️ External system (port 5155) is not running or refused connection"
+              );
+            } else if (error.code === "ETIMEDOUT") {
+              console.log("      - ⚠️ External system request timed out");
+            }
+
+            console.log("⚠️ Failed to sync graduate data on login:", {
+              userId: user.id,
+              email: user.email,
+              error: error.message,
+              code: error.code,
+              ip: req.ip,
+            });
+          }
+        } else {
+          console.log(
+            "   - ⚠️ No valid national ID available for external sync"
+          );
+        }
+      } else {
+        console.log("   - ✅ Graduate data already complete");
+      }
+    } else {
+      console.log("   - ❌ Graduate record not found for user ID:", user.id);
+    }
+  } else {
+    console.log(
+      `   - User is not a graduate (type: ${user["user-type"]}), skipping sync`
+    );
+  }
+
+  // ============================================
+  // ✅ DETERMINE USER STATUS
+  // ============================================
+  let status = null;
+
+  if (user["user-type"] === "graduate") {
+    const grad = await Graduate.findOne({ where: { graduate_id: user.id } });
+
+    if (!grad) {
+      return res.status(403).json({ error: "Graduate record not found" });
+    }
+
+    status = grad["status-to-login"];
+
+    if (status !== "accepted") {
+      return res.status(403).json({
+        error:
+          status === "pending"
+            ? "Your account is pending admin approval"
+            : "Your account is not active",
+        status,
+      });
     }
   }
 
-  // Check status for graduate
-  if (user["user-type"] === "graduate") {
-    const grad = await Graduate.findOne({ where: { graduate_id: user.id } });
-    if (!grad || grad["status-to-login"] !== "accepted") {
-      return res
-        .status(403)
-        .json({ error: "Graduate account pending approval" });
+  if (user["user-type"] === "staff") {
+    const staff = await Staff.findOne({ where: { staff_id: user.id } });
+
+    if (!staff) {
+      return res.status(403).json({ error: "Staff record not found" });
+    }
+
+    status = staff["status-to-login"];
+
+    if (status !== "active") {
+      return res.status(403).json({
+        error: "Staff account not active",
+        status,
+      });
+    }
+  }
+
+  // ============================================
+  // 📨 AUTO INVITATION AFTER LOGIN (إذا تم تحديث البيانات)
+  // ============================================
+  // نقوم بإرسال الدعوة قبل إرسال الـ response
+  if (user["user-type"] === "graduate" && dataUpdated && graduate) {
+    console.log("\n📨 Sending auto invitation during login (data was updated)...");
+    
+    try {
+      // استدعاء دالة الإرسال الآلي مباشرة بدون setTimeout
+      const { sendAutoGroupInvitation } = require("./invitation.controller");
+      const invitationSent = await sendAutoGroupInvitation(user.id);
+      
+      if (invitationSent) {
+        console.log("   - ✅ Auto invitation sent successfully during login");
+        
+        // نجيب أحدث بيانات للـ graduate بعد الدعوة
+        const updatedGrad = await Graduate.findOne({ 
+          where: { graduate_id: user.id } 
+        });
+        
+        // لو عايز تتأكد إن النوتيفيكشن اتبعتت
+        console.log(`   - 📬 Notification should appear now for user ${user.id}`);
+      } else {
+        console.log("   - ⚠️ Auto invitation not sent (already exists or no group)");
+      }
+    } catch (error) {
+      console.log("   - ❌ Auto invitation error during login:", error.message);
+      // لا نريد إيقاف عملية اللوجين بسبب هذا
     }
   }
 
   securityLogger.successfulLogin(req.ip, email, user["user-type"]);
+
+  console.log("✅ Login successful for user:", user.email);
+  console.log(`   - User Type: ${user["user-type"]}`);
+  console.log(`   - Status: ${status}`);
+  if (user["user-type"] === "graduate" && dataUpdated) {
+    console.log(`   - 📬 Notification sent with login response`);
+  }
+
+  // إرسال الـ response بعد انتهاء كل العمليات
   res.json({
     id: user.id,
     email: user.email,
     userType: user["user-type"],
+    status,
     token: generateToken(user.id),
   });
 });
-
 /**
  * Send password reset verification code to email
  * @route POST /api/users/forgot-password

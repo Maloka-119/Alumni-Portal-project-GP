@@ -447,7 +447,7 @@
 //   style={{ cursor: ["admin", "staff"].includes(comment.author?.["user-type"]) ? "default" : "pointer", color: "#484c50" }}
 //   onClick={() => {
 //     if (!["admin", "staff"].includes(comment.author?.["user-type"])) {
-//       navigate(`/helwan-alumni-portal/admin/dashboard/graduateprofile/${comment.author?.id}`);
+//       navigate(`/admin/dashboard/graduateprofile/${comment.author?.id}`);
 //     }
 //   }}
 // >

@@ -206,7 +206,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         timestamp: new Date().toISOString(),
       });
       return res.redirect(
-        "http://localhost:3000/helwan-alumni-portal/login?error=" +
+        "http://localhost:3000/login?error=" +
           encodeURIComponent("Invalid state parameter")
       );
     }
@@ -234,7 +234,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         timestamp: new Date().toISOString(),
       });
       return res.redirect(
-        "http://localhost:3000/helwan-alumni-portal/login?error=" +
+        "http://localhost:3000/login?error=" +
           encodeURIComponent("Authorization code not provided")
       );
     }
@@ -290,8 +290,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         tokenError.message ||
         "Failed to exchange authorization code for access token";
       return res.redirect(
-        "http://localhost:3000/helwan-alumni-portal/login?error=" +
-          encodeURIComponent(errorMessage)
+        "http://localhost:3000/login?error=" + encodeURIComponent(errorMessage)
       );
     }
 
@@ -373,8 +372,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         userInfoError.message ||
         "Failed to fetch user profile from LinkedIn";
       return res.redirect(
-        "http://localhost:3000/helwan-alumni-portal/login?error=" +
-          encodeURIComponent(errorMessage)
+        "http://localhost:3000/login?error=" + encodeURIComponent(errorMessage)
       );
     }
 
@@ -455,7 +453,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         timestamp: new Date().toISOString(),
       });
       return res.redirect(
-        "http://localhost:3000/helwan-alumni-portal/login?error=" +
+        "http://localhost:3000/login?error=" +
           encodeURIComponent(
             "Could not retrieve email from LinkedIn. Please ensure your LinkedIn account has a verified email address."
           )
@@ -528,7 +526,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
             timestamp: new Date().toISOString(),
           });
           return res.redirect(
-            "http://localhost:3000/helwan-alumni-portal/login?error=" +
+            "http://localhost:3000/login?error=" +
               encodeURIComponent(
                 "This LinkedIn account is already registered with a different National ID. Please log out of LinkedIn and use a different LinkedIn account, or use the correct National ID."
               )
@@ -558,7 +556,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
           user.Staff || (await Staff.findOne({ where: { staff_id: user.id } }));
         if (staffRecord && staffRecord["status-to-login"] !== "active") {
           return res.redirect(
-            "http://localhost:3000/helwan-alumni-portal/login?error=" +
+            "http://localhost:3000/login?error=" +
               encodeURIComponent(
                 "Your account is not activated yet. Please wait for admin approval."
               )
@@ -576,7 +574,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
           graduateRecord["status-to-login"] !== "accepted"
         ) {
           return res.redirect(
-            "http://localhost:3000/helwan-alumni-portal/login?error=" +
+            "http://localhost:3000/login?error=" +
               encodeURIComponent(
                 "Your account is under review. Please wait for admin approval to access the dashboard."
               )
@@ -586,9 +584,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
 
       // User is fully allowed → login
       const token = generateToken(user.id);
-      const redirectUrl = new URL(
-        "http://localhost:3000/helwan-alumni-portal/login"
-      );
+      const redirectUrl = new URL("http://localhost:3000/login");
       redirectUrl.searchParams.set("token", token);
       redirectUrl.searchParams.set("id", user.id);
       redirectUrl.searchParams.set("email", user.email);
@@ -652,7 +648,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
             timestamp: new Date().toISOString(),
           });
           return res.redirect(
-            "http://localhost:3000/helwan-alumni-portal/login?require_nid=true&provider=linkedin"
+            "http://localhost:3000/login?require_nid=true&provider=linkedin"
           );
         });
       }
@@ -791,7 +787,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       });
 
       return res.redirect(
-        "http://localhost:3000/helwan-alumni-portal/login?success=" +
+        "http://localhost:3000/login?success=" +
           encodeURIComponent(
             "Staff account created successfully. Your account is pending admin activation."
           )
@@ -804,9 +800,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     if (statusToLogin === "accepted") {
       // Only auto-login if confirmed graduate from API
       const token = generateToken(newUser.id);
-      const redirectUrl = new URL(
-        "http://localhost:3000/helwan-alumni-portal/login"
-      );
+      const redirectUrl = new URL("http://localhost:3000/login");
       redirectUrl.searchParams.set("token", token);
       redirectUrl.searchParams.set("id", newUser.id);
       redirectUrl.searchParams.set("email", newUser.email);
@@ -846,7 +840,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       });
 
       return res.redirect(
-        "http://localhost:3000/helwan-alumni-portal/login?success=" +
+        "http://localhost:3000/login?success=" +
           encodeURIComponent(
             "Account created successfully. Your graduation data is under review. You will be able to log in once approved."
           )
@@ -866,8 +860,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     // Redirect to frontend with error message
     const errorMessage = error.message || "LinkedIn authentication failed";
     return res.redirect(
-      "http://localhost:3000/helwan-alumni-portal/login?error=" +
-        encodeURIComponent(errorMessage)
+      "http://localhost:3000/login?error=" + encodeURIComponent(errorMessage)
     );
   }
 });

@@ -31,7 +31,7 @@
 // import PostSingle from './PostSingle.jsx';
 // import ChatBox from './ChatBox.jsx';
 
-// const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
+// const BASE_PATH = "/graduate/dashboard";
 
 // const sidebarSections = (darkMode, t) => [
 //   {
@@ -118,7 +118,7 @@
 //       } finally {
 //         localStorage.removeItem("user");
 //         localStorage.removeItem("token");
-//         navigate('/helwan-alumni-portal/login', { replace: true });
+//         navigate('/login', { replace: true });
 //       }
 //     }
 //   };
@@ -306,7 +306,7 @@ import Services from './Services.jsx';
 import DocumentRequest from './DocumentRequest.jsx';
 import MyRequests from './MyRequests.jsx';
 
-const BASE_PATH = "/helwan-alumni-portal/graduate/dashboard";
+const BASE_PATH = "/graduate/dashboard";
 
 
 
@@ -467,7 +467,7 @@ const Dashboard = ({ setUser }) => {
       } finally {
         localStorage.removeItem("user");
         localStorage.removeItem("token");
-        navigate('/helwan-alumni-portal/login', { replace: true });
+        navigate('/login', { replace: true });
       }
     }
   };

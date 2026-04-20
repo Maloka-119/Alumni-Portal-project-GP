@@ -14,10 +14,7 @@ import "./LandingPage.css";
 import Unibackground from "./Unibackgroundcr.jpeg";
 import TypingText from "../../components/TypingText";
 import API from "../../services/api";
-import HelwanLogo from "./logo-white-deskt-min.png";
-import NewLogo from '../../capital-uni-logo.png'
-import NewBg from '../../Newbg.jpg'
-
+import {CAPITAL_UNI_LOGO} from "../../constants/image-pathes.constants"
 export default function LandingPage() {
   const navigate = useNavigate();
   const footerRef = useRef(null);
@@ -81,7 +78,7 @@ export default function LandingPage() {
       
     >
       {/* <img src={HelwanLogo} alt="جامعة حلوان" className="hero-logo" /> */}
-      <img src={NewLogo} alt="جامعة العاصمه" className="hero-logo" />
+      <img src={CAPITAL_UNI_LOGO} alt="جامعة العاصمه" className="hero-logo" />
 
       <button onClick={scrollToFooter} className="contactt-btn">
         Contact Us / اتصل بنا
@@ -117,13 +114,13 @@ export default function LandingPage() {
 
             <nav className="nav-links">
               <button
-                onClick={() => navigate("/helwan-alumni-portal/register")}
+                onClick={() => navigate("/register")}
                 className="btn-primary"
               >
                 Sign Up / تسجيل
               </button>
               <button
-                onClick={() => navigate("/helwan-alumni-portal/login")}
+                onClick={() => navigate("/login")}
                 className="btn-outline"
               >
                 Sign In / تسجيل الدخول
@@ -268,13 +265,13 @@ export default function LandingPage() {
           </p>
           <div className="cta-buttons">
             <button
-              onClick={() => navigate("/helwan-alumni-portal/login")}
+              onClick={() => navigate("/login")}
               className="btn-outline"
             >
               Have an account / لدى حساب
             </button>
             <button
-              onClick={() => navigate("/helwan-alumni-portal/register")}
+              onClick={() => navigate("/register")}
               className="btn-primary"
             >
               Join us / انضم لنا

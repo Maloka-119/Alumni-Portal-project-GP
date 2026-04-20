@@ -175,69 +175,104 @@ const [chatId, setChatId] = useState(null);
 
 
   // --- Fetch Profile ---
-  const fetchProfile = async () => {
-    setLoading(true);
-    try {
-      const res = await API.get(`/graduates/profile/${userId}`);
-      if (res.data.status === "success" && res.data.data) {
-        const data = res.data.data;
-        const skills = Array.isArray(data.skills) ? data.skills : JSON.parse(data.skills || "[]");
-
-        const formattedPosts = (data.posts || []).map((p) => ({
-          ...p,
-          id: p.post_id,
-          content: p.content,
-          category: p.category,
-          date: p["created-at"],
-          author: {
-            name:
-              p.author?.["user-type"] === "admin" || p.author?.["user-type"] === "staff"
-                ? "Alumni Portal - Helwan University"
-                : p.author?.["full-name"] || "Unknown",
-            photo:
-              p.author?.["user-type"] === "admin" || p.author?.["user-type"] === "staff"
-                ? AdminPostsImg
-                : p.author?.image || PROFILE,
-          },
-          likes: Array.isArray(p.likes) ? p.likes : [],
-          likesCount: Number(p.likes_count) || 0,
-          likedByCurrentUser: !!p.like_id,
-          comments: Array.isArray(p.comments)
-            ? p.comments.map((c) => {
-                const isUni =
-                  c.author?.["full-name"]?.includes("Alumni Portal - Helwan University") ||
-                  c.author?.["user-type"] === "admin" ||
-                  c.author?.["user-type"] === "staff";
-
-                return {
-                  ...c,
-                  author: {
-                    ...c.author,
-                    name: isUni ? "Alumni Portal - Helwan University" : c.author?.["full-name"] || "Unknown",
-                    image: isUni ? AdminPostsImg : c.author?.image || PROFILE,
-                  },
-                };
-              })
-            : [],
-          images: Array.isArray(p.images) ? p.images : [],
-          shares: Number(p.shares) || 0,
-        }));
-
-        setFormData({
-          ...data,
-          skills,
-          posts: formattedPosts,
-        });
+  // --- Fetch Profile ---
+const fetchProfile = async () => {
+  setLoading(true);
+  try {
+    console.log('🔍 Fetching profile for userId:', userId);
+    const res = await API.get(`/graduates/profile/${userId}`);
+    console.log('✅ API Response:', res.data);
+    
+    if (res.data.status === "success" && res.data.data) {
+      const data = res.data.data;
+      
+      // ✅ معالجة skills بشكل آمن (مش هيعمل JSON.parse لو مش array)
+      let skills = [];
+      if (Array.isArray(data.skills)) {
+        skills = data.skills;
+        console.log('✅ Skills is array:', skills);
+      } else if (typeof data.skills === 'string') {
+        console.log('📝 Skills is string:', data.skills);
+        
+        // حاول تعمل parse لو كانت string
+        if (data.skills.startsWith('[') && data.skills.endsWith(']')) {
+          try {
+            skills = JSON.parse(data.skills);
+            console.log('✅ Parsed JSON string:', skills);
+          } catch (e) {
+            console.log('❌ Failed to parse JSON, using as single skill');
+            skills = [data.skills];
+          }
+        } else {
+          // لو مش JSON array، اعتبر الـ string نفسها هي المهارة
+          skills = [data.skills];
+          console.log('✅ Using string as single skill:', skills);
+        }
       } else {
-        setFormData(null);
+        skills = [];
+        console.log('📝 No skills data');
       }
-    } catch (err) {
-      console.error("Profile API Error for userId", userId, err.response?.status || err);
+
+      const formattedPosts = (data.posts || []).map((p) => ({
+        ...p,
+        id: p.post_id,
+        content: p.content,
+        category: p.category,
+        date: p["created-at"],
+        author: {
+          name:
+            p.author?.["user-type"] === "admin" || p.author?.["user-type"] === "staff"
+              ? "Alumni Portal - Helwan University"
+              : p.author?.["full-name"] || "Unknown",
+          photo:
+            p.author?.["user-type"] === "admin" || p.author?.["user-type"] === "staff"
+              ? AdminPostsImg
+              : p.author?.image || PROFILE,
+        },
+        likes: Array.isArray(p.likes) ? p.likes : [],
+        likesCount: Number(p.likes_count) || 0,
+        likedByCurrentUser: !!p.like_id,
+        comments: Array.isArray(p.comments)
+          ? p.comments.map((c) => {
+              const isUni =
+                c.author?.["full-name"]?.includes("Alumni Portal - Helwan University") ||
+                c.author?.["user-type"] === "admin" ||
+                c.author?.["user-type"] === "staff";
+
+              return {
+                ...c,
+                author: {
+                  ...c.author,
+                  name: isUni ? "Alumni Portal - Helwan University" : c.author?.["full-name"] || "Unknown",
+                  image: isUni ? AdminPostsImg : c.author?.image || PROFILE,
+                },
+              };
+            })
+          : [],
+        images: Array.isArray(p.images) ? p.images : [],
+        shares: Number(p.shares) || 0,
+      }));
+
+      setFormData({
+        ...data,
+        skills,
+        posts: formattedPosts,
+      });
+      
+      console.log('✅ Formatted data set:', { ...data, skills, posts: formattedPosts.length });
+    } else {
+      console.log('❌ No data in response');
       setFormData(null);
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (err) {
+    console.error("❌ Profile API Error for userId", userId, err);
+    console.error("   - Error response:", err.response?.data);
+    console.error("   - Error status:", err.response?.status);
+    setFormData(null);
+  } finally {
+    setLoading(false);
+  }
+};
 
   useEffect(() => {
     fetchProfile();

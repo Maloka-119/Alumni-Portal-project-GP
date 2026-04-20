@@ -90,7 +90,7 @@ const CommentsSection = ({ post, postPerm, onUpdatePosts }) => {
                                 }}
                                 onClick={() => {
                                     if (!["admin", "staff"].includes(comment.author?.["user-type"])) {
-                                        navigate(`/helwan-alumni-portal/admin/dashboard/graduateprofile/${comment.author?.id}`);
+                                        navigate(`/admin/dashboard/graduateprofile/${comment.author?.id}`);
                                     }
                                 }}
                             >

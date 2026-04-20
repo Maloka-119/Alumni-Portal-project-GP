@@ -242,7 +242,7 @@
 
 //             <h3>{t("or")}</h3>
 //             <button
-//               onClick={() => navigate('/helwan-alumni-portal/admin/dashboard/permissionsRoles')}
+//               onClick={() => navigate('/admin/dashboard/permissionsRoles')}
 //               style={{
 //                 backgroundColor: 'transparent',
 //                 color: '#1e3a8a',
@@ -645,7 +645,7 @@ const handleCreateStaff = async (e) => {
 
             <h3>{t("or")}</h3>
             <button
-              onClick={() => navigate('/helwan-alumni-portal/admin/dashboard/permissionsRoles')}
+              onClick={() => navigate('/admin/dashboard/permissionsRoles')}
               style={{
                 backgroundColor: 'transparent',
                 color: '#1e3a8a',

@@ -1,23 +1,40 @@
-// src/config/db.js
 const { Sequelize } = require("sequelize");
-const path = require("path");
-require("dotenv").config({ path: path.resolve(__dirname, "../../.env") });
+require("dotenv").config();
 
-console.log("DATABASE_URL:", process.env.DATABASE_URL);
+const db1 = process.env.DATABASE_URL1;
 
-// إنشاء الاتصال بقاعدة البيانات
-const sequelize = new Sequelize(process.env.DATABASE_URL, {
+if (!db1) {
+  throw new Error("DATABASE_URL1 is required");
+}
+
+function parseDbUrl(dbUrl) {
+  const u = new URL(dbUrl);
+  return {
+    host: u.hostname,
+    port: u.port,
+    username: decodeURIComponent(u.username),
+    password: decodeURIComponent(u.password),
+    database: u.pathname.replace("/", ""),
+  };
+}
+
+const config = parseDbUrl(db1);
+
+const sequelize = new Sequelize({
   dialect: "postgres",
-  logging: false,
+  host: config.host,
+  port: config.port,
+  username: config.username,
+  password: config.password,
+  database: config.database,
+  logging: process.env.NODE_ENV === "development" ? console.log : false,
+
+  dialectOptions: {
+    ssl:
+      process.env.NODE_ENV === "production"
+        ? { require: true, rejectUnauthorized: false }
+        : false,
+  },
 });
-
-// تجربة الاتصال
-// sequelize
-//   .authenticate()
-//   .then(() => console.log("Database connected successfully"))
-//   .catch((err) => console.error("Error connecting to database:", err));
-
-// Note: Database sync is handled in server.js to avoid duplicate sync calls
-// and to have better error handling for constraint and ENUM errors
 
 module.exports = sequelize;

@@ -35,7 +35,39 @@ const app = express();
 // 1) CORS
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: [
+      "http://localhost:80",
+      // "http://localhost:5005",
+      "http://localhost",
+      "http://localhost:3001",
+      "http://localhost:5155",
+      "http://localhost:3000",
+      "http://localhost:80",
+      // "http://localhost:5005",
+      "http://172.1.50.88",
+      "http://172.1.50.88:80",
+      "http://172.1.50.88:5155",
+      "http://172.1.50.88:3000",
+      //server ip
+      "http://10.100.104.148",
+      "http://10.100.104.148:80",
+      "http://10.100.104.148:5155",
+      "http://10.100.104.148:3000",
+
+      // 🔥 NEW ADDED (زي ما طلبت)
+      "http://193.227.34.56",
+      "http://193.227.34.56:80",
+      "http://193.227.34.56:5155",
+      "http://193.227.34.56:3000",
+
+      "http://172.1.20.72",
+      "http://172.1.20.72:80",
+      "http://172.1.20.72:5155",
+      "http://172.1.20.72:3000",
+
+      "http://lms2.capu.edu.eg",
+      "https://lms2.capu.edu.eg"
+    ],
     credentials: true,
   })
 );
@@ -179,8 +211,6 @@ const documentRequestRoutes = require("./routes/documentRequest.route");
 app.use("/alumni-portal/documents", documentRequestRoutes);
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-
-
 
 // Error Handler
 app.use(errorHandler);

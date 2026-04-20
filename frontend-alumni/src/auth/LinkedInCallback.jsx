@@ -20,7 +20,7 @@ const LinkedInCallback = ({ setUser }) => {
     // Check for error first
     if (error) {
       console.error("LinkedIn callback error:", error);
-      navigate("/helwan-alumni-portal/login?error=" + encodeURIComponent(error));
+      navigate("/login?error=" + encodeURIComponent(error));
       return;
     }
 
@@ -42,16 +42,16 @@ const LinkedInCallback = ({ setUser }) => {
       
       // Redirect to appropriate dashboard based on user type
       if (userType === "admin") {
-        navigate("/helwan-alumni-portal/admin/dashboard");
+        navigate("/admin/dashboard");
       } else if (userType === "staff") {
-        navigate("/helwan-alumni-portal/staff/dashboard");
+        navigate("/staff/dashboard");
       } else {
-        navigate("/helwan-alumni-portal/graduate/dashboard");
+        navigate("/graduate/dashboard");
       }
     } else {
       // No token and no error - something went wrong
       console.error("LinkedIn callback: No token or ID provided");
-      navigate("/helwan-alumni-portal/login?error=" + encodeURIComponent("LinkedIn authentication failed. Please try again."));
+      navigate("/login?error=" + encodeURIComponent("LinkedIn authentication failed. Please try again."));
     }
   }, [location, navigate, setUser]);
 

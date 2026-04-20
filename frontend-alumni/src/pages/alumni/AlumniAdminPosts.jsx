@@ -272,7 +272,7 @@ const PostCard = ({ post, currentUser, handleLikeToggle, toggleComments, handleA
                 onClick={() => {
                   // نتحقق إن الاسم مش بوابة الجامعة والـ user_id موجود
                   if (c.user_id && c.userName !== "Alumni Portal - Helwan University") {
-                    navigate(`/helwan-alumni-portal/graduate/dashboard/friends/${c.user_id}`);
+                    navigate(`/graduate/dashboard/friends/${c.user_id}`);
                   }
                 }}>
                   <strong style={{cursor:"pointer"}}>{c.userName}</strong> {c.content}

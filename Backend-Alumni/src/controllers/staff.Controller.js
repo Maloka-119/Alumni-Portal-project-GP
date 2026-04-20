@@ -1,4 +1,8 @@
 // src/controllers/staff.controller.js
+// src/controllers/staff.controller.js
+const bcrypt = require("bcrypt");
+const { Op } = require("sequelize");
+const sequelize = require("../config/db");
 const Staff = require("../models/Staff");
 const User = require("../models/User");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
@@ -420,5 +424,206 @@ const getStaffProfile = async (req, res) => {
     });
   }
 };
+// src/controllers/staff.controller.js
+// أضف هذه الدالة مع الدوال الموجودة
 
-module.exports = { getAllStaff, updateStaffStatus, getStaffProfile };
+// src/controllers/staff.controller.js
+// أضف هذه الدالة مع الدوال الموجودة
+
+const createStaff = async (req, res) => {
+  logger.info("----- [createStaff] START -----", {
+    timestamp: new Date().toISOString(),
+    user: req.user
+      ? { id: req.user.id, type: req.user["user-type"] }
+      : "undefined",
+  });
+
+  console.log("📥 Request body from frontend:", req.body); // لل debugging
+
+  // بداية الـ Transaction
+  const transaction = await sequelize.transaction();
+
+  try {
+    // ✅ استقبال البيانات من الفرونت (بنفس أسماء الحقول في الفرونت)
+    const { full_name, national_id, email, password, phone } = req.body;
+
+    logger.debug("Create staff request", {
+      full_name,
+      email,
+      phone,
+      userType: req.user?.["user-type"],
+    });
+
+    // ✅ 1. التحقق من البيانات المطلوبة
+    if (!full_name || !national_id || !email || !password) {
+      logger.warn("Missing required fields in createStaff");
+      await transaction.rollback();
+      return res.status(400).json({
+        status: "error",
+        message:
+          "Missing required fields: full_name, national_id, email, password are required",
+        data: null,
+      });
+    }
+
+    // ✅ 2. التحقق من عدم تكرار البيانات
+    const existingUser = await User.findOne({
+      where: {
+        [Op.or]: [{ "national-id": national_id }, { email: email }],
+      },
+    });
+
+    if (existingUser) {
+      logger.warn("Duplicate entry in createStaff");
+      await transaction.rollback();
+      return res.status(400).json({
+        status: "error",
+        message: "National ID or Email already exists",
+        data: null,
+      });
+    }
+
+    // ✅ 3. Split full_name إلى first-name و last-name
+    const nameParts = full_name.trim().split(" ");
+    const first_name = nameParts[0] || "";
+    const last_name = nameParts.slice(1).join(" ") || "";
+
+    // ✅ 4. Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // ✅ 5. تشفير الرقم القومي باستخدام aes
+    let encryptedNationalId = null;
+    try {
+      encryptedNationalId = aes.encryptNationalId(national_id);
+      logger.debug("National ID encrypted successfully");
+    } catch (encryptError) {
+      logger.error("Failed to encrypt National ID", {
+        error: encryptError.message,
+      });
+      await transaction.rollback();
+      return res.status(500).json({
+        status: "error",
+        message: "Failed to process national ID",
+        data: null,
+      });
+    }
+
+    // ✅ 6. إنشاء User جديد
+    const newUser = await User.create(
+      {
+        "first-name": first_name,
+        "last-name": last_name,
+        "national-id": encryptedNationalId,
+        email: email,
+        "phone-number": phone || null, // ✅ phone من الفرونت بتتحول لـ phone-number
+        "hashed-password": hashedPassword,
+        "birth-date": null,
+        "user-type": "staff",
+        auth_provider: "local",
+      },
+      { transaction }
+    );
+
+    logger.info("User created successfully", { userId: newUser.id });
+
+    // ✅ 7. إنشاء Staff مرتبط بالـ User
+    const newStaff = await Staff.create(
+      {
+        staff_id: newUser.id,
+        "status-to-login": "active",
+      },
+      { transaction }
+    );
+
+    logger.info("Staff record created successfully", {
+      staffId: newStaff.staff_id,
+    });
+
+    // ✅ 8. Commit transaction
+    await transaction.commit();
+
+    // ✅ 9. جلب البيانات الكاملة
+    const createdStaff = await Staff.findByPk(newStaff.staff_id, {
+      include: [
+        {
+          model: User,
+          attributes: [
+            "id",
+            "first-name",
+            "last-name",
+            "national-id",
+            "email",
+            "phone-number",
+            "user-type",
+          ],
+        },
+        {
+          model: Role,
+          attributes: ["id", "role-name"],
+          through: { attributes: [] },
+        },
+      ],
+    });
+
+    // ✅ 10. فك تشفير الرقم القومي للـ response
+    let decryptedNationalId = null;
+    if (createdStaff.User["national-id"]) {
+      try {
+        decryptedNationalId = aes.decryptNationalId(
+          createdStaff.User["national-id"]
+        );
+      } catch (decryptError) {
+        logger.error("Failed to decrypt National ID for response");
+        decryptedNationalId = "**************";
+      }
+    }
+
+    // ✅ 11. تنسيق الـ response حسب ما يتوقعه الفرونت
+    const responseData = {
+      staff_id: createdStaff.staff_id,
+      "status-to-login": createdStaff["status-to-login"],
+      User: {
+        "first-name": createdStaff.User["first-name"],
+        "last-name": createdStaff.User["last-name"],
+        "national-id": decryptedNationalId,
+        email: createdStaff.User.email,
+        // إضافة phone-number للـ response (اختياري)
+      },
+      Roles: createdStaff.Roles || [],
+    };
+
+    logger.info("Staff account created successfully", {
+      staffId: createdStaff.staff_id,
+      fullName: `${createdStaff.User["first-name"]} ${createdStaff.User["last-name"]}`,
+    });
+
+    // ✅ 12. الـ response بالشكل اللي الفرونت يتوقعه
+    return res.status(201).json({
+      success: true, // 👈 الفرونت بيعمل check على res.data.success
+      status: "success",
+      message: "Staff account created successfully",
+      data: responseData, // 👈 الفرونت بيستخدم res.data.data
+    });
+  } catch (error) {
+    await transaction.rollback();
+    logger.error("----- [createStaff] Unexpected Error", {
+      error: error.message,
+      stack: error.stack?.substring(0, 300),
+    });
+    console.error("Error creating staff:", error);
+
+    return res.status(500).json({
+      success: false, // 👈 عشان يكون consistent
+      status: "error",
+      message: "Internal server error while creating staff account",
+      data: null,
+    });
+  }
+};
+
+module.exports = {
+  getAllStaff,
+  updateStaffStatus,
+  getStaffProfile,
+  createStaff,
+};

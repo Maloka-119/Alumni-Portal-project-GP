@@ -139,7 +139,7 @@ import { useRef, useState, useEffect } from "react";
 import PROFILE from "./PROFILE.jpeg";
 import { useTranslation } from "react-i18next";
 import API from "../../services/api";
-import UniLogo from '../../components/logo-white-deskt-min.png';
+import {CAPITAL_UNI_LOGO} from "../../constants/image-pathes.constants"
 
 function DigitalID() {
   const { t } = useTranslation();
@@ -222,10 +222,9 @@ function DigitalID() {
     <div>
       <h1 className="uni-header">{t("digitalId_title")}</h1>
       <h4 className="h4">{t("digitalId_subtitle")}</h4>
-
       <div className="IdCardArea" ref={cardRef}>
         <div className="card-header">
-          <img src={UniLogo} alt="University Logo" className="uni-logo" />
+          <img src={CAPITAL_UNI_LOGO} alt="University Logo" className="uni-logo" />
           <span className="header-text">{t("digitalId_cardHeader")}</span>
         </div>
 
@@ -253,7 +252,7 @@ function DigitalID() {
                 src={qrImg} 
                 alt="QR Code" 
                 crossOrigin="anonymous"
-                onClick={() => window.open(`/helwan-alumni-portal/public-graduate/${user.graduationId}`, "_blank")}
+                onClick={() => window.open(`/public-graduate/${user.graduationId}`, "_blank")}
   style={{ cursor: "pointer" }}
               />
             )}
