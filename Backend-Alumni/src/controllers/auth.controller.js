@@ -198,7 +198,7 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log("Staff API check failed:", e.message);
   }
 
-  // --- Graduate check ---
+  // --- Graduate check (✅ FIXED) ---
   if (userType === "graduate") {
     try {
       const gradResp = await axios.get(
@@ -213,13 +213,13 @@ const registerUser = asyncHandler(async (req, res) => {
         statusToLogin = "accepted";
         externalData = gradResp.data;
       } else {
-        // مش موجود → نعتبره accepted تلقائياً
-        statusToLogin = "accepted";
+        // ❗ مش موجود → pending (بدل accepted)
+        statusToLogin = "pending";
       }
     } catch (e) {
       console.log("Graduate API check failed:", e.message);
-      // لو API رجع error → نعتبر المستخدم accepted
-      statusToLogin = "accepted";
+      // ❗ لو API وقع → pending (بدل accepted)
+      statusToLogin = "pending";
     }
   }
 
