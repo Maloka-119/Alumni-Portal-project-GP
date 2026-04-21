@@ -32,7 +32,7 @@ function GroupDetails({ group, goBack }) {
     fetchAvailableGraduates();
     fetchInvitations();
   }, [group.id]);
-
+console.log("GROUP =", group);
   const formatPosts = (data) => {
     return data.map((post) => ({
       ...post,
@@ -63,7 +63,7 @@ function GroupDetails({ group, goBack }) {
         console.error("Token not found");
         return;
       }
-
+console.log("GROUP =", group);
       const res = await API.get(`/posts/group/${group.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -224,15 +224,10 @@ function GroupDetails({ group, goBack }) {
           </div>
         </div>
 
-        <img
-          src={group.groupImage || group.cover || communityCover}
-          alt={group.groupName || group.name}
-          className="cover-img"
-        />
-
-        <h1>{group.groupName || group.name}</h1>
+        <img src={group.image || communityCover} alt={group.name} className="cover-img" />
+     <h1>{group.groupName || group.name}</h1>
         <p className="group-description">
-  {t("Welcome to this group! This group is associated with batch number {{batch}}", { batch: group.description })}
+  {t("Welcome to this community! This community is associated with batch number {{batch}}", { batch: group.description })}
 </p>
 
         <button className="invite-btn" onClick={() => setShowInviteSection(!showInviteSection)}>
