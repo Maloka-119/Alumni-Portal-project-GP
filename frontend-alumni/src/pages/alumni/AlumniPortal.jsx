@@ -357,6 +357,7 @@ const sidebarSections = (darkMode, t) => [
 
 const Dashboard = ({ setUser }) => {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [communitiesOpen, setCommunitiesOpen] = useState(false);
@@ -373,7 +374,17 @@ const Dashboard = ({ setUser }) => {
     const token = localStorage.getItem("token");
     return { Authorization: `Bearer ${token}` };
   };
-
+  const fetchUnreadMessagesCount = async () => {
+    try {
+      const res = await API.get("/chat/unread-counts", {
+        headers: getAuthHeaders(),
+      });
+  
+      setUnreadMessages(res.data.data.total || 0);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const acceptInvitation = async (invitationId) => {
     if (!invitationId) return console.error("Invitation id is missing");
     try {
@@ -398,7 +409,15 @@ const Dashboard = ({ setUser }) => {
     fetchUnreadCount();
   }, []);
   
+  useEffect(() => {
+    fetchUnreadMessagesCount();
   
+    const interval = setInterval(() => {
+      fetchUnreadMessagesCount();
+    }, 5000);
+  
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     const checkInvitation = async () => {
@@ -524,9 +543,34 @@ const Dashboard = ({ setUser }) => {
 </button>
 
 
-          <button className="header-btn" onClick={() => setChatOpen(!chatOpen)}>
-            <MessageCircle size={18}/>
-          </button>
+<button
+  className="header-btn"
+  style={{ position: "relative" }}
+  onClick={() => setChatOpen(!chatOpen)}
+>
+  <MessageCircle size={18} />
+
+  {unreadMessages > 0 && (
+    <span style={{
+      position: "absolute",
+      top: "-5px",
+      right: "-5px",
+      backgroundColor: "#ff4d4f",
+      color: "white",
+      borderRadius: "50%",
+      padding: "2px 6px",
+      fontSize: "12px",
+      fontWeight: "bold",
+      minWidth: "18px",
+      height: "18px",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center"
+    }}>
+      {unreadMessages}
+    </span>
+  )}
+</button>
           <button className="header-btn" onClick={() => navigate(`${BASE_PATH}/profile`)}>
             <User size={18}/>
           </button>
