@@ -151,36 +151,45 @@ console.log("GROUP =", group);
     }
   };
 
-  const handleAddOrEditPost = async (e) => {
-    e.preventDefault();
-    if (!newPost.content.trim()) return;
+const handleAddOrEditPost = async (e) => {
+  e.preventDefault();
 
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token not found");
-        return;
-      }
+  if (!newPost.content.trim()) return;
 
-      const formData = new FormData();
-      formData.append("content", newPost.content);
-      formData.append("category", newPost.category);
-      formData.append("groupId", group.id);
-      if (newPost.image) formData.append("image", newPost.image);
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-      if (!isEditingMode) {
-        await API.post("/posts/create-post", formData, {
-          headers: { Authorization: `Bearer ${token}`, "Accept-Language": "en" },
-        });
-      }
+    const formData = new FormData();
 
-      setShowForm(false);
-      setNewPost({ content: '', image: null, link: '', category: 'General' });
-      fetchPosts();
-    } catch (err) {
-      console.error(err);
+    formData.append("content", newPost.content);
+    formData.append("category", newPost.category);
+    formData.append("groupId", group.id);
+
+    // 🔥 مهم: نفس اسم الـ backend (جرب image أو images)
+    if (newPost.image) {
+   formData.append("images", newPost.image);
+      // لو لسه 500 جرّبي:
+      // formData.append("images", newPost.image);
     }
-  };
+
+    await API.post("/posts/create-post", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Accept-Language": "en",
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    setShowForm(false);
+    setNewPost({ content: "", image: null, link: "", category: "General" });
+
+    fetchPosts();
+  } catch (err) {
+    console.error("Error:", err.response?.data || err);
+  }
+};
+
 
   const handleEditPost = (post) => {
     setIsEditingMode(true);
@@ -192,7 +201,7 @@ console.log("GROUP =", group);
       postId: post.id || post.post_id, 
     });
   };
-
+console.log("IMAGE TYPE:", newPost.image);
   const handleDeletePost = async (postId) => {
     try {
       const token = localStorage.getItem("token");
