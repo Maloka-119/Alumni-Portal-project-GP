@@ -98,6 +98,12 @@ export const onMessagesMarkedAsRead = (callback) => {
   socket.on("messages_read", callback);
 };
 
+export const onMessageSeen = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onMessageSeen)");
+  
+  socket.off("message_seen"); // يمنع التكرار
+  socket.on("message_seen", callback);
+};
 // -------------------- DISCONNECT --------------------
 export const disconnectSocket = () => {
   if (!socket) return console.warn("⚠️ Socket not initialized (disconnectSocket)");

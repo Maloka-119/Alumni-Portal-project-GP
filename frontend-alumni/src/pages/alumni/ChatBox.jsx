@@ -191,24 +191,26 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
       updateChatListLastMessage({ ...updatedMsg, edited: true });
     };
 
-    const handleSeen = (seenData) => {
-      if (seenData.chat_id !== chatId) return;
+    const handleSeen = (data) => {
+      if (data.chatId !== chatId) return;
+    
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.sender_id === userId && msg.localStatus !== "seen"
+          String(msg.sender_id) === String(userId)
             ? { ...msg, localStatus: "seen" }
             : msg
         )
       );
     };
-
-    onNewMessage(handleNew);
-    onEditedMessage(handleEdit);
-    socketRef.current.on && socketRef.current.on("message_seen", handleSeen);
-
+    socketRef.current.on("new_message", handleNew);
+    socketRef.current.on("message_edited", handleEdit);
+    socketRef.current.on("messages_read", handleSeen);
     return () => {
       leaveChatSocket(chatId);
-      socketRef.current?.off && socketRef.current.off("message_seen");
+    
+      socketRef.current?.off("new_message", handleNew);
+      socketRef.current?.off("messages_read", handleSeen);
+      socketRef.current?.off("message_edited", handleEdit);
     };
   }, [chatId, token, userId, updateChatListLastMessage]);
 
@@ -257,12 +259,12 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
   
       const data = res.data.data;
   
+      // 👇 ده اللي بيرتب الشكل (اختياري بس مهم)
       const newMsg = {
         message_id: data.message_id,
         sender_id: userId,
         content: data.content || "",
-        message_type:
-          data.message_type || (file ? "file" : "text"),
+        message_type: data.message_type || (file ? "file" : "text"),
         file_url: data.file_url || null,
         file_name: data.file_name || null,
         reply_to: replyTo
@@ -278,7 +280,10 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
         created_at: data.created_at || new Date().toISOString(),
       };
   
+      // ❗ أهم حاجة (ما تكررش الرسالة لو socket شغال)
+      // ❌ متعملش setMessages هنا
   
+      // reset UI
       setNewMessage("");
       setFile(null);
       setFilePreview(null);
@@ -288,7 +293,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
   
     } catch (err) {
       console.error("Send Message Error", err);
-      alert("حدث خطأ أثناء إرسال الرسالة. حاول مرة أخرى.");
+      alert("حدث خطأ أثناء إرسال الرسالة");
     }
   };
   // ------------------ Edit / Delete ------------------
