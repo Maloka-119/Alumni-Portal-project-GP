@@ -48,7 +48,7 @@ function FriendshipPage() {
       const mapped = res.data.map((f) => ({
         id: f.graduate_id, // صححت الـ id عشان profile API
         friendId: f.friendId,
-        userName: f.fullName || "No Name",
+        name: f.fullName || "No Name",
         image: f.profilePicture || PROFILE,
       }));
       setFriends(mapped);
@@ -204,7 +204,10 @@ function FriendshipPage() {
 
       if (res.data && res.data.data && res.data.data.chat_id) {
         setChatId(res.data.data.chat_id);
-        setActiveChatFriend(friend);
+        setActiveChatFriend({
+  ...friend,
+  name: friend.name || friend.userName || friend.fullName || "Unknown",
+});
       } else {
         console.warn("⚠️ Response received but chat_id missing", res.data);
       }
@@ -247,7 +250,7 @@ function FriendshipPage() {
               friends.map((f, index) => (
                 <div className="user" key={`${f.id}-${index}`}>
                   <div className="friend-info">
-                    <img className="imgreq" src={f.image} alt={f.userName} />
+                    <img className="imgreq" src={f.image} alt={f.name} />
                     <span
                       className="user-name"
                       onClick={() => {
@@ -258,7 +261,7 @@ function FriendshipPage() {
                       }}
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
-                      {f.userName}
+                      {f.name}
                     </span>
                   </div>
                   <div className="friend-actions">
@@ -299,7 +302,7 @@ function FriendshipPage() {
               friendRequests.map((f, index) => (
                 <div className="user" key={`${f.id}-${index}`}>
                   <div className="friend-info">
-                    <img className="imgreq" src={f.image} alt={f.userName} />
+                    <img className="imgreq" src={f.image} alt={f.name} />
                     <span
                       className="user-name"
                       onClick={() => {
@@ -310,7 +313,7 @@ function FriendshipPage() {
                       }}
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
-                      {f.userName}
+                      {f.name}
                     </span>
                   </div>
                   <div className="friend-actions">
@@ -360,7 +363,7 @@ function FriendshipPage() {
               filteredSuggestions.map((f, index) => (
                 <div className="user" key={`${f.id}-${index}`}>
                   <div className="friend-info">
-                    <img className="imgreq" src={f.image} alt={f.userName} />
+                    <img className="imgreq" src={f.image} alt={f.name} />
                     <span
                       className="user-name"
                       onClick={() => {
@@ -371,7 +374,7 @@ function FriendshipPage() {
                       }}
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
-                      {f.userName}
+                      {f.name}
                     </span>
                   </div>
                   <div
