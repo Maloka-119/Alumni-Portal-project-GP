@@ -82,7 +82,9 @@ export const markMessagesAsReadSocket = (chatId) => {
 
 // -------------------- LISTENERS --------------------
 export const onNewMessage = (callback) => {
-  if (!socket) return console.warn("⚠️ Socket not initialized (onNewMessage)");
+  if (!socket) return;
+
+  socket.off("new_message"); // مهم جدًا يمنع duplicate listeners
   socket.on("new_message", callback);
 };
 

@@ -144,7 +144,9 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
       if (msg.chat_id !== chatId) return;
 
       setMessages((prev) => {
-        if (prev.some((m) => String(m.message_id) === String(msg.message_id))) return prev;
+        if (prev.some((m) => String(m.message_id) === String(msg.message_id))) {
+          return prev;
+        }
 
         let replyMsg = null;
         if (msg.reply_to_message_id) replyMsg = prev.find((m) => m.message_id === msg.reply_to_message_id) || msg.replyTo || null;
@@ -276,10 +278,6 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
         created_at: data.created_at || new Date().toISOString(),
       };
   
-      // update UI مرة واحدة فقط
-      updateChatListLastMessage(newMsg);
-  
-      setMessages((prev) => [...prev, newMsg]);
   
       setNewMessage("");
       setFile(null);
