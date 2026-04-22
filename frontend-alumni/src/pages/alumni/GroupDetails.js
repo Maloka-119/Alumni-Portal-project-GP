@@ -32,7 +32,7 @@ function GroupDetails({ group, goBack }) {
     fetchAvailableGraduates();
     fetchInvitations();
   }, [group.id]);
-
+console.log("GROUP =", group);
   const formatPosts = (data) => {
     return data.map((post) => ({
       ...post,
@@ -63,7 +63,7 @@ function GroupDetails({ group, goBack }) {
         console.error("Token not found");
         return;
       }
-
+console.log("GROUP =", group);
       const res = await API.get(`/posts/group/${group.id}`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -151,36 +151,45 @@ function GroupDetails({ group, goBack }) {
     }
   };
 
-  const handleAddOrEditPost = async (e) => {
-    e.preventDefault();
-    if (!newPost.content.trim()) return;
+const handleAddOrEditPost = async (e) => {
+  e.preventDefault();
 
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        console.error("Token not found");
-        return;
-      }
+  if (!newPost.content.trim()) return;
 
-      const formData = new FormData();
-      formData.append("content", newPost.content);
-      formData.append("category", newPost.category);
-      formData.append("groupId", group.id);
-      if (newPost.image) formData.append("image", newPost.image);
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) return;
 
-      if (!isEditingMode) {
-        await API.post("/posts/create-post", formData, {
-          headers: { Authorization: `Bearer ${token}`, "Accept-Language": "en" },
-        });
-      }
+    const formData = new FormData();
 
-      setShowForm(false);
-      setNewPost({ content: '', image: null, link: '', category: 'General' });
-      fetchPosts();
-    } catch (err) {
-      console.error(err);
+    formData.append("content", newPost.content);
+    formData.append("category", newPost.category);
+    formData.append("groupId", group.id);
+
+    // 🔥 مهم: نفس اسم الـ backend (جرب image أو images)
+    if (newPost.image) {
+   formData.append("images", newPost.image);
+      // لو لسه 500 جرّبي:
+      // formData.append("images", newPost.image);
     }
-  };
+
+    await API.post("/posts/create-post", formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Accept-Language": "en",
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    setShowForm(false);
+    setNewPost({ content: "", image: null, link: "", category: "General" });
+
+    fetchPosts();
+  } catch (err) {
+    console.error("Error:", err.response?.data || err);
+  }
+};
+
 
   const handleEditPost = (post) => {
     setIsEditingMode(true);
@@ -192,7 +201,7 @@ function GroupDetails({ group, goBack }) {
       postId: post.id || post.post_id, 
     });
   };
-
+console.log("IMAGE TYPE:", newPost.image);
   const handleDeletePost = async (postId) => {
     try {
       const token = localStorage.getItem("token");
@@ -224,15 +233,10 @@ function GroupDetails({ group, goBack }) {
           </div>
         </div>
 
-        <img
-          src={group.groupImage || group.cover || communityCover}
-          alt={group.groupName || group.name}
-          className="cover-img"
-        />
-
-        <h1>{group.groupName || group.name}</h1>
+        <img src={group.image || communityCover} alt={group.name} className="cover-img" />
+     <h1>{group.groupName || group.name}</h1>
         <p className="group-description">
-  {t("Welcome to this group! This group is associated with batch number {{batch}}", { batch: group.description })}
+  {t("Welcome to this community! This community is associated with batch number {{batch}}", { batch: group.description })}
 </p>
 
         <button className="invite-btn" onClick={() => setShowInviteSection(!showInviteSection)}>
