@@ -70,18 +70,24 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
   // ------------------ Fetch messages ------------------
   useEffect(() => {
     if (!chatId || !token) return;
+  
     let mounted = true;
-
+  
     const fetchMessages = async () => {
       try {
         const res = await API.get(`/chat/${chatId}/messages`);
         const allMessages = res.data?.data?.messages || [];
+  
         const normalizedMessages = allMessages.map((msg) => {
           let replyMsg = null;
+  
           if (msg.reply_to_message_id) {
-            replyMsg = allMessages.find((m) => m.message_id === msg.reply_to_message_id) || null;
-          } else if (msg.replyTo) replyMsg = msg.replyTo;
-
+            replyMsg =
+              allMessages.find((m) => m.message_id === msg.reply_to_message_id) || null;
+          } else if (msg.replyTo) {
+            replyMsg = msg.replyTo;
+          }
+  
           return {
             ...msg,
             file_url: msg.attachment_url || msg.file_url || null,
@@ -90,15 +96,23 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
             is_deleted: msg.is_deleted || false,
             reply_to: replyMsg,
             localStatus: normalizeStatus(msg.status),
-            created_at: msg["created-at"] || msg.created_at || msg.createdAt || new Date().toISOString(),
+            created_at:
+              msg["created-at"] ||
+              msg.created_at ||
+              msg.createdAt ||
+              new Date().toISOString(),
           };
         });
-
+  
         if (!mounted) return;
+  
         setMessages(normalizedMessages);
         setTimeout(() => scrollToBottom(), 50);
-
-        const hasUnread = normalizedMessages.some((msg) => msg.sender_id !== userId && msg.localStatus !== "seen");
+  
+        const hasUnread = normalizedMessages.some(
+          (msg) => msg.sender_id !== userId && msg.localStatus !== "seen"
+        );
+  
         if (hasUnread) {
           await markChatAsRead(chatId);
           markMessagesAsReadSocket(chatId);
@@ -108,12 +122,13 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
         console.error(t("Fetch Messages Error"), err);
       }
     };
-
-    setMessages([]);
+  
     fetchMessages();
-    return () => { mounted = false; };
-  }, [chatId, token, t, userId, updateChatListLastMessage]);
-
+  
+    return () => {
+      mounted = false;
+    };
+  }, [chatId, token, userId, t, updateChatListLastMessage]);
   // ------------------ Socket ------------------
   useEffect(() => {
     if (!chatId || !token) return;
@@ -129,7 +144,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
       if (msg.chat_id !== chatId) return;
 
       setMessages((prev) => {
-        if (prev.some((m) => m.message_id === msg.message_id)) return prev;
+        if (prev.some((m) => String(m.message_id) === String(msg.message_id))) return prev;
 
         let replyMsg = null;
         if (msg.reply_to_message_id) replyMsg = prev.find((m) => m.message_id === msg.reply_to_message_id) || msg.replyTo || null;
@@ -220,51 +235,64 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
   // ------------------ Send message ------------------
   const sendMessage = async () => {
     if (!newMessage.trim() && !file) return;
+  
     try {
       let res;
+  
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("content", newMessage || " ");
         if (replyTo) formData.append("reply_to_id", replyTo.message_id);
+  
         res = await API.post(`/chat/${chatId}/messages/file`, formData);
       } else {
-        res = await API.post(`/chat/${chatId}/messages`, { content: newMessage, reply_to_id: replyTo?.message_id || null });
+        res = await API.post(`/chat/${chatId}/messages`, {
+          content: newMessage,
+          reply_to_id: replyTo?.message_id || null,
+        });
       }
-
+  
       const data = res.data.data;
-      const isImage = data.file_url?.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+  
       const newMsg = {
         message_id: data.message_id,
         sender_id: userId,
         content: data.content || "",
-        message_type: isImage ? "image" : data.file_url?.endsWith(".pdf") ? "pdf" : data.message_type || (file ? "file" : "text"),
-        file_url: data.file_url || data.attachment_url || null,
-        file_name: data.file_name || data.attachment_name || (file?.name || null),
-        reply_to: replyTo ? { message_id: replyTo.message_id, sender_id: replyTo.sender_id, content: replyTo.content } : null,
+        message_type:
+          data.message_type || (file ? "file" : "text"),
+        file_url: data.file_url || null,
+        file_name: data.file_name || null,
+        reply_to: replyTo
+          ? {
+              message_id: replyTo.message_id,
+              sender_id: replyTo.sender_id,
+              content: replyTo.content,
+            }
+          : null,
         localStatus: "sent",
-        edited: data.is_edited || false,
+        edited: false,
         is_deleted: false,
         created_at: data.created_at || new Date().toISOString(),
       };
-
-      setMessages((prev) => {
-        if (prev.some((m) => m.message_id === newMsg.message_id)) return prev;
-        return [...prev, newMsg];
-      });
-
+  
+      // update UI مرة واحدة فقط
       updateChatListLastMessage(newMsg);
+  
+      setMessages((prev) => [...prev, newMsg]);
+  
       setNewMessage("");
       setFile(null);
       setFilePreview(null);
       setReplyTo(null);
+  
       setTimeout(() => scrollToBottom(), 50);
+  
     } catch (err) {
       console.error("Send Message Error", err);
       alert("حدث خطأ أثناء إرسال الرسالة. حاول مرة أخرى.");
     }
   };
-
   // ------------------ Edit / Delete ------------------
   const startEditMessage = (message) => {
     setEditingMessageId(message.message_id);
