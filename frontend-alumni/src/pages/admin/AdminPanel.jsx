@@ -143,7 +143,7 @@ const AdminPanel = ({ setUser }) => {
       {/* Main Content */}
       <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         <Routes>
-          <Route index element={<EmptyPage title="welcome to admin panel" />} />
+          <Route index element={<EmptyPage title="Welcome to the Administrative Dashboard  " />} />
           <Route path="reportsAnalysis" element={<AdminDashboard currentUser={JSON.parse(localStorage.getItem("user"))}/>} />
           <Route path="communityManagement" element={<GroupsPage currentUser={JSON.parse(localStorage.getItem("user"))} />} />
           <Route path="documentManagement" element={<ManageDocs currentUser={JSON.parse(localStorage.getItem("user"))} />} />

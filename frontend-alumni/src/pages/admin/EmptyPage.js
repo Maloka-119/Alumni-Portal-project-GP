@@ -6,7 +6,7 @@ const EmptyPage = ({ title }) => {
       <div style={styles.card}>
         <h2 style={styles.title}>{title}</h2>
         <p style={styles.text}>
-          “Welcome to the Administrative Dashboard — your centralized system for full control and management.”
+          “your centralized system for full control and management.”
         </p>
       </div>
     </div>
@@ -19,7 +19,7 @@ const styles = {
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    background: '#f5f7fb',
+    // background: '#f5f7fb',
     padding: '20px',
   },
   card: {
