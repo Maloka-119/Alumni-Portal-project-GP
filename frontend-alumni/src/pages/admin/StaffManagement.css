@@ -10,7 +10,7 @@
     transition: background 0.3s;
 }
 
-/* الـ Overlay خلفية المودال */
+/* الـ Overlay خلفية المودال - تم التعديل لدعم السكرول */
 .stf-adm-overlay {
     position: fixed;
     top: 0;
@@ -20,19 +20,23 @@
     background: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start; /* يبدأ من الأعلى ليسمح بالسكرول */
+    padding: 20px; /* مسافة أمان للموبايل */
     z-index: 1000;
+    overflow-y: auto; /* يسمح بالتمرير إذا كان المودال طويلاً */
 }
 
-/* جسم المودال */
+/* جسم المودال - تم التعديل ليكون مرناً */
 .stf-adm-modal-box {
     background: white;
     padding: 40px;
     border-radius: 15px;
-    width: 90%;
+    width: 95%;
     max-width: 850px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     text-align: center;
+    margin: auto; /* يتوسط تلقائياً */
+    position: relative;
 }
 
 .stf-adm-title {
@@ -122,6 +126,29 @@
     margin-top: 20px;
 }
 
+/* للموبايل والشاشات الصغيرة */
+@media (max-width: 768px) {
+    .stf-adm-grid-compact {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    /* تعديل الأزرار في الموبايل لضمان الظهور */
+    .stf-adm-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .stf-adm-btn-save, .stf-adm-btn-cancel {
+        width: 100%;
+        padding: 12px 20px;
+    }
+
+    .stf-adm-title {
+        font-size: 26px;
+    }
+}
+
 /* حاوية الباسورد عشان العين */
 .stf-adm-pass-container {
     position: relative;
@@ -131,7 +158,7 @@
 
 .stf-adm-pass-container input {
     width: 100%;
-    padding-right: 45px; /* مسافة للأيقونة */
+    padding-right: 45px;
 }
 
 .stf-adm-eye-btn {
