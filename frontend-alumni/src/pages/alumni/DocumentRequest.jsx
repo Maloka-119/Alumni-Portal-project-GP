@@ -1,3 +1,5 @@
+
+
 // import { useEffect, useState } from "react";
 // import API from "../../services/api"; 
 // import "./documentRequests.css";
@@ -7,6 +9,7 @@
 //   const [documents, setDocuments] = useState([]);
 //   const [selectedDoc, setSelectedDoc] = useState(null);
 //   const [attachments, setAttachments] = useState([]);
+//   const [docLanguage, setDocLanguage] = useState(""); // الحالة الجديدة للغة الشهادة
 //   const [loading, setLoading] = useState(false);
 //   const [error, setError] = useState("");
 //   const [successMessage, setSuccessMessage] = useState("");
@@ -15,12 +18,17 @@
 //   const { t, i18n } = useTranslation();
 //   const currentLang = i18n.language || "en";
 
+//   useEffect(() => {
+//     // تعيين لغة الشهادة الافتراضية لتكون نفس لغة الموقع عند فتح الصفحة
+//     setDocLanguage(currentLang === "ar" ? "ar" : "en");
+//   }, [currentLang]);
+
 //   // ================= 1. Timer for Success Message =================
 //   useEffect(() => {
 //     if (successMessage) {
 //       const timer = setTimeout(() => {
 //         setSuccessMessage("");
-//       }, 1500); // يختفي بعد ثانية ونصف
+//       }, 1500); 
 //       return () => clearTimeout(timer);
 //     }
 //   }, [successMessage]);
@@ -36,27 +44,26 @@
 //         setDocuments(alumniDocs);
 //       })
 //       .catch(() => setError(t("loadDocumentsError")));
-//   }, [currentLang, t]);
+//   }, [t]);
 
 //   const handleSelect = (doc) => {
 //     setSelectedDoc(doc);
 //     setAttachments([]);
+//     setDocLanguage(currentLang === "ar" ? "ar" : "en"); // إعادة تعيين اللغة عند كل اختيار جديد
 //     setError("");
 //     setSuccessMessage("");
 //     setShowModal(true);
 //   };
 
-//   // ================= Helper Functions =================
 //   const handleSuccess = () => {
 //     setSuccessMessage(t("requestSuccess"));
-//     setShowModal(false); // إغلاق المودال فوراً عند النجاح
+//     setShowModal(false); 
 //     setSelectedDoc(null);
 //     setAttachments([]);
 //     setError("");
 //   };
 
 //   const handleBackendError = (err) => {
-//     console.error("Backend Error Detail:", err.response?.data);
 //     const serverMessage = err.response?.data?.message;
 //     setError(serverMessage || t("submitRequestError"));
 //   };
@@ -65,7 +72,6 @@
 //   const handleSubmit = (e) => {
 //     e.preventDefault();
     
-//     // التحقق الإضافي (Validation)
 //     if (selectedDoc.requires_attachments && attachments.length === 0) {
 //       setError(currentLang === "ar" ? "يرجى إرفاق المستندات المطلوبة" : "Please attach the required documents");
 //       return;
@@ -74,9 +80,10 @@
 //     setLoading(true);
 //     setError("");
 
+//     // نستخدم docLanguage التي اختارها المستخدم للشهادة
 //     const formData = new FormData();
 //     formData.append("document_type", selectedDoc.code);
-//     formData.append("language", currentLang);
+//     formData.append("language", docLanguage); 
     
 //     if (attachments.length > 0) {
 //       attachments.forEach((file) => {
@@ -84,18 +91,13 @@
 //       });
 //     }
 
-//     // إرسال الطلب (تعميم الكود ليناسب الحالتين)
-//     API.post("/documents/requests", attachments.length === 0 ? {
-//         document_type: selectedDoc.code,
-//         language: currentLang
-//     } : formData)
+//     // توحيد طريقة الإرسال باستخدام FormData دائماً أفضل عند التعامل مع ملفات
+//     API.post("/documents/requests", formData)
 //       .then(() => handleSuccess())
 //       .catch((err) => handleBackendError(err))
 //       .finally(() => setLoading(false));
 //   };
 
-//   // ================= Check if Submit should be disabled =================
-//   // هذا المتغير يمنع الضغط على الزر إذا كانت المرفقات مطلوبة وهي فارغة
 //   const isSubmitDisabled = loading || (selectedDoc?.requires_attachments && attachments.length === 0);
 
 //   return (
@@ -129,34 +131,69 @@
 //           <div className="modal-content">
 //             <h3 className="modal-title">{t("request")}: {selectedDoc.name}</h3>
 
-//             {selectedDoc.requires_attachments && (
-//               <div className="input-group-horizontal upload-container">
-//               <label className="input-label-side">{t("attachments")}</label>
-//               <div className="file-input-wrapper">
-//                 <input
-//                   type="file"
-//                   id="file-upload"
-//                   className="hidden-file-input"
-//                   multiple
-//                   // إضافة خاصية accept بتخلي المتصفح يفلتر الملفات تلقائياً
-//                   accept=".jpeg,.jpg,.png,.pdf" 
-//                   onChange={(e) => {
-//                     setAttachments(Array.from(e.target.files));
-//                     setError(""); 
-//                   }}
-//                 />
-//                 <label htmlFor="file-upload" className="custom-file-button">
-//                   {attachments.length > 0 
-//                     ? `${attachments.length} ${t("filesSelected")}` 
-//                     : t("chooseFile")}
+//             {selectedDoc.code === "GRAD_CERT" && (
+//               <div className="requirements-box">
+//                 <h4 className="requirements-title">{t("graduation_requirements_title")}</h4>
+//                 <ul className="requirements-list">
+//                   <li>{t("req_fees")}</li>
+//                   <li>{t("req_military")}</li>
+//                   <li>{t("req_clearance")}</li>
+//                 </ul>
+//               </div>
+//             )}
+
+//             {/* --- الجزء الجديد: اختيار لغة الشهادة --- */}
+//             <div className="input-group-horizontal lang-selection-container">
+//               <label className="input-label-side">{t("certificate_language") || "لغة الشهادة"}:</label>
+//               <div className="radio-group">
+//                 <label className="radio-option">
+//                   <input 
+//                     type="radio" 
+//                     name="docLang" 
+//                     value="ar" 
+//                     checked={docLanguage === "ar"} 
+//                     onChange={(e) => setDocLanguage(e.target.value)}
+//                   />
+//                   <span>{t("arabic") || "عربي"}</span>
 //                 </label>
-                
-//                 {/* الملاحظة هنا */}
-//                 <p className="file-instruction-text">
-//                 {t("allowedFilesNote")}
-//                 </p>
+//                 <label className="radio-option">
+//                   <input 
+//                     type="radio" 
+//                     name="docLang" 
+//                     value="en" 
+//                     checked={docLanguage === "en"} 
+//                     onChange={(e) => setDocLanguage(e.target.value)}
+//                   />
+//                   <span>{t("english") || "إنجليزي"}</span>
+//                 </label>
 //               </div>
 //             </div>
+//             {/* --------------------------------------- */}
+
+//             {selectedDoc.requires_attachments && (
+              
+//               <div className="input-group-horizontal upload-container">
+//                 <label className="input-label-side">{t("attachments")}</label>
+//                 <div className="file-input-wrapper">
+//                   <input
+//                     type="file"
+//                     id="file-upload"
+//                     className="hidden-file-input"
+//                     multiple
+//                     accept=".jpeg,.jpg,.png,.pdf" 
+//                     onChange={(e) => {
+//                       setAttachments(Array.from(e.target.files));
+//                       setError(""); 
+//                     }}
+//                   />
+//                   <label htmlFor="file-upload" className="custom-file-button">
+//                     {attachments.length > 0 
+//                       ? `${attachments.length} ${t("filesSelected")}` 
+//                       : t("chooseFile")}
+//                   </label>
+//                   <p className="file-instruction-text">{t("allowedFilesNote")}</p>
+//                 </div>
+//               </div>
 //             )}
 
 //             <div className="document-actions">
@@ -191,6 +228,7 @@ const DocumentRequest = () => {
   const [documents, setDocuments] = useState([]);
   const [selectedDoc, setSelectedDoc] = useState(null);
   const [attachments, setAttachments] = useState([]);
+  const [docLanguage, setDocLanguage] = useState(""); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
@@ -199,7 +237,10 @@ const DocumentRequest = () => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language || "en";
 
-  // ================= 1. Timer for Success Message =================
+  useEffect(() => {
+    setDocLanguage(currentLang === "ar" ? "ar" : "en");
+  }, [currentLang]);
+
   useEffect(() => {
     if (successMessage) {
       const timer = setTimeout(() => {
@@ -209,7 +250,6 @@ const DocumentRequest = () => {
     }
   }, [successMessage]);
 
-  // ================= Load document types =================
   useEffect(() => {
     API.get("/documents-types")
       .then((res) => {
@@ -220,17 +260,17 @@ const DocumentRequest = () => {
         setDocuments(alumniDocs);
       })
       .catch(() => setError(t("loadDocumentsError")));
-  }, [currentLang, t]);
+  }, [t]);
 
   const handleSelect = (doc) => {
     setSelectedDoc(doc);
     setAttachments([]);
+    setDocLanguage(currentLang === "ar" ? "ar" : "en");
     setError("");
     setSuccessMessage("");
     setShowModal(true);
   };
 
-  // ================= Helper Functions =================
   const handleSuccess = () => {
     setSuccessMessage(t("requestSuccess"));
     setShowModal(false); 
@@ -244,7 +284,6 @@ const DocumentRequest = () => {
     setError(serverMessage || t("submitRequestError"));
   };
 
-  // ================= Submit request =================
   const handleSubmit = (e) => {
     e.preventDefault();
     
@@ -258,18 +297,21 @@ const DocumentRequest = () => {
 
     const formData = new FormData();
     formData.append("document_type", selectedDoc.code);
-    formData.append("language", currentLang);
+    formData.append("language", docLanguage); 
     
+    // إضافة اللغة للملاحظات بناءً على طلبك
+    const languageNote = docLanguage === "ar" 
+      ? "اللغة المطلوبة للشهادة: العربية" 
+      : "Required Certificate Language: English";
+    formData.append("notes", languageNote);
+
     if (attachments.length > 0) {
       attachments.forEach((file) => {
         formData.append("attachments", file);
       });
     }
 
-    API.post("/documents/requests", attachments.length === 0 ? {
-        document_type: selectedDoc.code,
-        language: currentLang
-    } : formData)
+    API.post("/documents/requests", formData)
       .then(() => handleSuccess())
       .catch((err) => handleBackendError(err))
       .finally(() => setLoading(false));
@@ -302,50 +344,74 @@ const DocumentRequest = () => {
         ))}
       </div>
 
-      {/* ================= Modal ================= */}
-{showModal && selectedDoc && (
-  <div className="modal-overlay">
-    <div className="modal-content">
-      <h3 className="modal-title">{t("request")}: {selectedDoc.name}</h3>
+      {showModal && selectedDoc && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 className="modal-title">{t("request")}: {selectedDoc.name}</h3>
 
-      {/* استخدام مفاتيح الترجمة t() بدلاً من النصوص المباشرة */}
-      {selectedDoc.code === "GRAD_CERT" && (
-        <div className="requirements-box">
-          <h4 className="requirements-title">{t("graduation_requirements_title")}</h4>
-          <ul className="requirements-list">
-            <li>{t("req_fees")}</li>
-            <li>{t("req_military")}</li>
-            <li>{t("req_clearance")}</li>
-          </ul>
-        </div>
-      )}
-
-            {selectedDoc.requires_attachments && (
-              <div className="input-group-horizontal upload-container">
-                <label className="input-label-side">{t("attachments")}</label>
-                <div className="file-input-wrapper">
-                  <input
-                    type="file"
-                    id="file-upload"
-                    className="hidden-file-input"
-                    multiple
-                    accept=".jpeg,.jpg,.png,.pdf" 
-                    onChange={(e) => {
-                      setAttachments(Array.from(e.target.files));
-                      setError(""); 
-                    }}
-                  />
-                  <label htmlFor="file-upload" className="custom-file-button">
-                    {attachments.length > 0 
-                      ? `${attachments.length} ${t("filesSelected")}` 
-                      : t("chooseFile")}
-                  </label>
-                  
-                  <p className="file-instruction-text">
-                    {t("allowedFilesNote")}
-                  </p>
-                </div>
+            {selectedDoc.code === "GRAD_CERT" && (
+              <div className="requirements-box">
+                <h4 className="requirements-title">{t("graduation_requirements_title")}</h4>
+                <ul className="requirements-list">
+                  <li>{t("req_fees")}</li>
+                  <li>{t("req_military")}</li>
+                  <li>{t("req_clearance")}</li>
+                </ul>
               </div>
+            )}
+
+            {/* --- تظهر لغة الشهادة فقط إذا كان المستند يتطلب مرفقات --- */}
+            {selectedDoc.requires_attachments && (
+              <>
+                <div className="input-group-horizontal lang-selection-container">
+                  <label className="input-label-side">{t("certificate_language") || "لغة الشهادة"}:</label>
+                  <div className="radio-group">
+                    <label className="radio-option">
+                      <input 
+                        type="radio" 
+                        name="docLang" 
+                        value="ar" 
+                        checked={docLanguage === "ar"} 
+                        onChange={(e) => setDocLanguage(e.target.value)}
+                      />
+                      <span>{t("arabic") || "عربي"}</span>
+                    </label>
+                    <label className="radio-option">
+                      <input 
+                        type="radio" 
+                        name="docLang" 
+                        value="en" 
+                        checked={docLanguage === "en"} 
+                        onChange={(e) => setDocLanguage(e.target.value)}
+                      />
+                      <span>{t("english") || "إنجليزي"}</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="input-group-horizontal upload-container">
+                  <label className="input-label-side">{t("attachments")}</label>
+                  <div className="file-input-wrapper">
+                    <input
+                      type="file"
+                      id="file-upload"
+                      className="hidden-file-input"
+                      multiple
+                      accept=".jpeg,.jpg,.png,.pdf" 
+                      onChange={(e) => {
+                        setAttachments(Array.from(e.target.files));
+                        setError(""); 
+                      }}
+                    />
+                    <label htmlFor="file-upload" className="custom-file-button">
+                      {attachments.length > 0 
+                        ? `${attachments.length} ${t("filesSelected")}` 
+                        : t("chooseFile")}
+                    </label>
+                    <p className="file-instruction-text">{t("allowedFilesNote")}</p>
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="document-actions">

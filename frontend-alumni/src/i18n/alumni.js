@@ -268,7 +268,14 @@ const alumni = {
 "req_fees": "Proof of payment for all academic years",
 "req_military": "Military training certificate",
 "req_clearance": "College clearance (No pending items)",
-"error_select_files": "Please attach the required documents"
+"error_select_files": "Please attach the required documents",
+"choose_language": "Required Certificate Language",
+  "arabic": "Arabic",
+  "english": "English",
+  "certificate_language": "Certificate Language",
+  "filesSelected": "files selected",
+  "chooseFile": "Choose Files",
+  "allowedFilesNote": "Allowed formats: PDF, PNG, JPG (Max 5MB per file)"
     },
   },
 
@@ -542,7 +549,15 @@ const alumni = {
 "requestSuccess": "تم إرسال الطلب بنجاح ✅",
 "loadDocumentsError": "فشل تحميل أنواع المستندات",
 "submitRequestError": "فشل إرسال الطلب",
-"unauthorizedError": "غير مصرح: يرجى تسجيل الدخول أولاً"
+"unauthorizedError": "غير مصرح: يرجى تسجيل الدخول أولاً",
+
+"choose_language": "لغة الشهادة المطلوبة",
+  "arabic": "عربي",
+  "english": "إنجليزي",
+  "certificate_language": "لغة الشهادة",
+  "filesSelected": "ملفات مختارة",
+  "chooseFile": "اختر ملفات",
+  "allowedFilesNote": "المرفقات المسموح بها: PDF, PNG, JPG (الحد الأقصى 5 ميجابايت)"
     },
   },
 };

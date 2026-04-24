@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Eye, CheckCircle, XCircle, FileText, Loader, AlertCircle } from "lucide-react";
+import { Eye, CheckCircle, XCircle, FileText, Loader, AlertCircle, Languages } from "lucide-react";
 import API from "../../services/api";
 import "./ManageDocs.css";
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,7 @@ function ManageDocs({ currentUser }) {
   const [loading, setLoading] = useState(true);
   const { t, i18n } = useTranslation();
 
-  // جلب الصلاحية - طالما أن docPerm ليس null فالمستخدم مسموح له بالدخول
+  // جلب الصلاحية
   const docPerm = getPermission("Document Requests management", currentUser);
 
   useEffect(() => {
@@ -45,7 +45,6 @@ function ManageDocs({ currentUser }) {
       setRequests(normalizedData);
     } catch (err) {
       console.error("Error loading requests:", err);
-      // اختياري: يمكنك إضافة تنبيه هنا لإخبار المستخدم بوجود خطأ في السيرفر
     } finally {
       setLoading(false);
     }
@@ -84,10 +83,13 @@ function ManageDocs({ currentUser }) {
   };
 
   const handleViewDetails = (req) => {
+    // تحديد نص اللغة للعرض
+    const displayLang = req.language === "ar" ? t("arabic") : t("english");
+
     Swal.fire({
       title: `<span class="adm-swal-title">${t("requestDetails")}</span>`,
       html: `
-        <div class="adm-swal-container" style="direction: ${i18n.language === 'ar' ? 'rtl' : 'ltr'};">
+        <div class="adm-swal-container" style="direction: ${i18n.language === 'ar' ? 'rtl' : 'ltr'}; text-align: start;">
           <div class="adm-swal-row">
             <span class="label">${t("reqNo")}</span>
             <span class="value">#${req.request_number}</span>
@@ -97,16 +99,18 @@ function ManageDocs({ currentUser }) {
             <span class="value">${req.graduate_name}</span>
           </div>
           <div class="adm-swal-row">
+            <span class="label">${t("certificate_language") || "لغة الشهادة"}</span>
+            <span class="value" style="font-weight: bold; color: #2563eb;">${displayLang}</span>
+          </div>
+          <div class="adm-swal-row">
             <span class="label">${t("nationalId")}</span>
-            <span class="value" style="word-break: break-all; max-width: 200px; text-align: end;">
-                ${req.national_id || '---'}
-            </span>
+            <span class="value">${req.national_id || '---'}</span>
           </div>
-          <div class="adm-swal-notes">
-            <span class="label" style="display: block; margin-bottom: 8px; font-weight: 700;">${t("gradNotes")}</span>
-            <p class="notes-text">${req.notes || t("noNotes")}</p>
+          <div class="adm-swal-notes" style="margin-top: 15px; padding: 10px; background: #f9fafb; border-radius: 8px;">
+            <span class="label" style="display: block; margin-bottom: 5px; font-weight: 700;">${t("gradNotes")}</span>
+            <p class="notes-text" style="margin: 0; font-size: 0.9rem; color: #4b5563;">${req.notes || t("noNotes")}</p>
           </div>
-          <div class="adm-swal-footer" style="margin-top: 20px;">
+          <div class="adm-swal-footer" style="margin-top: 20px; text-align: center;">
             <span class="adm-status-pill status-${req.status}">${t(req.status)}</span>
           </div>
         </div>
@@ -117,7 +121,7 @@ function ManageDocs({ currentUser }) {
         popup: 'adm-swal-popup-custom',
       }
     });
-};
+  };
 
   return (
     <div className="adm-docs-container">
@@ -139,6 +143,7 @@ function ManageDocs({ currentUser }) {
                 <th>{t("reqNo")}</th>
                 <th>{t("graduateName")}</th>
                 <th>{t("documentType")}</th>
+                <th>{t("language")}</th>
                 <th>{t("status")}</th>
                 <th>{t("attachments")}</th>
                 <th>{t("actions")}</th>
@@ -151,6 +156,11 @@ function ManageDocs({ currentUser }) {
                   <td data-label={t("graduateName")} className="adm-grad-name">{req.graduate_name}</td>
                   <td data-label={t("documentType")}>
                     {i18n.language === "ar" ? req.document_name_ar : req.document_name_en}
+                  </td>
+                  <td data-label={t("language")}>
+                    <span className="adm-lang-badge">
+                      {req.language === "ar" ? "العربية" : "English"}
+                    </span>
                   </td>
                   <td data-label={t("status")}>
                     <span className={`adm-status-pill status-${req.status}`}>
@@ -178,12 +188,10 @@ function ManageDocs({ currentUser }) {
                   </td>
                   <td data-label={t("actions")}>
                     <div className="adm-action-btns">
-                      {/* زر المعاينة متاح دائماً لمن يملك صلاحية View */}
                       <button className="adm-btn-view" title={t("view")} onClick={() => handleViewDetails(req)}>
                         <Eye size={18} />
                       </button>
 
-                      {/* أزرار القبول والرفض تظهر فقط لمن يملك canEdit */}
                       {docPerm?.canEdit && req.status === "under_review" && (
                         <>
                           <button className="adm-btn-approve" title={t("approve")} onClick={() => handleUpdateStatus(req.id, "approved")}>
