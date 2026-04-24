@@ -205,7 +205,7 @@ const toggleLanguage = () => {
       <main className="main-section">
         <Routes>
           {renderRoutes()}
-          <Route path="*" element={<EmptyPage title="Welcome" />} />
+          <Route path="*" element={<EmptyPage title="Welcome to Staff Dashboard" />} />
           
         </Routes>
       </main>
