@@ -156,15 +156,16 @@
 
 import ChatBox from "./ChatBox";
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+// import { useParams } from "react-router-dom";
 import API from "../../services/api";
 import PROFILE from "./PROFILE.jpeg";
 import "./Accountgrad.css";
 import PostCard from "../../components/PostCard"; 
 import { useTranslation } from "react-i18next";
 import AdminPostsImg from './AdminPosts.jpeg';
-import { FiUserPlus, FiUserCheck, FiUserX, FiMessageCircle, FiUserMinus } from "react-icons/fi";
-
+// import { FiUserPlus, FiUserCheck, FiUserX, FiMessageCircle, FiUserMinus } from "react-icons/fi";
+import { useNavigate, useParams } from "react-router-dom"; // أضيفي useNavigate هنا
+import { FiArrowLeft, FiUserPlus, FiUserCheck, FiUserX, FiMessageCircle, FiUserMinus } from "react-icons/fi"; // أضيفي FiArrowLeft
 function Accountgrad() {
   const { t } = useTranslation();
   const { userId } = useParams();
@@ -172,7 +173,7 @@ function Accountgrad() {
   const [loading, setLoading] = useState(true);
   const [activeChatFriend, setActiveChatFriend] = useState(null);
 const [chatId, setChatId] = useState(null);
-
+const navigate = useNavigate(); // تعريف الـ navigate
 
   // --- Fetch Profile ---
   // --- Fetch Profile ---
@@ -353,6 +354,28 @@ const fetchProfile = async () => {
 
   return (
     <div className="profiile-page">
+      {/* زرار الرجوع */}
+    <button 
+      onClick={() => navigate(-1)} 
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "5px",
+        cursor: "pointer",
+        border: "none",
+        background: "var(--main-color, #007bff)", // استخدمي لون الثيم بتاعك
+        color: "white",
+        padding: "8px 15px",
+        borderRadius: "20px",
+        marginBottom: "15px",
+        fontSize: "14px",
+        fontWeight: "bold",
+        boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
+      }}
+    >
+      <FiArrowLeft />
+       {/* {t("back") || "Back"} */}
+    </button>
       <div className="profiile-card">
         <div className="profile-header">
           <img
