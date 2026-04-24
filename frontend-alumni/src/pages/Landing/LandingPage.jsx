@@ -240,23 +240,28 @@ export default function LandingPage() {
 
 
         {/* ===== FAQ ===== */}
-        <div className="floating-faq">
-          <button className="faq-toggle" onClick={() => setFaqOpen(!faqOpen)}>
-            <HelpCircle size={26} color="white" />
-          </button>
-          <div className={`faq-popup ${faqOpen ? "open" : ""}`}>
-            <h4>FAQ / الأسئلة الشائعة</h4>
-            <div className="faq-list">
-              {faqs.map((faq) => (
-                <details key={faq.faq_id}>
-                  <summary>{faq.question}</summary>
-                  <p>{faq.answer}</p>
-                </details>
-              ))}
-            </div>
-          </div>
-        </div>
-
+       <div className="floating-faq">
+  <button className="faq-toggle" onClick={() => setFaqOpen(!faqOpen)}>
+    <HelpCircle size={26} color="white" />
+  </button>
+  <div className={`faq-popup ${faqOpen ? "open" : ""}`}>
+    <h4>FAQ / الأسئلة الشائعة</h4>
+    <div className="faq-list">
+      {faqs.map((faq) => (
+        <details key={faq.faq_id}>
+          <summary>
+            {faq.question} / {faq.question_ar}
+          </summary>
+          <p>
+            {faq.answer}
+            <br />
+            {faq.answer_ar}
+          </p>
+        </details>
+      ))}
+    </div>
+  </div>
+</div>
         <div className="cta-section">
           <p className="cta-text">
             Access your alumni account or join the network now
