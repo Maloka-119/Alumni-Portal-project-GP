@@ -550,3 +550,276 @@
 .dark .invite-action.cancel:hover {
   background: #ef4444;
 }
+/* تنسيقات خلفية الموديل مع تأثير ضبابي ناعم */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px); /* بيعمل غبشة خفيفة ورا الموديل */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* الموديل نفسه - حواف أنعم وظل أفضل */
+.members-modal {
+  background: #ffffff;
+  width: 90%;
+  max-width: 450px; /* كبرنا العرض شوية لراحة العين */
+  border-radius: 16px; /* حواف دائرية ناعمة */
+  padding: 24px;
+  position: relative;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* عنوان الموديل */
+.members-modal h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;
+  border-bottom: 1px solid #f3f4f6;
+  padding-bottom: 16px;
+}
+
+/* زر الإغلاق - شكل دائري ناعم */
+.close-modal-btn {
+  position: absolute;
+  top: 20px;
+  right: 20px; /* غيريها لـ left لو الموقع عربي RTL */
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  border: none;
+  font-size: 1.1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.3s ease;
+}
+
+.close-modal-btn:hover {
+  background: #fee2e2;
+  color: #ef4444; /* يحمر خفيف عند الوقوف عليه */
+}
+
+/* حاوية القائمة */
+.members-list-modal {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+/* كل عضو في القائمة - مسافات وتأثير عند التمرير */
+.member-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  transition: background-color 0.2s ease;
+  margin-bottom: 8px; /* مسافة بين كل عضو والتاني */
+}
+
+.member-item:hover {
+  background-color: #f9fafb; /* لون رمادي فاتح جداً عند الوقوف بالماوس */
+}
+
+/* صورة العضو */
+.member-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #f3f4f6;
+}
+
+/* تفاصيل العضو (الاسم والكلية) - حل مشكلة التداخل */
+.member-info {
+  display: flex;
+  flex-direction: column; /* بيجبر الاسم والكلية يبقوا تحت بعض */
+  align-items: flex-start;
+  flex: 1;
+}
+
+.member-info h4 {
+  margin: 0 0 4px 0; /* مسافة صغيرة جداً تحت الاسم */
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.member-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.2;
+}
+
+.no-members {
+  text-align: center;
+  color: #9ca3af;
+  padding: 30px 0;
+  font-size: 1rem;
+}
+
+/* تنسيق زر عرض عدد الأعضاء */
+.members-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #f3f4f6;
+  color: #4f46e5;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin: 10px auto;
+  transition: background-color 0.3s;
+  width: fit-content;
+}
+
+.members-count-badge:hover {
+  background-color: #e0e7ff;
+}
+
+/* =========================================
+   Dark Mode Styles for Members Modal
+========================================= */
+
+/* زر عرض عدد الأعضاء */
+.dark .members-count-badge {
+  background-color: #374151;
+  color: #60a5fa;
+}
+
+.dark .members-count-badge:hover {
+  background-color: #4b5563;
+}
+
+/* الموديل نفسه */
+.dark .members-modal {
+  background: #1f2937;
+  border: 1px solid #374151;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+}
+
+/* عنوان الموديل */
+.dark .members-modal h3 {
+  color: #60a5fa;
+  border-bottom: 1px solid #374151;
+}
+
+/* زر الإغلاق */
+.dark .close-modal-btn {
+  background: #374151;
+  color: #9ca3af;
+}
+
+.dark .close-modal-btn:hover {
+  background: #7f1d1d; /* خلفية حمراء غامقة */
+  color: #fca5a5;     /* أيقونة حمراء فاتحة */
+}
+
+/* تأثير التمرير على كل عضو */
+.dark .member-item:hover {
+  background-color: #374151;
+}
+
+/* إطار صورة العضو */
+.dark .member-avatar {
+  border-color: #374151;
+}
+
+/* اسم العضو */
+.dark .member-info h4 {
+  color: #f3f4f6;
+}
+
+/* تفاصيل الكلية */
+.dark .member-info p {
+  color: #9ca3af;
+}
+
+/* نص في حالة عدم وجود أعضاء */
+.dark .no-members {
+  color: #9ca3af;
+}
+
+/* تظبيط شكل الـ Scrollbar جوه الموديل في الدارك مود */
+.dark .members-modal::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+
+.dark .members-modal::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+  border: 2px solid #1f2937;
+}
+
+/* =========================================
+   Responsive Styles (للموبايل والشاشات الصغيرة)
+========================================= */
+@media screen and (max-width: 768px) {
+  /* تظبيط الموديل عشان ياخد مساحة مناسبة على الموبايل */
+  .members-modal {
+    width: 95%; 
+    padding: 16px; /* تقليل المسافات الداخلية لتوفير المساحة */
+    max-height: 85vh; /* زيادة الارتفاع المسموح به قليلاً */
+  }
+
+  /* تصغير حجم عنوان الموديل */
+  .members-modal h3 {
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+  }
+
+  /* تظبيط زر الإغلاق */
+  .close-modal-btn {
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    font-size: 1rem;
+  }
+
+  /* تقليل المسافات بين عناصر العضو الواحد */
+  .member-item {
+    gap: 12px;
+    padding: 10px;
+  }
+
+  /* تصغير صورة العضو على الموبايل */
+  .member-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  /* تصغير خطوط اسم العضو وتفاصيل الكلية */
+  .member-info h4 {
+    font-size: 0.95rem;
+  }
+
+  .member-info p {
+    font-size: 0.75rem;
+  }
+
+  /* تصغير زر عرض عدد الأعضاء الخارجي */
+  .members-count-badge {
+    font-size: 0.85rem;
+    padding: 6px 10px;
+  }
+}
