@@ -167,6 +167,10 @@
   background-color: #feebc8;
   color: #7c2d12;
 }
+.status-cancelled {
+  background-color: #fec8c8;
+  color: #7c1212;
+}
 
 .status-review {
   background-color: #e9d8fd;
@@ -350,6 +354,12 @@
 .dark .status-pending {
   background-color: #78350f;
   color: #fde68a;
+  border: none;
+
+}
+.dark .status-cancelled {
+  color: #fec8c8;
+  background-color: #7c1212;
   border: none;
 
 }

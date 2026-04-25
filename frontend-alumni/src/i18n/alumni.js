@@ -275,13 +275,15 @@ const alumni = {
   "certificate_language": "Certificate Language",
   "filesSelected": "files selected",
   "chooseFile": "Choose Files",
-  "allowedFilesNote": "Allowed formats: PDF, PNG, JPG (Max 5MB per file)"
+  "allowedFilesNote": "Allowed formats: PDF, PNG, JPG (Max 5MB per file)",
+  "statusCancelled": "Cancelled",
     },
   },
 
   ar: {
     translation: {
       "graduation_requirements_title": "الأوراق المطلوبة للرفع:",
+      "statusCancelled": "ملغى",
 "req_fees": "إثبات سداد الرسوم لكل الفرق الدراسية",
 "req_military": "شهادة تأدية التربية العسكرية",
 "req_clearance": "إخلاء طرف من الكلية (عدم وجود عهدة)",

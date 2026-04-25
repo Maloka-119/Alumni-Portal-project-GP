@@ -43,7 +43,10 @@ const MyRequests = () => {
       'In Progress': 'status-progress',
       'approved': 'status-progress',
       'rejected': 'status-rejected',
-      'under_review': 'status-review'
+      'under_review': 'status-review',
+      'Cancelled': 'status-cancelled',
+      'cancelled': 'status-cancelled',
+
     };
     return statusMap[status] || '';
   };
@@ -59,6 +62,7 @@ const MyRequests = () => {
      'Approved': 'statusInProgress',
     'Under Review': 'statusUnderReview',
     'Rejected': 'statusrejected',
+    'cancelled': 'statusCancelled',
   };
 
   if (loading) {

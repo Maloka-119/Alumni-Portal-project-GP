@@ -192,12 +192,13 @@ function ManageDocs({ currentUser }) {
                         <Eye size={18} />
                       </button>
 
-                      {docPerm?.canEdit && req.status === "under_review" && (
-                        <>
+                      {/* تعديل الشرط هنا ليشمل pending و under_review */}
+    {docPerm?.canEdit && ["pending", "under_review"].includes(req.status) && (
+      <>
                           <button className="adm-btn-approve" title={t("approve")} onClick={() => handleUpdateStatus(req.id, "approved")}>
                             <CheckCircle size={18} />
                           </button>
-                          <button className="adm-btn-reject" title={t("reject")} onClick={() => handleUpdateStatus(req.id, "rejected")}>
+                          <button className="adm-btn-reject" title={t("reject")} onClick={() => handleUpdateStatus(req.id, "cancelled")}>
                             <XCircle size={18} />
                           </button>
                         </>

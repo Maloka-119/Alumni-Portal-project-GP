@@ -143,6 +143,15 @@
     font-size: 0.72rem;
     font-weight: 700;
 }
+.status-cancelled { 
+    background: #fef2f2; 
+    color: #b91c1c; 
+    /* border: 1px solid #fee2e2; */
+    border-radius: 8px;
+    padding: 4px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
 /* Action Buttons & Icons */
 .adm-action-btns {
     display: flex;
