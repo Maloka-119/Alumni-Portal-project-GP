@@ -338,46 +338,69 @@ function GroupsPage({ currentUser }) {
 />
 
 
-          <input
-            type="file"
-            accept="image/png, image/jpeg, image/jpg"
-            onChange={async (e) => {
-              cleanupPreview();
+          <div className="form-group mb-3">
+  {/* الـ Input الخاص برفع الملف */}
+  <input
+    type="file"
+    className="form-control" // يمكنك تغيير الـ class حسب مكتبة التنسيق لديك
+    accept="image/png, image/jpeg"
+    onChange={async (e) => {
+      cleanupPreview();
 
-              const file = e.target.files[0];
-              if (!file) return;
+      const file = e.target.files[0];
+      if (!file) return;
 
-              const allowed = ["image/png", "image/jpeg", "image/jpg"];
-              if (!allowed.includes(file.type)) {
-                Swal.fire({ icon: "error", title: t("invalidImageType") });
-                return;
-              }
+      // التأكد من نوع الملف (MIME type)
+      const allowed = ["image/png", "image/jpeg"];
+      if (!allowed.includes(file.type)) {
+        Swal.fire({
+          icon: "error",
+          title: t("invalidImageType"),
+          text: "Supported formats: PNG, JPG, JPEG",
+        });
+        e.target.value = ""; // لتفريغ الـ input في حالة الخطأ
+        return;
+      }
 
-              if (file.size / 1024 / 1024 > 2) {
-                Swal.fire({ icon: "error", title: t("fileTooLarge") });
-                return;
-              }
+      // التأكد من الحجم (أكبر من 2 ميجابايت)
+      if (file.size / 1024 / 1024 > 2) {
+        Swal.fire({
+          icon: "error",
+          title: t("fileTooLarge"),
+          text: "Maximum size allowed is 2MB",
+        });
+        e.target.value = "";
+        return;
+      }
 
-              try {
-                const compressed = await imageCompression(file, {
-                  maxSizeMB: 1,
-                  maxWidthOrHeight: 1024,
-                  useWebWorker: true
-                });
+      try {
+        // عملية ضغط الصورة
+        const compressed = await imageCompression(file, {
+          maxSizeMB: 1,
+          maxWidthOrHeight: 1024,
+          useWebWorker: true,
+        });
 
-                setFormData({ ...formData, cover: compressed });
+        setFormData({ ...formData, cover: compressed });
 
-                const url = URL.createObjectURL(compressed);
-                setPreview(url);
-                previewUrlRef.current = url;
-              } catch {
-                const url = URL.createObjectURL(file);
-                setPreview(url);
-                previewUrlRef.current = url;
-                setFormData({ ...formData, cover: file });
-              }
-            }}
-          />
+        const url = URL.createObjectURL(compressed);
+        setPreview(url);
+        previewUrlRef.current = url;
+      } catch (error) {
+        // في حالة فشل الضغط، يتم استخدام الملف الأصلي
+        const url = URL.createObjectURL(file);
+        setPreview(url);
+        previewUrlRef.current = url;
+        setFormData({ ...formData, cover: file });
+      }
+    }}
+  />
+
+  {/* ملاحظة تظهر للمستخدم أسفل الـ Input */}
+  <p className="upload-instruction-text">
+   {t("allowedFiles")}: <span>PNG, JPG, JPEG</span> ({t("maxSize")}: <span>2MB</span>)
+</p>
+</div>
 
           {(preview || (editingGroup && editingGroup.cover)) && (
             <div style={{ position: "relative", marginTop: "10px" }}>

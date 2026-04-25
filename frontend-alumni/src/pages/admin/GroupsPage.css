@@ -230,3 +230,31 @@ h1 {
   white-space: normal;
   overflow-wrap: break-word;
 }
+
+.upload-instruction-text {
+  font-size: 13px;
+  color: #6b7280; /* رمادي هادي */
+  margin-top: 8px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* تمييز الامتدادات والحجم بلون أغمق قليلاً أو عريض */
+.upload-instruction-text span {
+  color: #374151;
+  font-weight: 600;
+  background-color: #f3f4f6; /* خلفية خفيفة جداً للتمييز */
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-family: monospace; /* اختياري: بيخلي شكل الامتدادات تقني أكتر */
+}
+
+/* علامة النجمة بلون أحمر بسيط للتنبيه */
+.upload-instruction-text::before {
+  content: "•";
+  color: #ef4444;
+  font-weight: bold;
+  margin-left: 2px;
+}

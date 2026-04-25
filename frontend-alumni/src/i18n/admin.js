@@ -309,10 +309,20 @@ const admin = {
   "dismiss": "Dismiss",
   "staffCreatedSuccess": "Staff account created successfully",
   "staffCreatedError": "Failed to create staff account",
+  "invalidImageType": "Invalid image type",
+  "fileTooLarge": "File is too large",
+  "allowedFiles": "Allowed files",
+  "maxSize": "Max size",
+  "allowedExtensionsHint": "Allowed extensions are: {{extensions}}",
     }
   },
   ar: {
     translation: {
+      "invalidImageType": "نوع الصورة غير صالح",
+  "fileTooLarge": "حجم الملف كبير جداً",
+  "allowedFiles": "الملفات المسموحة",
+  "maxSize": "أقصى حجم",
+  "allowedExtensionsHint": "الامتدادات المسموحة هي: {{extensions}}",
       "quickAddStaff": "إضافة موظف سريع",
   "fullName": "الاسم بالكامل",
   "nationalId": "الرقم القومي",
