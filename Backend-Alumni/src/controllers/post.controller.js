@@ -277,6 +277,47 @@ const createPost = async (req, res) => {
       postId: newPost.post_id,
     });
 
+    // Fetch full post for broadcasting via socket
+    try {
+      const fullPost = await Post.findByPk(newPost.post_id, {
+        include: [
+          {
+            model: User,
+            attributes: ["id", "first-name", "last-name", "email", "user-type"],
+            include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
+          },
+          {
+            model: PostImage,
+            attributes: ["image-url"],
+          },
+        ],
+      });
+
+      if (fullPost && global.chatSocket) {
+        // Enforce the same structure as fetchPosts if possible
+        const broadcastData = {
+          post_id: fullPost.post_id,
+          category: fullPost.category,
+          content: fullPost.content,
+          "created-at": fullPost["created-at"],
+          author: {
+            id: fullPost.User.id,
+            "full-name": `${fullPost.User["first-name"]} ${fullPost.User["last-name"]}`,
+            type: fullPost.User["user-type"],
+            image: fullPost.User.Graduate ? fullPost.User.Graduate["profile-picture-url"] : null,
+          },
+          "group-id": fullPost["group-id"],
+          images: fullPost.PostImages ? fullPost.PostImages.map(img => img["image-url"]) : [],
+          likesCount: 0,
+          isLikedByYou: false,
+          comments: []
+        };
+        global.chatSocket.broadcastNewPost(broadcastData);
+      }
+    } catch (broadcastErr) {
+      logger.error("Error broadcasting new post", { error: broadcastErr.message });
+    }
+
     return res.status(201).json({
       status: "success",
 
@@ -452,6 +493,43 @@ const editPost = async (req, res) => {
     logger.info("----- [editPost] END SUCCESS -----", {
       postId,
     });
+
+    // Broadcast post update via socket
+    try {
+      const fullUpdatedPost = await Post.findByPk(postId, {
+        include: [
+          {
+            model: User,
+            attributes: ["id", "first-name", "last-name", "email", "user-type"],
+            include: [{ model: Graduate, attributes: ["profile-picture-url"] }],
+          },
+          {
+            model: PostImage,
+            attributes: ["image-url"],
+          },
+        ],
+      });
+
+      if (fullUpdatedPost && global.chatSocket) {
+        const broadcastData = {
+          post_id: fullUpdatedPost.post_id,
+          category: fullUpdatedPost.category,
+          content: fullUpdatedPost.content,
+          "created-at": fullUpdatedPost["created-at"],
+          author: {
+            id: fullUpdatedPost.User.id,
+            "full-name": `${fullUpdatedPost.User["first-name"]} ${fullUpdatedPost.User["last-name"]}`,
+            type: fullUpdatedPost.User["user-type"],
+            image: fullUpdatedPost.User.Graduate ? fullUpdatedPost.User.Graduate["profile-picture-url"] : null,
+          },
+          "group-id": fullUpdatedPost["group-id"],
+          images: fullUpdatedPost.PostImages ? fullUpdatedPost.PostImages.map(img => img["image-url"]) : [],
+        };
+        global.chatSocket.broadcastPostUpdate(broadcastData);
+      }
+    } catch (broadcastErr) {
+      logger.error("Error broadcasting post update", { error: broadcastErr.message });
+    }
 
     return res.status(200).json({
       status: "success",
@@ -1879,6 +1957,15 @@ const likePost = async (req, res) => {
       await existingLike.destroy();
       logger.info("Like removed successfully", { postId, userId });
 
+      // Broadcast like update (unlike) via socket
+      if (global.chatSocket) {
+        const { likesCount } = await getPostLikeInfo(postId);
+        global.chatSocket.broadcastPostLike({
+          postId: parseInt(postId),
+          likesCount
+        });
+      }
+
       logger.info("----- [likePost] END SUCCESS (Unlike) -----", {
         postId,
         userId,
@@ -1910,6 +1997,15 @@ const likePost = async (req, res) => {
       userId,
       likeId: newLike.like_id,
     });
+
+    // Broadcast like update via socket
+    if (global.chatSocket) {
+      const { likesCount } = await getPostLikeInfo(postId);
+      global.chatSocket.broadcastPostLike({
+        postId: parseInt(postId),
+        likesCount
+      });
+    }
 
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
@@ -2059,23 +2155,33 @@ const addComment = async (req, res) => {
       commentId: newComment.comment_id,
     });
 
+    const commentData = {
+      comment_id: commentWithAuthor.comment_id,
+      content: commentWithAuthor.content,
+      "created-at": commentWithAuthor["created-at"],
+      edited: commentWithAuthor.edited,
+      author: {
+        id: commentWithAuthor.User.id,
+        "full-name": `${commentWithAuthor.User["first-name"]} ${commentWithAuthor.User["last-name"]}`,
+        email: commentWithAuthor.User.email,
+        image: commentWithAuthor.User.Graduate
+          ? commentWithAuthor.User.Graduate["profile-picture-url"]
+          : null,
+      },
+    };
+
+    // Broadcast comment via socket
+    if (global.chatSocket) {
+      global.chatSocket.broadcastPostComment({
+        postId: parseInt(postId),
+        comment: commentData
+      });
+    }
+
     return res.status(201).json({
       status: HttpStatusHelper.SUCCESS,
       message: "Comment added successfully",
-      comment: {
-        comment_id: commentWithAuthor.comment_id,
-        content: commentWithAuthor.content,
-        "created-at": commentWithAuthor["created-at"],
-        edited: commentWithAuthor.edited,
-        author: {
-          id: commentWithAuthor.User.id,
-          "full-name": `${commentWithAuthor.User["first-name"]} ${commentWithAuthor.User["last-name"]}`,
-          email: commentWithAuthor.User.email,
-          image: commentWithAuthor.User.Graduate
-            ? commentWithAuthor.User.Graduate["profile-picture-url"]
-            : null,
-        },
-      },
+      comment: commentData,
     });
   } catch (error) {
     logger.error("----- [addComment] Error", {
@@ -2392,6 +2498,11 @@ const deletePost = async (req, res) => {
       authorId: post["author-id"],
       authorType: postAuthor["user-type"],
     });
+
+    // Broadcast post deletion via socket
+    if (global.chatSocket) {
+      global.chatSocket.broadcastPostDelete(postId);
+    }
 
     logger.info("----- [deletePost] END SUCCESS -----", { postId, userId });
 

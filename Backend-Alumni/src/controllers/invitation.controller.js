@@ -12,6 +12,7 @@ const axios = require("axios");
 // Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
 const aes = require("../utils/aes");// عدل المسار حسب مكان الملف
+const notificationService = require("../services/notificationService");
 /**
  * Send a group invitation
  * @route POST /api/invitations
@@ -729,16 +730,12 @@ const sendAutoGroupInvitation = async (userId) => {
     // 4. Create notification
     console.log("\n📍 [6] CREATING NOTIFICATION:");
     
-    await Notification.create({
-      receiverId: userId,
-      type: "added_to_group",
-      message: `عزيزي الخريج، لديك دعوة للانضمام لمجموعة ${matchingGroup["group-name"]}`,
-      navigation: {
-        type: "invitation",
-        invitationId: invitation.id,
-        groupId: matchingGroup.id,
-      },
-    });
+    await notificationService.notifyAddedToGroup(
+      userId,
+      1, // From Admin
+      matchingGroup["group-name"],
+      matchingGroup.id
+    );
 
     console.log(`   ✅ Notification created`);
 

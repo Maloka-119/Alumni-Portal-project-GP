@@ -795,6 +795,106 @@ class ChatSocketServer {
     }
   }
 
+  // Method to send a notification (called from notification service)
+  sendNotification(receiverId, notification) {
+    try {
+      this.io.to(`user_${receiverId}`).emit('new_notification', notification);
+      console.log(`Notification sent to user_${receiverId} via socket`);
+    } catch (error) {
+      console.error('Error sending notification via socket:', error);
+    }
+  }
+
+  // Method to broadcast a new post to all connected users
+  broadcastNewPost(post) {
+    try {
+      this.io.emit('new_post', post);
+      console.log('New post broadcasted to all users via socket');
+    } catch (error) {
+      console.error('Error broadcasting post via socket:', error);
+    }
+  }
+
+  // Method to broadcast a post update
+  broadcastPostUpdate(post) {
+    try {
+      this.io.emit('post_updated', post);
+      console.log(`Post ${post.post_id || post.id} update broadcasted via socket`);
+    } catch (error) {
+      console.error('Error broadcasting post update via socket:', error);
+    }
+  }
+
+  // Method to broadcast a post deletion
+  broadcastPostDelete(postId) {
+    try {
+      this.io.emit('post_deleted', postId);
+      console.log(`Post ${postId} deletion broadcasted via socket`);
+    } catch (error) {
+      console.error('Error broadcasting post deletion via socket:', error);
+    }
+  }
+
+  // Method to broadcast a post like update
+  broadcastPostLike(data) {
+    try {
+      this.io.emit('post_liked', data);
+      console.log(`Post ${data.postId} like broadcasted via socket`);
+    } catch (error) {
+      console.error('Error broadcasting post like via socket:', error);
+    }
+  }
+
+  // Method to broadcast a new comment
+  broadcastPostComment(data) {
+    try {
+      this.io.emit('post_commented', data);
+      console.log(`Post ${data.postId} comment broadcasted via socket`);
+    } catch (error) {
+      console.error('Error broadcasting post comment via socket:', error);
+    }
+  }
+
+  // Method to send a live friend request
+  emitFriendRequest(receiverId, requestData) {
+    try {
+      this.io.to(`user_${receiverId}`).emit('friend_request_received', requestData);
+      console.log(`Friend request from ${requestData.senderId} sent to user ${receiverId} via socket`);
+    } catch (error) {
+      console.error('Error emitting friend request via socket:', error);
+    }
+  }
+
+  // Method to notify when a request is accepted
+  emitFriendRequestAccepted(senderId, friendData) {
+    try {
+      this.io.to(`user_${senderId}`).emit('friend_request_accepted', friendData);
+      console.log(`Friend request acceptance from ${friendData.id} sent to user ${senderId} via socket`);
+    } catch (error) {
+      console.error('Error emitting friend request acceptance via socket:', error);
+    }
+  }
+
+  // Method to notify when a request is cancelled
+  emitFriendRequestCancelled(receiverId, senderId) {
+    try {
+      this.io.to(`user_${receiverId}`).emit('friend_request_cancelled', { senderId });
+      console.log(`Friend request cancellation from ${senderId} sent to user ${receiverId} via socket`);
+    } catch (error) {
+      console.error('Error emitting friend request cancellation via socket:', error);
+    }
+  }
+
+  // Method to notify when unfriended
+  emitUnfriend(friendId, userId) {
+    try {
+      this.io.to(`user_${friendId}`).emit('unfriended', { friendId: userId });
+      console.log(`Unfriend notification from ${userId} sent to user ${friendId} via socket`);
+    } catch (error) {
+      console.error('Error emitting unfriend notification via socket:', error);
+    }
+  }
+
   // Get connected users count
   getConnectedUsersCount() {
     return this.connectedUsers.size;

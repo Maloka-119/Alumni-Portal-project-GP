@@ -7,6 +7,7 @@ import "./FriendShip.css";
 import { MessageCircle } from "lucide-react";
 import ChatBox from "./ChatBox";
 import { useLocation } from "react-router-dom";
+import { initSocket, onFriendRequestReceived, onFriendRequestAccepted, onFriendRequestCancelled, onUnfriended } from "../../services/socket";
 
 function FriendshipPage() {
   const { t, i18n } = useTranslation();
@@ -114,6 +115,42 @@ function FriendshipPage() {
     fetchFriends();
     fetchRequests();
     fetchSuggestions();
+
+    // Socket listeners for real-time updates
+    const token = localStorage.getItem("token");
+    if (token) {
+      initSocket(token);
+      
+      onFriendRequestReceived((request) => {
+        console.log("📨 New live friend request received:", request);
+        setFriendRequests((prev) => {
+          if (prev.some(r => r.id === request.id || r.senderId === request.senderId)) return prev;
+          return [request, ...prev];
+        });
+      });
+
+      onFriendRequestAccepted((newFriend) => {
+        console.log("🤝 Friend request accepted live:", newFriend);
+        setFriends((prev) => {
+          if (prev.some(f => f.id === newFriend.id || f.friendId === newFriend.friendId)) return prev;
+          return [newFriend, ...prev];
+        });
+        // Remove from suggestions if present
+        setSuggestions((prev) => prev.filter(s => s.id !== newFriend.id));
+      });
+
+      onFriendRequestCancelled(({ senderId }) => {
+        console.log("🚫 Friend request cancelled live:", senderId);
+        setFriendRequests((prev) => prev.filter(r => r.senderId !== senderId));
+      });
+
+      onUnfriended(({ friendId }) => {
+        console.log("👋 Unfriended live:", friendId);
+        setFriends((prev) => prev.filter(f => f.id !== friendId && f.friendId !== friendId));
+        // Refresh suggestions to potentially show them again
+        fetchSuggestions();
+      });
+    }
   }, []);
 
   // -------------------- Friend Actions --------------------

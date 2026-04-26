@@ -1,10 +1,10 @@
 const { Sequelize } = require("sequelize");
 require("dotenv").config();
 
-const db1 = process.env.DATABASE_URL1;
+const db1 = process.env.DATABASE_URL;
 
 if (!db1) {
-  throw new Error("DATABASE_URL1 is required");
+  throw new Error("DATABASE_URL is required");
 }
 
 function parseDbUrl(dbUrl) {

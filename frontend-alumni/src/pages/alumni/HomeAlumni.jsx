@@ -8,6 +8,7 @@ import PROFILE from './PROFILE.jpeg';
 import AdminPostsImg from './AdminPosts.jpeg';
 import { ChevronDown } from "lucide-react";
 import PostCard from '../../components/PostCard';
+import { initSocket, onNewPost, onPostUpdated, onPostDeleted, onPostLiked, onPostCommented } from '../../services/socket';
 
 const HomeAlumni = () => {
   const { darkMode } = useContext(DarkModeContext);
@@ -18,6 +19,52 @@ const HomeAlumni = () => {
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+  const formatPost = (post) => {
+    const isUniversityPost =
+      post.author?.type === "admin" || post.author?.type === "staff";
+
+    return {
+      id: post.post_id || post.id,
+      author: {
+        name: isUniversityPost
+          ? "Alumni Portal - Helwan University"
+          : post.author?.["full-name"] || "Unknown",
+        photo: isUniversityPost
+          ? AdminPostsImg
+          : post.author?.image || PROFILE,
+        id: post.author?.id,
+      },
+      date: post["created-at"],
+      category: post.category || "",
+      "group-id": post["group-id"] || null,
+      content: post.content || "",
+      images: post.images || [],
+      likesCount: post.likesCount || 0,
+      isLikedByYou: !!post.isLikedByYou,
+      shares: 0,
+      comments: (post.comments || []).map(comment => {
+        const isUniversityComment =
+          comment.author?.["user-type"] === "admin" ||
+          comment.author?.["user-type"] === "staff";
+
+        return {
+          comment_id: comment.comment_id,
+          content: comment.content,
+          author: {
+            id: comment.author?.id,
+            "full-name": isUniversityComment
+              ? "Alumni Portal - Helwan University"
+              : comment.author?.["full-name"] || "Unknown",
+            image: isUniversityComment
+              ? AdminPostsImg
+              : comment.author?.image || PROFILE,
+          },
+          "created-at": comment["created-at"],
+        };
+      }),
+    };
+  };
 
   const fetchPosts = async (pageNum = 1) => {
     if (pageNum === 1) setPosts([]);
@@ -111,6 +158,58 @@ image: isUniversityComment
 
   useEffect(() => {
     fetchPosts(1);
+
+    // Setup socket listener for live posts
+    const token = localStorage.getItem("token");
+    if (token) {
+      initSocket(token);
+      onNewPost((newPost) => {
+        console.log("🆕 New live post received:", newPost);
+        // Only add if it's not a group post (general feed)
+        if (newPost["group-id"] == null) {
+          const formatted = formatPost(newPost);
+          setPosts((prev) => {
+            // Check if post already exists to avoid duplicates
+            if (prev.some(p => p.id === formatted.id)) return prev;
+            return [formatted, ...prev];
+          });
+        }
+      });
+
+      onPostUpdated((updatedPost) => {
+        console.log("🔄 Live post update received:", updatedPost);
+        const formatted = formatPost(updatedPost);
+        setPosts((prev) =>
+          prev.map((post) => (post.id === formatted.id ? { ...post, ...formatted } : post))
+        );
+      });
+
+      onPostDeleted((deletedPostId) => {
+        console.log("🗑️ Live post deletion received:", deletedPostId);
+        setPosts((prev) => prev.filter((post) => post.id !== parseInt(deletedPostId) && post.id !== deletedPostId));
+      });
+
+      onPostLiked(({ postId, likesCount }) => {
+        console.log("❤️ Live post like received:", postId, likesCount);
+        setPosts((prev) =>
+          prev.map((post) => (post.id === postId ? { ...post, likesCount } : post))
+        );
+      });
+
+      onPostCommented(({ postId, comment }) => {
+        console.log("💬 Live post comment received:", postId, comment);
+        setPosts((prev) =>
+          prev.map((post) => {
+            if (post.id === postId) {
+              // Check if comment already exists
+              if (post.comments.some(c => c.comment_id === comment.comment_id)) return post;
+              return { ...post, comments: [comment, ...post.comments] };
+            }
+            return post;
+          })
+        );
+      });
+    }
   }, []);
 
   if (loading && posts.length === 0) return <p>{t('loadingPosts')}</p>;

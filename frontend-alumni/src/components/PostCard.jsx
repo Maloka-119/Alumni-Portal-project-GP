@@ -232,6 +232,12 @@ const PostCard = ({ post, onEdit, onDelete, highlightCommentId }) => {
   const token = localStorage.getItem("token");
   const currentUser = JSON.parse(localStorage.getItem("user"));
 
+  // Sync internal state with props when they change (important for real-time updates)
+  useEffect(() => {
+    setLikesCount(post.likesCount || 0);
+    if (post.comments) setComments(post.comments);
+  }, [post.likesCount, post.comments]);
+
   useEffect(() => {
     if (highlightCommentId) setShowComments(true);
   }, [highlightCommentId]);

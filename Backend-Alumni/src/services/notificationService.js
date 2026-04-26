@@ -27,6 +27,11 @@ const createNotification = async ({ receiverId, senderId, type, message, navigat
       isRead: false
     });
 
+    // Emit live notification via socket
+    if (global.chatSocket) {
+      global.chatSocket.sendNotification(receiverId, notification);
+    }
+
     return notification;
   } catch (error) {
     console.error('Error creating notification:', error);

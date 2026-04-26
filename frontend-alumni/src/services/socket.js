@@ -110,6 +110,76 @@ export const onMessageSeen = (callback) => {
   socket.on("message_seen", callback);
 };
 
+export const onNewNotification = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onNewNotification)");
+  
+  socket.off("new_notification");
+  socket.on("new_notification", callback);
+};
+
+export const onNewPost = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onNewPost)");
+  
+  socket.off("new_post");
+  socket.on("new_post", callback);
+};
+
+export const onPostUpdated = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onPostUpdated)");
+  
+  socket.off("post_updated");
+  socket.on("post_updated", callback);
+};
+
+export const onPostDeleted = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onPostDeleted)");
+  
+  socket.off("post_deleted");
+  socket.on("post_deleted", callback);
+};
+
+export const onPostLiked = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onPostLiked)");
+  
+  socket.off("post_liked");
+  socket.on("post_liked", callback);
+};
+
+export const onPostCommented = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onPostCommented)");
+  
+  socket.off("post_commented");
+  socket.on("post_commented", callback);
+};
+
+export const onFriendRequestReceived = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onFriendRequestReceived)");
+  
+  socket.off("friend_request_received");
+  socket.on("friend_request_received", callback);
+};
+
+export const onFriendRequestAccepted = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onFriendRequestAccepted)");
+  
+  socket.off("friend_request_accepted");
+  socket.on("friend_request_accepted", callback);
+};
+
+export const onFriendRequestCancelled = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onFriendRequestCancelled)");
+  
+  socket.off("friend_request_cancelled");
+  socket.on("friend_request_cancelled", callback);
+};
+
+export const onUnfriended = (callback) => {
+  if (!socket) return console.warn("⚠️ Socket not initialized (onUnfriended)");
+  
+  socket.off("unfriended");
+  socket.on("unfriended", callback);
+};
+
 // -------------------- DISCONNECT --------------------
 export const disconnectSocket = () => {
   if (!socket) return console.warn("⚠️ Socket not initialized (disconnectSocket)");

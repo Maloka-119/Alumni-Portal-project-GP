@@ -301,6 +301,7 @@ import Accountgrad from "./Accountgrad.jsx";
 import FeedbackPage from './FeedbackPage.jsx';
 import PostSingle from './PostSingle.jsx';
 import ChatBox from './ChatBox.jsx';
+import { initSocket, onNewNotification, onNewMessage } from "../../services/socket";
 import Swal from "sweetalert2";
 import Services from './Services.jsx';
 import DocumentRequest from './DocumentRequest.jsx';
@@ -407,14 +408,35 @@ const Dashboard = ({ setUser }) => {
   };
   useEffect(() => {
     fetchUnreadCount();
+
+    // Setup socket listener for live notification count
+    const token = localStorage.getItem("token");
+    if (token) {
+      initSocket(token);
+      onNewNotification(() => {
+        setUnreadCount((prev) => (prev || 0) + 1);
+      });
+    }
   }, []);
   
   useEffect(() => {
     fetchUnreadMessagesCount();
   
+    // Setup socket listener for live message count
+    const token = localStorage.getItem("token");
+    if (token) {
+      initSocket(token);
+      onNewMessage((msg) => {
+        // Only increment if chat sidebar is NOT open or it's not the current chat
+        // (Simplified logic: always fetch count or increment)
+        fetchUnreadMessagesCount();
+      });
+    }
+    
+    // Keep interval as a fallback but increase it
     const interval = setInterval(() => {
       fetchUnreadMessagesCount();
-    }, 5000);
+    }, 30000); // 30s fallback
   
     return () => clearInterval(interval);
   }, []);

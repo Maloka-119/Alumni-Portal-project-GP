@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./Notification.css";
 import { Check, X } from "lucide-react";
+import { initSocket, onNewNotification } from "../../services/socket";
 
 const NotificationsPage = ({ openChat, setUnreadCount }) => {
   const { t, i18n } = useTranslation();
@@ -129,6 +130,23 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
         }
         break;
 
+      case "group":
+        if (nav.groupId) navigate(`/graduate/dashboard/communities/my`);
+        break;
+
+      case "groups":
+        navigate("/graduate/dashboard/communities/all");
+        break;
+
+      case "announcement":
+      case "announcements":
+        navigate("/graduate/dashboard/opportunities");
+        break;
+
+      case "document-requests":
+        navigate("/graduate/dashboard/myrequests");
+        break;
+
       default:
         console.warn("Unknown notification screen:", nav.screen);
     }
@@ -153,6 +171,30 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
   useEffect(() => {
     fetchNotifications();
     fetchInvitations();
+
+    // Setup socket listener for live notifications
+    const token = localStorage.getItem("token");
+    if (token) {
+      initSocket(token);
+      onNewNotification((newNotif) => {
+        console.log("🔔 New live notification received:", newNotif);
+        // Map the new notification to the frontend format if necessary
+        const formattedNotif = {
+          id: newNotif.notification_id || newNotif.id,
+          receiverId: newNotif.receiverId,
+          senderId: newNotif.senderId,
+          type: newNotif.type,
+          message: newNotif.message,
+          isRead: newNotif.isRead,
+          createdAt: newNotif.createdAt,
+          navigation: newNotif.navigation,
+          sender: newNotif.sender || null
+        };
+        
+        setNotifications((prev) => [formattedNotif, ...prev]);
+        setUnreadCount && setUnreadCount((prev) => (prev || 0) + 1);
+      });
+    }
   }, []);
 
   const acceptInvitation = async (invitationId) => {
