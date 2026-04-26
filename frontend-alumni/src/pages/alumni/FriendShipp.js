@@ -313,7 +313,7 @@ function FriendshipPage() {
                       }}
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
-                      {f.name}
+                      {f.userName}
                     </span>
                   </div>
                   <div className="friend-actions">
@@ -374,7 +374,7 @@ function FriendshipPage() {
                       }}
                       style={{ cursor: "pointer", color: "#007bff" }}
                     >
-                      {f.name}
+                      {f.userName}
                     </span>
                   </div>
                   <div
