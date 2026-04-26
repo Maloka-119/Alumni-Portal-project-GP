@@ -6,9 +6,9 @@ const aes = require("../utils/aes");
 const validator = require("validator");
 const { normalizeCollegeName } = require("../services/facultiesService");
 
-// 🔴 START OF LOGGER IMPORT - ADDED THIS
+
 const { logger, securityLogger } = require("../utils/logger");
-// 🔴 END OF LOGGER IMPORT
+
 
 // ===================== Helper functions (same as Google) =====================
 function validateNationalId(nationalId) {

@@ -12,7 +12,14 @@ export const initSocket = (token) => {
   }
 
   if (!socket || tokenStored !== token) {
-    socket = io("http://localhost:5005", {
+
+    // ✅ الحل هنا (dynamic URL)
+    const SOCKET_URL =
+      window.location.hostname === "localhost"
+        ? "http://localhost:5005"
+        : window.location.origin;
+
+    socket = io(SOCKET_URL, {
       auth: { token },
       transports: ["websocket"],
     });
@@ -36,7 +43,6 @@ export const joinChatSocket = (chatId) => {
   if (!socket) return console.warn("⚠️ Socket not initialized (joinChatSocket)");
   if (!chatId) return console.warn("⚠️ No chatId provided for joinChatSocket");
   
-  // Wait for connection if not connected yet
   if (socket.connected) {
     socket.emit("join_chat", chatId);
   } else {
@@ -70,7 +76,6 @@ export const markMessagesAsReadSocket = (chatId) => {
   if (!socket) return console.warn("⚠️ Socket not initialized (markMessagesAsReadSocket)");
   if (!chatId) return console.warn("⚠️ No chatId provided for markMessagesAsReadSocket");
   
-  // Wait for connection if not connected yet
   if (socket.connected) {
     socket.emit("mark_read", { chat_id: chatId });
   } else {
@@ -84,7 +89,7 @@ export const markMessagesAsReadSocket = (chatId) => {
 export const onNewMessage = (callback) => {
   if (!socket) return;
 
-  socket.off("new_message"); // مهم جدًا يمنع duplicate listeners
+  socket.off("new_message");
   socket.on("new_message", callback);
 };
 
@@ -101,9 +106,10 @@ export const onMessagesMarkedAsRead = (callback) => {
 export const onMessageSeen = (callback) => {
   if (!socket) return console.warn("⚠️ Socket not initialized (onMessageSeen)");
   
-  socket.off("message_seen"); // يمنع التكرار
+  socket.off("message_seen");
   socket.on("message_seen", callback);
 };
+
 // -------------------- DISCONNECT --------------------
 export const disconnectSocket = () => {
   if (!socket) return console.warn("⚠️ Socket not initialized (disconnectSocket)");
