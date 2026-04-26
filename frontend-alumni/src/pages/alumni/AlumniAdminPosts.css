@@ -841,27 +841,33 @@
 }
 
 /* ====== Post Images Styling ====== */
+/* الحاوية الأساسية للصور */
 .uni-post-images {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* كل صورة تشغل نفس المساحة */
   gap: 8px;
-  margin-top: 10px;
-  margin-bottom: 10px;
+  margin-top: 12px;
+  width: 100%;
+  /* لو فيه صورة واحدة تاخد العرض كله، لو اتنين يتقسموا، وهكذا */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
+/* تنسيق الصورة الواحدة */
 .uni-post-preview {
   width: 100%;
-  aspect-ratio: 1/1; /* يجعل الصورة مربعة */
-  object-fit: cover; /* يملأ الصورة بدون تشويه */
+  height: 250px; /* ثبت طول موحد لكل الصور في الشبكة */
+  object-fit: cover; /* ده هيخلي الصور متناسقة، بس لو محتاج النص يبان كامل غيرها لـ contain */
   border-radius: 8px;
-  max-height: 350px; /* تحدد أقصى ارتفاع للصورة */
+  border: 1px solid #eee;
+  cursor: pointer;
 }
 
-
-.uni-post-preview:hover {
-  transform: scale(1.03);
+/* حالة خاصة: لو مفيش غير صورة واحدة خليها تاخد مساحتها الطبيعية عشان النص يبان */
+.uni-post-images img:only-child {
+  height: auto;
+  max-height: 500px;
+  object-fit: contain; /* عشان صور المستندات متتقصش */
+  background: #f9f9f9;
 }
-
 
 .image-viewer-overlay {
   position: fixed;
