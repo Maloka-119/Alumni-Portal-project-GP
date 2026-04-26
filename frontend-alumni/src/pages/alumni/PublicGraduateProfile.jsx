@@ -50,7 +50,7 @@ function PublicGraduateProfile() {
         </div>
         <div className="pgp-details">
           <p><strong>Faculty:</strong> {graduate.faculty || "-"}</p>
-          <p><strong>Department:</strong> {graduate.department || "-"}</p>
+          {/* <p><strong>Department:</strong> {graduate.department || "-"}</p> */}
           <p><strong>Graduation Year:</strong> {graduate.graduationYear || "-"}</p>
         </div>
       </div>
