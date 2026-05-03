@@ -242,6 +242,12 @@
       background-attachment: fixed;
     
   }
+@media (max-width: 767px) {
+  .landing-container {
+    /* بنلغي الفيكسد هنا بس عشان نحل مشكلة الهزة */
+    background-attachment: scroll; 
+  }
+}
   
   /* dark overlay over background image */
   .landing-container::before{
