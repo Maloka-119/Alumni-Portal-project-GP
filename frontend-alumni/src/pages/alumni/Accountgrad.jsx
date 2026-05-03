@@ -180,9 +180,9 @@ const navigate = useNavigate(); // تعريف الـ navigate
 const fetchProfile = async () => {
   setLoading(true);
   try {
-    console.log('🔍 Fetching profile for userId:', userId);
+    // console.log('🔍 Fetching profile for userId:', userId);
     const res = await API.get(`/graduates/profile/${userId}`);
-    console.log('✅ API Response:', res.data);
+    // console.log('✅ API Response:', res.data);
     
     if (res.data.status === "success" && res.data.data) {
       const data = res.data.data;
@@ -191,27 +191,27 @@ const fetchProfile = async () => {
       let skills = [];
       if (Array.isArray(data.skills)) {
         skills = data.skills;
-        console.log('✅ Skills is array:', skills);
+        // console.log('✅ Skills is array:', skills);
       } else if (typeof data.skills === 'string') {
-        console.log('📝 Skills is string:', data.skills);
+        // console.log('📝 Skills is string:', data.skills);
         
         // حاول تعمل parse لو كانت string
         if (data.skills.startsWith('[') && data.skills.endsWith(']')) {
           try {
             skills = JSON.parse(data.skills);
-            console.log('✅ Parsed JSON string:', skills);
+            // console.log('✅ Parsed JSON string:', skills);
           } catch (e) {
-            console.log('❌ Failed to parse JSON, using as single skill');
+            // console.log('❌ Failed to parse JSON, using as single skill');
             skills = [data.skills];
           }
         } else {
           // لو مش JSON array، اعتبر الـ string نفسها هي المهارة
           skills = [data.skills];
-          console.log('✅ Using string as single skill:', skills);
+          // console.log('✅ Using string as single skill:', skills);
         }
       } else {
         skills = [];
-        console.log('📝 No skills data');
+        // console.log('📝 No skills data');
       }
 
       const formattedPosts = (data.posts || []).map((p) => ({
@@ -260,9 +260,9 @@ const fetchProfile = async () => {
         posts: formattedPosts,
       });
       
-      console.log('✅ Formatted data set:', { ...data, skills, posts: formattedPosts.length });
+      // console.log('✅ Formatted data set:', { ...data, skills, posts: formattedPosts.length });
     } else {
-      console.log('❌ No data in response');
+      // console.log('❌ No data in response');
       setFormData(null);
     }
   } catch (err) {

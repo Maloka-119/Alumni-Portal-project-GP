@@ -294,16 +294,16 @@ const handleGoogleLogin = async () => {
 
 const handleLinkedInLogin = async () => {
   try {
-    console.log("Initiating LinkedIn login (no National ID required for existing users)");
+    // console.log("Initiating LinkedIn login (no National ID required for existing users)");
     
     // Get LinkedIn auth URL without National ID (for login)
     const res = await fetch(`http://localhost:5005/alumni-portal/auth/linkedin`);
     const data = await res.json();
 
-    console.log("LinkedIn login auth URL response:", data);
+    // console.log("LinkedIn login auth URL response:", data);
 
     if (data.status === "success" && data.data?.authUrl) {
-      console.log("Redirecting to LinkedIn for login:", data.data.authUrl);
+      // console.log("Redirecting to LinkedIn for login:", data.data.authUrl);
       // Clear any existing tokens to ensure fresh login
       localStorage.removeItem("token");
       localStorage.removeItem("user");

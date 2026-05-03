@@ -26,16 +26,16 @@ const LinkedInSignUp = () => {
     }
 
     try {
-      console.log("Getting LinkedIn auth URL with National ID:", linkedInNationalId);
+      // console.log("Getting LinkedIn auth URL with National ID:", linkedInNationalId);
       
       // Get LinkedIn auth URL with National ID
       const res = await fetch(`http://localhost:5005/alumni-portal/auth/linkedin?nationalId=${linkedInNationalId}`);
       const data = await res.json();
 
-      console.log("LinkedIn auth URL response:", data);
+      // console.log("LinkedIn auth URL response:", data);
 
       if (data.status === "success" && data.data?.authUrl) {
-        console.log("Redirecting to LinkedIn:", data.data.authUrl);
+        // console.log("Redirecting to LinkedIn:", data.data.authUrl);
         // Close the modal first
         setShowNidModal(false);
         // Clear any existing tokens to ensure fresh login

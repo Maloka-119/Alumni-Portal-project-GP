@@ -40,7 +40,7 @@ function GroupDetails({ group, goBack }) {
     fetchMembers(); // استدعاء دالة جلب الأعضاء
   }, [group.id]);
 
-  console.log("GROUP =", group);
+  // console.log("GROUP =", group);
 
   // دالة جلب الأعضاء اللي انتي ضفتيها
   const fetchMembers = async () => {
@@ -264,7 +264,7 @@ function GroupDetails({ group, goBack }) {
     });
   };
   
-  console.log("IMAGE TYPE:", newPost.image);
+  ("IMAGE TYPE:", newPost.image);
   
   const handleDeletePost = async (postId) => {
     try {

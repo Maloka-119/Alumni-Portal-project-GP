@@ -164,7 +164,7 @@ image: isUniversityComment
     if (token) {
       initSocket(token);
       onNewPost((newPost) => {
-        console.log("🆕 New live post received:", newPost);
+        // console.log("🆕 New live post received:", newPost);
         // Only add if it's not a group post (general feed)
         if (newPost["group-id"] == null) {
           const formatted = formatPost(newPost);
@@ -177,7 +177,7 @@ image: isUniversityComment
       });
 
       onPostUpdated((updatedPost) => {
-        console.log("🔄 Live post update received:", updatedPost);
+        // console.log("🔄 Live post update received:", updatedPost);
         const formatted = formatPost(updatedPost);
         setPosts((prev) =>
           prev.map((post) => (post.id === formatted.id ? { ...post, ...formatted } : post))
@@ -185,19 +185,19 @@ image: isUniversityComment
       });
 
       onPostDeleted((deletedPostId) => {
-        console.log("🗑️ Live post deletion received:", deletedPostId);
+        // console.log("🗑️ Live post deletion received:", deletedPostId);
         setPosts((prev) => prev.filter((post) => post.id !== parseInt(deletedPostId) && post.id !== deletedPostId));
       });
 
       onPostLiked(({ postId, likesCount }) => {
-        console.log("❤️ Live post like received:", postId, likesCount);
+        // console.log("❤️ Live post like received:", postId, likesCount);
         setPosts((prev) =>
           prev.map((post) => (post.id === postId ? { ...post, likesCount } : post))
         );
       });
 
       onPostCommented(({ postId, comment }) => {
-        console.log("💬 Live post comment received:", postId, comment);
+        // console.log("💬 Live post comment received:", postId, comment);
         setPosts((prev) =>
           prev.map((post) => {
             if (post.id === postId) {

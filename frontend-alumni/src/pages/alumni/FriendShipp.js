@@ -122,7 +122,7 @@ function FriendshipPage() {
       initSocket(token);
       
       onFriendRequestReceived((request) => {
-        console.log("📨 New live friend request received:", request);
+        // // console.log("📨 New live friend request received:", request);
         setFriendRequests((prev) => {
           if (prev.some(r => r.id === request.id || r.senderId === request.senderId)) return prev;
           return [request, ...prev];
@@ -130,7 +130,7 @@ function FriendshipPage() {
       });
 
       onFriendRequestAccepted((newFriend) => {
-        console.log("🤝 Friend request accepted live:", newFriend);
+        // // console.log("🤝 Friend request accepted live:", newFriend);
         setFriends((prev) => {
           if (prev.some(f => f.id === newFriend.id || f.friendId === newFriend.friendId)) return prev;
           return [newFriend, ...prev];
@@ -140,12 +140,12 @@ function FriendshipPage() {
       });
 
       onFriendRequestCancelled(({ senderId }) => {
-        console.log("🚫 Friend request cancelled live:", senderId);
+        // // console.log("🚫 Friend request cancelled live:", senderId);
         setFriendRequests((prev) => prev.filter(r => r.senderId !== senderId));
       });
 
       onUnfriended(({ friendId }) => {
-        console.log("👋 Unfriended live:", friendId);
+        // // console.log("👋 Unfriended live:", friendId);
         setFriends((prev) => prev.filter(f => f.id !== friendId && f.friendId !== friendId));
         // Refresh suggestions to potentially show them again
         fetchSuggestions();
@@ -237,7 +237,7 @@ function FriendshipPage() {
         otherUserId: receiverId,
       });
 
-      console.log("✅ Open Chat Response:", res.data);
+      // console.log("✅ Open Chat Response:", res.data);
 
       if (res.data && res.data.data && res.data.data.chat_id) {
         setChatId(res.data.data.chat_id);

@@ -177,7 +177,7 @@ const NotificationsPage = ({ openChat, setUnreadCount }) => {
     if (token) {
       initSocket(token);
       onNewNotification((newNotif) => {
-        console.log("🔔 New live notification received:", newNotif);
+        // console.log("🔔 New live notification received:", newNotif);
         // Map the new notification to the frontend format if necessary
         const formattedNotif = {
           id: newNotif.notification_id || newNotif.id,

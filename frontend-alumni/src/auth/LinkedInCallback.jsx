@@ -15,7 +15,7 @@ const LinkedInCallback = ({ setUser }) => {
     const lastName = params.get("lastName");
     const error = params.get("error");
 
-    console.log("LinkedIn callback params:", { token: !!token, id, email, userType, error });
+    // console.log("LinkedIn callback params:", { token: !!token, id, email, userType, error });
 
     // Check for error first
     if (error) {
