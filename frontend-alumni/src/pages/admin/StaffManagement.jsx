@@ -549,24 +549,26 @@ const handleCreateStaff = async (e) => {
         </select>
 
         <input
-          type="text"
-          placeholder={t("searchByNameOrNationalId")}
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            marginLeft: '16px',
-            padding: '8px 16px',
-            borderRadius: '12px',
-            border: '1px solid #d1d5db',
-            outline: 'none',
-            fontSize: '14px',
-            width: '250px',
-            transition: 'all 0.2s ease-in-out',
-            backgroundColor: "#f9fafb",
-          }}
-          onFocus={(e) => e.target.style.borderColor = '#1e3a8a'}
-          onBlur={(e) => e.target.style.borderColor = '#ccc'}
-        />
+  type="text"
+  placeholder={t("searchByNameOrNationalId")} // تم تقصير النص قليلاً ليتناسب مع الشاشات الصغيرة، أو يمكنك إبقاؤه كما هو
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  style={{
+    marginLeft: '16px',
+    padding: '8px 16px',
+    borderRadius: '12px',
+    border: '1px solid #d1d5db',
+    outline: 'none',
+    fontSize: '14px',
+    width: '100%',            // تغيير العرض ليكون مرناً
+    maxWidth: '250px',        // تثبيت أقصى عرض للشاشات الكبيرة
+    transition: 'all 0.2s ease-in-out',
+    backgroundColor: "#f9fafb",
+    boxSizing: 'border-box',  // لضمان حساب البادينج ضمن العرض
+  }}
+  onFocus={(e) => e.target.style.borderColor = '#1e3a8a'}
+  onBlur={(e) => e.target.style.borderColor = '#ccc'}
+/>
       </div>
 
       <div className="table-container">

@@ -99,13 +99,19 @@
 }
 
 .stf-adm-btn-save {
-    background-color: #1e3a8a;
+    background: linear-gradient(135deg, #1e3a8a 0%, #3b5998 100%);
     color: white;
     border: none;
     padding: 12px 40px;
     border-radius: 10px;
     font-weight: bold;
     cursor: pointer;
+    box-shadow: 0 4px 15px rgba(30, 58, 138, 0.2);
+    transition: transform 0.2s;
+}
+
+.stf-adm-btn-save:hover {
+    transform: translateY(-2px);
 }
 
 .stf-adm-btn-cancel {
@@ -124,29 +130,6 @@
     grid-template-columns: 1fr 1fr;
     gap: 25px;
     margin-top: 20px;
-}
-
-/* للموبايل والشاشات الصغيرة */
-@media (max-width: 768px) {
-    .stf-adm-grid-compact {
-        grid-template-columns: 1fr;
-        gap: 15px;
-    }
-
-    /* تعديل الأزرار في الموبايل لضمان الظهور */
-    .stf-adm-actions {
-        flex-direction: column;
-        gap: 10px;
-    }
-
-    .stf-adm-btn-save, .stf-adm-btn-cancel {
-        width: 100%;
-        padding: 12px 20px;
-    }
-
-    .stf-adm-title {
-        font-size: 26px;
-    }
 }
 
 /* حاوية الباسورد عشان العين */
@@ -171,13 +154,40 @@
     color: #1e3a8a;
 }
 
-/* تنسيق إضافي لزرار الحفظ ليكون أوضح */
-.stf-adm-btn-save {
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b5998 100%);
-    box-shadow: 0 4px 15px rgba(30, 58, 138, 0.2);
-    transition: transform 0.2s;
-}
+/* للموبايل والشاشات الصغيرة */
+@media (max-width: 768px) {
+    .stf-adm-modal-box {
+        padding: 20px;
+        width: 92%;
+    }
 
-.stf-adm-btn-save:hover {
-    transform: translateY(-2px);
+    .stf-adm-grid {
+        grid-template-columns: 1fr; /* جعل الجريد عموداً واحداً */
+        gap: 15px;
+    }
+
+    .stf-adm-grid-compact {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .stf-adm-full-width {
+        grid-column: span 1; /* إعادة ضبط العمود في الشاشات الصغيرة */
+        width: 100%;
+    }
+
+    /* تعديل الأزرار في الموبايل لضمان الظهور */
+    .stf-adm-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .stf-adm-btn-save, .stf-adm-btn-cancel {
+        width: 100%;
+        padding: 12px 20px;
+    }
+
+    .stf-adm-title {
+        font-size: 26px;
+    }
 }
