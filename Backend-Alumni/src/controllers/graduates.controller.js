@@ -831,40 +831,16 @@ const getDigitalID = async (req, res) => {
     console.log("\n📌 [5] GENERATING QR CODE:");
     
     const qrToken = generateQRToken(userId);
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:5005";
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     
-    // ✅ التأكد من الرابط الصحيح
-    const verificationUrl = `${backendUrl}/alumni-portal/graduates/digital-id/verify/${qrToken}`;
+    // The user wants the QR code to open the same page as when they click it in the frontend.
+    // In the frontend, clicking the QR opens: /public-graduate/${user.graduationId}
+    const verificationUrl = `${frontendUrl}/public-graduate/${graduate.graduate_id}`;
     
     console.log(`   - User ID: ${userId}`);
-    console.log(`   - Token generated: ${qrToken.substring(0, 20)}...`);
-    console.log(`   - Backend URL from env: ${process.env.BACKEND_URL || 'Not set, using default'}`);
-    console.log(`   - Final backend URL: ${backendUrl}`);
-    console.log(`   - ✅ Verification URL: ${verificationUrl}`);
-    
-    // 🔴 رسالة تحذير واضحة جداً
-    console.log(`\n🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴`);
-    console.log(`🔴                   IMPORTANT NOTICE                      🔴`);
-    console.log(`🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴`);
-    console.log(`🔴 The QR code contains this URL:`);
-    console.log(`🔴 ${verificationUrl}`);
-    console.log(`🔴`);
-    console.log(`🔴 When you click the QR code in the frontend, you are being`);
-    console.log(`🔴 redirected to: http://localhost:80/public-graduate/37`);
-    console.log(`🔴`);
-    console.log(`🔴 This is NOT a backend issue - the backend is sending the`);
-    console.log(`🔴 correct URL. The problem is in the FRONTEND code.`);
-    console.log(`🔴`);
-    console.log(`🔴 To fix this, check these files in your frontend:`);
-    console.log(`🔴 1. Any component that displays the QR code image`);
-    console.log(`🔴 2. Look for onClick handlers on the <img> tag`);
-    console.log(`🔴 3. Look for any JavaScript that modifies anchor tags`);
-    console.log(`🔴 4. Check if there's a global click handler`);
-    console.log(`🔴`);
-    console.log(`🔴 The QR code image should be wrapped in an <a> tag or have`);
-    console.log(`🔴 an onClick that does window.open('${verificationUrl}', '_blank')`);
-    console.log(`🔴 Currently, it's doing window.location = '/public-graduate/37'`);
-    console.log(`🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴\n`);
+    console.log(`   - Frontend URL: ${frontendUrl}`);
+    console.log(`   - ✅ QR Code URL: ${verificationUrl}`);
+
 
     let qrCodeDataURL;
     try {
@@ -1112,17 +1088,9 @@ const generateDigitalIDQR = async (req, res) => {
     const qrToken = generateQRToken(userId);
 
     // Create verification URL
-    const useFrontend =
-      process.env.QR_USE_FRONTEND === "true" && process.env.FRONTEND_URL;
-    const backendUrl = process.env.BACKEND_URL || "http://localhost:5005";
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+    const verificationUrl = `${frontendUrl}/public-graduate/${graduate.graduate_id}`;
 
-    let verificationUrl;
-    if (useFrontend) {
-      const frontendUrl = process.env.FRONTEND_URL;
-      verificationUrl = `${frontendUrl}/digital-id/verify/${qrToken}`;
-    } else {
-      verificationUrl = `${backendUrl}/alumni-portal/graduates/digital-id/verify/${qrToken}`;
-    }
 
     // Generate QR code as data URL
     const qrCodeDataURL = await QRCode.toDataURL(verificationUrl, {
