@@ -509,7 +509,7 @@
 
 // export default AdminPostsPage;
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from 'react-i18next';
 import { Heart, MessageCircle, Edit, Trash2, CheckCircle, Circle } from 'lucide-react';
@@ -537,9 +537,32 @@ const AdminPostsPage = ({ currentUser }) => {
   const [success, setSuccess] = useState(null);
   const [selectedImage, setSelectedImage] = useState({ postId: null, url: null });
 
+  // إضافة الـ Refs
+  const formRef = useRef(null);
+  const previousScrollPosition = useRef(null);
+
   const postPerm = currentUser?.userType === "admin"
     ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
     : getPermission("Portal posts management", currentUser) || { canView: false, canAdd: false, canEdit: false, canDelete: false };
+
+  // التعامل مع التمرير عند تغيير الـ editingPostId
+  useEffect(() => {
+    if (editingPostId && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [editingPostId]);
+
+  // التعامل مع العودة إلى المكان القديم عند الإغلاق أو الحفظ
+  useEffect(() => {
+    if (editingPostId === null && previousScrollPosition.current !== null) {
+      const scrollY = previousScrollPosition.current;
+      const timer = setTimeout(() => {
+        window.scrollTo({ top: scrollY, behavior: 'smooth' });
+        previousScrollPosition.current = null;
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [editingPostId]);
 
   useEffect(() => {
     if (postPerm.canView) {
@@ -628,6 +651,12 @@ const AdminPostsPage = ({ currentUser }) => {
     }
   };
 
+  // تعديل زر التعديل لحفظ الموقع الحالي
+  const handleEditClick = (postId) => {
+    previousScrollPosition.current = window.scrollY;
+    setEditingPostId(postId);
+  };
+
   const handleDelete = async (id) => {
     const result = await Swal.fire({
       title: t("Are you sure?"),
@@ -691,13 +720,16 @@ const AdminPostsPage = ({ currentUser }) => {
       {success && <div className="success-message">{success}</div>}
 
       {(postPerm.canAdd || editingPostId) && (
-        <CreatePostBar
-          types={types}
-          editingPost={posts.find(p => p.id === editingPostId) || null}
-          onSubmit={handleCreateOrEdit}
-          canAdd={postPerm.canAdd}
-          onCancelEdit={() => setEditingPostId(null)}
-        />
+        // تم ربط الـ Ref هنا ليتم التمرير إليه
+        <div ref={formRef}>
+          <CreatePostBar
+            types={types}
+            editingPost={posts.find(p => p.id === editingPostId) || null}
+            onSubmit={handleCreateOrEdit}
+            canAdd={postPerm.canAdd}
+            onCancelEdit={() => setEditingPostId(null)}
+          />
+        </div>
       )}
 
       <div className="filter-bar">
@@ -743,7 +775,8 @@ const AdminPostsPage = ({ currentUser }) => {
                 </button>
                 
                 <div style={{ display: 'flex', justifyContent: 'flex-end', marginLeft: "auto" }}>
-                  {postPerm.canEdit && <button onClick={() => setEditingPostId(post.id)} className="edit-btn"><Edit size={16} /></button>}
+                  {/* استبدال الدالة المباشرة بـ handleEditClick */}
+                  {postPerm.canEdit && <button onClick={() => handleEditClick(post.id)} className="edit-btn"><Edit size={16} /></button>}
                   {postPerm.canDelete && <button onClick={() => handleDelete(post.id)} className="delete-btn"><Trash2 size={16} /></button>}
                   {postPerm.canAdd && (
                     <div className="landing-tooltip-container">
