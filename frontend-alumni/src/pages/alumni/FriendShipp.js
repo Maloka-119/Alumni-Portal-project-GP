@@ -415,9 +415,7 @@ function FriendshipPage() {
                     </span>
                   </div>
                   <div
-                    className={`friend-actions ${
-                      i18n.language === "ar" ? "rtl" : "ltr"
-                    }`}
+                    className="friend-actions"
                   >
                     {!f.added ? (
                       <button
