@@ -5,9 +5,7 @@ const validator = require("validator");
 const sanitizeHtml = require("sanitize-html");
 const { securityLogger, logger } = require("../utils/logger");
 
-// Rate Limiting
 
-// Limits login attempts to prevent brute force attacks
 const authLimiter = rateLimit({
   windowMs: 5 * 60 * 1000, // 5 minutes
   max: 4, // Allow maximum 4 failed login attempts

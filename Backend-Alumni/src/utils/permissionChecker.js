@@ -1,7 +1,6 @@
 const Staff = require("../models/Staff");
 const Role = require("../models/Role");
 const Permission = require("../models/Permission");
-// تأكد تحميل العلاقة Staff <-> Role (through StaffRole) عشان الـ include يشتغل
 require("../models/StaffRole");
 
 const checkStaffPermission = async (
@@ -19,7 +18,7 @@ const checkStaffPermission = async (
       `🔍 Checking permission: ${requiredPermission} - ${requiredAction} for staff: ${staffId}`
     );
 
-    // 1. جيب الستاف مع الـ roles والـ permissions
+  
     const staff = await Staff.findByPk(staffId, {
       include: [
         {
@@ -41,7 +40,7 @@ const checkStaffPermission = async (
       return false;
     }
 
-    // تجنب TypeError لو الـ Roles مش محملة أو مش مصفوفة (مثلاً لو الـ association مش مضبوط)
+
     const roles = staff.Roles != null && Array.isArray(staff.Roles) ? staff.Roles : [];
     console.log(`📋 Staff has ${roles.length} roles`);
 

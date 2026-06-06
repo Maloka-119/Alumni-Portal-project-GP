@@ -9,23 +9,23 @@ const RolePermission = require("./RolePermission");
 const Staff = require("./Staff");
 const StaffRole = require("./StaffRole");
 
-// 🟢 Post ↔ User
+//  Post ↔ User
 Post.belongsTo(User, { foreignKey: "author-id" });
 User.hasMany(Post, { foreignKey: "author-id" });
 
-// 🟢 Post ↔ Comment
+//  Post ↔ Comment
 Post.hasMany(Comment, { foreignKey: "post-id" });
 Comment.belongsTo(Post, { foreignKey: "post-id" });
 
-// 🟢 Post ↔ Like
+// Post ↔ Like
 Post.hasMany(Like, { foreignKey: "post-id" });
 Like.belongsTo(Post, { foreignKey: "post-id" });
 
-// 🟢 Comment ↔ User
+//  Comment ↔ User
 Comment.belongsTo(User, { foreignKey: "author-id" });
 User.hasMany(Comment, { foreignKey: "author-id" });
 
-// 🟢 Like ↔ User - التصحيح هنا
+
 Like.belongsTo(User, {
   foreignKey: "user-id", // غير من "author-id" إلى "user-id"
   targetKey: "id",
@@ -35,7 +35,7 @@ User.hasMany(Like, {
   sourceKey: "id",
 });
 
-// 🟢 User ↔ Notification
+//  User ↔ Notification
 User.hasMany(Notification, {
   foreignKey: "receiver-id",
   as: "receivedNotifications",
@@ -45,7 +45,7 @@ User.hasMany(Notification, {
   as: "sentNotifications",
 });
 
-// 🔹 Role ↔ Permission (Many-to-Many through RolePermission)
+//  Role ↔ Permission (Many-to-Many through RolePermission)
 Role.belongsToMany(Permission, {
   through: RolePermission,
   foreignKey: "role_id",
@@ -60,13 +60,13 @@ Permission.belongsToMany(Role, {
   // as: "Roles",
 });
 
-// 🔹 RolePermission Associations
+//  RolePermission Associations
 RolePermission.belongsTo(Role, { foreignKey: "role_id" });
 RolePermission.belongsTo(Permission, { foreignKey: "permission_id" });
 Role.hasMany(RolePermission, { foreignKey: "role_id" });
 Permission.hasMany(RolePermission, { foreignKey: "permission_id" });
 
-// 🔹 StaffRole Associations
+//  StaffRole Associations
 StaffRole.belongsTo(Staff, { foreignKey: "staff_id" });
 StaffRole.belongsTo(Role, { foreignKey: "role_id" });
 Staff.hasMany(StaffRole, { foreignKey: "staff_id" });

@@ -7,7 +7,6 @@ const {
   notifyRequestAccepted,
 } = require("../services/notificationService");
 
-// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
 
 /**

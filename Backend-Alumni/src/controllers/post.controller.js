@@ -198,11 +198,7 @@ const createPost = async (req, res) => {
       }
     }
 
-    /*
-      =========================
-      AI MODERATION START
-      =========================
-    */
+  
 
     const moderationResult = await moderateContent(content || "");
 
@@ -212,11 +208,6 @@ const createPost = async (req, res) => {
 
     const isHidden = moderationResult === 0;
 
-    /*
-      =========================
-      AI MODERATION END
-      =========================
-    */
 
     logger.info("Creating post", {
       authorId,
@@ -396,11 +387,7 @@ const editPost = async (req, res) => {
 
     if (type !== undefined) post.category = type;
 
-    /*
-      =========================
-      AI MODERATION FOR EDIT
-      =========================
-    */
+  
 
     if (content !== undefined) {
       const moderationResult = await moderateContent(content);

@@ -7,11 +7,11 @@ const { DOCUMENT_TYPES } = require("../constants/documentTypes");
  * @access Public
  */
 const getAllDocuments = (req, res) => {
-  // Extract language preference from Accept-Language header
+ 
   const langHeader = req.headers["accept-language"];
   const lang = langHeader && langHeader.toLowerCase() === "en" ? "en" : "ar";
 
-  // Format document types with localized fields based on language preference
+ 
   const formattedDocuments = Object.values(DOCUMENT_TYPES).map((doc) => ({
     code: doc.code,
     name: lang === "ar" ? doc.name_ar : doc.name_en,

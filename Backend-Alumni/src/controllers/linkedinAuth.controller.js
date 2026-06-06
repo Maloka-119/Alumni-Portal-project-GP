@@ -6,11 +6,8 @@ const aes = require("../utils/aes");
 const validator = require("validator");
 const { normalizeCollegeName } = require("../services/facultiesService");
 
-// 🔴 START OF LOGGER IMPORT - ADDED THIS
 const { logger, securityLogger } = require("../utils/logger");
-// 🔴 END OF LOGGER IMPORT
 
-// ===================== Helper functions (same as Google) =====================
 function validateNationalId(nationalId) {
   return /^\d{14}$/.test(nationalId);
 }
@@ -96,7 +93,7 @@ const getLinkedInAuthUrl = asyncHandler(async (req, res) => {
       req.session.nationalId = nationalId || null;
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
+  
     logger.info("Get LinkedIn auth URL request initiated", {
       ip: req.ip,
       hasLinkedInClientId: !!LINKEDIN_CLIENT_ID,
@@ -105,7 +102,7 @@ const getLinkedInAuthUrl = asyncHandler(async (req, res) => {
       hasNationalId: !!nationalId,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+   
 
     const state = Math.random().toString(36).substring(2, 15);
 
@@ -129,7 +126,7 @@ const getLinkedInAuthUrl = asyncHandler(async (req, res) => {
       LINKEDIN_REDIRECT_URI
     )}&state=${state}&scope=${encodeURIComponent(scope)}&prompt=login&max_age=0`;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+ 
     logger.info("LinkedIn auth URL generated successfully", {
       authUrlLength: authUrl.length,
       state,
@@ -137,7 +134,7 @@ const getLinkedInAuthUrl = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+
 
     res.status(200).json({
       status: "success",
@@ -147,14 +144,14 @@ const getLinkedInAuthUrl = asyncHandler(async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+
     logger.error("Error generating LinkedIn auth URL", {
       error: error.message,
       stack: error.stack.substring(0, 200),
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+ 
     console.error("LinkedIn auth URL error:", error);
     res.status(500).json({
       status: "error",
@@ -173,7 +170,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     const { code, state } = req.query;
     let nationalIdFromState = null; // Declare at function scope
 
-    // 🔴 START OF LOGGING - ADDED THIS
+  
     logger.info("LinkedIn callback received", {
       hasCode: !!code,
       hasState: !!state,
@@ -182,7 +179,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+ 
 
     // Verify state parameter for security
     // Check both session and in-memory store
@@ -197,7 +194,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     const isValidState = state === sessionState || (memoryState && Date.now() - memoryState.timestamp <= STATE_EXPIRY);
 
     if (!isValidState) {
-      // 🔴 START OF LOGGING - ADDED THIS
+     
       securityLogger.warn("LinkedIn state mismatch detected", {
         receivedState: state,
         expectedState: sessionState,
@@ -206,7 +203,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+    
       return res.redirect(
         "http://localhost:3000/login?error=" +
         encodeURIComponent("Invalid state parameter")
@@ -229,13 +226,13 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     }
 
     if (!code) {
-      // 🔴 START OF LOGGING - ADDED THIS
+    
       logger.warn("LinkedIn callback missing authorization code", {
         state,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+     
       return res.redirect(
         "http://localhost:3000/login?error=" +
         encodeURIComponent("Authorization code not provided")
@@ -245,13 +242,13 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     // Exchange authorization code for access token
     let tokenResponse;
     try {
-      // 🔴 START OF LOGGING - ADDED THIS
+   
       logger.debug("Exchanging LinkedIn authorization code for access token", {
         codeLength: code.length,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+    
 
       tokenResponse = await axios.post(
         "https://www.linkedin.com/oauth/v2/accessToken",
@@ -269,16 +266,16 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         }
       );
 
-      // 🔴 START OF LOGGING - ADDED THIS
+     
       logger.debug("LinkedIn token exchange successful", {
         hasAccessToken: !!tokenResponse.data.access_token,
         expiresIn: tokenResponse.data.expires_in,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+      
     } catch (tokenError) {
-      // 🔴 START OF LOGGING - ADDED THIS
+    
       logger.error("LinkedIn token exchange failed", {
         error: tokenError.response?.data?.error || tokenError.message,
         errorDescription: tokenError.response?.data?.error_description,
@@ -286,7 +283,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+  
       console.error(
         "LinkedIn token exchange error:",
         tokenError.response?.data || tokenError.message
@@ -303,13 +300,13 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     const { access_token, expires_in, id_token } = tokenResponse.data;
 
     if (!access_token) {
-      // 🔴 START OF LOGGING - ADDED THIS
+  
       logger.error("LinkedIn returned empty access token", {
         responseData: tokenResponse.data,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+    
       return res.status(400).json({
         status: "error",
         message: "No access token received from LinkedIn",
@@ -319,12 +316,12 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     // Fetch user profile using OpenID Connect userinfo endpoint
     let userInfo;
     try {
-      // 🔴 START OF LOGGING - ADDED THIS
+      
       logger.debug("Fetching LinkedIn user info", {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+     
 
       // Try OpenID Connect userinfo endpoint first
       try {
@@ -415,16 +412,16 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         }
       }
 
-      // 🔴 START OF LOGGING - ADDED THIS
+     
       logger.debug("LinkedIn user info fetched successfully", {
         hasEmail: !!userInfo.email,
         hasSub: !!(userInfo.sub || userInfo.id),
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+     
     } catch (userInfoError) {
-      // 🔴 START OF LOGGING - ADDED THIS
+    
       logger.error("LinkedIn user info fetch failed", {
         error: userInfoError.response?.data?.error || userInfoError.message,
         statusCode: userInfoError.response?.status,
@@ -432,7 +429,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+    
       console.error(
         "LinkedIn userinfo error:",
         userInfoError.response?.data || userInfoError.message
@@ -452,14 +449,14 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
     const email = userInfo.email || null;
     const linkedinId = userInfo.sub || userInfo.id || null;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+   
     logger.debug("LinkedIn user info extracted", {
       email: email ? email.substring(0, 3) + "***" : "null",
       linkedinId: linkedinId ? linkedinId.substring(0, 3) + "***" : "null",
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+  
 
     // For additional profile info, try the v2 API (may need legacy scopes)
     let profile = {
@@ -484,12 +481,12 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
 
     // Try to get additional profile details if available
     try {
-      // 🔴 START OF LOGGING - ADDED THIS
+
       logger.debug("Attempting to fetch additional LinkedIn profile details", {
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+    
 
       const profileResponse = await axios.get(
         "https://api.linkedin.com/v2/me",
@@ -501,33 +498,32 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       );
       profile = profileResponse.data;
 
-      // 🔴 START OF LOGGING - ADDED THIS
+
       logger.debug("Additional LinkedIn profile details fetched", {
         hasProfileData: !!profile,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+   
     } catch (profileError) {
-      // If v2/me fails, use the userinfo data we have
-      // 🔴 START OF LOGGING - ADDED THIS
+
       logger.debug("Using OpenID Connect userinfo data only (v2/me failed)", {
         error: profileError.message,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+     
       console.log("Using OpenID Connect userinfo data only");
     }
 
     if (!email) {
-      // 🔴 START OF LOGGING - ADDED THIS
+     
       logger.warn("LinkedIn did not return email address", {
         linkedinId: linkedinId ? linkedinId.substring(0, 3) + "***" : "null",
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+  
       return res.redirect(
         "http://localhost:3000/login?error=" +
         encodeURIComponent("Could not retrieve email from LinkedIn. Please ensure your LinkedIn account has a verified email address.")
@@ -558,7 +554,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       ? `https://www.linkedin.com/in/${profile.id}`
       : null;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+   
     logger.debug("Profile data extracted", {
       firstNameLength: firstName.length,
       lastNameLength: lastName.length,
@@ -568,7 +564,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+ 
 
     const ip = req.ip || req.connection.remoteAddress;
 
@@ -876,14 +872,14 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
       }
     }
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+   
     logger.error("LinkedIn callback processing failed", {
       error: error.message,
       stack: error.stack.substring(0, 200),
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+
     console.error("LinkedIn callback error:", error);
     console.error("Error stack:", error.stack);
 
@@ -905,17 +901,17 @@ const refreshLinkedInToken = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+   
     logger.info("Refresh LinkedIn token request initiated", {
       userId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+   
 
     const user = await User.findByPk(userId);
     if (!user || user.auth_provider !== "linkedin") {
-      // 🔴 START OF LOGGING - ADDED THIS
+    
       logger.warn(
         "User not found or not LinkedIn authenticated for token refresh",
         {
@@ -926,7 +922,7 @@ const refreshLinkedInToken = asyncHandler(async (req, res) => {
           timestamp: new Date().toISOString(),
         }
       );
-      // 🔴 END OF LOGGING
+   
       return res.status(400).json({
         status: "error",
         message: "User not found or not authenticated via LinkedIn",
@@ -934,13 +930,13 @@ const refreshLinkedInToken = asyncHandler(async (req, res) => {
     }
 
     if (!user.linkedin_refresh_token) {
-      // 🔴 START OF LOGGING - ADDED THIS
+     
       logger.warn("No refresh token available for LinkedIn user", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+     
       return res.status(400).json({
         status: "error",
         message: "No refresh token available",
@@ -972,7 +968,7 @@ const refreshLinkedInToken = asyncHandler(async (req, res) => {
       linkedin_token_expires_at: new Date(Date.now() + expires_in * 1000),
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+   
     logger.info("LinkedIn token refreshed successfully", {
       userId,
       hasNewAccessToken: !!access_token,
@@ -981,14 +977,14 @@ const refreshLinkedInToken = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+   
 
     res.status(200).json({
       status: "success",
       message: "LinkedIn token refreshed successfully",
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+  
     logger.error("LinkedIn token refresh failed", {
       userId: req.user?.id,
       error: error.message,
@@ -996,7 +992,7 @@ const refreshLinkedInToken = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+   
     console.error("LinkedIn token refresh error:", error);
     res.status(500).json({
       status: "error",
@@ -1015,30 +1011,30 @@ const disconnectLinkedIn = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    
     logger.info("Disconnect LinkedIn request initiated", {
       userId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+   
 
     const user = await User.findByPk(userId);
     if (!user) {
-      // 🔴 START OF LOGGING - ADDED THIS
+    
       logger.warn("User not found for LinkedIn disconnect", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+   
       return res.status(404).json({
         status: "error",
         message: "User not found",
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
+  
     logger.info("Clearing LinkedIn data for user", {
       userId,
       email: user.email.substring(0, 3) + "***",
@@ -1046,7 +1042,7 @@ const disconnectLinkedIn = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+   
 
     // Clear LinkedIn data
     await user.update({
@@ -1061,20 +1057,20 @@ const disconnectLinkedIn = asyncHandler(async (req, res) => {
       is_linkedin_verified: false,
     });
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    
     logger.info("LinkedIn account disconnected successfully", {
       userId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+  
 
     res.status(200).json({
       status: "success",
       message: "LinkedIn account disconnected successfully",
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+    
     logger.error("LinkedIn disconnect failed", {
       userId: req.user?.id,
       error: error.message,
@@ -1082,7 +1078,7 @@ const disconnectLinkedIn = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+   
     console.error("LinkedIn disconnect error:", error);
     res.status(500).json({
       status: "error",
@@ -1101,13 +1097,13 @@ const getLinkedInProfile = asyncHandler(async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // 🔴 START OF LOGGING - ADDED THIS
+  
     logger.info("Get LinkedIn profile request initiated", {
       userId,
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+   
 
     const user = await User.findByPk(userId, {
       attributes: [
@@ -1127,13 +1123,13 @@ const getLinkedInProfile = asyncHandler(async (req, res) => {
     });
 
     if (!user) {
-      // 🔴 START OF LOGGING - ADDED THIS
+    
       logger.warn("User not found for LinkedIn profile request", {
         userId,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+
       return res.status(404).json({
         status: "error",
         message: "User not found",
@@ -1141,21 +1137,21 @@ const getLinkedInProfile = asyncHandler(async (req, res) => {
     }
 
     if (user.auth_provider !== "linkedin") {
-      // 🔴 START OF LOGGING - ADDED THIS
+    
       logger.warn("User not LinkedIn authenticated for profile request", {
         userId,
         authProvider: user.auth_provider,
         ip: req.ip,
         timestamp: new Date().toISOString(),
       });
-      // 🔴 END OF LOGGING
+     
       return res.status(400).json({
         status: "error",
         message: "User not authenticated via LinkedIn",
       });
     }
 
-    // 🔴 START OF LOGGING - ADDED THIS
+    
     logger.info("LinkedIn profile retrieved successfully", {
       userId,
       email: user.email.substring(0, 3) + "***",
@@ -1164,7 +1160,7 @@ const getLinkedInProfile = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+ 
 
     res.status(200).json({
       status: "success",
@@ -1186,7 +1182,7 @@ const getLinkedInProfile = asyncHandler(async (req, res) => {
       },
     });
   } catch (error) {
-    // 🔴 START OF LOGGING - ADDED THIS
+   
     logger.error("Get LinkedIn profile failed", {
       userId: req.user?.id,
       error: error.message,
@@ -1194,7 +1190,7 @@ const getLinkedInProfile = asyncHandler(async (req, res) => {
       ip: req.ip,
       timestamp: new Date().toISOString(),
     });
-    // 🔴 END OF LOGGING
+  
     console.error("Get LinkedIn profile error:", error);
     res.status(500).json({
       status: "error",

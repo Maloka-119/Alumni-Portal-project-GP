@@ -35,15 +35,15 @@ router.use(generalLimiter); // Limit general requests
 
 // ===== Public Routes =====
 
-// تسجيل مستخدم جديد مع حماية ضد الـ brute-force
+
 router.post(
   "/register",
-  authLimiter, // limit failed attempts
+  authLimiter, 
   validateRequest(registerSchema),
   registerUser
 );
 
-// تسجيل الدخول
+
 router.post(
   "/login",
   // authLimiter,
@@ -51,13 +51,13 @@ router.post(
   loginUser
 );
 
-// طلب إعادة كلمة المرور
+
 router.post("/forgot-password", authLimiter, forgotPassword);
 
-// التحقق من كود إعادة كلمة المرور
+
 router.post("/verify-code", authLimiter, verifyCode);
 
-// إعادة تعيين كلمة المرور
+
 router.post("/reset-password", authLimiter, resetPassword);
 
 // ===== Private Routes =====

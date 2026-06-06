@@ -2,7 +2,7 @@ const Joi = require("joi");
 const validator = require("validator");
 const { securityLogger } = require("../utils/logger");
 
-// Custom Joi extensions for security
+
 const customJoi = Joi.extend((joi) => ({
   type: 'string',
   base: joi.string(),
@@ -208,5 +208,5 @@ exports.validateRequest = (schema) => {
   };
 };
 
-// Export custom Joi for reuse
+
 exports.customJoi = customJoi;

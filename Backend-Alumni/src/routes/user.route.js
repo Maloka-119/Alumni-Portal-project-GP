@@ -1,6 +1,5 @@
 const express = require("express");
-const router = express.Router();
-// const adminController = require("../controllers/admin.controller");
+const router = express.Router(); 
 const userController = require("../controllers/user.controller");
 
 // // // GET all users (graduates + staff)

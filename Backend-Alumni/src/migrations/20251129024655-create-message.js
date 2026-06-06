@@ -85,7 +85,7 @@ module.exports = {
       reply_to_message_id: {
         type: Sequelize.INTEGER,
         allowNull: true
-        // سيتم إضافة المرجع لاحقاً
+       
       },
       'created-at': {
         type: Sequelize.DATE,

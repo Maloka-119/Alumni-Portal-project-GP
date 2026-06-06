@@ -18,8 +18,6 @@ const {
 const { generateQRToken, verifyQRToken } = require("../utils/qrTokenService");
 const QRCode = require("qrcode");
 const aes = require("../utils/aes");
-
-// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
 
 /**
@@ -492,7 +490,7 @@ const fetchStudentDataFromExternal = async (nationalId) => {
       throw error;
     }
 
-    // ✅ التعديل هنا: استخدام المسار الجديد /details/:nationalId
+
     const apiUrl = `${process.env.GRADUATE_API_URL}/details/${nationalId}`;
     
     const response = await axios.get(apiUrl, {
@@ -622,9 +620,7 @@ const sanitizeDigitalIDData = (data) => {
  */
 const getDigitalID = async (req, res) => {
   try {
-    // ============================================
-    // 🚀 START - GET DIGITAL ID FUNCTION CALLED
-    // ============================================
+
     console.log("\n" + "🆔".repeat(40));
     console.log("🆔 GET DIGITAL ID FUNCTION CALLED at:", new Date().toISOString());
     console.log("🆔".repeat(40));
@@ -770,7 +766,7 @@ const getDigitalID = async (req, res) => {
         throw new Error("GRADUATE_API_URL is not configured");
       }
 
-      // ✅ Use the correct API endpoint
+    
       const apiUrl = `${process.env.GRADUATE_API_URL}/details/${nationalIdToUse}`;
       console.log(`   - Calling API: ${apiUrl}`);
       
@@ -825,16 +821,13 @@ const getDigitalID = async (req, res) => {
       });
     }
 
-    // ============================================
-    // ✅ [5] GENERATE QR CODE WITH CORRECT URL
-    // ============================================
+
     console.log("\n📌 [5] GENERATING QR CODE:");
     
     const qrToken = generateQRToken(userId);
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     
-    // The user wants the QR code to open the same page as when they click it in the frontend.
-    // In the frontend, clicking the QR opens: /public-graduate/${user.graduationId}
+   
     const verificationUrl = `${frontendUrl}/public-graduate/${graduate.graduate_id}`;
     
     console.log(`   - User ID: ${userId}`);
@@ -1001,9 +994,7 @@ const getDigitalID = async (req, res) => {
     });
 
   } catch (err) {
-    // ============================================
-    // ❌ ERROR HANDLING
-    // ============================================
+
     console.log("\n❌".repeat(40));
     console.log("❌ ERROR IN GET DIGITAL ID:");
     console.log("❌ Time:", new Date().toISOString());
@@ -1642,9 +1633,7 @@ const updateProfile = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // ============================================
-    // 🚀 START - UPDATE PROFILE FUNCTION CALLED
-    // ============================================
+    
     console.log("\n" + "🟢".repeat(40));
     console.log(
       "🟢 UPDATE PROFILE FUNCTION CALLED at:",
@@ -1713,16 +1702,14 @@ const updateProfile = async (req, res) => {
     console.log("      - Current first name:", user["first-name"]);
     console.log("      - Current last name:", user["last-name"]);
 
-    // ============================================
-    // 🔄 [2.5] SYNC WITH EXTERNAL SYSTEM FOR FACULTY & GRADUATION YEAR
-    // ============================================
+
     console.log("\n🔄 [2.5] CHECKING FOR EXTERNAL DATA SYNC:");
 
-    // حاول تجيب البيانات من السيستم الأول لو مش موجودة
+
     if (!graduate.faculty_code || !graduate["graduation-year"]) {
       console.log("   - Missing faculty or graduation year, trying to fetch from external system...");
       
-      // فك تشفير الرقم القومي
+    
       let nationalId = null;
       if (user["national-id"]) {
         const decrypted = aes.decryptNationalId(user["national-id"]);
@@ -1820,9 +1807,7 @@ const updateProfile = async (req, res) => {
       console.log(`      - graduation-year: ${graduate["graduation-year"]}`);
     }
 
-    // ============================================
-    // 📝 [3] UPDATE USER FIELDS (TEXT FIELDS)
-    // ============================================
+
     console.log("\n📝 [3] UPDATING USER FIELDS:");
 
     const userFields = ["firstName", "lastName", "phoneNumber"];
@@ -1845,9 +1830,7 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    // ============================================
-    // 🎯 [4] UPDATE GRADUATE FIELDS WITH TYPE HANDLING
-    // ============================================
+ 
     console.log("\n🎯 [4] UPDATING GRADUATE FIELDS (WITH TYPE HANDLING):");
 
     // Define fields with their types for proper handling
@@ -1893,17 +1876,17 @@ const updateProfile = async (req, res) => {
         if (type === "number") {
           console.log(`      - Processing as NUMBER type`);
 
-          // Case 1: Empty string or null/undefined
+         
           if (newValue === "" || newValue === null || newValue === undefined) {
             console.log(`      - ⚠️ Empty value detected, converting to null`);
             newValue = null;
           }
-          // Case 2: It's already a number
+        
           else if (typeof newValue === "number") {
             console.log(`      - ✅ Valid number: ${newValue}`);
             newValue = newValue;
           }
-          // Case 3: It's a string that might contain a number
+         
           else if (typeof newValue === "string") {
             console.log(`      - Attempting to parse string to number`);
             const trimmed = newValue.trim();
@@ -1926,7 +1909,7 @@ const updateProfile = async (req, res) => {
               }
             }
           }
-          // Case 4: Any other type (boolean, object, etc.)
+        
           else {
             console.log(
               `      - ❌ Unexpected type: ${typeof newValue}, converting to null`
@@ -1955,9 +1938,7 @@ const updateProfile = async (req, res) => {
       }
     });
 
-    // ============================================
-    // 🏛️ [5] UPDATE FACULTY IF PROVIDED
-    // ============================================
+
     console.log("\n🏛️ [5] PROCESSING FACULTY UPDATE:");
     if (req.body.faculty !== undefined) {
       console.log(`   - Faculty from request: "${req.body.faculty}"`);
@@ -1973,9 +1954,7 @@ const updateProfile = async (req, res) => {
       console.log(`   - No faculty update provided`);
     }
 
-    // ============================================
-    // 🔒 [6] UPDATE PRIVACY SETTINGS
-    // ============================================
+  
     console.log("\n🔒 [6] UPDATING PRIVACY SETTINGS:");
 
     if (req.body.showCV !== undefined) {
@@ -1997,9 +1976,7 @@ const updateProfile = async (req, res) => {
       user.show_phone = req.body.showPhone;
     }
 
-    // ============================================
-    // 📸 [7] HANDLE PROFILE PICTURE UPLOAD
-    // ============================================
+ 
     console.log("\n📸 [7] PROCESSING PROFILE PICTURE:");
 
     if (req.files?.profilePicture?.[0]) {
@@ -2053,9 +2030,7 @@ const updateProfile = async (req, res) => {
       console.log(`   - ✅ Profile picture removed from database`);
     }
 
-    // ============================================
-    // 📄 [8] HANDLE CV UPLOAD
-    // ============================================
+  
     console.log("\n📄 [8] PROCESSING CV:");
 
     if (req.files?.cv?.[0]) {
@@ -2133,9 +2108,7 @@ const updateProfile = async (req, res) => {
       console.log(`   - ✅ CV removed from database`);
     }
 
-    // ============================================
-    // 💾 [9] SAVE ALL CHANGES TO DATABASE
-    // ============================================
+
     console.log("\n💾 [9] SAVING CHANGES TO DATABASE:");
 
     console.log("   - Saving User changes...");
@@ -2146,9 +2119,7 @@ const updateProfile = async (req, res) => {
     await graduate.save();
     console.log("   - ✅ Graduate saved successfully");
 
-    // ============================================
-    // 📊 [10] PREPARE RESPONSE DATA
-    // ============================================
+
     console.log("\n📊 [10] PREPARING RESPONSE DATA:");
 
     const lang = req.headers["accept-language"] || req.user.language || "ar";
@@ -2176,9 +2147,6 @@ const updateProfile = async (req, res) => {
       phoneNumber: user.phoneNumber,
     };
 
-    // ============================================
-    // ✅ [11] LOG SUCCESS AND RETURN RESPONSE
-    // ============================================
     console.log("\n✅ [11] PROFILE UPDATED SUCCESSFULLY:");
     console.log("   - User ID:", userId);
     console.log("   - Updated fields:", Object.keys(req.body).join(", "));
@@ -2204,9 +2172,7 @@ const updateProfile = async (req, res) => {
       data: graduateProfile,
     });
   } catch (err) {
-    // ============================================
-    // ❌ ERROR HANDLING
-    // ============================================
+  
     console.log("\n❌".repeat(40));
     console.log("❌ ERROR IN UPDATE PROFILE:");
     console.log("❌ Time:", new Date().toISOString());
@@ -2560,9 +2526,6 @@ const getPublicGraduateProfile = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // ============================================
-    // 🚀 START - GET PUBLIC GRADUATE PROFILE
-    // ============================================
     console.log("\n" + "👤".repeat(50));
     console.log("👤 GET PUBLIC GRADUATE PROFILE CALLED at:", new Date().toISOString());
     console.log("👤".repeat(50));
@@ -2701,7 +2664,7 @@ const getPublicGraduateProfile = async (req, res) => {
       console.log(`   ❌ No national ID found for user`);
     }
 
-    // 📍 LOG 5: إذا مفيش رقم قومي صالح، استخدم البيانات المحلية
+    
     if (!nationalIdToUse) {
       console.log("\n📍 [5] NO VALID NATIONAL ID - USING LOCAL DATA ONLY");
       
@@ -2731,7 +2694,7 @@ const getPublicGraduateProfile = async (req, res) => {
       });
     }
 
-    // 📍 LOG 6: محاولة جلب البيانات من API الخارجي
+   
     console.log("\n📍 [6] FETCHING FROM EXTERNAL API:");
     console.log(`   - National ID to use: ${nationalIdToUse.substring(0, 6)}****`);
     console.log(`   - GRADUATE_API_URL from env: ${process.env.GRADUATE_API_URL || 'NOT SET'}`);
@@ -2746,7 +2709,7 @@ const getPublicGraduateProfile = async (req, res) => {
         throw new Error("GRADUATE_API_URL is not configured");
       }
 
-      // بناء الرابط - لاحظ أني غيرته للصيغة الصحيحة
+     
       const apiUrl = `${process.env.GRADUATE_API_URL}?nationalId=${nationalIdToUse}`;
       console.log(`   📞 Calling external API:`);
       console.log(`      - Full URL: ${apiUrl}`);
@@ -2774,7 +2737,7 @@ const getPublicGraduateProfile = async (req, res) => {
         console.log(`      - Data type: ${typeof externalData}`);
         console.log(`      - Full response:`, JSON.stringify(externalData, null, 2));
         
-        // استخراج الحقول المهمة
+       
         console.log(`      - Extracted fields:`);
         console.log(`         • fullName: ${externalData.fullName || externalData['full-name'] || 'N/A'}`);
         console.log(`         • faculty: ${externalData.faculty || externalData.Faculty || 'N/A'}`);
@@ -2810,7 +2773,7 @@ const getPublicGraduateProfile = async (req, res) => {
       });
     }
 
-    // 📍 LOG 7: تجهيز البيانات النهائية
+    
     console.log("\n📍 [7] BUILDING FINAL PROFILE DATA:");
     
     let finalProfile;
@@ -2832,7 +2795,7 @@ const getPublicGraduateProfile = async (req, res) => {
     } else {
       console.log(`   ✅ USING EXTERNAL DATA`);
       
-      // استخراج faculty name
+    
       let facultyName;
       if (externalData.faculty || externalData.Faculty || externalData.facultyName) {
         facultyName = externalData.faculty || externalData.Faculty || externalData.facultyName;
@@ -2842,7 +2805,7 @@ const getPublicGraduateProfile = async (req, res) => {
         console.log(`   - Faculty from local: "${facultyName}"`);
       }
 
-      // استخراج full name
+    
       let fullName;
       if (externalData.fullName || externalData['full-name']) {
         fullName = externalData.fullName || externalData['full-name'];
@@ -2855,7 +2818,7 @@ const getPublicGraduateProfile = async (req, res) => {
         console.log(`   - Full name from local: "${fullName}"`);
       }
 
-      // استخراج department
+    
       let department = externalData.department || externalData.Department || null;
       if (!department) {
         department = graduate.skills || null;
@@ -2864,7 +2827,7 @@ const getPublicGraduateProfile = async (req, res) => {
         console.log(`   - Department from external: "${department}"`);
       }
 
-      // استخراج graduation year
+   
       let graduationYear = externalData.graduationYear || externalData['graduation-year'] || null;
       if (!graduationYear) {
         graduationYear = graduate["graduation-year"] || null;
@@ -2889,7 +2852,7 @@ const getPublicGraduateProfile = async (req, res) => {
       });
     }
 
-    // 📍 LOG 8: إرسال الـ response
+    
     console.log("\n📍 [8] FINAL RESPONSE:");
     console.log(`   - Using: ${useLocalData ? 'LOCAL DATA' : 'EXTERNAL DATA'}`);
     console.log(`   - Response data:`);
@@ -2921,9 +2884,7 @@ const getPublicGraduateProfile = async (req, res) => {
     });
 
   } catch (err) {
-    // ============================================
-    // ❌ ERROR HANDLING
-    // ============================================
+  
     console.log("\n" + "❌".repeat(50));
     console.log("❌ ERROR IN GET PUBLIC GRADUATE PROFILE:");
     console.log("❌".repeat(50));
@@ -2961,14 +2922,12 @@ const getGraduateProfileForUser = async (req, res) => {
     const { identifier } = req.params;
     const currentUserId = req.user.id;
 
-    // ============================================
-    // 🚀 START - GET GRADUATE PROFILE FOR USER
-    // ============================================
+ 
     console.log("\n" + "🔥".repeat(50));
     console.log("🔥 GET GRADUATE PROFILE FOR USER at:", new Date().toISOString());
     console.log("🔥".repeat(50));
     
-    // 📍 LOG 1: كل حاجة عن الطلب
+   
     console.log("\n📍 [1] RAW REQUEST DATA:");
     console.log(`   - identifier: "${identifier}" (type: ${typeof identifier})`);
     console.log(`   - currentUserId: ${currentUserId} (type: ${typeof currentUserId})`);
@@ -2981,13 +2940,13 @@ const getGraduateProfileForUser = async (req, res) => {
     console.log(`   - req.baseUrl: ${req.baseUrl}`);
     console.log(`   - req.path: ${req.path}`);
 
-    // 📍 LOG 2: التأكد إن الـ response هيبقا JSON
+    
     console.log("\n📍 [2] SETTING RESPONSE HEADERS:");
     console.log(`   - Before setting: res.get('Content-Type'): ${res.get('Content-Type')}`);
     res.setHeader('Content-Type', 'application/json');
     console.log(`   - After setting: res.get('Content-Type'): ${res.get('Content-Type')}`);
 
-    // Log request initiation
+   
     logger.info("Get graduate profile for user request initiated", {
       currentUserId,
       identifier,
@@ -2995,7 +2954,7 @@ const getGraduateProfileForUser = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    // 📍 LOG 3: البحث عن الخريج
+
     console.log("\n📍 [3] SEARCHING FOR GRADUATE:");
     console.log(`   - Is identifier numeric? ${!isNaN(identifier) ? 'YES' : 'NO'}`);
     console.log(`   - identifier as number: ${parseInt(identifier)}`);
@@ -3069,7 +3028,7 @@ const getGraduateProfileForUser = async (req, res) => {
       }
     }
 
-    // 📍 LOG 4: التحقق من وجود الخريج
+   
     console.log("\n📍 [4] VALIDATION RESULTS:");
     
     if (!graduate) {
@@ -3113,7 +3072,7 @@ const getGraduateProfileForUser = async (req, res) => {
 
     console.log(`   ✅ User data present`);
 
-    // ========== الجزء الناقص هنا ==========
+   
     console.log("\n📍 [5] PROCESSING FRIENDSHIP AND POSTS:");
 
     // Determine friendship status
@@ -3281,7 +3240,7 @@ const getGraduateProfileForUser = async (req, res) => {
 
     console.log(`   ✅ Formatted ${postsData.length} posts`);
 
-    // 📍 [5.5] BUILDING PROFILE OBJECT
+   
     console.log("\n📍 [5.5] BUILDING PROFILE OBJECT:");
 
     const lang = req.headers["accept-language"] || req.user.language || "ar";
@@ -3327,9 +3286,7 @@ const getGraduateProfileForUser = async (req, res) => {
       console.log(`      - Phone: ✅`);
     }
     
-    // ========== نهاية الجزء الناقص ==========
 
-    // 📍 LOG 6: قبل إرجاع النتيجة
     console.log("\n📍 [6] FINAL RESPONSE:");
     console.log(`   - Response headers before send:`, res.getHeaders());
     console.log(`   - Content-Type should be: application/json`);
@@ -3349,9 +3306,7 @@ const getGraduateProfileForUser = async (req, res) => {
     return res.json(successResponse);
 
   } catch (err) {
-    // ============================================
-    // ❌ ERROR HANDLING
-    // ============================================
+ 
     console.log("\n" + "💥".repeat(50));
     console.log("💥 ERROR CAUGHT IN CATCH BLOCK:");
     console.log("💥".repeat(50));

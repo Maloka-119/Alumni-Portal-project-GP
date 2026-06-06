@@ -1,4 +1,3 @@
-// models/UniversityService.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/db');
 
@@ -29,8 +28,8 @@ const UniversityService = sequelize.define('UniversityService', {
   },
 }, {
   tableName: 'university_services',
-  timestamps: false,     // زي ما انتِ عايزة
-  paranoid: true,        // عشان deletedAt يشتغل
+  timestamps: false,    
+  paranoid: true,        
   indexes: [
     { unique: true, fields: ['pref'] }
   ]

@@ -1,4 +1,3 @@
-// src/routes/staff.route.js
 const express = require("express");
 const router = express.Router();
 const staffController = require("../controllers/staff.Controller");
@@ -10,7 +9,7 @@ router.post(
   "/create",
   authMiddleware.protect,
   (req, res, next) => {
-    // التحقق من أن المستخدم Admin
+ 
     if (req.user && req.user["user-type"] === "admin") {
       next();
     } else {

@@ -1,10 +1,9 @@
-// middleware/authMiddleware.js
 const jwt = require("jsonwebtoken");
 const asyncHandler = require("express-async-handler");
 const User = require("../models/User");
 const Staff = require("../models/Staff");
 
-// Protect middleware (أي يوزر: graduate, staff, admin)
+
 const protect = asyncHandler(async (req, res, next) => {
   let token;
 
@@ -17,10 +16,10 @@ const protect = asyncHandler(async (req, res, next) => {
       const secret = process.env.JWT_SECRET || "your_jwt_secret_key_here";
       const decoded = jwt.verify(token, secret);
 
-      // جرب الأول تجيب اليوزر من جدول Users
+  
       let user = await User.findByPk(decoded.id);
 
-      // لو مش لاقي في Users ممكن يكون Staff
+    
       if (!user) {
         const staff = await Staff.findByPk(decoded.id, { include: User });
         if (staff) {
@@ -34,7 +33,7 @@ const protect = asyncHandler(async (req, res, next) => {
           .json({ message: "Not authorized, user not found" });
       }
 
-      req.user = user; // خزّن بيانات اليوزر في request
+      req.user = user; 
       next();
     } catch (error) {
       console.error("Auth middleware error:", error.message);
@@ -45,7 +44,7 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-// Role middlewares
+
 const admin = asyncHandler(async (req, res, next) => {
   if (req.user && req.user["user-type"] === "admin") {
     next();

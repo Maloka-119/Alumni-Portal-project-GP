@@ -1,5 +1,3 @@
-// src/controllers/staff.controller.js
-// src/controllers/staff.controller.js
 const bcrypt = require("bcrypt");
 const { Op } = require("sequelize");
 const sequelize = require("../config/db");
@@ -424,11 +422,7 @@ const getStaffProfile = async (req, res) => {
     });
   }
 };
-// src/controllers/staff.controller.js
-// أضف هذه الدالة مع الدوال الموجودة
 
-// src/controllers/staff.controller.js
-// أضف هذه الدالة مع الدوال الموجودة
 
 const createStaff = async (req, res) => {
   logger.info("----- [createStaff] START -----", {
@@ -438,13 +432,13 @@ const createStaff = async (req, res) => {
       : "undefined",
   });
 
-  console.log("📥 Request body from frontend:", req.body); // لل debugging
+  console.log("📥 Request body from frontend:", req.body);
 
-  // بداية الـ Transaction
+  
   const transaction = await sequelize.transaction();
 
   try {
-    // ✅ استقبال البيانات من الفرونت (بنفس أسماء الحقول في الفرونت)
+  
     const { full_name, national_id, email, password, phone } = req.body;
 
     logger.debug("Create staff request", {
@@ -454,7 +448,7 @@ const createStaff = async (req, res) => {
       userType: req.user?.["user-type"],
     });
 
-    // ✅ 1. التحقق من البيانات المطلوبة
+   
     if (!full_name || !national_id || !email || !password) {
       logger.warn("Missing required fields in createStaff");
       await transaction.rollback();
@@ -466,7 +460,7 @@ const createStaff = async (req, res) => {
       });
     }
 
-    // ✅ 2. التحقق من عدم تكرار البيانات
+  
     const existingUser = await User.findOne({
       where: {
         [Op.or]: [{ "national-id": national_id }, { email: email }],
@@ -483,15 +477,15 @@ const createStaff = async (req, res) => {
       });
     }
 
-    // ✅ 3. Split full_name إلى first-name و last-name
+
     const nameParts = full_name.trim().split(" ");
     const first_name = nameParts[0] || "";
     const last_name = nameParts.slice(1).join(" ") || "";
 
-    // ✅ 4. Hash password
+  
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ✅ 5. تشفير الرقم القومي باستخدام aes
+    
     let encryptedNationalId = null;
     try {
       encryptedNationalId = aes.encryptNationalId(national_id);
@@ -508,14 +502,14 @@ const createStaff = async (req, res) => {
       });
     }
 
-    // ✅ 6. إنشاء User جديد
+  
     const newUser = await User.create(
       {
         "first-name": first_name,
         "last-name": last_name,
         "national-id": encryptedNationalId,
         email: email,
-        "phone-number": phone || null, // ✅ phone من الفرونت بتتحول لـ phone-number
+        "phone-number": phone || null, 
         "hashed-password": hashedPassword,
         "birth-date": null,
         "user-type": "staff",
@@ -526,7 +520,7 @@ const createStaff = async (req, res) => {
 
     logger.info("User created successfully", { userId: newUser.id });
 
-    // ✅ 7. إنشاء Staff مرتبط بالـ User
+   
     const newStaff = await Staff.create(
       {
         staff_id: newUser.id,
@@ -539,10 +533,10 @@ const createStaff = async (req, res) => {
       staffId: newStaff.staff_id,
     });
 
-    // ✅ 8. Commit transaction
+ 
     await transaction.commit();
 
-    // ✅ 9. جلب البيانات الكاملة
+ 
     const createdStaff = await Staff.findByPk(newStaff.staff_id, {
       include: [
         {
@@ -565,7 +559,7 @@ const createStaff = async (req, res) => {
       ],
     });
 
-    // ✅ 10. فك تشفير الرقم القومي للـ response
+   
     let decryptedNationalId = null;
     if (createdStaff.User["national-id"]) {
       try {
@@ -578,7 +572,7 @@ const createStaff = async (req, res) => {
       }
     }
 
-    // ✅ 11. تنسيق الـ response حسب ما يتوقعه الفرونت
+    
     const responseData = {
       staff_id: createdStaff.staff_id,
       "status-to-login": createdStaff["status-to-login"],
@@ -597,12 +591,12 @@ const createStaff = async (req, res) => {
       fullName: `${createdStaff.User["first-name"]} ${createdStaff.User["last-name"]}`,
     });
 
-    // ✅ 12. الـ response بالشكل اللي الفرونت يتوقعه
+  
     return res.status(201).json({
-      success: true, // 👈 الفرونت بيعمل check على res.data.success
+      success: true, 
       status: "success",
       message: "Staff account created successfully",
-      data: responseData, // 👈 الفرونت بيستخدم res.data.data
+      data: responseData, 
     });
   } catch (error) {
     await transaction.rollback();
@@ -613,7 +607,7 @@ const createStaff = async (req, res) => {
     console.error("Error creating staff:", error);
 
     return res.status(500).json({
-      success: false, // 👈 عشان يكون consistent
+      success: false, 
       status: "error",
       message: "Internal server error while creating staff account",
       data: null,

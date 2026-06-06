@@ -8,7 +8,7 @@ const FAQ = sequelize.define('FAQ', {
     autoIncrement: true 
   },
 
-  // سؤال بالعربي
+ 
   question_ar: { 
     type: DataTypes.TEXT, 
     allowNull: false,
@@ -18,7 +18,7 @@ const FAQ = sequelize.define('FAQ', {
     }
   },
 
-  // سؤال بالإنجليزي
+ 
   question_en: { 
     type: DataTypes.TEXT, 
     allowNull: false,
@@ -28,7 +28,7 @@ const FAQ = sequelize.define('FAQ', {
     }
   },
 
-  // إجابة بالعربي
+
   answer_ar: { 
     type: DataTypes.TEXT, 
     allowNull: false,
@@ -38,7 +38,7 @@ const FAQ = sequelize.define('FAQ', {
     }
   },
 
-  // إجابة بالإنجليزي
+ 
   answer_en: { 
     type: DataTypes.TEXT, 
     allowNull: false,

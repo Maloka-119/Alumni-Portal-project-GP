@@ -8,15 +8,15 @@ const Post = require("../models/Post");
 const User = require("../models/User");
 const checkStaffPermission = require("../utils/permissionChecker");
 const authMiddleware = require("../middleware/authMiddleware");
-const { getCollegeNameByCode } = require("../services/facultiesService"); // ⬅️ أضف هذا الاستيراد
+const { getCollegeNameByCode } = require("../services/facultiesService"); 
 
 const router = express.Router();
 
-// ✳️ ربط العلاقات لو مش معمول قبل كده
+
 Post.belongsTo(User, { foreignKey: "author-id" });
 User.hasMany(Post, { foreignKey: "author-id" });
 
-// ⬅️ أضف authMiddleware.protect هنا
+
 router.get("/reports-stats", authMiddleware.protect, async (req, res) => {
   try {
     const user = req.user;
@@ -85,7 +85,7 @@ router.get("/reports-stats", authMiddleware.protect, async (req, res) => {
       ],
     });
 
-    // 🏫 الكليات (مع حذف null)
+ 
     const graduatesByFacultyData = await Graduate.findAll({
       attributes: [
         "faculty_code",

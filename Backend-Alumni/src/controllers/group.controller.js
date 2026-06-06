@@ -11,8 +11,6 @@ const checkStaffPermission = require("../utils/permissionChecker");
 const { notifyAddedToGroup } = require("../services/notificationService");
 const { getCollegeNameByCode } = require("../services/facultiesService");
 const { normalizeCollegeName } = require("../services/facultiesService");
-
-// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
 
 /**
@@ -107,7 +105,7 @@ const getGraduatesForGroup = async (req, res) => {
         "user-type": "graduate",
         id: {
           [Op.notIn]: memberIds,
-          [Op.ne]: currentUserId, // Prevent self-invitation
+          [Op.ne]: currentUserId, 
         },
       },
       include: [
@@ -206,10 +204,10 @@ const createGroup = async (req, res) => {
       });
     }
 
-    // 1. Define allowed user types
+   
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. Check if user type is allowed
+ 
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
       // Log unauthorized access
       logger.warn("Unauthorized access to create group", {
@@ -225,7 +223,7 @@ const createGroup = async (req, res) => {
       });
     }
 
-    // 3. Check staff permissions
+  
     if (user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         user.id,
@@ -249,7 +247,7 @@ const createGroup = async (req, res) => {
       }
     }
 
-    // 4. Extract faculty_code and graduation_year
+  
     let faculty_code = groupName ? normalizeCollegeName(groupName) : groupName;
     let graduation_year = null;
 
@@ -265,7 +263,7 @@ const createGroup = async (req, res) => {
       }
     }
 
-    // 5. Check if group already exists with same faculty and year
+   
     if (faculty_code && graduation_year) {
       const existingGroup = await Group.findOne({
         where: {
@@ -291,7 +289,7 @@ const createGroup = async (req, res) => {
       }
     }
 
-    // 6. Handle image upload
+ 
     let imageUrl = null;
     if (req.file) {
       imageUrl = req.file.path || req.file.url || req.file.location || null;
@@ -304,7 +302,7 @@ const createGroup = async (req, res) => {
       });
     }
 
-    // 7. Create group
+   
     const group = await Group.create({
       "group-name": groupName,
       description,
@@ -380,10 +378,10 @@ const getGroups = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    // 1. Define allowed user types
+ 
     const allowedUserTypes = ["admin", "staff", "graduate"];
 
-    // 2. Check if user type is allowed
+   
     if (!req.user || !allowedUserTypes.includes(req.user["user-type"])) {
       // Log unauthorized access
       logger.warn("Unauthorized access to view groups", {
@@ -399,8 +397,7 @@ const getGroups = async (req, res) => {
       });
     }
 
-    // 3. Staff can proceed directly to view groups
-    // 4. Get all groups
+  
     const groups = await Group.findAll();
 
     // Get member count for each group
@@ -473,10 +470,10 @@ const addUserToGroup = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    // 1. Define allowed user types
+   
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. Check if user type is allowed
+  
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
       // Log unauthorized access
       logger.warn("Unauthorized access to add user to group", {
@@ -492,7 +489,7 @@ const addUserToGroup = async (req, res) => {
       });
     }
 
-    // 3. Check staff permissions
+   
     if (user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         user.id,
@@ -517,7 +514,7 @@ const addUserToGroup = async (req, res) => {
       }
     }
 
-    // 4. Verify group exists
+   
     const group = await Group.findByPk(groupId);
     if (!group) {
       // Log group not found
@@ -649,10 +646,10 @@ const editGroup = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    // 1. Define allowed user types
+    
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. Check if user type is allowed
+
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
       // Log unauthorized access
       logger.warn("Unauthorized access to edit group", {
@@ -668,7 +665,7 @@ const editGroup = async (req, res) => {
       });
     }
 
-    // 3. Check staff permissions
+  
     if (user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         user.id,
@@ -692,7 +689,7 @@ const editGroup = async (req, res) => {
       }
     }
 
-    // 4. Find group
+   
     const group = await Group.findByPk(groupId);
     if (!group) {
       // Log group not found
@@ -707,7 +704,7 @@ const editGroup = async (req, res) => {
         .json({ status: "fail", message: "Group not found" });
     }
 
-    // 5. Extract faculty_code and graduation_year from groupName and description
+   
     let faculty_code = group.faculty_code;
     let graduation_year = group.graduation_year;
 
@@ -732,7 +729,7 @@ const editGroup = async (req, res) => {
       }
     }
 
-    // 6. Check for duplicate group
+   
     if (faculty_code && graduation_year) {
       const existingGroup = await Group.findOne({
         where: {
@@ -759,7 +756,7 @@ const editGroup = async (req, res) => {
       }
     }
 
-    // 7. Update data
+    
     const oldGroupName = group["group-name"];
     const oldDescription = group.description;
 
@@ -768,7 +765,7 @@ const editGroup = async (req, res) => {
     group.faculty_code = faculty_code;
     group.graduation_year = graduation_year;
 
-    // 8. Remove group image if requested
+   
     if (removeGroupImage) {
       // Log image removal
       logger.debug("Removing group image as requested", {
@@ -779,7 +776,7 @@ const editGroup = async (req, res) => {
       group["group-image"] = null;
     }
 
-    // 9. Upload new image
+   
     if (req.file) {
       const imageUrl = req.file.path || req.file.url || req.file.location;
       group["group-image"] = imageUrl;
@@ -1208,7 +1205,7 @@ const joinGroup = async (req, res) => {
       "user-id": userId,
     });
 
-    // Note: No notification when user joins themselves
+  
 
     // Count members after addition
     const memberCount = await GroupMember.count({

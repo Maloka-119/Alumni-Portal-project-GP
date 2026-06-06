@@ -11,7 +11,7 @@ const { Op } = require("sequelize");
 const { logger, securityLogger } = require("../utils/logger");
 const { normalizeCollegeName } = require("../services/facultiesService");
 
-// ===================== Helper functions =====================
+
 
 /**
  * Validate Egyptian National ID format
@@ -56,7 +56,7 @@ function extractDOBFromEgyptianNID(nationalId) {
   )}-${String(dd).padStart(2, "0")}`;
 }
 
-// ===================== Passport Google Strategy =====================
+
 
 /**
  * Configure Passport Google OAuth strategy
@@ -265,7 +265,7 @@ exports.googleCallback = (req, res, next) => {
         let externalData = null;
         let foundInAPI = false;
 
-        // 1. Check Staff API first
+       
         try {
           const staffResp = await axios.get(
             `${process.env.STAFF_API_URL}?nationalId=${encodeURIComponent(
@@ -283,7 +283,7 @@ exports.googleCallback = (req, res, next) => {
           // Staff API error - ignore, continue to graduate check
         }
 
-        // 2. If not staff → check Graduate API
+     
         if (!foundInAPI) {
           try {
             const gradResp = await axios.get(

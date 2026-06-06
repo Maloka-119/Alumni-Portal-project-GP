@@ -21,11 +21,11 @@ const Post = sequelize.define(
     "created-at": { type: DataTypes.DATE, defaultValue: DataTypes.NOW },
     "author-id": {
       type: DataTypes.INTEGER,
-      references: { model: "User", key: "id" }, // اسم الجدول كـ string
+      references: { model: "User", key: "id" }, 
     },
     "group-id": {
       type: DataTypes.INTEGER,
-      references: { model: "Group", key: "id" }, // اسم الجدول كـ string
+      references: { model: "Group", key: "id" }, 
     },
     "in-landing": { type: DataTypes.BOOLEAN, defaultValue: false },
     "is-hidden": { type: DataTypes.BOOLEAN, defaultValue: false },

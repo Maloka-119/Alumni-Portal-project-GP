@@ -29,7 +29,7 @@ const Feedback = sequelize.define(
   {
     tableName: "Feedback",
     timestamps: true,
-    underscored: true, // ← يولد created_at و updated_at بدل camelCase
+    underscored: true, 
   }
 );
 

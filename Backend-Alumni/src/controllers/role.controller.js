@@ -1,4 +1,3 @@
-// src/controllers/role.controller.js
 const Role = require("../models/Role");
 const Permission = require("../models/Permission");
 const RolePermission = require("../models/RolePermission");

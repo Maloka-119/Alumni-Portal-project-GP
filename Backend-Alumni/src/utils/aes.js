@@ -18,10 +18,10 @@ function decryptNationalId(encryptedString) {
   try {
     if (!encryptedString) return null;
 
-    // لو مفيش IV (old data)
+  
     if (!encryptedString.includes(":")) {
       console.warn("⚠️ Old encrypted NID format detected");
-      return null; // أو حاول decrypt بطريقة قديمة لو كانت موجودة
+      return null; 
     }
 
     const [ivHex, encrypted] = encryptedString.split(":");
@@ -58,7 +58,7 @@ function encryptNationalId(nid) {
   let encrypted = cipher.update(nid, "utf8", "hex");
   encrypted += cipher.final("hex");
 
-  // نخزن IV مع النص المشفر
+
   return iv.toString("hex") + ":" + encrypted;
 }
 

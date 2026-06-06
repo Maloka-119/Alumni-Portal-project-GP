@@ -28,33 +28,33 @@ const {
 } = require("./middleware/security");
 const app = express();
 
-// ==================================================
-// 🛡️ Security Middlewares (order IMPORTANT)
-// ==================================================
 
-// 1) CORS
+//  Security Middlewares (order IMPORTANT)
+
+
+
 app.use(
   cors({
     origin: [
       "http://localhost:80",
-      // "http://localhost:5005",
+    
       "http://localhost",
       "http://localhost:3001",
       "http://localhost:5155",
       "http://localhost:3000",
       "http://localhost:80",
-      // "http://localhost:5005",
+    
       "http://172.1.50.88",
       "http://172.1.50.88:80",
       "http://172.1.50.88:5155",
       "http://172.1.50.88:3000",
-      //server ip
+    
       "http://10.100.104.148",
       "http://10.100.104.148:80",
       "http://10.100.104.148:5155",
       "http://10.100.104.148:3000",
 
-      // 🔥 NEW ADDED (زي ما طلبت)
+  
       "http://193.227.34.56",
       "http://193.227.34.56:80",
       "http://193.227.34.56:5155",
@@ -72,19 +72,19 @@ app.use(
   })
 );
 
-// 2) Helmet
+
 app.use(helmetConfig);
 
-// 3) Body Parser (قبل أي rate limiter)
+
 app.use(express.json({ limit: "10kb" }));
 app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
-// 4) Sanitize + XSS + HPP
+
 app.use(hppProtection);
 app.use(xssProtection);
 app.use(sanitizeInput);
 
-// 5) Sessions
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET || "mysecret",
@@ -99,10 +99,10 @@ app.use(
   })
 );
 
-// 6) Rate Limiter (General) — هنا المكان الصحيح
+
 app.use(generalLimiter);
 
-// 7) Logger
+
 app.use(morgan("dev"));
 
 app.get("/health/detailed", async (req, res) => {
@@ -118,13 +118,7 @@ app.get("/health/detailed", async (req, res) => {
   });
 });
 
-// ==================================================
-// ⚙️ الإعدادات الأساسية للتطبيق
-// ==================================================
 
-// ==================================================
-// 🌐 WebSocket setup
-// ==================================================
 
 const http = require("http");
 const server = http.createServer(app);
@@ -133,16 +127,14 @@ const chatSocket = new ChatSocketServer(server);
 
 global.chatSocket = chatSocket;
 
-// ==================================================
-// 🛣️ Routes
-// ==================================================
+
 
 // Test Route
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
-// Routes العامة
+
 const graduateRoutes = require("./routes/graduates.route");
 app.use("/alumni-portal/graduates", graduateRoutes);
 
@@ -152,7 +144,7 @@ app.use("/alumni-portal/posts", postRoutes);
 const staffRoutes = require("./routes/staff.route");
 app.use("/alumni-portal/staff", staffRoutes);
 
-// 🔒 تطبيق rate limiting على routes المصادقة
+
 const authRoutes = require("./routes/auth.route");
 app.use("/alumni-portal", authRoutes);
 
@@ -206,7 +198,7 @@ app.use("/alumni-portal/university-services", serviceRoutes);
 
 const documentTypeRoutes = require("./routes/documentType.routes.js");
 app.use("/alumni-portal/documents-types", documentTypeRoutes);
-// بعد graduateRoutes
+
 const documentRequestRoutes = require("./routes/documentRequest.route");
 app.use("/alumni-portal/documents", documentRequestRoutes);
 // Serve uploaded files
@@ -218,9 +210,9 @@ app.use(
 // Error Handler
 app.use(errorHandler);
 
-// ==================================================
-// 🔧 Reset and seed NEW permissions
-// ==================================================
+
+// Reset and seed NEW permissions
+
 
 const ensurePermissionsSeeded = async () => {
   const newPermissions = [
@@ -275,13 +267,7 @@ const ensurePermissionsSeeded = async () => {
   }
 };
 
-// ==================================================
-//  Sync Database and Seed Default Admin + Permissions
-// ==================================================
 
-// ==================================================
-// ✅Connect Database and Seed Default Admin + Permissions
-// ==================================================
 
 sequelize
   .authenticate()
@@ -353,9 +339,7 @@ sequelize
     process.exit(1);
   });
 
-// ==================================================
-// ✅ Start Server
-// ==================================================
+
 
 const PORT = process.env.PORT || 5005;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

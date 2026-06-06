@@ -6,7 +6,7 @@ const multer = require("multer");
 const cloudinary = require("../config/cloudinary");
 const postController = require("../controllers/post.controller");
 
-// إعداد التخزين على Cloudinary
+
 const storage = new CloudinaryStorage({
   cloudinary: cloudinary,
   params: {
@@ -30,7 +30,7 @@ router.post("/:postId/like", authMiddleware.protect, postController.likePost);
 router.delete("/:postId/like", authMiddleware.protect, postController.unlikePost);
 router.post("/:postId/comments", authMiddleware.protect, postController.addComment);
 
-// ==================== ADMIN/STAFF/GROUP POST ROUTES بدون تحقق على النوع ====================
+
 router.get("/admin", authMiddleware.protect, postController.getAdminPosts);
 router.get("/", authMiddleware.protect, postController.getAllPosts);
 router.post("/create-post", authMiddleware.protect, upload.array("images", 5), postController.createPost);
@@ -39,7 +39,7 @@ router.get("/group/:groupId", authMiddleware.protect, postController.getGroupPos
 // ==================== DYNAMIC ROUTES ====================
 router.get("/:postId", postController.getPostWithDetails);
 
-// ==================== ROUTES معدلة ====================
+
 router.patch("/:postId/landing", authMiddleware.protect, postController.toggleLandingStatus);
 router.put("/:postId/edit", authMiddleware.protect, upload.array("images", 5), postController.editPost);
 router.delete("/:postId", authMiddleware.protect, postController.deletePost);

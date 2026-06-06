@@ -1,5 +1,3 @@
-// facultiesService.js
-
 const faculties = [
   {
     code: "ENG_HEL",
@@ -147,7 +145,7 @@ const faculties = [
   }
 ];
 
-// ترجع كل الكليات
+
 function getHelwanFaculties() {
   return faculties.map(f => ({
     code: f.code,
@@ -156,29 +154,29 @@ function getHelwanFaculties() {
   }));
 }
 
-// Normalize — يربط أي اسم عربي/إنجليزي بالكود
+
 function normalizeCollegeName(input) {
   if (!input) return null;
   const cleaned = input.trim().toLowerCase();
 
   for (const col of faculties) {
-    // 1. تحقق من الكود أولاً (case-insensitive)
+
     if (col.code.toLowerCase() === cleaned) return col.code;
     
-    // 2. تحقق من الاسم العربي
+   
     if (col.ar.toLowerCase() === cleaned) return col.code;
     
-    // 3. تحقق من الاسم الإنجليزي
+  
     if (col.en.toLowerCase() === cleaned) return col.code;
     
-    // 4. تحقق من المرادفات
+   
     if (col.synonyms.some(s => s.toLowerCase() === cleaned)) return col.code;
   }
 
   return null;
 }
 
-// جلب اسم الكلية حسب الكود واللغة
+
 function getCollegeNameByCode(code, lang = "ar") {
   const col = faculties.find(f => f.code === code);
   if (!col) return null;

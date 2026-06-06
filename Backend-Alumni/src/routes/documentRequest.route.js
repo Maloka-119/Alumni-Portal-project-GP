@@ -93,7 +93,7 @@ const multerErrorHandler = (err, req, res, next) => {
   next();
 };
 
-// ==================== GRADUATE ROUTES ====================
+
 // Create new document request (Graduates only)
 router.post(
   "/requests",
@@ -102,7 +102,7 @@ router.post(
   upload.array("attachments", 5),
   multerErrorHandler,
   (req, res, next) => {
-    // بعد ما multer يشتغل
+   
     console.log("\n✅ MULTER PROCESSING COMPLETE");
     console.log("req.body keys:", Object.keys(req.body));
     console.log("req.files count:", req.files ? req.files.length : 0);
@@ -126,7 +126,7 @@ router.get(
   documentRequestController.getMyDocumentRequests
 );
 
-// ==================== STAFF/ADMIN ROUTES ====================
+
 // Get all document requests (Staff/Admin only)
 router.get(
   "/requests",
@@ -141,7 +141,7 @@ router.put(
   documentRequestController.updateDocumentRequestStatus
 );
 
-// ==================== TEST ROUTE (تأكد أن multer شغال) ====================
+
 router.post(
   "/test-upload",
   protect,
@@ -180,7 +180,7 @@ router.post(
   }
 );
 
-// ==================== DIRECT TEST ROUTE (بدون authentication) ====================
+
 router.post("/direct-test", upload.single("attachment"), (req, res) => {
   console.log("\n🎯 DIRECT TEST ROUTE HIT!");
   console.log("Body:", req.body);

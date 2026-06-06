@@ -9,7 +9,6 @@ const { findMatchingGroup } = require("../utils/groupUtils");
 const sequelize = require("../config/db");
 const { getCollegeNameByCode } = require("../services/facultiesService");
 const axios = require("axios"); 
-// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
 const aes = require("../utils/aes");// عدل المسار حسب مكان الملف
 const notificationService = require("../services/notificationService");
@@ -560,12 +559,12 @@ const sendAutoGroupInvitation = async (userId) => {
       timestamp: new Date().toISOString(),
     });
 
-    // 📍 [0] نشوف لو فيه invitation قبل كده
+   
     console.log("\n📍 [0] CHECKING EXISTING INVITATIONS:");
     const existingInvitations = await Invitation.findAll({
       where: {
         receiver_id: userId,
-        sender_id: 1  // من الادمن
+        sender_id: 1  
       }
     });
 
@@ -575,7 +574,7 @@ const sendAutoGroupInvitation = async (userId) => {
         console.log(`      - Invitation ${idx + 1}: ID=${inv.id}, GroupID=${inv.group_id}, Status=${inv.status}`);
       });
       console.log(`   ✅ Already invited before - skipping`);
-      return true;  // أو false حسب المطلوب
+      return true; 
     }
 
     console.log(`   ✅ No previous invitations found`);
@@ -602,11 +601,10 @@ const sendAutoGroupInvitation = async (userId) => {
     console.log(`      - Faculty Code: ${graduate.faculty_code || 'null'}`);
     console.log(`      - Graduation Year: ${graduate["graduation-year"] || 'null'}`);
 
-    // 📌 لو faculty_code لسه null، نستنى أو نستخدم البيانات من external API
     if (!graduate.faculty_code) {
       console.log("\n📍 [2] FACULTY CODE IS NULL - CHECKING IF WE SHOULD WAIT");
       
-      // نجيب الرقم القومي
+     
       let nationalId = null;
       if (graduate.User && graduate.User["national-id"]) {
         const decrypted = aes.decryptNationalId(graduate.User["national-id"]);
@@ -620,7 +618,7 @@ const sendAutoGroupInvitation = async (userId) => {
         console.log(`   - Trying to fetch fresh data from external API...`);
         
         try {
-          // نحاول نجيب البيانات من external API
+          
           const apiUrl = `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`;
           console.log(`   - Calling: ${apiUrl}`);
           
@@ -632,7 +630,7 @@ const sendAutoGroupInvitation = async (userId) => {
             console.log(`      - Department: ${response.data.department}`);
             console.log(`      - Graduation Year: ${response.data["graduation-year"]}`);
             
-            // تحديث البيانات
+          
             const facultyCode = normalizeCollegeName(response.data.faculty);
             if (facultyCode) {
               graduate.faculty_code = facultyCode;
@@ -648,7 +646,7 @@ const sendAutoGroupInvitation = async (userId) => {
         }
       }
       
-      // بعد المحاولة، لو لسه null، نوقف
+     
       if (!graduate.faculty_code) {
         console.log(`   ❌ Faculty code still null after API attempt`);
         console.log(`   ➡️  No invitation will be sent (waiting for faculty data)`);
@@ -690,7 +688,7 @@ const sendAutoGroupInvitation = async (userId) => {
     console.log(`      - Group Name: ${matchingGroup["group-name"]}`);
     console.log(`      - Group Faculty Code: ${matchingGroup.faculty_code || 'null'}`);
     
-    // اتأكد إن الجروب مش بياخد ناس من كلية تانية
+   
     if (matchingGroup.faculty_code && matchingGroup.faculty_code !== graduate.faculty_code) {
       console.log(`   ⚠️ WARNING: Faculty code mismatch!`);
       console.log(`      - Group belongs to: ${matchingGroup.faculty_code}`);
@@ -699,7 +697,7 @@ const sendAutoGroupInvitation = async (userId) => {
       return false;
     }
 
-    // نتأكد تاني (بعد ما لقينا الجروب) إن مفيش invitation قبل كده
+   
     console.log("\n📍 [4] DOUBLE-CHECKING INVITATIONS:");
     const finalCheck = await Invitation.findOne({
       where: {

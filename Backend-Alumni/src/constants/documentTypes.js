@@ -1,32 +1,29 @@
-// 📄 File: src/constants/documentTypes.js
-// ✅ قائمة أنواع الوثائق الثابتة مع خصائص كل نوع
-
 const DOCUMENT_TYPES = {
-  // 1. شهادة التخرج (Graduation Certificate)
+
   GRAD_CERT: {
     code: "GRAD_CERT",
     name_ar: "شهادة تخرج",
     name_en: "Graduation Certificate",
-    requires_attachments: true, // ✅ محتاجة أوراق
-    requires_national_id: true, // ✅ محتاجة رقم قومي
-    base_processing_days: 15, // ⏳ 15 يوم للتجهيز
+    requires_attachments: true, 
+    requires_national_id: true, 
+    base_processing_days: 15, 
     description_ar: "شهادة تخرج رسمية من الجامعة",
     description_en: "Official graduation certificate from the university",
   },
 
-  // 2. إثبات قيد (Enrollment Proof)
+ 
   ENROLL_PROOF: {
     code: "ENROLL_PROOF",
     name_ar: "إثبات قيد",
     name_en: "Enrollment Proof",
-    requires_attachments: false, // ❌ مش محتاجة أوراق
-    requires_national_id: true, // ✅ محتاجة رقم قومي
-    base_processing_days: 3, // ⏳ 3 أيام للتجهيز
+    requires_attachments: false, 
+    requires_national_id: true, 
+    base_processing_days: 3, 
     description_ar: "وثيقة تثبت قيد الطالب بالجامعة",
     description_en: "Document proving student enrollment at the university",
   },
 
-  // 3. بيان حالة (Status Statement)
+ 
   STATUS_STMT: {
     code: "STATUS_STMT",
     name_ar: "بيان حالة",
@@ -38,7 +35,7 @@ const DOCUMENT_TYPES = {
     description_en: "Statement showing student academic status",
   },
 
-  // 4. بيان درجات (Grades Statement)
+
   GRADES_STMT: {
     code: "GRADES_STMT",
     name_ar: "بيان درجات",
@@ -50,7 +47,7 @@ const DOCUMENT_TYPES = {
     description_en: "Detailed statement of student grades",
   },
 
-  // 5. شهادة مؤمنة (Secured Certificate)
+
   SECURED_CERT: {
     code: "SECURED_CERT",
     name_ar: "شهادة مؤمنة",
@@ -62,7 +59,7 @@ const DOCUMENT_TYPES = {
     description_en: "Secured and certified certificate from the university",
   },
 
-  // 6. إفادة التخرج (Graduation Testimonial)
+  
   GRAD_TESTIMONIAL: {
     code: "GRAD_TESTIMONIAL",
     name_ar: "إفادة تخرج",
@@ -75,7 +72,7 @@ const DOCUMENT_TYPES = {
       "Testimonial containing graduate name, graduation year and result",
   },
 
-  // 7. شهادة تقديرات (Transcript Certificate)
+  
   TRANSCRIPT_CERT: {
     code: "TRANSCRIPT_CERT",
     name_ar: "شهادة تقديرات",
@@ -90,7 +87,7 @@ const DOCUMENT_TYPES = {
   },
 };
 
-// 🔧 Utility functions
+
 const DOCUMENT_CODES = Object.values(DOCUMENT_TYPES).map((doc) => doc.code);
 
 const getDocumentByCode = (code) => {

@@ -2,7 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
-    // إضافة العلاقة بين Chat و Message لـ last_message_id
+  
     await queryInterface.addConstraint('Chat', {
       fields: ['last_message_id'],
       type: 'foreign key',
@@ -15,7 +15,7 @@ module.exports = {
       onDelete: 'SET NULL'
     });
 
-    // إضافة العلاقة بين Message و Message لـ reply_to_message_id
+   
     await queryInterface.addConstraint('Message', {
       fields: ['reply_to_message_id'],
       type: 'foreign key',

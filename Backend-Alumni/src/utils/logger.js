@@ -2,33 +2,33 @@ const winston = require("winston");
 const fs = require("fs");
 const path = require("path");
 
-// إنشاء مجلد اللوجات إذا لم يكن موجوداً
+
 const logsDir = path.join(__dirname, "../logs");
 if (!fs.existsSync(logsDir)) {
   fs.mkdirSync(logsDir, { recursive: true });
 }
 
-// تنسيق اللوجات
+
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
   winston.format.errors({ stack: true }),
   winston.format.json()
 );
 
-// إنشاء ال logger
+
 const logger = winston.createLogger({
   level: "info",
   format: logFormat,
   defaultMeta: { service: "alumni-portal" },
   transports: [
-    // لوجات الأخطاء
+  
     new winston.transports.File({ 
       filename: path.join(logsDir, "error.log"), 
       level: "error",
       maxsize: 5242880, // 5MB
       maxFiles: 5
     }),
-    // لوجات عامة
+  
     new winston.transports.File({ 
       filename: path.join(logsDir, "combined.log"),
       maxsize: 5242880,
@@ -44,14 +44,14 @@ const logger = winston.createLogger({
   ]
 });
 
-// إضافة console transport في بيئة التطوير
+
 if (process.env.NODE_ENV !== "production") {
   logger.add(new winston.transports.Console({
     format: winston.format.simple()
   }));
 }
 
-// دوال مساعدة للتسجيل
+
 const securityLogger = {
   // Add this method
   warn: (message, meta = {}) => {
@@ -64,7 +64,7 @@ const securityLogger = {
   failedLogin: (ip, email, reason = "Invalid credentials") => {
     logger.warn("Failed login attempt", { 
       ip, 
-      email: email.substring(0, 3) + "***", // إخفاء جزء من البريد
+      email: email.substring(0, 3) + "***", 
       reason,
       timestamp: new Date().toISOString()
     });
@@ -108,7 +108,7 @@ const securityLogger = {
   sqlInjectionAttempt: (ip, query) => {
     logger.error("SQL injection attempt detected", { 
       ip, 
-      query: query.substring(0, 100), // تسجيل جزء من الكويري فقط
+      query: query.substring(0, 100), 
       timestamp: new Date().toISOString()
     });
   },

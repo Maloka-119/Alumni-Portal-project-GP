@@ -9,6 +9,6 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    // لا يمكن حذف enum value في PostgreSQL بسهولة
+    
   }
 };

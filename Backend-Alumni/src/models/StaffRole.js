@@ -9,7 +9,7 @@ const StaffRole = sequelize.define(
     staff_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
-      references: { model: Staff, key: "id" }, // عادة مفتاح Staff هو id
+      references: { model: Staff, key: "id" },
     },
     role_id: {
       type: DataTypes.INTEGER,
@@ -20,7 +20,7 @@ const StaffRole = sequelize.define(
   { tableName: "StaffRole", timestamps: false }
 );
 
-// 🔹 M:N relationship
+// M:N relationship
 Staff.belongsToMany(Role, {
   through: StaffRole,
   foreignKey: "staff_id",
@@ -32,7 +32,7 @@ Role.belongsToMany(Staff, {
   otherKey: "staff_id",
 });
 
-// 🔹 1:N relationship لتسهيل الـ include
+//  1:N relationship لتسهيل الـ include
 StaffRole.belongsTo(Staff, { foreignKey: "staff_id" });
 StaffRole.belongsTo(Role, { foreignKey: "role_id" });
 Staff.hasMany(StaffRole, { foreignKey: "staff_id" });

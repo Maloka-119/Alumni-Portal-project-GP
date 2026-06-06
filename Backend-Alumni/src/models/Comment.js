@@ -12,11 +12,11 @@ const Comment = sequelize.define(
     content: { type: DataTypes.STRING },
     "post-id": {
       type: DataTypes.INTEGER,
-      references: { model: "Post", key: "post_id" }, // استخدم اسم الجدول كـ string
+      references: { model: "Post", key: "post_id" }, 
     },
     "author-id": {
       type: DataTypes.INTEGER,
-      references: { model: "User", key: "id" }, // استخدم اسم الجدول كـ string
+      references: { model: "User", key: "id" }, 
     },
       "parent-comment-id": {
       type: DataTypes.INTEGER,

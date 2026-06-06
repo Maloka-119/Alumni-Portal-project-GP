@@ -1,6 +1,5 @@
-// utils/groupUtils.js
 const { Group } = require("../models");
-const { Op } = require("sequelize"); // 👈 أضفنا هذا السطر
+const { Op } = require("sequelize"); 
 
 const findMatchingGroup = async (faculty_code, graduation_year) => {
   try {
@@ -10,7 +9,7 @@ const findMatchingGroup = async (faculty_code, graduation_year) => {
     );
     console.log("🔍".repeat(30));
 
-    // 📍 LOG 1: كل الجروبات الموجودة
+
     console.log("\n📍 [1] ALL GROUPS IN DATABASE:");
     const allGroups = await Group.findAll({
       attributes: ["id", "group-name", "faculty_code", "graduation_year"],
@@ -31,7 +30,7 @@ const findMatchingGroup = async (faculty_code, graduation_year) => {
       });
     }
 
-    // أولاً: بحث دقيق
+  
     console.log("\n📍 [2] SEARCHING FOR EXACT MATCH:");
     console.log(
       `   - Criteria: faculty_code = "${faculty_code}", graduation_year = ${graduation_year}`
@@ -55,7 +54,7 @@ const findMatchingGroup = async (faculty_code, graduation_year) => {
 
     console.log(`   ❌ No exact match found`);
 
-    // ثانياً: بحث عن جروب عام لنفس الكلية (أي سنة)
+  
     console.log("\n📍 [3] SEARCHING FOR FACULTY GROUP (any year):");
     console.log(`   - Criteria: faculty_code = "${faculty_code}" (any year)`);
 
@@ -74,10 +73,10 @@ const findMatchingGroup = async (faculty_code, graduation_year) => {
 
     console.log(`   ❌ No faculty group found for code: ${faculty_code}`);
     
-    // 🔥 الخطوة الجديدة: البحث بالاسم (fallback)
+ 
     console.log("\n📍 [4] SEARCHING BY GROUP NAME (fallback):");
     
-    // تصحيح: نحدد الكلمات المفتاحية لكل كلية
+ 
     const facultyNamePatterns = {
       'COMP_AI': ['Computers', 'Artificial Intelligence', 'حاسبات', 'كمبيوتر'],
       'ENG_MAT': ['Engineering', 'Mataria', 'هندسة', 'مطرية'],
@@ -85,7 +84,7 @@ const findMatchingGroup = async (faculty_code, graduation_year) => {
       'NURS': ['Nursing', 'تمريض'],
     };
     
-    // استخدام patterns خاصة بالكلية أو البحث بالكود نفسه
+  
     const patterns = facultyNamePatterns[faculty_code] || [faculty_code];
     console.log(`   - Searching for groups with names containing:`, patterns);
     
@@ -104,7 +103,7 @@ const findMatchingGroup = async (faculty_code, graduation_year) => {
         console.log(`      - Group Name: ${groupByName["group-name"]}`);
         console.log(`      - Current Faculty Code: ${groupByName.faculty_code || 'null'}`);
         
-        // لو لقينا جروب باسمه مطابق لكن faculty_code بتاعه null، نحدثه
+      
         if (!groupByName.faculty_code) {
           console.log(`   🔧 Updating group faculty_code from null to ${faculty_code}...`);
           groupByName.faculty_code = faculty_code;
@@ -112,7 +111,7 @@ const findMatchingGroup = async (faculty_code, graduation_year) => {
           console.log(`   ✅ Group updated successfully!`);
         } else if (groupByName.faculty_code !== faculty_code) {
           console.log(`   ⚠️ Group has different faculty_code: ${groupByName.faculty_code}`);
-          // هنا ممكن نختار نرجع الجروب ولا لا حسب المنطق
+        
         }
         
         return groupByName;

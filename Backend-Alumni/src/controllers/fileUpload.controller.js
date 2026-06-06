@@ -6,8 +6,6 @@ const cloudinary = require("../config/cloudinary");
 const { Chat, UserBlock } = require("../models");
 const { Op } = require("sequelize");
 const asyncHandler = require("express-async-handler");
-
-// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
 
 /**
@@ -205,7 +203,7 @@ const uploadChatFile = asyncHandler(async (req, res) => {
           size: fileInfo.size,
           mimeType: fileInfo.mimeType,
           publicId: fileInfo.publicId,
-          type: fileInfo.mimeType.split("/")[0], // 'image', 'application', etc.
+          type: fileInfo.mimeType.split("/")[0], 
         },
         ip: req.ip,
         timestamp: new Date().toISOString(),

@@ -35,7 +35,7 @@ module.exports = {
     await queryInterface.addIndex('Like', ['post-id']);
     await queryInterface.addIndex('Like', ['user-id']);
     
-    // لمنع الإعجاب المزدوج
+  
     await queryInterface.addConstraint('Like', {
       fields: ['post-id', 'user-id'],
       type: 'unique'

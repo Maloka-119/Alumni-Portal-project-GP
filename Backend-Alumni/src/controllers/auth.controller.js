@@ -13,8 +13,7 @@ const {
   getCollegeNameByCode,
 } = require("../services/facultiesService");
 const { securityLogger } = require("../utils/logger");
-// أضف هذا السطر 👇
-const logger = require("../utils/logger");  // هذا هو السطر المهم!
+const logger = require("../utils/logger");  
 const {
   validateEmail,
   validatePassword,
@@ -23,12 +22,12 @@ const {
   sanitizeInput,
 } = require("../middleware/security");
 
-// Import invitation controller
+
 const {
   sendAutoGroupInvitation,
 } = require("../controllers/invitation.controller");
 
-// ======== Helper Functions ========
+
 
 /**
  * Extract date of birth from Egyptian National ID (NID)
@@ -198,7 +197,7 @@ const registerUser = asyncHandler(async (req, res) => {
     console.log("Staff API check failed:", e.message);
   }
 
-  // --- Graduate check (✅ FIXED) ---
+  // --- Graduate check  ---
   if (userType === "graduate") {
     try {
       const gradResp = await axios.get(
@@ -209,16 +208,16 @@ const registerUser = asyncHandler(async (req, res) => {
       );
 
       if (gradResp.data?.faculty) {
-        // موجود في system2 → accepted
+       
         statusToLogin = "accepted";
         externalData = gradResp.data;
       } else {
-        // ❗ مش موجود → pending (بدل accepted)
+      
         statusToLogin = "pending";
       }
     } catch (e) {
       console.log("Graduate API check failed:", e.message);
-      // ❗ لو API وقع → pending (بدل accepted)
+    
       statusToLogin = "pending";
     }
   }
@@ -326,19 +325,16 @@ const loginUser = asyncHandler(async (req, res) => {
     return res.status(401).json({ error: "Invalid email or password" });
   }
 
-  // ============================================
-  // 🔄 SYNC GRADUATE DATA FROM EXTERNAL SYSTEM ON LOGIN
-  // ============================================
+
   console.log("\n🔄 CHECKING GRADUATE DATA ON LOGIN:");
   console.log(`   - User ID: ${user.id}`);
   console.log(`   - User Type: ${user["user-type"]}`);
   console.log(`   - Email: ${user.email}`);
 
-  let dataUpdated = false; // متغير لنتتبع إذا حصل تحديث للبيانات
+  let dataUpdated = false; 
   let graduate = null;
 
   if (user["user-type"] === "graduate") {
-    // جلب الـ graduate record
     graduate = await Graduate.findOne({
       where: { graduate_id: user.id },
     });
@@ -355,16 +351,16 @@ const loginUser = asyncHandler(async (req, res) => {
       );
       console.log(`      - Current skills: ${graduate.skills || "missing"}`);
 
-      // لو الفاكولتي أو سنة التخرج ناقصة
+   
       if (!graduate.faculty_code || !graduate["graduation-year"]) {
         console.log(
           "   - ⚠️ Missing faculty or graduation year, fetching from external system..."
         );
 
-        // فك تشفير الرقم القومي
+  
         let nationalId = null;
         if (user["national-id"]) {
-          // محاولة فك التشفير
+    
           const decrypted = aes.decryptNationalId(user["national-id"]);
           if (decrypted) {
             nationalId = decrypted;
@@ -373,7 +369,7 @@ const loginUser = asyncHandler(async (req, res) => {
               nationalId.substring(0, 6) + "****"
             );
           } else {
-            // لو فك التشفير فشل، جرب استخدام القيمة كـ plain text لو كانت 14 رقم
+      
             const rawNid = String(user["national-id"]).trim();
             if (/^\d{14}$/.test(rawNid)) {
               nationalId = rawNid;
@@ -393,7 +389,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
         if (nationalId) {
           try {
-            // ✅ التعديل هنا: غيرنا الرابط
+          
             const externalApiUrl = `http://localhost:5155/api/details/${nationalId}`;
             console.log(`   - Calling external API: ${externalApiUrl}`);
 
@@ -414,7 +410,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
               let updated = false;
 
-              // تحديث faculty_code
+              
               if (externalData.faculty && !graduate.faculty_code) {
                 const facultyCode = normalizeCollegeName(externalData.faculty);
                 if (facultyCode) {
@@ -427,13 +423,13 @@ const loginUser = asyncHandler(async (req, res) => {
                   console.log(
                     `      - ⚠️ Could not normalize faculty: ${externalData.faculty}`
                   );
-                  // If normalization fails, store the original
+               
                   graduate.faculty_code = externalData.faculty;
                   updated = true;
                 }
               }
 
-              // تحديث سنة التخرج
+          
               if (externalData.graduationYear && !graduate["graduation-year"]) {
                 const year = parseInt(externalData.graduationYear);
                 if (!isNaN(year) && year > 1900 && year < 2100) {
@@ -447,7 +443,7 @@ const loginUser = asyncHandler(async (req, res) => {
                 }
               }
 
-              // تحديث skills من department لو skills فاضية
+            
               if (externalData.department && !graduate.skills) {
                 graduate.skills = externalData.department;
                 console.log(
@@ -461,7 +457,7 @@ const loginUser = asyncHandler(async (req, res) => {
                 console.log(
                   "   - ✅ Graduate data synced and saved successfully"
                 );
-                dataUpdated = true; // ✅ تم تحديث البيانات
+                dataUpdated = true;
               } else {
                 console.log("   - No updates needed");
               }
@@ -507,9 +503,7 @@ const loginUser = asyncHandler(async (req, res) => {
     );
   }
 
-  // ============================================
-  // ✅ DETERMINE USER STATUS
-  // ============================================
+
   let status = null;
 
   if (user["user-type"] === "graduate") {
@@ -549,34 +543,32 @@ const loginUser = asyncHandler(async (req, res) => {
     }
   }
 
-  // ============================================
-  // 📨 AUTO INVITATION AFTER LOGIN (إذا تم تحديث البيانات)
-  // ============================================
-  // نقوم بإرسال الدعوة قبل إرسال الـ response
+
+
   if (user["user-type"] === "graduate" && dataUpdated && graduate) {
     console.log("\n📨 Sending auto invitation during login (data was updated)...");
     
     try {
-      // استدعاء دالة الإرسال الآلي مباشرة بدون setTimeout
+    
       const { sendAutoGroupInvitation } = require("./invitation.controller");
       const invitationSent = await sendAutoGroupInvitation(user.id);
       
       if (invitationSent) {
         console.log("   - ✅ Auto invitation sent successfully during login");
         
-        // نجيب أحدث بيانات للـ graduate بعد الدعوة
+     
         const updatedGrad = await Graduate.findOne({ 
           where: { graduate_id: user.id } 
         });
         
-        // لو عايز تتأكد إن النوتيفيكشن اتبعتت
+     
         console.log(`   - 📬 Notification should appear now for user ${user.id}`);
       } else {
         console.log("   - ⚠️ Auto invitation not sent (already exists or no group)");
       }
     } catch (error) {
       console.log("   - ❌ Auto invitation error during login:", error.message);
-      // لا نريد إيقاف عملية اللوجين بسبب هذا
+      
     }
   }
 
@@ -589,7 +581,7 @@ const loginUser = asyncHandler(async (req, res) => {
     console.log(`   - 📬 Notification sent with login response`);
   }
 
-  // إرسال الـ response بعد انتهاء كل العمليات
+
   res.json({
     id: user.id,
     email: user.email,

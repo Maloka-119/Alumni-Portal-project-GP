@@ -18,7 +18,7 @@ const Graduate = sequelize.define(
     "cv-url": { type: DataTypes.STRING },
    
      faculty_code: {
-      type: DataTypes.STRING, // الكود الموحد
+      type: DataTypes.STRING, 
       allowNull: true,
     },
     "profile-picture-url": { type: DataTypes.STRING },
@@ -47,7 +47,6 @@ const Graduate = sequelize.define(
 
 Graduate.belongsTo(User, { foreignKey: "graduate_id" });
 User.hasOne(Graduate, { foreignKey: "graduate_id" });
-// العلاقة بين Graduate والدعوات (عشان نقدر نعمل include)
 Graduate.hasMany(Invitation, {
   foreignKey: "receiver_id",
   as: "pendingInvitation",

@@ -1,8 +1,6 @@
 const Permission = require("../models/Permission");
 const RolePermission = require("../models/RolePermission");
 const Role = require("../models/Role");
-
-// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
 
 /**

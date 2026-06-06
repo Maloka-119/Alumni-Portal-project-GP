@@ -31,7 +31,7 @@ module.exports = {
       last_message_id: {
         type: Sequelize.INTEGER,
         allowNull: true
-        // سيتم إضافة المرجع لاحقاً بعد إنشاء جدول Message
+     
       },
       last_message_at: {
         type: Sequelize.DATE,

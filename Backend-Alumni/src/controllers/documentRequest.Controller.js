@@ -1,4 +1,3 @@
-// File: src/controllers/documentRequestController.js
 const asyncHandler = require("express-async-handler");
 const { Op } = require("sequelize");
 const DocumentRequest = require("../models/DocumentRequest");
@@ -463,7 +462,7 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
     userType: user["user-type"],
   });
 
-  // 1️⃣ Verify user is a graduate
+  // Verify user is a graduate
   if (user["user-type"] !== "graduate") {
     logger.warn("Non-graduate tried to access graduate document requests", {
       userId: user.id,
@@ -476,7 +475,7 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
   }
 
   try {
-    // 2️⃣ Fetch graduate requests with additional information
+    //Fetch graduate requests with additional information
     const requests = await DocumentRequest.findAll({
       where: {
         graduate_id: user.id,
@@ -515,7 +514,7 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
       requestCount: requests.length,
     });
 
-    // 3️⃣ Enhance data before returning with timeline information
+    //  Enhance data before returning with timeline information
     const enhancedRequests = requests.map((request) => {
       const requestData = request.toJSON();
       const docType = getDocumentByCode(requestData["request-type"]);
@@ -626,7 +625,7 @@ const getMyDocumentRequests = asyncHandler(async (req, res) => {
       };
     });
 
-    // 4️⃣ Return result
+    // Return result
     res.status(200).json({
       success: true,
       count: enhancedRequests.length,
@@ -665,7 +664,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
     newStatus: status,
   });
 
-  // 1️⃣ Verify user is staff or admin
+  // Verify user is staff or admin
   if (!["staff", "admin"].includes(user["user-type"])) {
     logger.warn("Non-staff/admin tried to update document request status", {
       userId: user.id,
@@ -678,7 +677,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
     });
   }
 
-  // 2️⃣ Check staff permissions
+  //Check staff permissions
   if (user["user-type"] === "staff") {
     const hasPermission = await checkStaffPermission(
       user.id,
@@ -697,7 +696,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
     }
   }
 
-  // 3️⃣ Validate status value
+  // Validate status value
   const validStatuses = [
     "pending",
     "under_review",
@@ -719,7 +718,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
   }
 
   try {
-    // 4️⃣ Fetch the request
+    // Fetch the request
     const documentRequest = await DocumentRequest.findByPk(requestId, {
       include: [
         {
@@ -747,7 +746,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
 
     const oldStatus = documentRequest.status;
 
-    // 5️⃣ Update status
+    // Update status
     documentRequest.status = status;
     if (notes !== undefined) {
       documentRequest.notes = notes;
@@ -771,7 +770,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
 
     await documentRequest.save();
 
-    // 6️⃣ Send notification to graduate
+    //  Send notification to graduate
     const documentType = getDocumentByCode(documentRequest["request-type"]);
     const documentTypeName = documentType
       ? documentType.name_en
@@ -798,7 +797,7 @@ const updateDocumentRequestStatus = asyncHandler(async (req, res) => {
       userType: user["user-type"],
     });
 
-    // 7️⃣ Return result
+    //  Return result
     res.status(200).json({
       success: true,
       message: "Document request status updated successfully.",
@@ -842,7 +841,7 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
   console.log("User ID:", user.id);
   console.log("User Type:", user["user-type"]);
 
-  // 1️⃣ Authorization
+  //  Authorization
   if (!["staff", "admin"].includes(user["user-type"])) {
     return res.status(403).json({
       success: false,
@@ -850,7 +849,7 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
     });
   }
 
-  // 2️⃣ Staff permission check
+  //  Staff permission check
   if (user["user-type"] === "staff") {
     let hasPermission = false;
 
@@ -896,7 +895,7 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
                 "first-name",
                 "last-name",
                 "email",
-                "national-id", // ✅ مهم جدًا
+                "national-id", 
               ],
             },
           ],
@@ -938,7 +937,7 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
           ? `${staffUser["first-name"]} ${staffUser["last-name"]}`
           : null,
 
-        // 🔐 FIXED NATIONAL ID DECRYPT
+   
         national_id: gradUser?.["national-id"]
           ? decryptNationalId(gradUser["national-id"])
           : null,

@@ -136,10 +136,10 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
       lang,
     });
 
-    // 1. Define allowed user types
+   
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. Check if user type is allowed
+  
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
       logger.warn("Unauthorized access to admin FAQs", {
         userId: user?.id,
@@ -151,7 +151,7 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
       });
     }
 
-    // 3. Check staff permissions
+  
     if (user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         user.id,
@@ -171,7 +171,7 @@ const getAllFAQsAdmin = asyncHandler(async (req, res) => {
       }
     }
 
-    // 4. Continue for admin or authorized staff
+  
     let whereClause = {};
     let orderClause = [
       ["order", "ASC"],
@@ -340,10 +340,9 @@ const createFAQ = asyncHandler(async (req, res) => {
       hasAnswerEn: !!answer_en,
     });
 
-    // 1. Define allowed user types
+   
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. Check if user type is allowed
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
       logger.warn("Unauthorized FAQ creation attempt", {
         userId: user?.id,
@@ -355,7 +354,7 @@ const createFAQ = asyncHandler(async (req, res) => {
       });
     }
 
-    // 3. Check staff permissions
+
     if (user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         user.id,
@@ -375,7 +374,7 @@ const createFAQ = asyncHandler(async (req, res) => {
       }
     }
 
-    // 4. Continue for admin or authorized staff
+ 
     // Validate required fields for both languages
     if (!question_ar || !question_en || !answer_ar || !answer_en) {
       logger.warn("Missing required fields for FAQ creation", {
@@ -393,7 +392,7 @@ const createFAQ = asyncHandler(async (req, res) => {
       });
     }
 
-    // Check if order is provided, otherwise get the next order number
+
     let faqOrder = order;
     if (faqOrder === undefined || faqOrder === null) {
       const lastFAQ = await FAQ.findOne({
@@ -498,10 +497,10 @@ const updateFAQ = asyncHandler(async (req, res) => {
       },
     });
 
-    // 1. Define allowed user types
+
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. Check if user type is allowed
+ 
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
       logger.warn("Unauthorized FAQ update attempt", {
         userId: user?.id,
@@ -513,7 +512,7 @@ const updateFAQ = asyncHandler(async (req, res) => {
       });
     }
 
-    // 3. Check staff permissions
+   
     if (user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         user.id,
@@ -533,7 +532,7 @@ const updateFAQ = asyncHandler(async (req, res) => {
       }
     }
 
-    // 4. Continue for admin or authorized staff
+ 
     const faq = await FAQ.findByPk(id);
 
     if (!faq) {
@@ -681,10 +680,10 @@ const deleteFAQ = asyncHandler(async (req, res) => {
       faqId: id,
     });
 
-    // 1. Define allowed user types
+  
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. Check if user type is allowed
+   
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
       logger.warn("Unauthorized FAQ soft delete attempt", {
         userId: user?.id,
@@ -696,7 +695,7 @@ const deleteFAQ = asyncHandler(async (req, res) => {
       });
     }
 
-    // 3. Check staff permissions
+  
     if (user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         user.id,
@@ -716,7 +715,7 @@ const deleteFAQ = asyncHandler(async (req, res) => {
       }
     }
 
-    // 4. Continue for admin or authorized staff
+  
     const faq = await FAQ.findByPk(id);
 
     if (!faq) {
@@ -801,10 +800,10 @@ const hardDeleteFAQ = asyncHandler(async (req, res) => {
       faqId: id,
     });
 
-    // 1. Define allowed user types
+  
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. Check if user type is allowed
+ 
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
       logger.warn("Unauthorized FAQ hard delete attempt", {
         userId: user?.id,
@@ -816,7 +815,7 @@ const hardDeleteFAQ = asyncHandler(async (req, res) => {
       });
     }
 
-    // 3. Check staff permissions
+
     if (user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         user.id,
@@ -836,7 +835,7 @@ const hardDeleteFAQ = asyncHandler(async (req, res) => {
       }
     }
 
-    // 4. Continue for admin or authorized staff
+
     const faq = await FAQ.findByPk(id);
 
     if (!faq) {
@@ -940,7 +939,7 @@ const getFAQCategories = asyncHandler(async (req, res) => {
 const reorderFAQs = asyncHandler(async (req, res) => {
   try {
     const user = req.user;
-    const { faq_orders } = req.body; // Array of { faq_id, order }
+    const { faq_orders } = req.body; 
 
     logger.info("Reordering FAQs", {
       userId: user?.id,
@@ -948,10 +947,10 @@ const reorderFAQs = asyncHandler(async (req, res) => {
       faqCount: faq_orders?.length || 0,
     });
 
-    // 1. Define allowed user types
+
     const allowedUserTypes = ["admin", "staff"];
 
-    // 2. Check if user type is allowed
+  
     if (!user || !allowedUserTypes.includes(user["user-type"])) {
       logger.warn("Unauthorized FAQ reorder attempt", {
         userId: user?.id,
@@ -963,7 +962,7 @@ const reorderFAQs = asyncHandler(async (req, res) => {
       });
     }
 
-    // 3. Check staff permissions
+    
     if (user["user-type"] === "staff") {
       const hasPermission = await checkStaffPermission(
         user.id,
@@ -983,7 +982,7 @@ const reorderFAQs = asyncHandler(async (req, res) => {
       }
     }
 
-    // 4. Continue for admin or authorized staff
+   
     if (!Array.isArray(faq_orders)) {
       logger.warn("Invalid faq_orders format", {
         userId: user.id,

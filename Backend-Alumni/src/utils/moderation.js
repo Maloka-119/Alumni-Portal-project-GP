@@ -1,14 +1,12 @@
 const { Configuration, OpenAIApi } = require("openai");
 
 const configuration = new Configuration({
-  apiKey: process.env.OPENAI_API_KEY, // حطي هنا مفتاح الـ API بتاعك
+  apiKey: process.env.OPENAI_API_KEY, 
 });
 
 const openai = new OpenAIApi(configuration);
 
-/**
- * ترجع true لو المحتوى سيء، false لو تمام
- */
+
 async function isContentBad(text) {
   if (!text) return false;
 
@@ -19,10 +17,10 @@ async function isContentBad(text) {
     });
 
     const result = response.data.results[0];
-    return result.flagged; // true لو المحتوى غير مسموح
+    return result.flagged; 
   } catch (err) {
     console.error("Moderation API error:", err);
-    // لو فيه مشكلة في الـ API نعتبر المحتوى آمن
+   
     return false;
   }
 }

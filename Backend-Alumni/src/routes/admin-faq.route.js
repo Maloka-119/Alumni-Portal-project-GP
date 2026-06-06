@@ -3,10 +3,10 @@ const router = express.Router();
 const faqController = require("../controllers/faq.controller");
 const authMiddleware = require("../middleware/authMiddleware");
 
-// All routes require admin OR staff authentication
+
 router.use(authMiddleware.protect);
 
-// نضيف middleware مباشر للتحقق من admin أو staff
+
 router.use((req, res, next) => {
   if (
     req.user &&
@@ -18,7 +18,7 @@ router.use((req, res, next) => {
   }
 });
 
-// كل الـ routes تفضل زي ما هي بدون تغيير
+
 router.get("/", faqController.getAllFAQsAdmin);
 router.put("/reorder", faqController.reorderFAQs);
 router.get("/:id", faqController.getFAQ);

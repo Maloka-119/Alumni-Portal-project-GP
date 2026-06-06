@@ -30,11 +30,11 @@ const Invitation = sequelize.define('Invitation', {
   timestamps: false
 });
 
-// علاقات User بالدعوات
+
 User.hasMany(Invitation, { foreignKey: 'sender_id', as: 'sentInvitations' });
 User.hasMany(Invitation, { foreignKey: 'receiver_id', as: 'receivedInvitations' });
 
-// علاقة Group بالدعوات
+
 Group.hasMany(Invitation, { foreignKey: 'group_id' });
 Invitation.belongsTo(Group, { foreignKey: 'group_id' });
 

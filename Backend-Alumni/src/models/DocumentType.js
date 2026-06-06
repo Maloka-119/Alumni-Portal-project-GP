@@ -11,21 +11,21 @@ const DocumentType = sequelize.define(
       autoIncrement: true,
     },
 
-    // 🔑 الكود الأساسي (من constants) - مش بيتغير
+   
     document_code: {
       type: DataTypes.ENUM(...DOCUMENT_CODES),
       unique: true,
       allowNull: false,
     },
 
-    // 💰 الرسوم (بعدين لما نعمل نظام الدفع)
+   
     fee_amount: {
-      type: DataTypes.DECIMAL(10, 2), // مثال: 100.50
+      type: DataTypes.DECIMAL(10, 2), 
       defaultValue: 0.0,
       allowNull: false,
     },
 
-    // ⏳ عدد أيام التجهيز (ممكن الإدمن يعدله)
+   
     processing_days: {
       type: DataTypes.INTEGER,
       defaultValue: 7,
@@ -36,14 +36,14 @@ const DocumentType = sequelize.define(
       },
     },
 
-    // 🔧 هل النوع مفعل ولا لأ
+   
     is_active: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
       allowNull: false,
     },
 
-    // 📝 وصف إضافي من الإدمن
+   
     admin_notes: {
       type: DataTypes.TEXT,
       allowNull: true,
@@ -73,7 +73,7 @@ const DocumentType = sequelize.define(
   }
 );
 
-// 🔧 هوك قبل التحديث
+
 DocumentType.beforeUpdate((documentType, options) => {
   documentType.updated_at = new Date();
 });

@@ -2,8 +2,6 @@ const Notification = require("../models/Notification");
 const User = require("../models/User");
 const HttpStatusHelper = require("../utils/HttpStatuHelper");
 const { Op } = require("sequelize");
-
-// Import logger utilities
 const { logger, securityLogger } = require("../utils/logger");
 
 /**
