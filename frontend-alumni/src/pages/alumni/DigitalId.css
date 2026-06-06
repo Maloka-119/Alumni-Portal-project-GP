@@ -1,4 +1,4 @@
-/* Main card */
+
 .IdCardArea {
   width: 500px;
   height: 300px;
@@ -16,11 +16,10 @@
 
 .h4{
   color:dimgrey;
-  /* margin-left: 350px; */
   text-align: center;
 }
 
-/* Top bar */
+
 .card-header {
   background-color: #37568d;
   color: white;
@@ -30,17 +29,17 @@
   font-weight: bold;
 }
 
-/* Body (info + image) */
+
 .card-body {
   display: flex;
-  align-items: center;       /* يخلي النص والصورة في نفس السطر */
+  align-items: center;       
   justify-content: space-between;
   padding: 15px 20px;
   height: 220px;
   gap: 20px;
 }
 
-/* Text info */
+
 .cardcontent {
   flex: 1;
 }
@@ -61,7 +60,7 @@
 .uni-logo {
   height: 28px;
   position: absolute;
-  left: 10px; /* يثبت اللوجو على أقصى اليسار */
+  left: 10px;
   object-fit: contain;
 }
 
@@ -81,17 +80,17 @@
   font-weight: bold;
 }
 
-/* Profile picture */
+
 .profile-picc {
   width: 110px;
-  height: 120px;             /* أقل في الطول */
+  height: 120px;            
   border-radius: 8px;
   margin-left: 20px;
   border: 2px solid #37568d;
   object-fit: cover;
 }
 
-/* Footer bar */
+
 .card-footer {
   background-color: #37568d;
 
@@ -100,7 +99,7 @@
   font-weight: bold;
 }
 
-/* Buttons */
+
 .button {
   background-color: #b38e19;
   color: white;
@@ -117,9 +116,9 @@
   background-color: #2c4270;
 }
 
-/* Dark Mode for ID Card */
+
 .dark .IdCardArea {
-  background: #1f2937; /* خلفية غامقة أساسية */
+  background: #1f2937; 
   color: #f3f4f6;
   border-radius: 12px;
   box-shadow: 0 6px 25px rgba(0,0,0,0.5);
@@ -131,17 +130,17 @@
 }
 
 .dark .card-header {
-  background-color: #1e3a8a; /* أزرق غامق */
+  background-color: #1e3a8a; 
   color: #f3f4f6;
 }
 
 .dark .p {
   font-size: 15px;
-  color: #e5e7eb; /* رمادي فاتح للوضوح */
+  color: #e5e7eb; 
 }
 
 .dark .strong {
-  color: #60a5fa; /* أزرق فاتح شوية للتمييز */
+  color: #60a5fa; 
   font-weight: bold;
 }
 
@@ -161,23 +160,22 @@
 }
 
 .dark .button:hover {
-  background-color: #1e40af; /* أغمق عند الهوفر */
+  background-color: #1e40af; 
 }
 
-/* Main card stays same style but scales */
+
 .IdCardArea {
   max-width: 500px;
   width: 100%;
-  /* background: linear-gradient(135deg, #ffffff, #f2f2f2, #d9f2e6); */
   border-radius: 12px;
   box-shadow: 0 6px 25px rgba(0,0,0,0.35); 
   margin: 20px auto;
   overflow: hidden;
   font-family: Arial, sans-serif;
-  height: auto; /* بدل 250px ثابت */
+  height: auto;
 }
 
-/* Responsive scaling */
+
 @media (max-width: 768px) {
   .IdCardArea {
     max-width: 400px;
@@ -221,15 +219,15 @@
   }
 }
 
-/* Section for images (profile + QR) */
+
 .images-section {
   display: flex;
-  flex-direction: column; /* عمودي افتراضي */
+  flex-direction: column; 
   align-items: center;
   gap: 10px;
 }
 
-/* QR image */
+
 .qr-picc {
   width: 100px;
   height: 100px;
@@ -238,7 +236,7 @@
   object-fit: cover;
 }
 
-/* Larger screens: profile + QR side by side */
+
 @media (min-width: 500px) {
   .images-section {
     flex-direction: row;

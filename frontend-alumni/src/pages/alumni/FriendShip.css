@@ -17,7 +17,7 @@
   margin-bottom: 25px;
   }
   
-  /* Friend card style */
+
   .friend-card {
     display: flex;
     align-items: center;
@@ -34,7 +34,7 @@
     transform: translateY(-3px);
   }
   
-  /* Friend info section */
+
   .friend-info {
     display: flex;
     align-items: center;
@@ -61,18 +61,17 @@
     color: #666;
   }
   
-  /* Action buttons */
+
   .friend-actions {
-    /* display: flex; */
     gap: 10px;
 }
 
 .friend-actions.rtl {
-    margin-left: auto; /* يدفعهم لليمين */
+    margin-left: auto; 
 }
 
 .friend-actions.ltr {
-    margin-right: auto; /* يدفعهم للشمال */
+    margin-right: auto; 
 }
 
   
@@ -106,7 +105,7 @@
     transform: scale(1.05);
   }
   
-  /* Search bar */
+
   .friendship-search {
     width: 100%;
     margin-bottom: 20px;
@@ -128,7 +127,7 @@
     border-color: #2563eb;
   }
   
-  /* 🌐 الصفحة العامة */
+
   .page {
     width: 100%;
   min-height: 100vh;
@@ -141,7 +140,7 @@
   transition: all 0.3s ease;
   }
   
-  /* ✅ شريط التنقل بين التبويبات */
+
   .friendship-bar {
     display: flex;
     justify-content: center;
@@ -168,18 +167,18 @@
   }
   
 .friendship-link {
-  transition: all 0.3s ease; /* انتقال ناعم لأي تغيير في اللون أو الظل */
+  transition: all 0.3s ease; 
 }
 
 .friendship-link.active {
      background: #4f7ef5;
      box-shadow: 0 3px 6px rgba(37, 99, 235, 0.3);
      color:#f2f0f0;
-  transform: translateY(-2px); /* حركة خفيفة لأعلى لما يكون نشط */
+  transform: translateY(-2px); 
 }
 
   
-  /* 🧍 المستخدم الواحد */
+
   .user {
     display: flex;
     align-items: center;
@@ -196,7 +195,7 @@
     transform: translateY(-2px);
   }
   
-  /* 👤 صورة المستخدم */
+ 
   .img {
     width: 55px;
     height: 55px;
@@ -206,7 +205,7 @@
     margin-right: 15px;
   }
   
-  /* 📋 بيانات المستخدم */
+ 
   .data {
     flex: 1;
     font-size: 1rem;
@@ -233,12 +232,12 @@
 .Removebutton {
     background-color: #ef4444;
     color: white;
-    padding: 0 4px; /* حواف رأسية صغيرة جداً */
+    padding: 0 4px; 
     border-radius: 2px;
     cursor: pointer;
-    line-height: 1;   /* يقلل ارتفاع السطر */
-    height: auto;     /* يسمح للزر بالتكيف مع النص */
-    display: inline-block; /* يضبط العرض على النص فقط */
+    line-height: 1;   
+    height: auto;     
+    display: inline-block; 
 }
   
 .Removebutton:hover {
@@ -247,7 +246,7 @@
 
 
   
-  /* 🧭 العناوين */
+  
   .Title {
     font-size: 1.3rem;
     font-weight: 600;
@@ -295,7 +294,7 @@
   }
   
  
-/* 🔍 Search Input Styling */
+
 .search-input {
   width: 100%;
   max-width: 350px;
@@ -309,23 +308,23 @@
   background-color: #f9fafc;
   outline: none;
   transition: all 0.25s ease;
-  direction: inherit; /* يحافظ على اتجاه الصفحة حسب اللغة */
+  direction: inherit; 
 }
 
-/* عند الوقوف على السيرش */
+
 .search-input:focus {
   border-color: #37568d;
   background-color: #fff;
   box-shadow: 0 0 5px rgba(55, 86, 141, 0.25);
 }
 
-/* Placeholder text */
+
 .search-input::placeholder {
   color: #aaa;
   font-size: 14px;
 }
 
-/* Responsive behavior */
+
 @media (max-width: 600px) {
   .search-input {
     width: 90%;
@@ -354,7 +353,7 @@
   margin-left: 4px;
 }
 
-/* Responsive adjustments */
+
 @media (max-width: 1024px) {
   .friend-card {
     flex-direction: column;

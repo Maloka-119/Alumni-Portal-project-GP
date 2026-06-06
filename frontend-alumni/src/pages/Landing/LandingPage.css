@@ -1,16 +1,14 @@
 :root{
-    --navy:#062244;        /* deep header */
-    --accent:#c5972f;      /* warm gold */
-    --muted:#6b7280;       /* grey text */
+    --navy:#062244;        
+    --accent:#c5972f;     
+    --muted:#6b7280;      
     --panel:rgba(255,255,255,0.06);
     --glass:rgba(255,255,255,0.08);
     --card:#ffffff;
     --text:#0b1220;
   }
   
-  /* ========== CSS المحسّن للأزرار مع تأثيرات الضوء ========== */
 
-/* الأزرار الأساسية مع تأثير الضوء المتحرك */
 .btn-primary {
   position: relative;
   background: linear-gradient(135deg, #c5972f 0%, #e6b84f 100%);
@@ -28,7 +26,7 @@
   animation: pulse 2s infinite;
 }
 
-/* تأثير النبض المستمر */
+
 @keyframes pulse {
   0% {
     box-shadow: 0 6px 20px rgba(197, 151, 47, 0.4),
@@ -44,7 +42,7 @@
   }
 }
 
-/* تأثير الضوء المتحرك */
+
 .btn-glow {
   position: absolute;
   top: 0;
@@ -72,7 +70,7 @@
   animation: none;
 }
 
-/* الأزرار الثانوية مع تأثيرات محسنة */
+
 .btn-outline {
   position: relative;
   background: transparent;
@@ -112,9 +110,7 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* تحسينات إضافية للتصميم الحالي */
 
-/* تحسين الأزرار في قسم البطل */
 .hero-btn {
   min-width: 200px;
   height: 60px;
@@ -123,14 +119,14 @@
   justify-content: center;
 }
 
-/* تحسين الأزرار في قسم CTA */
+
 .cta-btn {
   min-width: 220px;
   height: 65px;
   font-size: 1.15rem;
 }
 
-/* تحسين التنقل في الأقسام */
+
 .nav-links {
   display: flex;
   gap: 20px;
@@ -139,7 +135,7 @@
   flex-wrap: wrap;
 }
 
-/* تحسين النص داخل الأزرار */
+
 .btn-text {
   position: relative;
   z-index: 2;
@@ -150,7 +146,7 @@
   line-height: 1.4;
 }
 
-/* تحسينات للاستجابة */
+
 @media (max-width: 768px) {
   .btn-primary, .btn-outline {
     padding: 14px 24px;
@@ -195,7 +191,7 @@
   }
 }
 
-/* تأثيرات إضافية للجاذبية */
+
 .feature-card {
   transition: all 0.3s ease;
   position: relative;
@@ -224,10 +220,10 @@
 
 .success-card:hover, .exclusive-card:hover {
   transform: translateY(-5px);
-  /* box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2); */
+
 }
 
-  /* Reset container */
+
   .landing-container{
     min-height:100vh;
     background-size:cover;
@@ -244,12 +240,12 @@
   }
 @media (max-width: 767px) {
   .landing-container {
-    /* بنلغي الفيكسد هنا بس عشان نحل مشكلة الهزة */
+  
     background-attachment: scroll; 
   }
 }
   
-  /* dark overlay over background image */
+
   .landing-container::before{
     content:"";
     position:absolute;
@@ -258,7 +254,7 @@
     z-index:0;
   }
   
-  /* main content sits above overlay */
+
   .landing-main{
     position:relative;
     z-index:1;
@@ -268,7 +264,7 @@
     padding:14px 20px;
   }
   
-  /* Header like helwan */
+
   .landing-header{
     background:var(--navy);
     color:white;
@@ -308,7 +304,7 @@
     letter-spacing:0.2px;
   }
   
-  /* nav buttons aligned right like site */
+
   .nav-links{
     display:flex;
     gap:10px;
@@ -335,9 +331,7 @@
     cursor:pointer;
   }
   
-  /* Hero
-     big, centered, serif-like heading feel
-  */
+
   .hero-section{
     display:flex;
     align-items:center;
@@ -363,20 +357,18 @@
     margin-top:6px;
   }
   
-  /* center nav under hero heading */
+
   .nav-links{
     margin-top:22px;
     justify-content:center;
   }
   
-  /* About section uses translucent card */
+
   .about-section{
     max-width:1100px;
     margin:36px auto;
-    /* background:var(--glass); */
     padding:26px;
     border-radius:10px;
-    /* color:rgba(255,255,255,0.95); */
     color: #062244;
     background-color: var(--footer-bg);
     text-align:center;
@@ -395,12 +387,11 @@
     max-width:880px;
     margin:0 auto;
     line-height:1.6;
-    /* color:rgba(255,255,255,0.92); */
     color: #062244;
 
   }
   
-  /* Features cards */
+
   .about-features{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
@@ -414,14 +405,12 @@
     border-radius:10px;
     text-align:center;
     transition:transform .18s ease, background .18s ease;
-    /* border:1px solid rgba(255, 255, 255, 0.04); */
     border:1px solid #c5972f;
 
   }
   
   .feature-card:hover{
     transform:translateY(-6px);
-    /* background:rgba(255, 255, 255, 0.09); */
   }
   
   .feature-card .icon{
@@ -432,7 +421,6 @@
   .success-section{
     margin:36px auto;
     width:94%;
-    /* background:rgba(255,255,255,0.03); */
     color: #062244;
     background-color: var(--footer-bg);
     padding:28px;
@@ -450,7 +438,7 @@
     font-size:1.3rem;
   }
   
-  /* scroll container with left padding to clear arrow */
+
   .success-scroll{
     position:relative;
     display:flex;
@@ -482,7 +470,6 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    /* background: rgba(241, 241, 241, 0.849);  */
     background-color: #fff;
     color: var(--text);
     border-radius: 10px;
@@ -538,7 +525,6 @@
     align-items:center;
     justify-content:center;
     background:rgba(255,255,255,0.06);
-    /* color:#fff; */
     color:var(--navy);
     border:1px solid rgba(255,255,255,0.08);
     cursor:pointer;
@@ -550,13 +536,11 @@
   
   .scroll-btn:hover{
     background:var(--accent);
-    /* color:var(--navy); */
     color:#fff;
     border-color:transparent;
   }
   
-  /* FAQ section */
-  /* Floating FAQ */
+
 .floating-faq {
   position: fixed;
   bottom: 22px;
@@ -566,7 +550,7 @@
 
 .faq-toggle {
   background: var(--accent);
-  color: var(--navy); /* بدل #fff عشان يكون متناسق مع لون الـaccent */
+  color: var(--navy); 
   border: none;
   border-radius: 50%;
   width: 54px;
@@ -589,13 +573,13 @@
   position: absolute;
   bottom: 70px;
   right: 0;
-  background: rgba(11, 36, 66, 0.9); /* أقرب للون الـnavy مع شفافية بسيطة */
+  background: rgba(11, 36, 66, 0.9);
   border: 1px solid rgba(255,255,255,0.15);
   border-radius: 10px;
   width: 420px;
   padding: 16px;
   box-shadow: 0 5px 18px rgba(0,0,0,0.35);
-  color: #fff; /* نص واضح */
+  color: #fff; 
   display: none;
   max-height: 360px;
   min-height: 220px;
@@ -666,7 +650,7 @@
   line-height: 1.4;
 }
 
-/* Responsive */
+
 @media (max-width: 500px) {
   .faq-popup {
     width: 88vw;
@@ -676,8 +660,7 @@
 
   
   summary{ font-weight:700; color:var(--accent); }
-  
-  /* responsive tweaks */
+
   @media (max-width:900px){
     .hero-text h2{ font-size:1.6rem; }
     .success-cards{ padding-left:64px; }
@@ -778,8 +761,6 @@
   }
   
   .cta-section {
-    /* background: rgba(255,255,255,0.08); */
-    /* backdrop-filter: blur(8px); */
     padding: 28px 24px;
     border-radius: 16px;
     margin: 40px auto;
@@ -788,7 +769,6 @@
     align-items: center;
     justify-content: space-between;
     gap: 20px;
-    /* box-shadow: 0 6px 20px rgba(3,10,22,0.25); */
   }
   
   .cta-text {
@@ -840,7 +820,7 @@
     transform: translateY(-3px);
   }
   
-  /* responsive */
+
   @media (max-width: 680px) {
     .cta-section {
       flex-direction: column;
@@ -850,18 +830,16 @@
     .cta-buttons { justify-content: center; }
   }
   
-  /* Exclusive Events Section */
+
 .exclusive-section {
   width: 94%;
   margin: 40px auto;
-  /* background: rgba(255, 255, 255, 0.03); */
   color: #062244;
     background-color: var(--footer-bg);
   backdrop-filter: blur(8px);
   border-radius: 12px;
   padding: 30px 22px;
   box-shadow: 0 6px 20px rgba(3, 10, 22, 0.25);
-  /* color: rgba(255, 255, 255, 0.95); */
   text-align: center;
 }
 
@@ -911,7 +889,6 @@
 
 .exclusive-text p {
   font-size: 0.95rem;
-  /* color: rgba(255, 255, 255, 0.88); */
   color: #062244;
   line-height: 1.5;
 }
@@ -945,7 +922,6 @@
   transform: scale(1.2);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .exclusive-card {
     flex-direction: column;

@@ -41,7 +41,7 @@ const general = {
       registrationFailed: "Registration failed",
       somethingWrong: "Something went wrong",
      
-      //staff
+     
       "Username": "Username",
       "National ID": "National ID",
       "Work ID": "Work ID",
@@ -119,7 +119,7 @@ const general = {
         somethingWrong: "حدث خطأ ما",
         
 
-        //staff
+      
         "Username": "اسم المستخدم",
         "National ID": "الرقم القومي",
         "Work ID": "رقم العمل",

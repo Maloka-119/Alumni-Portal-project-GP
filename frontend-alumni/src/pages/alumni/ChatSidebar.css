@@ -36,7 +36,7 @@
   left: 0;
 }
 
-/* Close Button */
+
 .close-chat {
   position: absolute;
   top: 10px;
@@ -83,7 +83,7 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Dark Mode */
+
 .dark .chat-sidebar {
   background: #1f2937;
   box-shadow: -2px 0 8px rgba(0,0,0,0.5);
@@ -94,7 +94,7 @@
   color: #f9fafb;
 }
 
-/* Responsive */
+
 @media (max-width: 1024px) {
   .chat-sidebar, .chat-sidebar.ltr, .chat-sidebar.rtl {
       width: 300px;

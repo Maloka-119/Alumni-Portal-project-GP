@@ -1,4 +1,4 @@
-/* Container & Global Font */
+
 .adm-docs-container {
     max-width: 1250px;
     margin: 2rem auto;
@@ -6,10 +6,9 @@
     font-family: 'Inter', 'Segoe UI', sans-serif;
 }
 
-/* Header Section */
+
 .adm-docs-header {
     margin-bottom: 2rem;
-    /* border-left: 4px solid #3b82f6; */
     padding-left: 1.25rem;
 }
 
@@ -26,7 +25,7 @@
     margin-top: 0.25rem;
 }
 
-/* Table Card Styling */
+
 .adm-table-responsive-wrapper {
     background: #ffffff;
     border-radius: 16px;
@@ -41,7 +40,7 @@
     text-align: left;
 }
 
-/* Table Header */
+
 .adm-main-table thead {
     background-color: #f8fafc;
 }
@@ -56,7 +55,7 @@
     border-bottom: 2px solid #f1f5f9;
 }
 
-/* Table Body */
+
 .adm-main-table td {
     padding: 1.25rem 1.5rem;
     vertical-align: middle;
@@ -68,7 +67,7 @@
     background-color: #f1f5f980;
 }
 
-/* Data Specific Styles */
+
 .adm-req-num {
     font-family: 'Courier New', monospace;
     font-weight: 700;
@@ -90,7 +89,7 @@
     font-weight: 700;
 }
 
-/* Status Pill Design */
+
 .adm-status-pill {
     display: inline-flex;
     align-items: center;
@@ -100,7 +99,7 @@
     font-weight: 700;
 }
 
-/* 1. حالة الانتظار - Pending (اللون البرتقالي الهادئ) */
+
 .status-pending { 
     background: #fff7ed; 
     color: #c2410c; 
@@ -111,33 +110,29 @@
     font-weight: 700;
 }
 
-/* 2. حالة المراجعة - Under Review (اللون الأزرق السماوي) */
+
 .status-under_review { 
     background: #f0f9ff; 
     color: #0369a1; 
-    /* border: 1px solid #e0f2fe; */
     border-radius: 8px;
     padding: 4px 10px;
     font-size: 0.72rem;
     font-weight: 700;
 }
 
-/* 3. حالة الاكتمال - Completed / Approved (اللون الأخضر المريح) */
+
 .status-approved, .status-completed { 
     background: #f0fdf4; 
     color: #15803d; 
-    /* border: 1px solid #dcfce7; */
     border-radius: 8px;
     padding: 4px 10px;
     font-size: 0.72rem;
     font-weight: 700;
 }
 
-/* 4. حالة الرفض - Rejected (اللون الأحمر الهادئ) */
 .status-rejected { 
     background: #fef2f2; 
     color: #b91c1c; 
-    /* border: 1px solid #fee2e2; */
     border-radius: 8px;
     padding: 4px 10px;
     font-size: 0.72rem;
@@ -146,13 +141,12 @@
 .status-cancelled { 
     background: #fef2f2; 
     color: #b91c1c; 
-    /* border: 1px solid #fee2e2; */
     border-radius: 8px;
     padding: 4px 10px;
     font-size: 0.72rem;
     font-weight: 700;
 }
-/* Action Buttons & Icons */
+
 .adm-action-btns {
     display: flex;
     gap: 0.65rem;
@@ -178,7 +172,7 @@
 .adm-btn-approve:hover { background: #dcfce7; transform: translateY(-2px); }
 .adm-btn-reject:hover { background: #fee2e2; transform: translateY(-2px); }
 
-/* Attachments */
+
 .adm-files-stack {
     display: flex;
     flex-direction: column;
@@ -197,7 +191,6 @@
 
 .adm-file-link:hover { text-decoration: underline; }
 
-/* Loading state */
 .adm-loading-wrapper {
     display: flex;
     flex-direction: column;
@@ -218,7 +211,7 @@
 
 @keyframes adm-spin { to { transform: rotate(360deg); } }
 
-/* Responsive adjustments */
+
 @media (max-width: 850px) {
     .adm-main-table thead { display: none; }
     .adm-main-table tr {
@@ -246,7 +239,7 @@
 }
 
 
-/* تنعيم النافذة المنبثقة بالكامل */
+
 .adm-swal-popup-custom {
     font-family: 'Inter', 'Segoe UI', Roboto, sans-serif !important;
     border-radius: 20px !important;
@@ -265,7 +258,7 @@
     text-align: inherit;
 }
 
-/* الصفوف المنظمة بدل الـ <p> العشوائي */
+
 .adm-swal-row {
     display: flex;
     justify-content: space-between;
@@ -286,7 +279,7 @@
     font-size: 0.9rem;
 }
 
-/* الملاحظات */
+
 .adm-swal-notes {
     margin-top: 1rem;
     background: #f8fafc;
@@ -298,7 +291,7 @@
     margin-top: 0.5rem;
     font-size: 0.85rem;
     color: #475569;
-    line-height: 1.6; /* بيخلي قراءة الملاحظات أنعم بكتير */
+    line-height: 1.6; 
 }
 
 .adm-swal-footer {
@@ -307,7 +300,7 @@
     justify-content: center;
 }
 
-/* تأكيد تنعيم أزرار Swal */
+
 .swal2-styled.swal2-confirm {
     border-radius: 10px !important;
     font-weight: 600 !important;
@@ -319,7 +312,7 @@
     box-shadow: none !important;
 }
 
-/* حل مشكلة طول الـ National ID اللي ظاهر في الصورة */
+
 .adm-swal-row .value {
     word-break: break-word;
     text-align: left;
@@ -331,14 +324,14 @@
     justify-content: center;
     align-items: center;
     padding: 40px;
-    background: #f9fafb; /* لون خلفية هادئ جداً */
+    background: #f9fafb;
     border-radius: 8px;
-    border: 1px dashed #e5e7eb; /* إطار منقط خفيف */
+    border: 1px dashed #e5e7eb; 
     margin-top: 20px;
   }
   
   .adm-no-data-simple p {
-    color: #6b7280; /* لون رمادي للنص */
+    color: #6b7280; 
     font-size: 1.1rem;
     margin: 0;
   }

@@ -1,4 +1,3 @@
-/* Dark Mode Base */
 .dark {
   background-color: #111827;
   color: #f3f4f6;
@@ -7,7 +6,7 @@
 }
 
 
-/* Header */
+
 .dark .page-header,
 .dark .header-dark {
   background-color: #1f2937;
@@ -23,7 +22,7 @@
   background: rgba(255, 255, 255, 0.25);
 }
 
-/* Sidebar */
+
 .dark .alumni-sidebar {
   background: #1f2937;
 }
@@ -34,7 +33,7 @@
   color: #f3f4f6;
 }
 
-/* Main content cards */
+
 .dark .alumni-card {
   background: #1f2937;
   color: #f3f4f6;
@@ -44,7 +43,7 @@
   transition: background 0.3s, color 0.3s, box-shadow 0.3s;
 }
 
-/* Scrollbars */
+
 .dark .alumni-sidebar::-webkit-scrollbar-thumb,
 .dark .alumni-main-content::-webkit-scrollbar-thumb,
 .dark body::-webkit-scrollbar-thumb {
@@ -52,7 +51,7 @@
   border-radius: 8px;
 }
 
-/* Contact button */
+
 .dark .contact-btn {
   background-color: #2563eb;
   color: #f3f4f6;
@@ -63,14 +62,14 @@
   background-color: #1d4ed8;
 }
 
-/* Dark Mode for AlumniAdminPosts */
+
 .dark .uni-feed {
   background: #111827;
   color: #f3f4f6;
   transition: background 0.3s, color 0.3s;
 }
 
-/* Dark Mode Header */
+
 .dark .uni-header {
   background: linear-gradient(90deg, #2563eb, #4f7ef5, #10b981);
   -webkit-background-clip: text;
@@ -97,7 +96,7 @@
   border-color: #10b981;
 }
 
-/* Posts */
+
 .dark .uni-post-card {
   background: #1f2937;
   color: #f3f4f6;
@@ -130,10 +129,10 @@
 }
 
 .dark .uni-post-actions button.uni-liked {
-  color: #f87171; /* Like button highlight */
+  color: #f87171; 
 }
 
-/* Comments */
+
 .dark .uni-comment-input input {
   background: #1f2937;
   color: #f3f4f6;
@@ -170,14 +169,14 @@
 }
 
 
-/* Dark Mode for PostsAlumni */
+
 .dark .am-feed {
   background: #111827;
   color: #f3f4f6;
   transition: background 0.3s, color 0.3s;
 }
 
-/* Header */
+
 .dark .am-header {
   background: linear-gradient(90deg, #2563eb, #4f7ef5, #10b981);
   -webkit-background-clip: text;
@@ -188,11 +187,10 @@
   background: linear-gradient(90deg, #2563eb, #10b981);
 }
 
-/* Create Post Bar - Dark Mode */
+
 .dark .am-create-bar {
   background: #1f2937;
   color: #f3f4f6;
-  /* border: 1px solid #374151; */
   transition: all 0.2s ease-in-out;
 }
 
@@ -213,7 +211,7 @@
 
 
 
-/* Post Form */
+
 .dark .uni-post-form {
   background: #1f2937;
   color: #f3f4f6;
@@ -238,7 +236,7 @@
   background: #374151;
 }
 
-/* Form Buttons */
+
 .dark .uni-form-buttons button[type="submit"] {
   background-color: #2563eb;
   color: #f3f4f6;
@@ -256,7 +254,7 @@
 .dark .uni-form-buttons button[type="button"]:hover {
   background-color: #4b5563;
 }
-/* Dark Mode Inputs & Textareas */
+
 .dark .uni-post-form input,
 .dark .uni-post-form textarea,
 
@@ -278,8 +276,7 @@
 }
 
 
-/* Posts */
-/* Dark Mode Posts */
+
 .dark .am-posts {
   display: flex;
   flex-direction: column;
@@ -287,7 +284,7 @@
 }
 
 .dark .am-post-card {
-  background: #1f2937; /* خلفية أساسية للدارك */
+  background: #1f2937; 
   padding: 20px;
   border-radius: 20px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.3);
@@ -298,7 +295,7 @@
 .dark .am-post-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 25px rgba(0,0,0,0.5);
-  background: #1f2937c0; /* أفتح شويه للتمييز عند Hover */
+  background: #1f2937c0; 
 }
 
 .dark .am-post-header {
@@ -323,7 +320,7 @@
   color: #9ca3af;
 }
 
-/* Edit/Delete buttons Dark Mode */
+
 .dark .am-post-header button {
   background: #1f2937;
   color: #1f2937;
@@ -344,7 +341,7 @@
   color: #1f2937;
 }
 
-/* Comments */
+
 .dark .am-comment-input input {
   background: #1f2937;
   color: #f3f4f6;
@@ -374,7 +371,7 @@
   border-radius: 50%;
 }
 
-/* ===== Dark Mode ===== */
+
 .dark .comments-container {
   background: #1f2937;
   color: #f1f1f1;
@@ -408,7 +405,7 @@
   background-color: #2563eb;
 }
 
-/* Dark Mode Select */
+
 .dark .uni-category-select select {
   background-color: #1f2937;
   color: #f3f4f6;
@@ -429,7 +426,6 @@
   color: #10b981;
 }
 
-/* ===== faq Dark Mode ===== */
 .dark .view-faq {
   background: #111827;
   color: #f3f4f6;
@@ -468,7 +464,7 @@
   color: #d1d5db;
 }
 
-/* ===== Dark Mode Notifications ===== */
+
 .dark .notifications-container {
   background: #111827;
   color: #f3f4f6;
@@ -521,7 +517,6 @@
   color: #9ca3af;
 }
 
-/* ===== Dark Mode for Community & Explorer ===== */
 .dark .community-panel,
 .dark .explorer-wrapper {
   background: #111827;
@@ -600,7 +595,7 @@
   transform: scale(1.02);
 }
 
-/* Dark mode for chat (matches the dark theme you provided) */
+
 
 .dark .chat-container {
   background: #111827;
@@ -618,12 +613,12 @@
   border-bottom: 1px solid #374151;
 }
 
-/* messages area */
+
 .dark .messages-box {
   background: transparent;
 }
 
-/* message bubbles */
+
 .dark .message {
   box-shadow: none;
 }
@@ -646,7 +641,7 @@
   color: #e6eefb;
 }
 
-/* reply snippet */
+
 .dark .reply-line {
   color: #93c5fd;
   border-left-color: #34d399;
@@ -662,7 +657,6 @@
   font-weight: 500;
 }
 
-/* media inside messages */
 .dark .chat-media {
   background: #071026;
   border-radius: 10px;
@@ -671,7 +665,7 @@
   display: block;
 }
 
-/* file link */
+
 .dark .file-link {
   color: #93c5fd;
 }
@@ -680,7 +674,7 @@
   color: #60a5fa;
 }
 
-/* action icons */
+
 .dark .icon-btn {
   background: transparent;
 }
@@ -705,7 +699,7 @@
   background: rgba(255,255,255,0.02);
 }
 
-/* reply preview box */
+
 .dark .reply-preview {
   background: rgba(59,130,246,0.06);
   border-left-color: #34d399;
@@ -720,7 +714,7 @@
   color: #93c5fd;
 }
 
-/* file preview */
+
 .dark .file-preview {
   background: #0b1220;
   border: 1px solid #1f2937;
@@ -731,13 +725,13 @@
   background: #071026;
 }
 
-/* file text */
+
 .dark .file-name,
 .dark .file-size {
   color: #e6eefb;
 }
 
-/* preview buttons */
+
 .dark .preview-btn {
   background: #2563eb;
   color: #f3f4f6;
@@ -747,7 +741,7 @@
   background: #b91c1c;
 }
 
-/* input area */
+
 .dark .input-box {
   background: #111827;
   border-top: 1px solid #374151;
@@ -763,7 +757,7 @@
   color: #9ca3af;
 }
 
-/* attach / send icons in input */
+
 .dark .icon-btn.attach svg {
   color: #34d399;
 }
@@ -777,7 +771,7 @@
   color: #f8fafc;
 }
 
-/* overlay / media viewer */
+
 .dark .overlay {
   background: rgba(2, 6, 23, 0.85);
 }
@@ -786,7 +780,7 @@
   box-shadow: 0 8px 30px rgba(2,6,23,0.8);
 }
 
-/* scrollbar dark */
+
 .dark .messages-box::-webkit-scrollbar-track {
   background: #0b1220;
   border-radius: 8px;
@@ -805,7 +799,7 @@
   scrollbar-color: #374151 #0b1220;
 }
 
-/* ===== Dark Mode Friendship Page ===== */
+
 .dark .friendship-container,
 .dark .page {
   background: #111827;
@@ -816,7 +810,7 @@
   color: #60a5fa;
 }
 
-/* Cards */
+
 .dark .friend-card,
 .dark .user {
   background: #1f2937;
@@ -831,7 +825,7 @@
   box-shadow: 0 6px 14px rgba(0,0,0,0.5);
 }
 
-/* Friend details */
+
 .dark .friend-details h3,
 .dark .data {
   color: #f3f4f6;
@@ -842,7 +836,7 @@
   color: #9ca3af;
 }
 
-/* Buttons */
+
 .dark .friend-actions button,
 .dark .button,
 .dark .Removebutton {
@@ -872,7 +866,7 @@
   background: #ef4444;
 }
 
-/* Search bar */
+
 .dark .friendship-search input {
   background: #1f2937;
   color: #f3f4f6;
@@ -887,7 +881,7 @@
 .dark .friendship-search input::placeholder {
   color: #9ca3af;
 }
-/* Focused search state in dark mode */
+
 .dark .friendship-search input:focus {
   background: #111827;
   border-color: #3b82f6;
@@ -900,7 +894,7 @@
   color: rgba(59, 130, 246, 0.5);
  
 }
-/* Tabs */
+
 .dark .friendship-bar {
   border-bottom: 2px solid #374151;
 }
@@ -919,7 +913,7 @@
   box-shadow: 0 4px 12px rgba(37,99,235,0.4);
 }
 
-/* Title */
+
 .dark .Title {
   color: #f3f4f6;
   
@@ -928,13 +922,13 @@
   box-shadow: 0 4px 10px rgba(0,0,0,0.4);
 }
 
-/* Profile Image */
+
 .dark .friend-info img,
 .dark .img {
   border: 2px solid #374151;
 }
 
-/* Responsive fix */
+
 @media (max-width: 600px) {
   .dark .user {
     background: #1f2937;

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { FaLinkedin } from "react-icons/fa";
 import { useTranslation } from "react-i18next";
 import "./LinkedInSignUp.css";
-import "./Register.css"; // Import Register.css for modal styles
+import "./Register.css"; 
 
 const LinkedInSignUp = () => {
   const { t  } = useTranslation();
@@ -10,7 +10,7 @@ const LinkedInSignUp = () => {
   const [linkedInNationalId, setLinkedInNationalId] = useState("");
 
   const handleLinkedInLogin = () => {
-    // Show National ID modal first (like Google signup)
+
     setShowNidModal(true);
   };
 
@@ -26,22 +26,19 @@ const LinkedInSignUp = () => {
     }
 
     try {
-      // console.log("Getting LinkedIn auth URL with National ID:", linkedInNationalId);
-      
-      // Get LinkedIn auth URL with National ID
+ 
       const res = await fetch(`http://localhost:5005/alumni-portal/auth/linkedin?nationalId=${linkedInNationalId}`);
       const data = await res.json();
 
-      // console.log("LinkedIn auth URL response:", data);
+
 
       if (data.status === "success" && data.data?.authUrl) {
-        // console.log("Redirecting to LinkedIn:", data.data.authUrl);
-        // Close the modal first
+    
         setShowNidModal(false);
-        // Clear any existing tokens to ensure fresh login
+      
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        // Small delay to ensure modal closes, then redirect to LinkedIn OAuth
+    
         setTimeout(() => {
           window.location.href = data.data.authUrl;
         }, 100);
@@ -66,7 +63,7 @@ const LinkedInSignUp = () => {
         {t("Sign up with LinkedIn")}
       </button>
 
-      {/* National ID Modal (same as Google signup) */}
+  
       {showNidModal && (
         <div className="nid-overlay">
           <div className="nid-box">

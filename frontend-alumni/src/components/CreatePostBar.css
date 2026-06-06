@@ -1,4 +1,4 @@
-/* Create post bar */
+
 .create-post-bar {
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(20px);
@@ -50,7 +50,7 @@
     font-weight: 400;
 }
 
-/* Compact post form */
+
 .compact-post-form {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
@@ -83,7 +83,7 @@
     background: rgba(255, 255, 255, 0.9);
 }
 
-/* Optional icons in form */
+
 .optional-icons {
     display: flex;
     gap: 20px;
@@ -94,21 +94,21 @@
     cursor: pointer;
     color: #6b7280;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    padding: 10px;         /* زيادة البادينج */
-    border-radius: 14px;    /* زوّدنا الانحناء شوية */
-    width: 36px;            /* عرض أكبر */
-    height: 36px;           /* ارتفاع أكبر */
-    font-size: 28px;        /* لو الأيقونات تعتمد على font-size */
+    padding: 10px;         
+    border-radius: 14px;    
+    width: 36px;           
+    height: 36px;          
+    font-size: 28px;        
 }
 
 .optional-icons svg:hover {
     color: #3b82f6;
-    transform: scale(1.4) rotate(5deg); /* تكبير عند التحويم */
+    transform: scale(1.4) rotate(5deg); 
     background: rgba(59, 130, 246, 0.2);
 }
 
 
-/* Form buttons */
+
 .form-buttons {
     display: flex;
     gap: 10px;

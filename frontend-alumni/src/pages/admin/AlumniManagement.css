@@ -5,7 +5,6 @@
   margin: 1rem 0;
 }
 
-/* ===== Table ===== */
 .table-container {
   overflow-x: auto;
   margin: 2rem auto;
@@ -46,7 +45,6 @@
   transition: background 0.2s ease;
 }
 
-/* ===== Status Badges ===== */
 .status-badge {
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
@@ -66,7 +64,7 @@
   color: #991b1b;
 }
 
-/* ===== Actions ===== */
+
 .actions-cell {
   display: flex;
   gap: 0.75rem;
@@ -92,13 +90,13 @@
 }
 
 
-/* ===== Toggle switch ===== */
+
 .toggle-switch {
   position: relative;
   width: 45px; 
   height: 22px; 
   background-color: #e5e7eb;
-  border-radius: 11px; /* دائري وناعم */
+  border-radius: 11px; 
   cursor: pointer;
   transition: background-color 0.3s ease;
   display: flex;
@@ -109,7 +107,7 @@
 }
 
 .toggle-switch.active {
-  background-color: #22c55e; /* أخضر ناعم */
+  background-color: #22c55e; 
 }
 
 .toggle-slider {
@@ -118,15 +116,15 @@
   background-color: white;
   border-radius: 50%;
   transition: transform 0.3s ease;
-  box-shadow: none; /* إزالة الظل */
+  box-shadow: none; 
 }
 
-/* الحركة على LTR */
+
 .toggle-switch.active .toggle-slider {
   transform: translateX(23px);
 }
 
-/* دعم RTL */
+
 html[dir="rtl"] .toggle-switch .toggle-slider {
   transform: translateX(0);
 }
@@ -136,7 +134,7 @@ html[dir="rtl"] .toggle-switch.active .toggle-slider {
 }
 
 
-/* ===== Add button ===== */
+
 .add-button {
   background: #2563eb;
   color: white;
@@ -160,7 +158,7 @@ html[dir="rtl"] .toggle-switch.active .toggle-slider {
   transform: translateY(-1px);
 }
 
-/* Tooltip */
+
 .add-button::after {
   content: "Manage";
   position: absolute;
@@ -183,7 +181,7 @@ html[dir="rtl"] .toggle-switch.active .toggle-slider {
 }
 
 
-/* ===== Modal ===== */
+
 .modal {
   position: fixed;
   top: 0;
@@ -269,7 +267,6 @@ html[dir="rtl"] .toggle-switch.active .toggle-slider {
   background-color: #991b1b;
 }
 
-/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .tabs-container {
     flex-wrap: wrap;

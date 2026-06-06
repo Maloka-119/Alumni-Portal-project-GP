@@ -148,13 +148,9 @@ export default function FeedbackPageUnique() {
         {records.map((item) => (
           <div key={item.feedback_id} className="feedback-card">
             <span className="feedback-badge">#{item.feedback_id}</span>
-            {/* <span className={`feedback-type-badge ${getTypeClassName(item.category)}`}>
-              {item.category === "Suggestion" ? t("suggestion") : t("complaint")}
-            </span> */}
+         
             <h4 className="feedback-card-title">{item.title || "No Title"}</h4>
-            {/* <h5 className="feedback-user">
-              {item.User ? `${item.User["first-name"]} ${item.User["last-name"]}` : "-"}
-            </h5> */}
+         
             <p className="feedback-card-text">{smallText(item.details)}</p>
             <button
               className="feedback-see-more"

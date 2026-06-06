@@ -13,7 +13,7 @@ function MyGroups() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [showInviteOnly, setShowInviteOnly] = useState(false);
 
-  // ====== تحديث اتجاه الصفحة تلقائي حسب اللغة ======
+
   useEffect(() => {
     document.documentElement.dir = i18n.language === "ar" ? "rtl" : "ltr";
   }, [i18n.language]);

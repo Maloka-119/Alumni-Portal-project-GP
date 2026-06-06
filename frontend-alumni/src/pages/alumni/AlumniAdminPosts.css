@@ -196,17 +196,17 @@
 }
 
 
-.uni-post-actions button:nth-child(1):hover { /* like */
+.uni-post-actions button:nth-child(1):hover { 
   color: #ff3b3b;
   background: rgba(255, 59, 59, 0.1);
 }
 
-.uni-post-actions button:nth-child(2):hover { /* comment */
+.uni-post-actions button:nth-child(2):hover { 
   color: #22c55e;
   background: rgba(34, 197, 94, 0.1);
 }
 
-.uni-post-actions button:nth-child(3):hover { /* share */
+.uni-post-actions button:nth-child(3):hover { 
   color: #9ca3af;
   background: rgba(156, 163, 175, 0.1);
 }
@@ -316,8 +316,8 @@
   }
 
   .comments-container {
-    width: 80%;       /* تشغل 90% من عرض الشاشة */
-    max-width: none;  /* نشيل الحد الأقصى */
+    width: 80%;       
+    max-width: none;  
     padding: 16px;
   }
 }
@@ -325,7 +325,7 @@
 @media (max-width: 480px) {
 
   .comments-container {
-    width: 95%;       /* تقريبا كامل عرض الشاشة */
+    width: 95%;      
     padding: 12px;
   }
 
@@ -355,9 +355,9 @@
   }
 
   .uni-post-actions {
-    flex-direction: row;  /* بدل column نخليهم صف */
-    flex-wrap: wrap;      /* يسمح للصف بالانكسار لو ضيق */
-    gap: 8px;             /* مسافة بين الأزرار */
+    flex-direction: row;  
+    flex-wrap: wrap;      
+    gap: 8px;          
   }
 
   .uni-filter {
@@ -365,7 +365,7 @@
   }
 }
 
-/* Create Post Bar */
+
 .uni-create-post-bar {
   width: 100%;
   padding: 12px 16px;
@@ -391,7 +391,7 @@
   font-size: 14px;
 }
 
-/* Post Form */
+
 .uni-post-form {
   display: flex;
   flex-direction: column;
@@ -420,7 +420,7 @@
   background: #eef3ff;
 }
 
-/* Optional Icons */
+
 .uni-optional-icons {
   display: flex;
   gap: 12px;
@@ -444,7 +444,7 @@
   transform: scale(1.1);
 }
 
-/* Form Buttons */
+
 .uni-form-buttons {
   display: flex;
   gap: 12px;
@@ -535,7 +535,7 @@
   background: #4b5563;
 }
 
-/* Dropdown menu */
+
 .post-actions-dropdown .dropdown-menu {
   position: absolute;
   top: 40px;
@@ -586,7 +586,7 @@
   color: #f3f4f6;
 }
 
-/* ===== Comments Modal for alumni posts ===== */
+
 .comments-modal {
   position: fixed;
   top: 0;
@@ -631,7 +631,7 @@
   color: #111827;
 }
 
-/* ===== Comments list ===== */
+
 .comments-list {
   max-height: 300px;
   overflow-y: auto;
@@ -644,7 +644,7 @@
 }
 
 
-/* ===== Comment item ===== */
+
 .comment-item {
   display: flex;
   align-items: flex-start;
@@ -664,7 +664,7 @@
 }
 
 
-/* ===== Comment avatar ===== */
+
 .comment-avatar {
   width: 35px;
   height: 35px;
@@ -672,7 +672,7 @@
   object-fit: cover;
 }
 
-/* ===== Comment text ===== */
+
 .comment-text {
   font-size: 14px;
   color: #333;
@@ -697,7 +697,7 @@
 }
 
 
-/* ===== Comment input ===== */
+
 .comment-input {
   display: flex;
   gap: 10px;
@@ -734,7 +734,7 @@
 }
 
 .load-more-btn {
-  background: #e5e7eb; /* رمادي فاتح */
+  background: #e5e7eb; 
   color: #111;
   font-size: 14px;
   font-weight: 500;
@@ -746,16 +746,15 @@
 }
 
 .load-more-btn:hover {
-  background: #d1d5db; /* أغمق شوية */
+  background: #d1d5db; 
 }
 
 .load-more-btn:active {
   transform: scale(0.97);
 }
 
-/* Dark mode */
 .dark-mode .load-more-btn {
-  background: #374151; /* رمادي غامق */
+  background: #374151; 
   color: #f9fafb;
 }
 
@@ -763,7 +762,7 @@
   background: #4b5563;
 }
 
-/* Light mode simple */
+
 .uni-category-select {
   display: flex;
   flex-direction: column;
@@ -840,32 +839,29 @@
   opacity: 0.7;
 }
 
-/* ====== Post Images Styling ====== */
-/* الحاوية الأساسية للصور */
+
 .uni-post-images {
   display: grid;
   gap: 8px;
   margin-top: 12px;
   width: 100%;
-  /* لو فيه صورة واحدة تاخد العرض كله، لو اتنين يتقسموا، وهكذا */
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 }
 
-/* تنسيق الصورة الواحدة */
+
 .uni-post-preview {
   width: 100%;
-  height: 250px; /* ثبت طول موحد لكل الصور في الشبكة */
-  object-fit: cover; /* ده هيخلي الصور متناسقة، بس لو محتاج النص يبان كامل غيرها لـ contain */
+  height: 250px;
+  object-fit: cover; 
   border-radius: 8px;
   border: 1px solid #eee;
   cursor: pointer;
 }
 
-/* حالة خاصة: لو مفيش غير صورة واحدة خليها تاخد مساحتها الطبيعية عشان النص يبان */
 .uni-post-images img:only-child {
   height: auto;
   max-height: 500px;
-  object-fit: contain; /* عشان صور المستندات متتقصش */
+  object-fit: contain; 
   background: #f9f9f9;
 }
 
@@ -917,7 +913,6 @@
 
 
 
-/* ====== Post Header Styling ====== */
 
 .post-header {
   display: flex;
@@ -941,7 +936,7 @@
   transition: width 0.2s, height 0.2s;
 }
 
-/* للشاشات الصغيرة */
+
 @media (max-width: 768px) {
   .profile-pic {
     width: 35px;
@@ -969,7 +964,7 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  margin: 0; /* نشيل أي margin */
+  margin: 0; 
   padding: 0;
   line-height: 1.2;
 }
@@ -1052,17 +1047,16 @@
   color: #37568d;
 }
 
-/* Edit button hover (first child) */
+
 .comment-actions button:first-child:hover svg {
   color: #007bff;
 }
 
-/* Delete button hover (second child) */
 .comment-actions button:nth-child(2):hover svg {
   color: #ff4d4d;
 }
 
-/* Dark mode */
+
 .dark .comment-actions button svg {
   color: #a8c7ff;
 }
@@ -1087,7 +1081,7 @@
   transform: scale(1.2);
   color: #1a3a6e;
 }
-/* Dark mode */
+
 .dark .load-more-btn {
   color: #c9d1d9;
 }
@@ -1136,10 +1130,10 @@
   white-space: nowrap;
 }
 
-/* ======= Responsive Comments ======= */
+
 @media (max-width: 768px) {
   .comment-item {
-    flex-direction: column; /* خلي الكومنت عمودي */
+    flex-direction: column; 
     align-items: flex-start;
     gap: 6px;
     padding: 6px 8px;
@@ -1148,7 +1142,7 @@
   .comment-left {
     display: flex;
     gap: 6px;
-    flex-wrap: wrap; /* يسمح للنص والـ avatar بالانكسار */
+    flex-wrap: wrap; 
   }
 
   .comment-avatar {
@@ -1188,7 +1182,7 @@
 
   .comment-actions {
     gap: 4px;
-    flex-wrap: wrap; /* لو الأزرار زحمة يسمح لها بالانكسار */
+    flex-wrap: wrap; 
   }
 
   .comment-input input {

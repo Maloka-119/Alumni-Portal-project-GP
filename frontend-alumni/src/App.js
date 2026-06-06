@@ -1,5 +1,5 @@
 import "./App.css";
-import { Routes, Route, Navigate } from "react-router-dom"; // شيل BrowserRouter من هنا
+import { Routes, Route, Navigate } from "react-router-dom"; 
 import { useEffect, useState } from "react";
 import { DarkModeProvider } from "./pages/alumni/DarkModeContext";
 import Register from "./auth/Register";
@@ -37,19 +37,9 @@ function App() {
     <div className="App">
       <DarkModeProvider>
         <Routes>
-          {/* {" "} */}
-          {/* شيل Router من هنا */}
-          {/* إعادة توجيه الصفحة الرئيسية */}
-          {/* <Route
-            path="alumni-portal/home"
-            element={<Navigate to="alumni-portal/home" />}
-          /> */}
-          {/* صفحات عامة */}
           <Route path="/" element={<LandingPage />} />
-          {/* <Route path="alumni-portal/home" element={<div>hello</div>} /> */}
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login setUser={setUser} />} />
-          {/* مسار إكمال تسجيل جوجل */}
           <Route
             path="/complete-registration"
             element={<CompleteRegistration setUser={setUser} />}
@@ -58,13 +48,13 @@ function App() {
             path="/public-graduate/:graduationId"
             element={<PublicGraduateProfile />}
           />
-          {/* LinkedIn routes */}
+       
           <Route path="/auth/linkedin/signup" element={<LinkedInSignUp />} />
           <Route
             path="/auth/linkedin/callback"
             element={<LinkedInCallback setUser={setUser} />}
           />
-          {/* صفحات محمية */}
+    
           <Route
             path="/admin/dashboard/*"
             element={
@@ -89,10 +79,10 @@ function App() {
               </ProtectedRoute>
             }
           />
-          {/* صفحات إعادة تعيين كلمة المرور */}
+
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          {/* أي مسار غير معروف يعيد للتسجيل/اللاندنج */}
+
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </DarkModeProvider>

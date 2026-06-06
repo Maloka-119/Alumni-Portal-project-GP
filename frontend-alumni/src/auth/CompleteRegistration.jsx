@@ -37,7 +37,7 @@ const CompleteRegistration = () => {
           showConfirmButton: false,
         });
 
-        // بعد إكمال البيانات، توجيه المستخدم للـ login
+       
         navigate("/login", { replace: true });
       }
     } catch (err) {

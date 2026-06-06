@@ -34,7 +34,7 @@ export default function FeedbackView({ currentUser }) {
   const smallText = (text) =>
     text && text.length > 60 ? text.slice(0, 60) + "..." : text;
 
-  // Filter based on category
+
   const filteredRecords =
     filter === "all"
       ? records

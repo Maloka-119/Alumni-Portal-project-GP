@@ -19,7 +19,7 @@
       letter-spacing: -0.02em;
   }
   
-  /* Sidebar */
+
   .roles-sidebar {
     background: #fff;
     border-radius: 10px;
@@ -76,7 +76,7 @@
     background: #b38f19a8;
   }
   
-  /* Permissions section */
+
   .permissions-section {
     flex: 1;
     background: #fff;
@@ -129,7 +129,7 @@
     background: #f1f3f5;
   }
   
-  /* Modal */
+
   .modal-overlay {
     position: fixed;
     top: 0;
@@ -276,7 +276,7 @@
     background: #2563eb;
   }
   
-  /* Permissions Table Checkbox Styling */
+
   .permissions-table input[type="checkbox"] {
     appearance: none;
     -webkit-appearance: none;
@@ -296,7 +296,7 @@
     border-color: #888;
   }
   
-  /* Delete checkbox - red */
+
   .permissions-table td:nth-child(2) input[type="checkbox"]:checked {
     background: linear-gradient(135deg, #f87171, #ef4444);
     border-color: #ef4444;
@@ -313,7 +313,7 @@
     transform: rotate(45deg);
   }
   
-  /* Edit checkbox - blue */
+
   .permissions-table td:nth-child(3) input[type="checkbox"]:checked {
     background: linear-gradient(135deg, #60a5fa, #3b82f6);
     border-color: #3b82f6;
@@ -330,7 +330,7 @@
     transform: rotate(45deg);
   }
   
-  /* View checkbox - green */
+ 
   .permissions-table td:nth-child(4) input[type="checkbox"]:checked {
     background: linear-gradient(135deg, #34d399, #10b981);
     border-color: #10b981;
@@ -346,7 +346,7 @@
     border-bottom: 2px solid #fff;
     transform: rotate(45deg);
   }
-  /* Add checkbox - purple */
+
   .permissions-table td:nth-child(5) input[type="checkbox"]:checked {
     background: linear-gradient(135deg, #d8b4fe, #c084fc);
     border-color: #c084fc;
@@ -364,7 +364,7 @@
 }
 
   
-  /* Table polish */
+
   .permissions-table th {
     background: linear-gradient(135deg, #f9fafb, #f1f3f5);
     color: #333;
@@ -424,7 +424,7 @@
     transform: rotate(0deg);    
   }
   
-  /* Maintain horizontal layout but responsive widths */
+
   @media (max-width: 1200px) {
     .roles-container {
       flex-wrap: wrap; 
@@ -442,7 +442,7 @@
     }
   }
   
-  /* Smaller devices */
+
   @media (max-width: 768px) {
     .roles-sidebar {
       width: 180px; 
@@ -544,7 +544,7 @@
   
   .update-btn-container {
     display: flex;
-    justify-content: flex-start; /* يخليه على الشمال */
+    justify-content: flex-start; 
     margin-top: 16px;
   }
   

@@ -67,7 +67,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
     }
   };
 
-  // ------------------ Fetch messages ------------------
+
   useEffect(() => {
     if (!chatId || !token) return;
   
@@ -129,7 +129,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
       mounted = false;
     };
   }, [chatId, token, userId, t, updateChatListLastMessage]);
-  // ------------------ Socket ------------------
+ 
   useEffect(() => {
     if (!chatId || !token) return;
 
@@ -218,7 +218,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // ------------------ File ------------------
+
   const handleFileChange = (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
@@ -236,7 +236,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
     setFilePreview({ url, type, name: f.name });
   };
 
-  // ------------------ Send message ------------------
+
   const sendMessage = async () => {
     if (!newMessage.trim() && !file) return;
   
@@ -259,7 +259,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
   
       const data = res.data.data;
   
-      // 👇 ده اللي بيرتب الشكل (اختياري بس مهم)
+   
       const newMsg = {
         message_id: data.message_id,
         sender_id: userId,
@@ -280,10 +280,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
         created_at: data.created_at || new Date().toISOString(),
       };
   
-      // ❗ أهم حاجة (ما تكررش الرسالة لو socket شغال)
-      // ❌ متعملش setMessages هنا
-  
-      // reset UI
+
       setNewMessage("");
       setFile(null);
       setFilePreview(null);
@@ -296,7 +293,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
       alert("حدث خطأ أثناء إرسال الرسالة");
     }
   };
-  // ------------------ Edit / Delete ------------------
+
   const startEditMessage = (message) => {
     setEditingMessageId(message.message_id);
     setEditContent(message.content);
@@ -341,7 +338,7 @@ export default function ChatBox({ chatId, activeChatFriend, onClose, updateChatL
     }
   };
 
-  // ------------------ Render ------------------
+
   return (
     <div className="chat-overlay" dir={direction}>
       <div className="chat-header">

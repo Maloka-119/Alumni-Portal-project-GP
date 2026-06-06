@@ -102,7 +102,7 @@ const GoogleNationalIdModal = ({ isOpen, onClose, onProceed }) => {
   );
 };
 
-// CSS Styles
+
 const modalStyles = `
 .modal-overlay {
   position: fixed;
@@ -293,7 +293,7 @@ const modalStyles = `
 }
 `;
 
-// Add styles to document
+
 const styleSheet = document.createElement('style');
 styleSheet.textContent = modalStyles;
 document.head.appendChild(styleSheet);

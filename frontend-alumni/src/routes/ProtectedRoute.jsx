@@ -2,8 +2,7 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 
 const ProtectedRoute = ({ user, requiredRole, children }) => {
-  // console.log("user:", user);
-  // console.log("requiredRole:", requiredRole);
+
 
   if (!user) {
     return <Navigate to="/alumni-portal/login" replace />;

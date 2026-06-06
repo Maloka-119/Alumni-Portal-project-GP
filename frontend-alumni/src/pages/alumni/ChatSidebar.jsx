@@ -8,7 +8,7 @@ export default function ChatSidebar({ darkMode, chatOpen, setChatOpen, chatId, a
   const { i18n } = useTranslation();
   const [selectedChat, setSelectedChat] = useState(null);
 
-  // ------------------ Set selected chat when chatId or friendData changes ------------------
+
   useEffect(() => {
     if (!chatId || !activeChatFriend) return;
     setSelectedChat({ chatId, friend: activeChatFriend });
@@ -33,23 +33,3 @@ export default function ChatSidebar({ darkMode, chatOpen, setChatOpen, chatId, a
 }
 
 
-
-// import React from "react";
-// import ChatList from "./chatList";
-// import { X } from "lucide-react";
-// import './AlumniPortal.css';
-
-// export default function ChatSidebar({ darkMode, chatOpen, setChatOpen }) {
-//   return (
-//     <div className={`chat-sidebar ${chatOpen ? "open" : ""}`}>
-//       <div className="chat-header">
-        
-//         <button onClick={() => setChatOpen(false)} className="close-chat">
-//           <X size={18} />
-//         </button>
-//       </div>
-
-//       <ChatList darkMode={darkMode} />
-//     </div>
-//   );
-// }

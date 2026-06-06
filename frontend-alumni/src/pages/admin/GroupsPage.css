@@ -2,7 +2,7 @@
 
 body {
   font-family: 'Inter', sans-serif;
-  /* background: linear-gradient(135deg, #e0eafc, #cfdef3); */
+
   margin: 0;
   padding: 0;
 }
@@ -233,7 +233,7 @@ h1 {
 
 .upload-instruction-text {
   font-size: 13px;
-  color: #6b7280; /* رمادي هادي */
+  color: #6b7280; 
   margin-top: 8px;
   font-weight: 400;
   display: flex;
@@ -241,17 +241,17 @@ h1 {
   gap: 4px;
 }
 
-/* تمييز الامتدادات والحجم بلون أغمق قليلاً أو عريض */
+
 .upload-instruction-text span {
   color: #374151;
   font-weight: 600;
-  background-color: #f3f4f6; /* خلفية خفيفة جداً للتمييز */
+  background-color: #f3f4f6; 
   padding: 1px 6px;
   border-radius: 4px;
-  font-family: monospace; /* اختياري: بيخلي شكل الامتدادات تقني أكتر */
+  font-family: monospace; 
 }
 
-/* علامة النجمة بلون أحمر بسيط للتنبيه */
+
 .upload-instruction-text::before {
   content: "•";
   color: #ef4444;

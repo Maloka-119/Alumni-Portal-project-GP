@@ -76,7 +76,7 @@
     color: #374151;
   }
   
-  /* Responsive adjustments */
+
 @media (max-width: 1024px) {
   .view-faq {
     padding: 20px 30px;

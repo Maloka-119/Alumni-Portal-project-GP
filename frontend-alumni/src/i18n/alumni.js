@@ -1,7 +1,6 @@
 const alumni = {
   en: {
     translation: {
-      // ===== Main navigation =====
       "uniservices": "University Services",
       "uniOpportunities": "University Opportunities",
       "filterByType": "Filter by type",
@@ -37,7 +36,7 @@ const alumni = {
       "myCommunities": "My Communities",
       "Welcome to this group! This group is associated with batch number {{batch}": "Welcome to this group! This group is associated with batch number {{batch}",
 
-      // ===== Profile =====
+ 
       "faculty": "Faculty",
       "graduationYear": "Graduation Year",
       "bio": "Bio",
@@ -56,7 +55,7 @@ const alumni = {
       "noSkills": "No Skills",
       "noJob": "No Job",
 
-      // ===== My Posts =====
+  
       "createNewPost": "Create new post...",
       "writePost": "Write your post...",
       "addLink": "Add link",
@@ -73,12 +72,12 @@ const alumni = {
       "file": "File",
       "link": "Link",
 
-      // ===== Home =====
+    
       "homeFeed": "Home Feed",
       "errorFetchingPosts": "Error fetching posts",
       "loadMore": "Load more",
 
-      // ===== Digital ID =====
+   
       "digitalId_title": "Digital ID",
       "digitalId_subtitle": "Your Graduate ID is ready! Use it to verify your graduation and access alumni services",
       "digitalId_cardHeader": "Graduate ID",
@@ -95,7 +94,7 @@ const alumni = {
       "digitalId_noShareSupport": "Sharing not supported. Please download instead.",
       "digitalId_loading": "Loading your Digital ID...",
 
-      // ===== Groups =====
+  
       "myGroups": "My Communities",
       "join": "Join",
       "joined": "Joined",
@@ -107,7 +106,6 @@ const alumni = {
       "like": "Like",
       "alreadyLiked": "You already liked this post!",
 
-      // ===== Friendship Page =====
       "Friends": "Friends",
       "Requests": "Friend Requests",
       "Suggestions": "Suggestions",
@@ -155,7 +153,7 @@ const alumni = {
       "pleaseLogin": "Please login",
       "emptyPostError": "Post cannot be empty",
 
-      // Success story modal
+
       "successStoryInfoTitle": "Public Post",
       "successStoryInfoText": "Success story posts can be featured publicly on the main page.",
       "categoryGeneral": "General",
@@ -232,7 +230,7 @@ const alumni = {
       "Opportunities": "Opportunities",
       "universityServices": "University Services",
 
-      // ===== My Requests =====
+     
       "myRequestsTitle": "My Document Requests",
       "myRequestsSubtitle": "Track and manage your document requests",
       "loadingRequests": "Loading your requests...",
@@ -293,7 +291,7 @@ const alumni = {
       "filesSelected": "ملفات تم اختيارها",
       "loading": "جاري التحميل",
       "universityServices": "الخدمات الجامعية",
-      // ===== Main navigation =====
+    
       "uniservices": " خدمات الجامعة",
       "uniOpportunities": "فرص الجامعة",
       "filterByType": "تصفية حسب النوع",
@@ -344,7 +342,7 @@ const alumni = {
       "tourFAQ": "اعثر على إجابات للأسئلة الشائعة.",
       "tourFeedback": "قدّم ملاحظات أو اقتراحات لتحسين البوابة.",
 
-      // ===== Profile =====
+    
       "faculty": "الكلية",
       "graduationYear": "سنة التخرج",
       "bio": "نبذة",
@@ -362,7 +360,7 @@ const alumni = {
       "noSkills": "لا توجد مهارات",
       "noJob": "لا يوجد وظيفة",
 
-      // ===== My Posts =====
+ 
       "createNewPost": "أنشئ منشورًا جديدًا...",
       "writePost": "اكتب منشورك...",
       "addLink": "إضافة رابط",
@@ -379,12 +377,12 @@ const alumni = {
       "file": "ملف",
       "link": "رابط",
 
-      // ===== Home =====
+
       "homeFeed": "الصفحة الرئيسية",
       "errorFetchingPosts": "خطأ أثناء جلب المنشورات",
       "loadMore": "عرض المزيد",
 
-      // ===== Digital ID =====
+    
       "digitalId_title": "البطاقة الرقمية",
       "digitalId_subtitle": "بطاقتك جاهزة! استخدمها لإثبات تخرجك والوصول إلى خدمات الخريجين",
       "digitalId_cardHeader": "بطاقة الخريج",
@@ -401,7 +399,7 @@ const alumni = {
       "digitalId_noShareSupport": "المشاركة غير مدعومة. من فضلك قم بالتحميل بدلاً من ذلك.",
       "digitalId_loading": "جاري تحميل البطاقة الرقمية...",
 
-      // ===== Groups =====
+     
       "myGroups": "مجمتعاتي",
       "join": "انضم",
       "joined": "تم الانضمام",
@@ -413,7 +411,7 @@ const alumni = {
       "like": "إعجاب",
       "alreadyLiked": "لقد أعجبت بهذا المنشور بالفعل!",
 
-      // ===== Friendship Page =====
+   
       "Friends": "الأصدقاء",
       "Requests": "طلبات الصداقة",
       "Suggestions": "اقتراحات الأصدقاء",
@@ -459,7 +457,7 @@ const alumni = {
       "pleaseLogin": "من فضلك قم بتسجيل الدخول",
       "emptyPostError": "لا يمكن أن يكون المنشور فارغاً",
 
-      // Success story modal
+  
       "successStoryInfoTitle": "بوست عام",
       "successStoryInfoText": "يمكن للبوستات التي تصنف كقصة نجاح أن تظهر بشكل عام على الصفحة الرئيسية.",
       "categoryGeneral": "عام",
@@ -521,7 +519,6 @@ const alumni = {
       "My Communities": "مجتمعاتي",
       "Opportunities": "الفرص",
 
-      // ===== My Requests =====
       "myRequestsTitle": "طلبات المستندات",
       "myRequestsSubtitle": "تابع وأدر طلبات المستندات الخاصة بك",
       "loadingRequests": "جاري تحميل طلباتك...",

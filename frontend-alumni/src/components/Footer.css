@@ -8,7 +8,7 @@
   --social-gap: 0.5rem;
 }
 
-/* Footer Base */
+
 .footer {
   margin-top: 3rem;
   background-color: var(--footer-bg);
@@ -22,7 +22,7 @@
   transition: background 0.3s, color 0.3s;
 }
 
-/* Dark Mode */
+
 .dark .footer {
   --footer-bg: #1f2937;
   --footer-color: #f3f4f6;
@@ -30,7 +30,6 @@
 }
 
 
-/* Grid Layout */
 .footer-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -49,7 +48,6 @@
   font-size: 0.9rem;
 }
 
-/* Social Icons */
 .social-icons {
   display: flex;
   justify-content: center;
@@ -84,7 +82,7 @@
   opacity: 0.85;
 }
 
-/* Responsive */
+
 @media (max-width: 1024px) and (min-width: 769px) {
   .footer-grid {
     grid-template-columns: repeat(2, 1fr);

@@ -18,12 +18,12 @@ function ShowAccountgrad() {
 const [chatId, setChatId] = useState(null);
 
 
-  // --- Fetch Profile ---
+
   const fetchProfile = async () => {
     setLoading(true);
     try {
       const res = await API.get(`/graduates/profile/${userId}`);
-    //   console.log("Full API Response:", res);
+   
       if (res.data.status === "success" && res.data.data) {
         const data = res.data.data;
         console.log("Profile Data:", data);

@@ -1,7 +1,6 @@
 .admin-feedback-container {
     padding: 30px;
     min-height: 100vh;
-    /* background: #f9fafb; */
     color: #1f2937;
   }
   
@@ -27,7 +26,7 @@
     cursor: pointer;
   }
   
-  /* Cards */
+
   .admin-feedback-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -83,7 +82,7 @@
     background: #1d4ed8;
   }
   
-  /* Modal */
+
   .admin-feedback-modal-overlay {
     position: fixed;
     top: 0;
@@ -136,7 +135,7 @@
     background: #1d4ed8;
   }
   
-  /* Responsive */
+
   @media (max-width: 768px) {
     .admin-feedback-filter {
       flex-direction: column;

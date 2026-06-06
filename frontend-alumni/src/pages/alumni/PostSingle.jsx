@@ -12,7 +12,7 @@ const PostSingle = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // جاي من query string لو اشعار كومنت
+
   const commentId = new URLSearchParams(location.search).get('comment');
 
   const [post, setPost] = useState(null);
@@ -89,7 +89,7 @@ const PostSingle = () => {
         post={post}
         onDelete={handleDelete}
         onEdit={() => navigate(`/edit-post/${postId}`)}
-        highlightCommentId={commentId} // هنا بنمرر commentId
+        highlightCommentId={commentId} 
       />
     </div>
   );

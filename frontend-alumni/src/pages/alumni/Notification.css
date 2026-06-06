@@ -1,10 +1,10 @@
-/* ===== Container ===== */
+
 .notifications-container {
   width: 100%;
   min-height: 100vh;
   padding: 20px;
   box-sizing: border-box;
-  background: transparent; /* خلفية الصفحة */
+  background: transparent; 
 }
 
 .notifications-list {
@@ -15,16 +15,16 @@
   margin: 0 auto;
 }
 
-/* ===== Title ===== */
+
 .Title {
   font-size: 28px;
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 30px;
-  text-align: center; /* دايمًا في الوسط سواء عربي أو إنجليزي */
+  text-align: center; 
 }
 
-/* ===== Notification Item ===== */
+
 .notification-item {
   display: flex;
   justify-content: space-between;
@@ -53,7 +53,7 @@
   transform: translateY(-2px) scale(1.01);
 }
 
-/* ===== Left Side ===== */
+
 .notif-content {
   display: flex;
   flex-direction: column;
@@ -73,7 +73,7 @@
   color: #64748b;
 }
 
-/* ===== Right Side (Actions) ===== */
+
 .notif-actions {
   display: flex;
   align-items: center;
@@ -137,7 +137,7 @@
   transform: scale(1.05);
 }
 
-/* Empty state */
+
 .empty {
   text-align: center;
   color: #64748b;
@@ -145,7 +145,6 @@
   padding: 16px;
 }
 
-/* ===== Responsive ===== */
 @media (max-width: 600px) {
   .notif-content p {
     font-size: 14px;
@@ -157,7 +156,7 @@
   }
 }
 
-/* ===== Dark Mode ===== */
+
 .dark .notifications-container {
   background: #111827;
   color: #f3f4f6;
@@ -211,8 +210,6 @@
   margin-bottom: 30px;
 }
 .allread:hover {
-  /* background-color: #2563eb; */
-  /* color: #fff;  */
   border-color: #10b981;
 }
 
@@ -223,7 +220,6 @@
 }
 
 .dark .allread:hover {
-  /* background-color: #3b82f6;  */
   color: #10b981; 
   border-color: #10b981;
 }

@@ -5,7 +5,7 @@
   gap: 25px;
   padding: 30px;
   min-height: 100vh;
-  font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif; /* خط حديث وواضح */
+  font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif; 
   width: 100%;
   max-width: 100%;
 }
@@ -19,13 +19,10 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
-  /* transition: transform 0.2s, box-shadow 0.2s; */
+ 
 }
 
-/* .profiile-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
-} */
+
 
 .profile-header {
   display: flex;
@@ -96,7 +93,7 @@
   margin-bottom: 15px;
 }
 
-/* Dark Mode Profile */
+
 .dark .profiile-page {
 
   color: #f3f4f6;
@@ -109,9 +106,7 @@
   transition: background 0.3s, color 0.3s, box-shadow 0.3s;
 }
 
-/* .dark .profiile-card:hover {
-  box-shadow: 0 12px 25px rgba(0,0,0,0.6);
-} */
+
 
 .dark .profile-header {
   border-bottom: 1px solid #374151;
@@ -151,7 +146,7 @@
   transition: all 0.2s ease;
 }
 
-/* اللون الأساسي للأزرار العادية */
+
 .friend-btn {
   background-color: #f0f0f0;
   color: #333;
@@ -162,7 +157,7 @@
   transform: scale(1.1);
 }
 
-/* زر قبول الطلب */
+
 .acceptre-btn {
   background-color: #4CAF50;
   color: white;
@@ -173,7 +168,6 @@
   transform: scale(1.1);
 }
 
-/* زر رفض الطلب */
 .rejectre-btn {
   background-color: #f44336;
   color: white;
@@ -184,12 +178,12 @@
   transform: scale(1.1);
 }
 
-/* مسافة بين الأزرار */
+
 .friendship-buttons button + button {
   margin-left: 5px;
 }
 
-/* ===== Responsive Profile Page ===== */
+
 @media (max-width: 1024px) {
   .profiile-card {
     width: 90%;
@@ -231,14 +225,14 @@
   }
 
   .profile-header {
-    flex-direction: row; /* الاسم والوظيفة جنب الصورة */
+    flex-direction: row; 
     align-items: center;
-    justify-content: space-between; /* الصور والزرار يبعدوا */
+    justify-content: space-between; 
   }
 
   .profile-info-container {
     display: flex;
-    flex-direction: column; /* الاسم فوق الوظيفة */
+    flex-direction: column; 
   }
 
  

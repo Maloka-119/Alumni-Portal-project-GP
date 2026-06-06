@@ -1,4 +1,3 @@
-/* Tour.css */
 .tour-overlay {
   position: fixed;
   top: 0;
@@ -81,7 +80,7 @@
   color: #fff;
 }
 
-/* Tooltip responsive داخل sidebar */
+
 @media (max-width: 500px) {
   .tour-tooltip {
     max-width: 180px;

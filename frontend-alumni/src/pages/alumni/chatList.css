@@ -1,24 +1,23 @@
-/* Chat Header */
 .chat-header {
   display: flex;
-  justify-content: space-between; /* الاسم على اليسار وزر الإغلاق على اليمين */
+  justify-content: space-between; 
   align-items: center;
-  background-color: #1e3a8a; /* لون أزرق */
+  background-color: #1e3a8a; 
   color: #fff;
   padding: 10px 15px;
   font-weight: bold;
   height: 50px;
   flex-shrink: 0;
-  border-bottom: 1px solid #60a5fa; /* خط تحت الهيدر */
-  border-radius: 8px 8px 0 0; /* حواف مدورة من فوق */
+  border-bottom: 1px solid #60a5fa; 
+  border-radius: 8px 8px 0 0; 
 }
 
 .chat-header span {
   font-size: 16px;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis; /* إذا الاسم طويل يظهر ... */
-  text-align: left; /* الاسم على اليسار في LTR */
+  text-overflow: ellipsis; 
+  text-align: left; 
 }
 
 .chat-header button {
@@ -34,14 +33,14 @@
 }
 
 .chat-header button:hover {
-  transform: scale(1.2); /* تأثير تكبير صغير عند المرور */
+  transform: scale(1.2); 
 }
 
 .chat-header button:active {
-  transform: scale(1); /* العودة للحجم الطبيعي عند الضغط */
+  transform: scale(1); 
 }
 
-/* Chat List Items */
+
 .chat-item {
   padding: 15px 12px;
   cursor: pointer;
@@ -72,15 +71,15 @@
   height: 40px;
   border-radius: 50%;
   margin-right: 10px;
-  display: none; /* شيلنا الصورة عموماً */
+  display: none; 
 }
 
 .chat-text {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start; /* الاسم فوق */
-  align-items: flex-start; /* الاسم على اليسار */
+  justify-content: flex-start; 
+  align-items: flex-start; 
   overflow: hidden;
 }
 
@@ -90,7 +89,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-align: left; /* الاسم على اليسار */
+  text-align: left;
 }
 
 .chat-text small {
@@ -102,7 +101,7 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  margin-top: 3px; /* مسافة بين الاسم و آخر رسالة */
+  margin-top: 3px; 
 }
 
 .chat-time {
@@ -124,9 +123,9 @@
   top: 50%;
   transform: translateY(-50%);
 }
-/* Chat Sidebar Dark Mode */
+
 .dark .chat-header {
-  background-color: #1f2937; /* غامق */
+  background-color: #1f2937; 
   color: #f9fafb;
   border-bottom: 1px solid #374151;
 }
@@ -166,7 +165,7 @@
   color: #fff;
 }
 .chat-list {
-  direction: ltr; /* افتراضي */
+  direction: ltr; 
 }
 
 .chat-list.rtl {

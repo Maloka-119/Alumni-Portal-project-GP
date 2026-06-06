@@ -1,4 +1,4 @@
-/* زرار الفتح الأساسي */
+
 .stf-adm-trigger-btn {
     background-color: #1e3a8a;
     color: white;
@@ -10,7 +10,7 @@
     transition: background 0.3s;
 }
 
-/* الـ Overlay خلفية المودال - تم التعديل لدعم السكرول */
+
 .stf-adm-overlay {
     position: fixed;
     top: 0;
@@ -20,13 +20,13 @@
     background: rgba(0, 0, 0, 0.5);
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* يبدأ من الأعلى ليسمح بالسكرول */
-    padding: 20px; /* مسافة أمان للموبايل */
+    align-items: flex-start; 
+    padding: 20px; 
     z-index: 1000;
-    overflow-y: auto; /* يسمح بالتمرير إذا كان المودال طويلاً */
+    overflow-y: auto; 
 }
 
-/* جسم المودال - تم التعديل ليكون مرناً */
+
 .stf-adm-modal-box {
     background: white;
     padding: 40px;
@@ -35,7 +35,7 @@
     max-width: 850px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     text-align: center;
-    margin: auto; /* يتوسط تلقائياً */
+    margin: auto;
     position: relative;
 }
 
@@ -51,7 +51,7 @@
     margin-bottom: 30px;
 }
 
-/* تقسيم الفورم */
+
 .stf-adm-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -70,7 +70,7 @@
     margin-bottom: 8px;
 }
 
-/* شكل الـ Input زي الصورة */
+
 .stf-adm-input-group input {
     border: 1.5px solid #1e3a8a;
     border-radius: 12px;
@@ -90,7 +90,7 @@
     margin: 20px auto 0;
 }
 
-/* الأزرار */
+
 .stf-adm-actions {
     margin-top: 30px;
     display: flex;
@@ -124,7 +124,7 @@
     cursor: pointer;
 }
 
-/* تحويل الجريد ليكون أريح للعين */
+
 .stf-adm-grid-compact {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -132,7 +132,7 @@
     margin-top: 20px;
 }
 
-/* حاوية الباسورد عشان العين */
+
 .stf-adm-pass-container {
     position: relative;
     display: flex;
@@ -154,7 +154,7 @@
     color: #1e3a8a;
 }
 
-/* للموبايل والشاشات الصغيرة */
+
 @media (max-width: 768px) {
     .stf-adm-modal-box {
         padding: 20px;
@@ -162,7 +162,7 @@
     }
 
     .stf-adm-grid {
-        grid-template-columns: 1fr; /* جعل الجريد عموداً واحداً */
+        grid-template-columns: 1fr; 
         gap: 15px;
     }
 
@@ -172,11 +172,11 @@
     }
 
     .stf-adm-full-width {
-        grid-column: span 1; /* إعادة ضبط العمود في الشاشات الصغيرة */
+        grid-column: span 1; 
         width: 100%;
     }
 
-    /* تعديل الأزرار في الموبايل لضمان الظهور */
+  
     .stf-adm-actions {
         flex-direction: column;
         gap: 10px;

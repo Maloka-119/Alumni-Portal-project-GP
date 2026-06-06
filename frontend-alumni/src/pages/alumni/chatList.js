@@ -9,7 +9,7 @@ export default function ChatList() {
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
 
-  // ------------------ FETCH CHAT LIST ------------------
+
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -39,7 +39,7 @@ export default function ChatList() {
     fetchChats();
   }, [t]);
 
-  // ------------------ UPDATE CHAT LIST ------------------
+
   const updateChatList = (updatedMsg) => {
     setChats((prevChats) =>
       prevChats.map((chat) => {
@@ -64,7 +64,7 @@ export default function ChatList() {
     );
   };
 
-  // ------------------ OPEN CHAT ------------------
+
   const openChat = async (chat) => {
     setActiveChat(chat);
 
@@ -81,7 +81,7 @@ export default function ChatList() {
     }
   };
 
-  // ------------------ FORMAT TIME ------------------
+ 
   const formatTime = (timestamp) => {
     if (!timestamp) return "";
     const options = { hour: "2-digit", minute: "2-digit", hour12: true };

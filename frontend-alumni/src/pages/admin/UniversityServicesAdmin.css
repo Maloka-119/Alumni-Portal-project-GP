@@ -1,7 +1,6 @@
 .usp-manage {
     padding: 30px;
     min-height: 100vh;
-    /* background: #f4f5f7; */
   }
   
   .usp-header h2 {
@@ -11,7 +10,7 @@
     margin-bottom: 20px;
   }
   
-  /* FORM */
+
   .usp-form {
     background: #fff;
     border: 1px solid #e5e7eb;
@@ -50,7 +49,7 @@
     background: #1d4ed8;
   }
   
-  /* LIST */
+
   .usp-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));

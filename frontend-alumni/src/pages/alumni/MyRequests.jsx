@@ -19,7 +19,6 @@ const MyRequests = () => {
     const fetchRequests = async () => {
       try {
         const response = await API.get('/documents/requests/my-requests');
-        // console.log('📊 Requests Data:', response.data.data);
         setRequests(response.data.data || []);
       } catch (err) {
         console.error('❌ Error:', err);
@@ -104,7 +103,7 @@ const MyRequests = () => {
             <thead>
               <tr>
                 <th>{t('requestNumber')}</th>
-                {/* <th>{t('requestType')}</th> */}
+             
                 <th>{t('createdAt')}</th>
                 <th>{t('requestStatus')}</th>
                 <th>{t('expectedCompletion')}</th>
@@ -117,7 +116,7 @@ const MyRequests = () => {
               {requests.map((req) => (
                 <tr key={req.document_request_id}>
                   <td className="request-number">{req.request_number}</td>
-                  {/* <td>{req['request-type']}</td> */}
+               
                   <td>
   {req['created-at'] 
     ? new Date(req['created-at']).toLocaleDateString(

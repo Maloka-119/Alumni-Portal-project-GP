@@ -23,8 +23,7 @@ const Header = () => {
   return (
     <header className="page-header">
       <div className="header-left">
-        {/* <img src={UniLogo} alt="University Logo" className="logoo-placeholder" />
-        <h1 className="portal-name">Helwan ALUMNI Portal</h1> */}
+    
         
         <img src={CAPITAL_UNI_LOGO} alt="University Logo" className="logoo-placeholder" />
         <h1 className="portal-name">{t("Capital Alumni Portal")}</h1>
@@ -39,7 +38,7 @@ const Header = () => {
   title={t("move_to_landing")}
   onClick={() => navigate("/")}
 >
-  {/* <DoorOpen size={20} /> */}
+
   <Home size={20} />
 </button>
 

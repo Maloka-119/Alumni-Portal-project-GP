@@ -1,4 +1,3 @@
-/* ===== Wrapper & Global ===== */
 .document-wrapper {
   width: 90%;
   max-width: 1300px;
@@ -27,7 +26,7 @@
   font-size: 1.1rem;
 }
 
-/* ===== Status Messages ===== */
+
 .status-message {
   text-align: center;
   padding: 12px;
@@ -40,14 +39,14 @@
 .status-message.error { background: #fef2f2; color: #ef4444; border: 1px solid #fee2e2; }
 .status-message.success { background: #f0fdf4; color: #22c55e; border: 1px solid #dcfce7; }
 
-/* ===== Grid ===== */
+
 .document-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 25px;
 }
 
-/* ===== Card ===== */
+
 .document-card {
   background: #ffffff;
   border-radius: 24px;
@@ -66,7 +65,7 @@
   border-color: #3b82f633;
 }
 
-/* ===== Badge ===== */
+
 .document-badge {
   position: absolute;
   top: 15px;
@@ -81,7 +80,7 @@
 
 [dir="rtl"] .document-badge { right: auto; left: 15px; }
 
-/* ===== Content ===== */
+
 .document-card-content {
   padding: 40px 25px 10px;
   flex-grow: 1;
@@ -101,7 +100,7 @@
   line-height: 1.6;
 }
 
-/* ===== Buttons & Actions ===== */
+
 .document-actions {
   padding: 20px 25px 25px;
   display: flex;
@@ -138,7 +137,7 @@
   background: #e2e8f0;
 }
 
-/* ===== Modal ===== */
+
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -170,15 +169,13 @@
   border-radius: 12px;
 }
 
-/* ===== Responsive ===== */
+
 @media (max-width: 640px) {
   .document-grid { grid-template-columns: 1fr; }
   .document-header { font-size: 1.8rem; }
 }
 
-/* ===== Dark Mode Styles ===== */
 
-/* عندما يكون الكلاس .dark موجوداً في الـ body أو الـ wrapper */
 .dark .document-wrapper {
   background-color: #0f172a;
   color: #f8fafc;
@@ -230,23 +227,23 @@
   color: #94a3b8;
 }
 
-/* تدرج لوني مختلف للعنوان في الدارك مود لزيادة الوضوح */
+
 .dark .document-header {
   background: linear-gradient(135deg, #60a5fa 0%, #a855f7 100%);
   -webkit-background-clip: text;
 }
 
-/* ===== Horizontal Input Style ===== */
+
 .input-group-horizontal {
   display: flex;
-  align-items: center; /* ليكون الكلام والانبوت على خط واحد */
-  gap: 15px; /* مسافة بين الكلمة والانبوت */
+  align-items: center; 
+  gap: 15px; 
   margin-bottom: 20px;
   direction: inherit;
 }
 
 .input-label-side {
-  flex: 0 0 100px; /* يعطي عرض ثابت للكلمة عشان الانبوتس تبدأ من نفس النقطة */
+  flex: 0 0 100px;
   font-weight: 600;
   font-size: 0.95rem;
   color: #475569;
@@ -254,7 +251,7 @@
 }
 
 .form-input-side {
-  flex: 1; /* يخلي الانبوت ياخد باقي المساحة المتوفرة */
+  flex: 1;
   padding: 10px 14px;
   border: 1.8px solid #cdd6e0;
   border-radius: 12px;
@@ -270,7 +267,7 @@
   box-shadow: 0 0 5px rgba(59, 130, 246, 0.2);
 }
 
-/* ضبط المسافات في الموبايل عشان ميبقاش ضيق */
+
 @media (max-width: 480px) {
   .input-group-horizontal {
     flex-direction: column;
@@ -282,7 +279,7 @@
   }
 }
 
-/* الدارك مود للستايل الجانبي */
+
 .dark .input-label-side {
   color: #cbd5e1;
 }
@@ -292,13 +289,13 @@
   color: #f3f4f6;
 }
 
-/* الحاوية الأساسية */
+
 .file-input-wrapper {
   flex: 1;
   position: relative;
 }
 
-/* إخفاء الزرار الأصلي بتاع المتصفح */
+
 .hidden-file-input {
   position: absolute;
   width: 1px;
@@ -310,13 +307,13 @@
   border: 0;
 }
 
-/* التصميم الجديد لزرار Choose File */
+
 .custom-file-button {
   display: block;
   width: 100%;
   padding: 12px 15px;
   background-color: #f8fafc;
-  border: 2px dashed #cbd5e1; /* حدود منقطة تعطي إيحاء بالرفع */
+  border: 2px dashed #cbd5e1; 
   border-radius: 12px;
   color: #64748b;
   font-size: 0.9rem;
@@ -331,7 +328,7 @@
   color: #2563eb;
 }
 
-/* الدارك مود */
+
 .dark .custom-file-button {
   background-color: #1e293b;
   border-color: #475569;

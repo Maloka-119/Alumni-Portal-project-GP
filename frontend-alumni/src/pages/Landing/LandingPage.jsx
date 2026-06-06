@@ -73,11 +73,10 @@ export default function LandingPage() {
   return (
     <div
       className="landing-container"
-      // style={{ backgroundImage: `url(${Unibackground})` }}
-      // style={{ backgroundImage: `url(${NewBg})` }}
+
       
     >
-      {/* <img src={HelwanLogo} alt="جامعة حلوان" className="hero-logo" /> */}
+
       <img src={CAPITAL_UNI_LOGO} alt="جامعة العاصمه" className="hero-logo" />
 
       <button onClick={scrollToFooter} className="contactt-btn">
@@ -88,22 +87,13 @@ export default function LandingPage() {
         <section className="hero-section">
           <div className="hero-text">
             <TypingText
-              // lines={[
-              //   "Welcome to Helwan University Alumni Portal",
-              //   "مرحبا بكم في بوابة خريجي جامعة حلوان",
-              // ]}
+     
               lines={[
                 "Welcome to Capital University Alumni Portal",
                 "مرحبا بكم في بوابة خريجي جامعة العاصمه",
               ]}
             />
-            {/* <p style={{ color: "white" }}>
-              The Alumni Portal connects graduates of Helwan University to share
-              knowledge, find jobs, and stay in touch.
-              <br />
-              تربط بوابة الخريجين خريجي جامعة حلوان لتبادل المعرفة والفرص
-              والبقاء على تواصل.
-            </p> */}
+
             <p style={{ color: "white" }}>
               The Alumni Portal connects graduates of Capital University "Helwan University" to share
               knowledge, find jobs, and stay in touch.
@@ -157,7 +147,7 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-{/* Success Stories */}
+
 <section className="success-section">
   <h3>Success Stories / قصص النجاح</h3>
   <div className="success-scroll">
@@ -202,7 +192,7 @@ export default function LandingPage() {
   </div>
 </section>
 
-{/* Exclusive Events  */}
+
 <section className="exclusive-section">
   <h3>Exclusive Events / الفعاليات الحصرية</h3>
   <div className="exclusive-container">
@@ -239,7 +229,7 @@ export default function LandingPage() {
 </section>
 
 
-        {/* ===== FAQ ===== */}
+      
        <div className="floating-faq">
   <button className="faq-toggle" onClick={() => setFaqOpen(!faqOpen)}>
     <HelpCircle size={26} color="white" />

@@ -1,4 +1,3 @@
-// StaffDashboard.jsx
 import React, { useState, useEffect } from "react";
 import { LogOut, User, Menu, X } from "lucide-react";
 import "./StaffDashboard.css";
@@ -35,7 +34,6 @@ const toggleLanguage = () => {
         const res = await API.get("/staff/profile", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        // console.log("Profile response:", res);
         if (res.data.status === "success") {
           const staffProfile = { ...res.data.data, roles: res.data.data.roles || [] };
           setCurrentUser(staffProfile);

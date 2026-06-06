@@ -28,8 +28,7 @@ function FriendshipPage() {
   const [activeChatFriend, setActiveChatFriend] = useState(null);
   const [chatId, setChatId] = useState(null);
 
-  // ضبط اتجاه النص حسب اللغة
-  // ضبط اتجاه الصفحة حسب اللغة (أفضل حل)
+ 
   useEffect(() => {
     const dir = i18n.language === "ar" ? "rtl" : "ltr";
     document.documentElement.setAttribute("dir", dir);
@@ -41,13 +40,13 @@ function FriendshipPage() {
     if (tab) setCurrentTab(tab);
   }, [location.search]);
 
-  // -------------------- Fetch Functions --------------------
+
   const fetchFriends = async () => {
     try {
       setLoadingFriends(true);
       const res = await API.get("/friendships/friends");
       const mapped = res.data.map((f) => ({
-        id: f.graduate_id, // صححت الـ id عشان profile API
+        id: f.graduate_id, 
         friendId: f.friendId,
         name: f.fullName || "No Name",
         image: f.profilePicture || PROFILE,
@@ -65,7 +64,7 @@ function FriendshipPage() {
       setLoadingRequests(true);
       const res = await API.get("/friendships/requests");
       const mapped = res.data.map((f) => ({
-        id: f.senderId, // صححت الـ id عشان profile API
+        id: f.senderId, 
         senderId: f.senderId,
         userName: f.fullName || "No Name",
         image: f.profilePicture || PROFILE,
@@ -88,12 +87,12 @@ function FriendshipPage() {
       );
       const now = Date.now();
 
-      // فلترة الأشخاص اللي لسه ما كملوش 24 ساعة
+    
       const filtered = res.data.filter((f) => {
         const removedAt = removed[f.graduate_id];
-        if (!removedAt) return true; // مش محذوف أصلاً
-        const diffHours = (now - removedAt) / (1000 * 60 * 60); // فرق الساعات
-        return diffHours >= 24; // لو مرّ عليه 24 ساعة أو أكثر → يظهر تاني
+        if (!removedAt) return true; 
+        const diffHours = (now - removedAt) / (1000 * 60 * 60); 
+        return diffHours >= 24; 
       });
 
       const mapped = filtered.map((f) => ({
@@ -116,13 +115,13 @@ function FriendshipPage() {
     fetchRequests();
     fetchSuggestions();
 
-    // Socket listeners for real-time updates
+ 
     const token = localStorage.getItem("token");
     if (token) {
       initSocket(token);
       
       onFriendRequestReceived((request) => {
-        // // console.log("📨 New live friend request received:", request);
+      
         setFriendRequests((prev) => {
           if (prev.some(r => r.id === request.id || r.senderId === request.senderId)) return prev;
           return [request, ...prev];
@@ -130,30 +129,30 @@ function FriendshipPage() {
       });
 
       onFriendRequestAccepted((newFriend) => {
-        // // console.log("🤝 Friend request accepted live:", newFriend);
+      
         setFriends((prev) => {
           if (prev.some(f => f.id === newFriend.id || f.friendId === newFriend.friendId)) return prev;
           return [newFriend, ...prev];
         });
-        // Remove from suggestions if present
+      
         setSuggestions((prev) => prev.filter(s => s.id !== newFriend.id));
       });
 
       onFriendRequestCancelled(({ senderId }) => {
-        // // console.log("🚫 Friend request cancelled live:", senderId);
+      
         setFriendRequests((prev) => prev.filter(r => r.senderId !== senderId));
       });
 
       onUnfriended(({ friendId }) => {
-        // // console.log("👋 Unfriended live:", friendId);
+   
         setFriends((prev) => prev.filter(f => f.id !== friendId && f.friendId !== friendId));
-        // Refresh suggestions to potentially show them again
+      
         fetchSuggestions();
       });
     }
   }, []);
 
-  // -------------------- Friend Actions --------------------
+
   const confirmFriend = async (senderId) => {
     try {
       await API.put(`/friendships/confirm/${senderId}`);
@@ -200,24 +199,22 @@ function FriendshipPage() {
   };
 
   const removeSuggestion = (id) => {
-    // حفظ وقت الحذف في localStorage
+   
     const removed = JSON.parse(
       localStorage.getItem("removedSuggestions") || "{}"
     );
-    removed[id] = Date.now(); // وقت الحذف الحالي بالميللي ثانية
+    removed[id] = Date.now(); 
     localStorage.setItem("removedSuggestions", JSON.stringify(removed));
 
-    // إزالة من الواجهة
+ 
     setSuggestions((prev) => prev.filter((f) => f.id !== id));
   };
 
-  // -------------------- Chat Functions --------------------
+ 
   const openChat = async (friend) => {
-    // console.log("Friend Object Received:", friend);
 
-    // تأكدي من وجود ID صالح
     const receiverId = friend.friendId || friend.id;
-    // console.log("Receiver ID to send:", receiverId);
+
 
     if (!receiverId) {
       console.error("❌ Friend ID is missing. Cannot open chat.", friend);
@@ -225,19 +222,19 @@ function FriendshipPage() {
     }
 
     try {
-      // قبل الإرسال، تأكدي من الـ token
+   
       const token = localStorage.getItem("token");
       if (!token) {
         console.error("❌ No auth token found in localStorage");
         return;
       }
 
-      // عمل POST للـ conversation
+   
       const res = await API.post("/chat/conversation", {
         otherUserId: receiverId,
       });
 
-      // console.log("✅ Open Chat Response:", res.data);
+    
 
       if (res.data && res.data.data && res.data.data.chat_id) {
         setChatId(res.data.data.chat_id);
@@ -265,7 +262,7 @@ function FriendshipPage() {
     f.userName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // -------------------- Render Tabs --------------------
+ 
   const renderContent = () => {
     switch (currentTab) {
       case "friends":

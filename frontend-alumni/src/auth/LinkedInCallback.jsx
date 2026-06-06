@@ -15,9 +15,6 @@ const LinkedInCallback = ({ setUser }) => {
     const lastName = params.get("lastName");
     const error = params.get("error");
 
-    // console.log("LinkedIn callback params:", { token: !!token, id, email, userType, error });
-
-    // Check for error first
     if (error) {
       console.error("LinkedIn callback error:", error);
       navigate("/login?error=" + encodeURIComponent(error));
@@ -25,7 +22,7 @@ const LinkedInCallback = ({ setUser }) => {
     }
 
     if (token && id) {
-      // Store token and user data
+  
       localStorage.setItem("token", token);
       const userData = {
         id: parseInt(id),
@@ -40,7 +37,7 @@ const LinkedInCallback = ({ setUser }) => {
         setUser(userData);
       }
       
-      // Redirect to appropriate dashboard based on user type
+   
       if (userType === "admin") {
         navigate("/admin/dashboard");
       } else if (userType === "staff") {
@@ -49,7 +46,7 @@ const LinkedInCallback = ({ setUser }) => {
         navigate("/graduate/dashboard");
       }
     } else {
-      // No token and no error - something went wrong
+
       console.error("LinkedIn callback: No token or ID provided");
       navigate("/login?error=" + encodeURIComponent("LinkedIn authentication failed. Please try again."));
     }

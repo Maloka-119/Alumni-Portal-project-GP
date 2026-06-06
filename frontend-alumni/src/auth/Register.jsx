@@ -82,27 +82,27 @@ const handleSubmit = async (e) => {
     if (err.response) {
       const data = err.response.data;
 
-      // === Validation array from backend ===
+    
       if (data?.details && Array.isArray(data.details)) {
         const friendlyMessages = data.details.map(d => {
           let text = d.replace(/"/g, "");
 
-          // 🔐 SQL Injection detected (any field)
+   
           if (/potential SQL injection/i.test(text)) {
             text = "Your input contains invalid characters. Please avoid using characters like ' ; --";
           }
 
-          // 🚨 XSS detected (any field)
+      
           else if (/potential XSS attack/i.test(text)) {
             text = "Your input contains forbidden HTML/script characters. Please remove any < > or similar content.";
           }
 
-          // Email invalid
+      
           else if (/email must be a valid email/i.test(text)) {
             text = "Please enter a valid email address.";
           }
 
-          // Password validations
+   
           else if (/password length must be at least/i.test(text)) {
             text = "Password must be at least 8 characters long.";
           }
@@ -119,7 +119,7 @@ const handleSubmit = async (e) => {
             text = "Password must contain at least one lowercase letter.";
           }
 
-          // National ID formatting
+        
           text = text.replace(/nationalId/gi, "National ID");
 
           return "• " + text;
@@ -128,17 +128,17 @@ const handleSubmit = async (e) => {
         message = friendlyMessages.join("<br/>");
       }
 
-      // === Duplicate email ===
+   
       else if (data?.error === "Email already registered") {
         message = "This email is already registered. Try logging in.";
       }
 
-      // === Duplicate National ID ===
+   
       else if (data?.error === "NID already registered") {
         message = "This National ID is already registered.";
       }
 
-      // === Other backend errors ===
+      
       else if (data?.error) {
         message = data.error;
       }
@@ -187,7 +187,7 @@ const handleSubmit = async (e) => {
     );
   }
   return (
-    // <div className="recontainer" style={{ backgroundImage: `url(${Unibackground})` }}>
+   
      <div className="recontainer" style={{ backgroundImage: `url(${NewBg})` }}>
 
       <Header />
@@ -197,7 +197,7 @@ const handleSubmit = async (e) => {
 
           <form onSubmit={handleSubmit}>
             <h2 className="main-title">{t("createAccount")}</h2>
-            {/* <p className="subtitle">{t("helwan")}</p> */}
+            
             <p className="subtitle">{t("capitalUniversity")}</p>
             <br />
 
@@ -280,7 +280,7 @@ const handleSubmit = async (e) => {
 
         </div>
 
-        {/* ========= National ID Modal for Google ========= */}
+    
         {showNidModal && (
           <div className="nid-overlay">
             <div className="nid-box">

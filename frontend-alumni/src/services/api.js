@@ -13,7 +13,7 @@ API.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // هنا بنضيف اللغة الحالية للـ backend
+
     config.headers["Accept-Language"] = i18n.language;
 
     return config;

@@ -11,7 +11,7 @@ function ManageDocs({ currentUser }) {
   const [loading, setLoading] = useState(true);
   const { t, i18n } = useTranslation();
 
-  // جلب الصلاحية
+
   const docPerm = getPermission("Document Requests management", currentUser);
 
   useEffect(() => {
@@ -83,7 +83,7 @@ function ManageDocs({ currentUser }) {
   };
 
   const handleViewDetails = (req) => {
-    // تحديد نص اللغة للعرض
+
     const displayLang = req.language === "ar" ? t("arabic") : t("english");
 
     Swal.fire({
@@ -192,7 +192,7 @@ function ManageDocs({ currentUser }) {
                         <Eye size={18} />
                       </button>
 
-                      {/* تعديل الشرط هنا ليشمل pending و under_review */}
+                     
     {docPerm?.canEdit && ["pending", "under_review"].includes(req.status) && (
       <>
                           <button className="adm-btn-approve" title={t("approve")} onClick={() => handleUpdateStatus(req.id, "approved")}>

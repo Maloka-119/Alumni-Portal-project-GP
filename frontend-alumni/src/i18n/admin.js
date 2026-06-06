@@ -1,5 +1,3 @@
-// src/i18n/admin.js
-
 const admin = {
   en: {
     translation: {

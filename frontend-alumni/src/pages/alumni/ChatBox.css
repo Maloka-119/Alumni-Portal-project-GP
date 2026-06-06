@@ -1,4 +1,3 @@
-/* ================= Chat Overlay ================= */
 .chat-overlay {
   position: fixed;
   bottom: 20px;
@@ -21,7 +20,7 @@
 
 [dir="rtl"] .chat-overlay { right: auto; left: 20px; }
 
-/* ================= Header ================= */
+
 .chat-header {
   display: flex;
   justify-content: space-between;
@@ -34,7 +33,7 @@
   border-radius: 12px 12px 0 0;
 }
 
-/* ================= Messages Container ================= */
+
 .chat-messages {
   flex: 1;
   padding: 12px;
@@ -47,7 +46,7 @@
 .chat-messages::-webkit-scrollbar { width: 6px; }
 .chat-messages::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 3px; }
 
-/* ================= Each Message ================= */
+
 .chat-message {
   display: flex;
   flex-direction: column;
@@ -66,7 +65,7 @@
 .chat-overlay[dir="rtl"] .chat-message.me { align-self: flex-start; border-bottom-left-radius: 0; }
 .chat-overlay[dir="rtl"] .chat-message.friend { align-self: flex-end; border-bottom-right-radius: 0; }
 
-/* ================= Reply Box ================= */
+
 .chat-message .reply-box {
   background: #e0f2fe;
   border-left: 4px solid #60a5fa;
@@ -83,7 +82,7 @@
 .chat-message .reply-box strong { display: block; font-weight: 600; margin-bottom: 2px; }
 .chat-message .reply-box p { margin: 0; color: #334155; }
 
-/* ================= File / Image Preview ================= */
+
 .file-preview {
   display: flex;
   align-items: center;
@@ -98,12 +97,12 @@
 .file-preview span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px; }
 .file-preview button { flex-shrink: 0; }
 
-/* ================= Message Actions ================= */
+
 .chat-message .message-actions { display: flex; gap: 6px; margin-top: 4px; }
 .action-btn { border: none; background: transparent; cursor: pointer; color: #555; padding: 2px; display: flex; align-items: center; }
 .action-btn.delete { color: #ef4444; }
 
-/* ================= Input Area ================= */
+
 .chat-input {
   display: flex;
   align-items: center;
@@ -123,7 +122,7 @@
   font-size: 14px;
 }
 
-/* ================= Dark Mode ================= */
+
 .dark .chat-overlay { background: #111827; border: 1px solid #374151; color: #f9fafb; }
 .dark .chat-header { background: #1f2937; color: #f9fafb; border-bottom: 1px solid #374151; }
 .dark .chat-messages { background: #1e293b; }
@@ -142,7 +141,6 @@
 .edited-label { font-size: 11px; color: #999; font-style: italic; }
 .status-label.seen { color: #1b18e6; }
 
-/* ================= Media Queries (Responsive) ================= */
 @media (max-width: 768px) {
   .chat-overlay {
     width: 95%;
@@ -156,7 +154,7 @@
   .chat-input input[type="text"] { font-size: 13px; }
 }
 
-/* ================= File Preview in Chat Input - Modern ================= */
+
 .file-preview {
   display: flex;
   align-items: center;
@@ -200,7 +198,7 @@
   font-weight: 500;
 }
 
-/* ================= Sent Images in Messages ================= */
+
 .sent-image {
   max-width: 220px;
   max-height: 220px;
@@ -216,7 +214,7 @@
   transform: scale(1.05);
 }
 
-/* ================= PDF / Other Files in Messages ================= */
+
 .chat-message button {
   display: flex;
   align-items: center;
@@ -228,7 +226,6 @@
   cursor: pointer;
   font-size: 14px;
   font-weight: 500;
-  /* color: #1e293b; */
   transition: all 0.2s ease;
 }
 
@@ -245,10 +242,7 @@
 }
 
 
-/* ================= Keep Icons Intact ================= */
-/* لا نعدل أي شيء في .action-btn أو أيقونات Edit / Delete / Reply */
 
-/* ================= Responsive ================= */
 @media (max-width: 768px) {
   .file-preview img.preview-img {
     width: 50px;
@@ -265,10 +259,10 @@
   }
 }
 
-/* ================= Message Actions - Smooth & Small ================= */
+
 .chat-message .message-actions {
   display: flex;
-  gap: 4px; /* أقل مسافة بين الأزرار */
+  gap: 4px; 
   margin-top: 2px;
 }
 
@@ -280,26 +274,26 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px; /* يجعل الزر أنعم */
+  border-radius: 6px; 
   transition: background 0.2s, transform 0.15s;
 }
 
 .action-btn:hover {
-  background: rgba(96, 165, 250, 0.15); /* لمسة لونية خفيفة عند المرور */
+  background: rgba(96, 165, 250, 0.15); 
   transform: scale(1.1);
 }
 
 .action-btn svg {
-  width: 14px; /* أصغر قليلاً */
+  width: 14px; 
   height: 14px;
   flex-shrink: 0;
 }
 
 .action-btn.delete:hover {
-  background: rgba(239, 68, 68, 0.15); /* لون خفيف لحذف */
+  background: rgba(239, 68, 68, 0.15); 
 }
-/* تصغير أيقونات الـ actions */
+
 .chat-message .message-actions svg {
-  width: 14px;   /* أقل من 12px */
-  height: 14px;  /* نفس الحجم للارتفاع */
+  width: 14px;  
+  height: 14px;  
 }

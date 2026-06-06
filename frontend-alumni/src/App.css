@@ -39,14 +39,14 @@
 
 
 
-/* Override default alert style */
+
 :root {
   --alert-bg: #2563eb;
   --alert-text: #fff;
   --alert-border: #1e4ed8;
 }
 
-/* Base alert style */
+
 .alert-custom {
   position: fixed;
   top: 20px;

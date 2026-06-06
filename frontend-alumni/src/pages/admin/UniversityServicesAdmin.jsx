@@ -16,7 +16,7 @@ const UniversityServicesAdmin = ({ currentUser }) => {
   const perm = currentUser?.userType === "admin"
     ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
     : getPermission("Services management", currentUser) || { canView: false, canAdd: false, canEdit: false, canDelete: false };
-    // console.log("Permissions:", getPermission("servicesManagement", currentUser));
+
 
   useEffect(() => {
     if (perm.canView) fetchServices();
@@ -25,9 +25,7 @@ const UniversityServicesAdmin = ({ currentUser }) => {
   const fetchServices = async () => {
     try {
       const res = await API.get("/university-services");
-      // console.log("GET services response:", res);
-      
-      // الوصول للبيانات الحقيقية من داخل res.data.data
+
       const data = res.data.data;
       if (res.data.success) setServices(data);
     } catch (error) {
@@ -43,10 +41,10 @@ const UniversityServicesAdmin = ({ currentUser }) => {
       let res;
       if (editingId) {
         res = await API.put(`/university-services/${editingId}`, form);
-        // console.log("UPDATE service response:", res);
+   
       } else {
         res = await API.post("/university-services", form);
-        // console.log("CREATE service response:", res);
+
       }
 
       if (res.data.success) {
@@ -61,7 +59,7 @@ const UniversityServicesAdmin = ({ currentUser }) => {
         fetchServices();
       }
     } catch (error) {
-      // console.log("SUBMIT service error:", error);
+     
       Swal.fire(t("Error!"), t("Something went wrong"), "error");
     }
   };
@@ -85,14 +83,14 @@ const UniversityServicesAdmin = ({ currentUser }) => {
     if (result.isConfirmed) {
       try {
         const res = await API.delete(`/university-services/${id}`);
-        // console.log("DELETE service response:", res);
+      
 
         if (res.data.success) {
           Swal.fire(t("Deleted!"), t("Service has been deleted."), "success");
           fetchServices();
         }
       } catch (error) {
-        // console.log("DELETE service error:", error);
+   
         Swal.fire(t("Error!"), t("Something went wrong"), "error");
       }
     }
@@ -102,7 +100,7 @@ const UniversityServicesAdmin = ({ currentUser }) => {
 
   const handleViewDetails = (service) => {
     setModalService(service);
-    const formattedDetails = service.details.replace(/\n/g, "<br/>"); // تحويل السطور
+    const formattedDetails = service.details.replace(/\n/g, "<br/>"); 
     Swal.fire({
       title: service.title,
       html: `<p style="text-align: right;">${formattedDetails}</p>`,

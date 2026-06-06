@@ -10,7 +10,7 @@
     color: #1f2937;
   }
   
-  /* FORM */
+
   .faq-form {
     background: #ffffff;
     border: 1px solid #e5e7eb;
@@ -50,14 +50,14 @@
     background: #1d4ed8;
   }
   
-  /* FAQ GRID */
+
   .faq-list {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
     gap: 20px;
   }
   
-  /* ITEM */
+
   .faq-item {
     background: #ffffff;
     border: 1px solid #e5e7eb;
@@ -112,7 +112,7 @@
     color: #dc2626;
   }
   
-  /* ANSWER ANIMATION */
+
   .faq-answer {
     max-height: 0;
     overflow: hidden;
@@ -125,7 +125,7 @@
     max-height: 300px;
   }
   
-  /* HEADER & BUTTON */
+
   .faq-header-top {
     display: flex;
     align-items: center;
@@ -154,7 +154,7 @@
     background: #1d4ed8;
   }
   
-  /* RESPONSIVE */
+
   @media (max-width: 1024px) {
     .faq-form {
       width: 80%;

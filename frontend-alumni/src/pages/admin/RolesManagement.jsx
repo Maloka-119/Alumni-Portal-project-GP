@@ -31,7 +31,7 @@ const RolesManagement = ({ currentUser }) => {
     try {
       const [permsRes, rolesRes, staffRes] = await Promise.allSettled([
         API.get("/permissions"),
-        // التعديل هنا: ضفنا catch صغير للـ roles عشان لو 404 نرجع مصفوفة فاضية بهدوء
+      
         API.get("/roles/get-all-roles").catch(err => {
           if (err.response?.status === 404) return { data: { roles: [] } };
           throw err;
@@ -39,10 +39,10 @@ const RolesManagement = ({ currentUser }) => {
         API.get("/staff"),
       ]);
   
-      // معالجة Permissions
+
       const perms = permsRes.status === "fulfilled" ? (permsRes.value.data?.data || []) : [];
       
-      // معالجة Roles
+  
       let rolesRaw = [];
       if (rolesRes.status === "fulfilled") {
         rolesRaw = rolesRes.value.data?.roles || [];
@@ -51,7 +51,7 @@ const RolesManagement = ({ currentUser }) => {
         rolesRaw = [];
       }
   
-      // معالجة Staff
+ 
       const staff = staffRes.status === "fulfilled" ? (staffRes.value.data?.data || []) : [];
   
       const roles = rolesRaw.map(r => ({
@@ -424,7 +424,7 @@ const RolesManagement = ({ currentUser }) => {
     const rolePerms = permissions[roleName] || [];
     const modulePerm = rolePerms[index];
   
-    // تحديد الصلاحيات المسموح بها لكل module
+
     const allowed = (() => {
       switch (modulePerm.module) {
         case "Graduate management": return ["view", "edit"];

@@ -28,7 +28,7 @@ function PublicGraduateProfile() {
 
   return (
     <div className="pgp-page">
-      {/* جملة تعريفية قبل الكارت */}
+    
       <div className="pgp-intro">
         <h1>Welcome to the Helwan Alumni Public Profile</h1>
         <p>مرحبا بكم في صفحة التعريف العامة لخريجي جامعة حلوان</p>
@@ -45,12 +45,11 @@ function PublicGraduateProfile() {
         </div>
         <div className="pgp-name-section">
           <h2 className="pgp-name-eng">{graduate.fullName}</h2>
-          {/* <h3 className="pgp-name-ar">{graduate.fullNameArabic || "-"}</h3> */}
-          {/* <p className="pgp-id-number">{graduate.idNumber || "-"}</p> */}
+ 
         </div>
         <div className="pgp-details">
           <p><strong>Faculty:</strong> {graduate.faculty || "-"}</p>
-          {/* <p><strong>Department:</strong> {graduate.department || "-"}</p> */}
+    
           <p><strong>Graduation Year:</strong> {graduate.graduationYear || "-"}</p>
         </div>
       </div>

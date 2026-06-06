@@ -89,7 +89,7 @@ const AdminPanel = ({ setUser }) => {
 
   return (
     <div className="admin-panel">
-      {/* Header */}
+     
       <header className="header">
         <div className="header-left">
           <button
@@ -115,7 +115,7 @@ const AdminPanel = ({ setUser }) => {
         </div>
       </header>
 
-      {/* Sidebar */}
+ 
       <aside className={`sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sidebar-content">
           {menuSections.map((section, idx) => (
@@ -140,7 +140,7 @@ const AdminPanel = ({ setUser }) => {
         </div>
       </aside>
 
-      {/* Main Content */}
+
       <main className={`main-content ${isSidebarOpen ? 'sidebar-open' : ''}`}>
         <Routes>
           <Route index element={<EmptyPage title="Welcome to the Administrative Dashboard  " />} />

@@ -28,13 +28,11 @@ function Login({ setUser }) {
   const [code, setCode] = useState("");
   const [newPass, setNewPass] = useState("");
 
-  // =====================
-  // التعامل مع Google OAuth بعد redirect + عرض رسائل الخطأ
-  // =====================
+
 useEffect(() => {
   const params = new URLSearchParams(location.search);
 
-  // Show error messages
+
   const errorMessage = params.get("error");
   if (errorMessage) {
     Swal.fire({
@@ -45,9 +43,9 @@ useEffect(() => {
     });
   }
 
-  // Request National ID for first-time OAuth login (Google or LinkedIn)
+ 
   const requireNid = params.get("require_nid");
-  const provider = params.get("provider") || "google"; // Default to google for backward compatibility
+  const provider = params.get("provider") || "google"; 
   if (requireNid === "true") {
     Swal.fire({
       icon: "info",
@@ -69,7 +67,7 @@ useEffect(() => {
       if (result.isConfirmed) {
         const nationalId = result.value;
         if (provider === "linkedin") {
-          // For LinkedIn, get auth URL with National ID
+         
           fetch(`http://localhost:5005/alumni-portal/auth/linkedin?nationalId=${nationalId}`)
             .then(res => res.json())
             .then(data => {
@@ -92,14 +90,14 @@ useEffect(() => {
               });
             });
         } else {
-          // For Google
+       
           window.location.href = `http://localhost:5005/alumni-portal/auth/google?nationalId=${nationalId}`;
         }
       }
     });
   }
 
-  // Successful login handling
+
   const token = params.get("token");
   const id = params.get("id");
   const emailParam = params.get("email");
@@ -120,13 +118,11 @@ useEffect(() => {
     }
   }
 }, [location.search, navigate, setUser]);
-  // =====================
-  // تسجيل الدخول التقليدي
-  // =====================
+
 const handleLogin = async () => {
   try {
     const res = await API.post("/login", { email, password });
-    // console.log("Login Response Data:", res.data);
+   
     const { id, email: userEmail, userType, token } = res.data;
 
     const user = { id, email: userEmail, userType };
@@ -156,32 +152,31 @@ const handleLogin = async () => {
     if (err.response) {
       const data = err.response.data;
 
-      // Invalid credentials
+    
       if (data?.error === "Invalid credentials") {
         message = "• The email or password you entered is incorrect. Please try again.";
       }
 
-      // Validation errors array
+   
       else if (data?.details && Array.isArray(data.details)) {
         const friendlyMessages = data.details.map(d => {
           let text = d.replace(/"/g, "");
 
-          // General input validation (SQL injection)
+        
           if (/potential SQL injection/i.test(text)) {
             text = "• Your input contains invalid characters. Please avoid using characters like ' ; --";
           }
 
-          // General input validation (XSS attack)
           else if (/potential XSS attack/i.test(text)) {
             text = "• Your input contains forbidden characters like < > or scripts. Please remove them.";
           }
 
-          // Email invalid
+       
           else if (/email must be a valid email/i.test(text)) {
             text = "• Please enter a valid email address.";
           }
 
-          // Password invalid format
+  
           else if (/password must be/i.test(text)) {
             text = "• Your password does not meet the required format.";
           }
@@ -192,7 +187,6 @@ const handleLogin = async () => {
         message = friendlyMessages.join("<br/>");
       }
 
-      // Generic backend error
       else if (data?.error) {
         message = "• " + data.error;
       }
@@ -219,9 +213,7 @@ const handleLogin = async () => {
 
 
 
-  // =====================
-  // إرسال رمز إعادة تعيين كلمة المرور
-  // =====================
+
   const handleResetPassword = async (e) => {
     e.preventDefault();
     try {
@@ -243,18 +235,14 @@ const handleLogin = async () => {
     }
   };
 
-  // =====================
-  // تأكيد الكود
-  // =====================
+
   const handleCodeSubmit = (e) => {
     e.preventDefault();
     setShowCode(false);
     setShowNewPass(true);
   };
 
-  // =====================
-  // تعيين كلمة المرور الجديدة
-  // =====================
+
   const handleNewPassword = async (e) => {
     e.preventDefault();
     try {
@@ -281,7 +269,7 @@ const handleLogin = async () => {
 
 const handleGoogleLogin = async () => {
   try {
-    // فتح صفحة Google login
+   
     window.open("http://localhost:5005/alumni-portal/auth/google", "_self");
   } catch (err) {
     Swal.fire({
@@ -294,20 +282,16 @@ const handleGoogleLogin = async () => {
 
 const handleLinkedInLogin = async () => {
   try {
-    // console.log("Initiating LinkedIn login (no National ID required for existing users)");
-    
-    // Get LinkedIn auth URL without National ID (for login)
+
     const res = await fetch(`http://localhost:5005/alumni-portal/auth/linkedin`);
     const data = await res.json();
 
-    // console.log("LinkedIn login auth URL response:", data);
 
     if (data.status === "success" && data.data?.authUrl) {
-      // console.log("Redirecting to LinkedIn for login:", data.data.authUrl);
-      // Clear any existing tokens to ensure fresh login
+
       localStorage.removeItem("token");
       localStorage.removeItem("user");
-      // Redirect to LinkedIn OAuth
+ 
       window.location.href = data.data.authUrl;
     } else {
       console.error("LinkedIn login auth URL request failed:", data);
@@ -329,7 +313,7 @@ const handleLinkedInLogin = async () => {
 
 
   return (
-    // <div className="login-container" style={{ backgroundImage: `url(${Unibackground})` }}>
+ 
      <div className="login-container" style={{ backgroundImage: `url(${NewBg})` }}>
 
       <Header />
@@ -337,7 +321,7 @@ const handleLinkedInLogin = async () => {
       <div className="wrapperr">
         <div className="login-content">
           <h1 className="login-title">{t("welcomePortal")}</h1>
-          {/* <h4 className="login-subtitle">{t("helwanUniversity")}</h4> */}
+        
           <h4 className="login-subtitle">{t("capitalUniversity")}</h4>
 
 
@@ -389,19 +373,19 @@ const handleLinkedInLogin = async () => {
               </p>
             </form>
             <hr className="form-divider" />
-            {/* زر LinkedIn login تحت الفورم */}
+           
             <LinkedInLoginButton
               onClick={handleLinkedInLogin}
               text={t("signInWithLinkedIn") || "Sign in with LinkedIn"}
             />
-            {/* زر Google login تحت الفورم */}
+        
             <GoogleLoginButton
               onClick={handleGoogleLogin}
               text={t("signInWithGoogle")}
             />
           </div>
 
-          {/* RESET MODALS */}
+     
           {showReset && (
             <div className="modal-overlay">
               <div className="reset-modal">

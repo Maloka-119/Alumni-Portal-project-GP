@@ -12,7 +12,7 @@ const CommentsSection = ({ post, postPerm, onUpdatePosts }) => {
     const navigate = useNavigate();
     const [commentInput, setCommentInput] = useState("");
 
-    // دالة إضافة تعليق
+ 
     const handleCommentSubmit = async () => {
         if (!postPerm.canAdd || !commentInput.trim()) return;
 
@@ -29,7 +29,7 @@ const CommentsSection = ({ post, postPerm, onUpdatePosts }) => {
                     author: { ...res.data.comment.author, "user-type": "admin" },
                 };
 
-                // تحديث البيانات في الكومبوننت الأب
+               
                 onUpdatePosts(post.id, [...post.comments, newComment]);
                 setCommentInput("");
             }
@@ -38,7 +38,7 @@ const CommentsSection = ({ post, postPerm, onUpdatePosts }) => {
         }
     };
 
-    // دالة حذف تعليق
+ 
     const handleDeleteComment = async (commentId) => {
         try {
             await API.delete(`/posts/comments/${commentId}`);
@@ -49,7 +49,7 @@ const CommentsSection = ({ post, postPerm, onUpdatePosts }) => {
         }
     };
 
-    // دالة تعديل تعليق
+
     const handleEditComment = async (comment) => {
         const { value: newContent } = await Swal.fire({
             input: "textarea",

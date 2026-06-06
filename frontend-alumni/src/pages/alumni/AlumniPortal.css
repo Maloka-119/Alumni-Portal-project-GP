@@ -1,4 +1,3 @@
-/* General */
 html, body {
   margin: 0;
   padding: 0;
@@ -13,7 +12,7 @@ html, body {
   min-height: 100vh;
 }
 
-/* Light & Dark Mode */
+
 .light {
   background: #f9fafb;
   color: #1f2937;
@@ -24,9 +23,9 @@ html, body {
   color: #f3f4f6;
 }
 
-/* Header */
+
 .page-header {
-  height: 64px; /* ارتفاع ثابت */
+  height: 64px; 
   padding: 0 2rem;
   display: flex;
   align-items: center;
@@ -117,15 +116,15 @@ html, body {
   background: rgba(255,255,255,0.25);
 }
 
-/* Layout */
+
 .alumni-layout {
   display: flex;
   flex: 1;
   overflow: hidden;
-  margin-top: 64px; /* مطابق ارتفاع الهيدر */
+  margin-top: 64px; 
 }
 
-/* Sidebar */
+
 .alumni-sidebar {
   width: 240px;
   background: #f3f4f6;
@@ -133,7 +132,7 @@ html, body {
   overflow-y: auto;
   transition: all 0.3s ease;
   position: fixed;
-  top: 64px; /* مطابق ارتفاع الهيدر */
+  top: 64px; 
   inset-inline-start: 0;
   height: calc(100vh - 64px);
   z-index: 1000;
@@ -149,7 +148,7 @@ html, body {
   overflow: hidden;
 }
 
-/* Sidebar items */
+
 .alumni-sidebar-section h3 {
   font-size: 14px;
   margin-bottom: 8px;
@@ -182,7 +181,7 @@ html, body {
   background-color: #4b5563;
 }
 
-/* Main content */
+
 .alumni-main-content {
   flex: 1;
   padding: 24px;
@@ -196,7 +195,7 @@ html, body {
   transition: margin-inline-start 0.3s ease;
 }
 
-/* لما السايدبار يتقفل */
+
 .alumni-sidebar.closed + .alumni-main-content {
   margin-inline-start: 0;
 }
@@ -217,9 +216,7 @@ html, body {
   color: #f3f4f6;
 }
 
-/* Responsive */
 
-/* أقل من 768px */
 @media (max-width: 768px) {
   .page-header {
     height: 56px;
@@ -260,7 +257,7 @@ html, body {
   }
 }
 
-/* أقل من 480px */
+
 @media (max-width: 480px) {
   .page-header {
     height: 52px;
@@ -291,10 +288,10 @@ html, body {
   }
 }
 
-/* أقل من 392px */
+
 @media (max-width: 392px) {
   .page-header {
-    /* height: 48px; */
+
     padding: 0 0.5rem;
     flex-wrap: wrap;
   }
@@ -316,14 +313,10 @@ html, body {
     margin-top: 48px;
 
   }
-/* 
-  .alumni-sidebar {
-    top: 48px;
-    height: calc(100vh - 48px);
-  } */
+
 }
 
-/* Scrollbar */
+
 .alumni-sidebar::-webkit-scrollbar,
 .alumni-main-content::-webkit-scrollbar {
   width: 8px;
@@ -340,7 +333,7 @@ html, body {
   background: #4b5563;
 }
 
-/* Contact button */
+
 .contact-btn {
   position: absolute;
   bottom: 24px;
@@ -367,7 +360,7 @@ html, body {
   background-color: #374151;
 }
 
-/* Submenu */
+
 .alumni-sidebar-submenu {
   margin-inline-start: 20px;
   list-style: none;
@@ -402,8 +395,7 @@ html, body {
 }
 
 .dark .page-header{
-  /* background: #374151; */
   background: linear-gradient(90deg, #1f2937, #374151);
   box-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  /* color: #f3f4f6; */
+
 }

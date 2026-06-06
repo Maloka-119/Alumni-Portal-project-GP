@@ -7,12 +7,10 @@
 .recontainer {
   font-family: Arial, sans-serif;
   min-height: 100vh;
-  /* تعديل: تقليل البادينج الكلي قليلاً */
   padding: 1.5rem 1rem; 
   background: repeat-y center center fixed;
   background-size: cover; 
   width: 100%;
-  /* تعديل: تقليل المسافة العلوية لضغط المحتوى للأعلى */
   padding-top: 90px; 
 }
 
@@ -25,7 +23,6 @@
 }
 
 .wrapper {
-  /* تعديل هام: تصغير العرض الأقصى للفورم لتبدو ملمومة ومتناسقة */
   max-width: 900px; 
   width: 100%;
   margin: 0 auto;
@@ -36,19 +33,16 @@
 }
 
 .main-title {
-  /* تعديل: تصغير حجم الخط قليلاً ليتناسب مع الحجم الجديد */
   font-size: 2.2rem; 
   font-weight: bold;
   color: #1e3a8a;
   margin-bottom: 0.3rem;
-  /* إضافة: لضمان التوسط */
   text-align: center; 
 }
 
 .subtitle {
   color: #5a5e68;
   margin: 0 0 1rem 0;
-  /* إضافة: لضمان التوسط */
   text-align: center; 
 }
 
@@ -56,15 +50,12 @@
   background: #ffffff;
   border-radius: 0.5rem;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  /* تعديل: تقليل البادينج الداخلي لتوفير مساحة رأسية */
   padding: 1.5rem 2rem; 
 }
 
 .form-grid {
   display: grid;
-  /* الحفاظ على تقسيمة الـ 8 أعمدة كما هي */
   grid-template-columns: repeat(8, 1fr);
-  /* تعديل: تقليل المسافة بين الحقول */
   gap: 1rem; 
 }
 
@@ -77,23 +68,19 @@
 .form-label {
   color: #1e3a8a;
   font-weight: 500;
-  /* تعديل: تقليل المسافة السفلية */
   margin-bottom: 0.3rem; 
   font-size: 0.95rem;
 }
 
 .form-inputre {
   width: 100%;
-  /* تعديل: تقليل البادينج الداخلي للحقول لتصغير حجمها رأسياً */
   padding: 0.6rem 1rem; 
   border: 1px solid #1e3a8a;
   border-radius: 0.5rem;
   font-size: 1rem;
   transition: all 0.2s ease;
-  /* تعديل: استخدام خلفية بيضاء صريحة لراحة العين بدل الشفافة */
   background-color: #fff; 
   color: #42444d;
-  /* تم إزالة backdrop-filter لأن الخلفية أصبحت بيضاء */
 }
 
 .form-inputre:focus {
@@ -103,7 +90,6 @@
 }
 
 .submit-section {
-  /* تعديل: تقليل المسافة العلوية */
   margin-top: 1.5rem; 
   text-align: center;
 }
@@ -111,7 +97,6 @@
 .register-btn {
   background-color: #1e3a8a;
   color: white;
-  /* تعديل: تقليل البادينج الرأسي للزر */
   padding: 0.6rem 3rem; 
   border: none;
   border-radius: 0.5rem;
@@ -149,7 +134,6 @@
   font-size: 0.875rem;
 }
 
-/* Phone center field */
 .phone-center {
   grid-column: 3 / span 4;
   display: flex;
@@ -171,7 +155,7 @@
   text-align: center;
 }
 
-/* Rest of the code (Messages, Media Queries, Modal) remains unchanged as requested */
+
 .message {
   margin-top: 1rem;
   padding: 0.8rem 1.2rem;
@@ -207,7 +191,7 @@
   to { opacity: 0; transform: translateY(-10px); }
 }
 
-/* Responsive adjustments */
+
 @media (max-width: 1024px) {
   .form-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -257,7 +241,7 @@
   }
 }
 
-/* مودال الرقم القومي */
+
 .nid-overlay {
   position: fixed;
   top: 0;
@@ -336,6 +320,6 @@
 .form-divider {
   border: none;
   height: 1px;
-  background: #ddd; /* لون الخط */
-  margin: 15px 0;   /* المسافة فوق وتحت الخط */
+  background: #ddd; 
+  margin: 15px 0;  
 }

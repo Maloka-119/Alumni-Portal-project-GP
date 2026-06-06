@@ -301,7 +301,7 @@
   cursor: pointer;
 }
 
-/* Smooth custom scrollbar */
+
 .messages-box::-webkit-scrollbar {
   width: 8px;
 }
@@ -321,12 +321,12 @@
   background: #94a3b8;
 }
 
-/* Firefox support */
+
 .messages-box {
   scrollbar-width: thin;
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
-/* ================= Chat Container Dark Mode ================= */
+
 .dark .chat-container {
   background: #111827;
   color: #f9fafb;
@@ -465,7 +465,7 @@
   scrollbar-color: #374151 #1e293b;
 }
 
-/* ===== Chat Container Responsive ===== */
+
 @media (max-width: 768px) {
   .chat-container {
     height: calc(100vh - 50px);

@@ -35,7 +35,7 @@ const AlumniAdminPosts = () => {
     setError(null);
     try {
       const res = await API.get("/posts/admin");
-      // console.log("admin posts API response:", res.data);
+
 
       const filtered = (res.data?.data || []).filter(p => !p["group-id"]); 
   
@@ -257,9 +257,7 @@ const PostCard = ({ post, currentUser, handleLikeToggle, toggleComments, handleA
         <button onClick={() => { toggleComments(); setShowComments(!showComments); }}>
           <MessageCircle size={16} /> {post.comments.length}
         </button>
-        {/* <button>
-          <Share2 size={16} /> {post.shares}
-        </button> */}
+  
       </div>
 
       {showComments && (
@@ -270,7 +268,7 @@ const PostCard = ({ post, currentUser, handleLikeToggle, toggleComments, handleA
                 <img src={c.avatar} className="uni-comment-avatar" />
                 <div className="comment-text"
                 onClick={() => {
-                  // نتحقق إن الاسم مش بوابة الجامعة والـ user_id موجود
+                
                   if (c.user_id && c.userName !== "Alumni Portal - Helwan University") {
                     navigate(`/graduate/dashboard/friends/${c.user_id}`);
                   }
