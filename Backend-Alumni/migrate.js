@@ -21,7 +21,7 @@ const umzug = new Umzug({
 (async () => {
   try {
     await umzug.up();
-    console.log("All migrations performed successfully ");
+  
     process.exit(0);
   } catch (err) {
     console.error(err);

@@ -29,7 +29,7 @@ const UniversityServicesAdmin = ({ currentUser }) => {
       const data = res.data.data;
       if (res.data.success) setServices(data);
     } catch (error) {
-      console.log(error);
+  
     }
   };
 

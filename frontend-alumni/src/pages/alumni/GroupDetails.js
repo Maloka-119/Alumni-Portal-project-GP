@@ -40,7 +40,8 @@ function GroupDetails({ group, goBack }) {
     fetchMembers(); 
   }, [group.id]);
 
-  console.log("GROUP =", group);
+
+
 
   const fetchMembers = async () => {
     try {
@@ -238,7 +239,7 @@ function GroupDetails({ group, goBack }) {
     });
   };
   
-  console.log("IMAGE TYPE:", newPost.image);
+ 
   
   const handleDeletePost = async (postId) => {
     try {

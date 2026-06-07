@@ -549,10 +549,7 @@ const getSentInvitations = async (req, res) => {
  */
 const sendAutoGroupInvitation = async (userId) => {
   try {
-    console.log("\n" + "📨".repeat(30));
-    console.log("📨 SEND AUTO GROUP INVITATION at:", new Date().toISOString());
-    console.log("📨 User ID:", userId);
-    console.log("📨".repeat(30));
+
     
     logger.info("Auto group invitation process started", {
       userId,
@@ -560,7 +557,7 @@ const sendAutoGroupInvitation = async (userId) => {
     });
 
    
-    console.log("\n📍 [0] CHECKING EXISTING INVITATIONS:");
+   
     const existingInvitations = await Invitation.findAll({
       where: {
         receiver_id: userId,
@@ -569,18 +566,18 @@ const sendAutoGroupInvitation = async (userId) => {
     });
 
     if (existingInvitations.length > 0) {
-      console.log(`   ⚠️ Found ${existingInvitations.length} existing invitations:`);
+    
       existingInvitations.forEach((inv, idx) => {
-        console.log(`      - Invitation ${idx + 1}: ID=${inv.id}, GroupID=${inv.group_id}, Status=${inv.status}`);
+     
       });
-      console.log(`   ✅ Already invited before - skipping`);
+    
       return true; 
     }
 
-    console.log(`   ✅ No previous invitations found`);
+ 
 
     // 1. Get graduate data
-    console.log("\n📍 [1] FETCHING GRADUATE DATA:");
+
     const graduate = await Graduate.findOne({
       where: { graduate_id: userId },
       include: [
@@ -592,17 +589,14 @@ const sendAutoGroupInvitation = async (userId) => {
     });
 
     if (!graduate) {
-      console.log("   ❌ Graduate not found");
+    
       return false;
     }
 
-    console.log("   ✅ Graduate found:");
-    console.log(`      - User ID: ${userId}`);
-    console.log(`      - Faculty Code: ${graduate.faculty_code || 'null'}`);
-    console.log(`      - Graduation Year: ${graduate["graduation-year"] || 'null'}`);
+ 
 
     if (!graduate.faculty_code) {
-      console.log("\n📍 [2] FACULTY CODE IS NULL - CHECKING IF WE SHOULD WAIT");
+     
       
      
       let nationalId = null;
@@ -610,25 +604,22 @@ const sendAutoGroupInvitation = async (userId) => {
         const decrypted = aes.decryptNationalId(graduate.User["national-id"]);
         if (decrypted) {
           nationalId = decrypted;
-          console.log(`   - Decrypted national ID: ${nationalId.substring(0, 6)}****`);
+        
         }
       }
 
       if (nationalId) {
-        console.log(`   - Trying to fetch fresh data from external API...`);
+      
         
         try {
           
           const apiUrl = `${process.env.GRADUATE_API_URL}?nationalId=${nationalId}`;
-          console.log(`   - Calling: ${apiUrl}`);
+        
           
           const response = await axios.get(apiUrl, { timeout: 5000 });
           
           if (response.data && response.data.faculty) {
-            console.log(`   ✅ Got fresh data from API:`);
-            console.log(`      - Faculty: ${response.data.faculty}`);
-            console.log(`      - Department: ${response.data.department}`);
-            console.log(`      - Graduation Year: ${response.data["graduation-year"]}`);
+     
             
           
             const facultyCode = normalizeCollegeName(response.data.faculty);
@@ -638,18 +629,17 @@ const sendAutoGroupInvitation = async (userId) => {
               graduate.skills = response.data.department || graduate.skills;
               
               await graduate.save();
-              console.log(`   ✅ Updated faculty_code to: ${facultyCode}`);
+           
             }
           }
         } catch (error) {
-          console.log(`   ⚠️ Could not fetch from API: ${error.message}`);
+         
         }
       }
       
      
       if (!graduate.faculty_code) {
-        console.log(`   ❌ Faculty code still null after API attempt`);
-        console.log(`   ➡️  No invitation will be sent (waiting for faculty data)`);
+      
         
         logger.info("Faculty code null, skipping auto invitation", {
           userId,
@@ -661,9 +651,7 @@ const sendAutoGroupInvitation = async (userId) => {
     }
 
     // 2. Find matching group
-    console.log("\n📍 [3] FINDING MATCHING GROUP:");
-    console.log(`   - Using faculty_code: "${graduate.faculty_code}"`);
-    console.log(`   - graduationYear: ${graduate["graduation-year"]}`);
+
 
     const matchingGroup = await findMatchingGroup(
       graduate.faculty_code,
@@ -671,8 +659,7 @@ const sendAutoGroupInvitation = async (userId) => {
     );
 
     if (!matchingGroup) {
-      console.log("   ❌ NO MATCHING GROUP FOUND");
-      console.log(`   ➡️  No invitation sent (no group for this faculty)`);
+   
       
       logger.info("No matching group found for auto invitation", {
         userId,
@@ -683,22 +670,16 @@ const sendAutoGroupInvitation = async (userId) => {
       return false;
     }
 
-    console.log("   ✅ MATCHING GROUP FOUND:");
-    console.log(`      - Group ID: ${matchingGroup.id}`);
-    console.log(`      - Group Name: ${matchingGroup["group-name"]}`);
-    console.log(`      - Group Faculty Code: ${matchingGroup.faculty_code || 'null'}`);
+
     
    
     if (matchingGroup.faculty_code && matchingGroup.faculty_code !== graduate.faculty_code) {
-      console.log(`   ⚠️ WARNING: Faculty code mismatch!`);
-      console.log(`      - Group belongs to: ${matchingGroup.faculty_code}`);
-      console.log(`      - Graduate belongs to: ${graduate.faculty_code}`);
-      console.log(`   ❌ Will not send invitation to wrong faculty`);
+ 
       return false;
     }
 
    
-    console.log("\n📍 [4] DOUBLE-CHECKING INVITATIONS:");
+   
     const finalCheck = await Invitation.findOne({
       where: {
         sender_id: 1,
@@ -708,13 +689,12 @@ const sendAutoGroupInvitation = async (userId) => {
     });
 
     if (finalCheck) {
-      console.log(`   ⚠️ Invitation already exists (ID: ${finalCheck.id})`);
-      console.log(`   ✅ Already invited - skipping`);
+   
       return true;
     }
 
     // 3. Create invitation
-    console.log("\n📍 [5] CREATING INVITATION:");
+
     
     const invitation = await Invitation.create({
       sender_id: 1,
@@ -723,10 +703,10 @@ const sendAutoGroupInvitation = async (userId) => {
       status: "pending",
     });
 
-    console.log(`   ✅ Invitation created with ID: ${invitation.id}`);
+   
 
     // 4. Create notification
-    console.log("\n📍 [6] CREATING NOTIFICATION:");
+  
     
     await notificationService.notifyAddedToGroup(
       userId,
@@ -735,7 +715,7 @@ const sendAutoGroupInvitation = async (userId) => {
       matchingGroup.id
     );
 
-    console.log(`   ✅ Notification created`);
+   
 
     logger.info("Auto group invitation sent successfully", {
       userId,
@@ -746,8 +726,7 @@ const sendAutoGroupInvitation = async (userId) => {
       timestamp: new Date().toISOString(),
     });
 
-    console.log("\n✅ AUTO INVITATION COMPLETED");
-    console.log("📨".repeat(30) + "\n");
+
 
     return true;
   } catch (error) {

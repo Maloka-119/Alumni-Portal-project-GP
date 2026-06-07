@@ -20,7 +20,7 @@ User.hasMany(Post, { foreignKey: "author-id" });
 router.get("/reports-stats", authMiddleware.protect, async (req, res) => {
   try {
     const user = req.user;
-    console.log("🔍 User in reports-stats:", user);
+  
 
     const allowedUserTypes = ["admin", "staff"];
 

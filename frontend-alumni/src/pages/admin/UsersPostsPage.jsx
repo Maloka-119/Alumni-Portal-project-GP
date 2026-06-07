@@ -224,7 +224,7 @@ const navigate = useNavigate();
         )
       );
     } catch (err) {
-      console.log(err);
+    
     }
   };
 
@@ -256,7 +256,7 @@ const navigate = useNavigate();
         )
       );
     } catch (err) {
-      console.log(err);
+ 
     }
   };
   

@@ -18,7 +18,7 @@ const getAllPermissions = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    console.log("🔹 Fetching all permissions...");
+   
 
     const permissions = await Permission.findAll();
 
@@ -31,13 +31,11 @@ const getAllPermissions = async (req, res) => {
       timestamp: new Date().toISOString(),
     });
 
-    console.log(`🔹 Total permissions fetched: ${permissions.length}`);
+   
 
     // Log detailed permission info for debugging (console only)
     permissions.forEach((p) => {
-      console.log(
-        `Permission: ${p.name}, can-view: ${p["can-view"]}, can-edit: ${p["can-edit"]}, can-delete: ${p["can-delete"]}, can-add: ${p["can-add"]}`
-      );
+
     });
 
     // Log permission summary for security monitoring

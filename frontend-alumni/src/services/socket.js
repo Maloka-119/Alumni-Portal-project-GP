@@ -27,9 +27,9 @@ export const initSocket = (token) => {
     tokenStored = token;
 
    
-    socket.on("connect", () => console.log("✅ Socket connected:", socket.id));
+    socket.on("connect", () => {});
     socket.on("connect_error", (err) => console.error("❌ Socket connect error:", err));
-    socket.on("disconnect", (reason) => console.log("🔌 Socket disconnected:", reason));
+    socket.on("disconnect", () => {});
 
 
     window.socket = socket;
@@ -186,5 +186,5 @@ export const disconnectSocket = () => {
   socket.disconnect();
   socket = null;
   tokenStored = null;
-  console.log("🔌 Socket fully disconnected");
+
 };

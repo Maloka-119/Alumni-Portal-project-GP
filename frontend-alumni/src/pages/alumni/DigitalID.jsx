@@ -73,7 +73,7 @@ function DigitalID() {
             title: t("digitalId_shareTitle"),
             text: t("digitalId_shareText"),
             files: [file],
-          }).catch((error) => console.log("Error sharing:", error));
+        }).catch(() => {});
         } else {
           alert(t("digitalId_noShareSupport"));
         }

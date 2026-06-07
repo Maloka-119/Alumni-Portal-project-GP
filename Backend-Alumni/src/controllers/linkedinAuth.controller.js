@@ -513,7 +513,7 @@ const handleLinkedInCallback = asyncHandler(async (req, res) => {
         timestamp: new Date().toISOString(),
       });
      
-      console.log("Using OpenID Connect userinfo data only");
+     
     }
 
     if (!email) {

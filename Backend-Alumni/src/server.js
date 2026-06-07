@@ -241,11 +241,11 @@ const ensurePermissionsSeeded = async () => {
     );
 
     if (existingPermissions.length > 0 && missingPermissions.length === 0) {
-      console.log(" All permissions already exist. Skipping seeding...");
+    
       return;
     }
 
-    console.log(" Resetting and reseeding permissions...");
+  
     await Permission.destroy({ where: {} });
     await sequelize.query('ALTER SEQUENCE "Permission_id_seq" RESTART WITH 1;');
 
@@ -258,10 +258,10 @@ const ensurePermissionsSeeded = async () => {
         "can-add": false,
       });
 
-      console.log(` Added permission: ${permName}`);
+     
     }
 
-    console.log(" Permissions reset and seeded successfully!");
+   
   } catch (error) {
     console.error(" Error during permission seeding:", error);
   }
@@ -272,7 +272,7 @@ const ensurePermissionsSeeded = async () => {
 sequelize
   .authenticate()
   .then(async () => {
-    console.log("Database connected successfully.");
+
 
     // Ensure Notification table has correct structure
     const Notification = require("./models/Notification");
@@ -296,18 +296,18 @@ sequelize
         `);
 
         if (!columnExists[0][0].exists) {
-          console.log(" Adding navigation column to Notification table...");
+       
           await sequelize.query(`
             ALTER TABLE "Notification" 
             ADD COLUMN navigation JSON
           `);
-          console.log(" Navigation column added successfully.");
+      
         }
       } else {
         // Table doesn't exist - create it
-        console.log(" Creating Notification table...");
+      
         await Notification.sync({ force: false, alter: false });
-        console.log(" Notification table created successfully.");
+     
       }
     } catch (error) {
       console.error(" Error checking Notification table:", error);
@@ -325,14 +325,14 @@ sequelize
         "first-name": "Alumni Portal -",
         "last-name": " Helwan University",
       });
-      console.log("Default Admin created");
+   
       await sequelize.query('ALTER SEQUENCE "User_id_seq" RESTART WITH 2;');
     }
 
     // Seed permissions
     await ensurePermissionsSeeded();
 
-    console.log(" Database initialization completed successfully.");
+   
   })
   .catch(async (err) => {
     console.error(" Error connecting to database:", err);
@@ -342,4 +342,4 @@ sequelize
 
 
 const PORT = process.env.PORT || 5005;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {});

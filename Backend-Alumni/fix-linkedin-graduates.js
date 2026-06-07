@@ -11,7 +11,7 @@ const { User, Graduate } = require("./src/models");
 
 async function fixLinkedInGraduates() {
   try {
-    console.log("🔍 Finding LinkedIn users without Graduate records...");
+   
 
     // Find all users who:
     // 1. Are graduates
@@ -33,10 +33,10 @@ async function fixLinkedInGraduates() {
     // Filter users who don't have a Graduate record
     const usersToFix = usersWithoutGraduate.filter((user) => !user.Graduate);
 
-    console.log(`📊 Found ${usersToFix.length} LinkedIn users without Graduate records`);
+
 
     if (usersToFix.length === 0) {
-      console.log("✅ All LinkedIn users already have Graduate records!");
+  
       await sequelize.close();
       return;
     }
@@ -52,14 +52,13 @@ async function fixLinkedInGraduates() {
           "profile-picture-url": user.profile_picture_url || null,
         });
         created++;
-        console.log(`✅ Created Graduate record for user ID: ${user.id} (${user.email})`);
+      
       } catch (error) {
         console.error(`❌ Error creating Graduate record for user ID ${user.id}:`, error.message);
       }
     }
 
-    console.log(`\n✨ Successfully created ${created} Graduate records!`);
-    console.log("📝 Note: These users have 'pending' status and need admin approval.");
+
 
     await sequelize.close();
   } catch (error) {

@@ -22,43 +22,24 @@ const { decryptNationalId } = require("../utils/aes");
  * @access Private (Graduates only)
  */
 const createDocumentRequest = asyncHandler(async (req, res) => {
-  console.log("\n" + "=".repeat(70));
-  console.log("CREATE DOCUMENT REQUEST - DEBUG START");
-  console.log("=".repeat(70));
+
 
   // ==================== PHASE 0: DEBUG LOGS ====================
-  console.log("\nPHASE 0: REQUEST ARRIVED AT CONTROLLER");
-  console.log("   Time:", new Date().toISOString());
-  console.log("   Controller invoked successfully!");
+
 
   // ==================== PHASE 1: REQUEST INSPECTION ====================
-  console.log("\nPHASE 1: REQUEST INSPECTION");
-  console.log("   Method:", req.method);
-  console.log("   URL:", req.originalUrl || req.url);
-  console.log("   Headers:");
-  console.log("     - Content-Type:", req.headers["content-type"] || "NOT SET");
-  console.log("     - Content-Length:", req.headers["content-length"] || "0");
-  console.log(
-    "     - Authorization:",
-    req.headers["authorization"] ? "PRESENT" : "MISSING"
-  );
+
 
   // Check req.body after multer
-  console.log("\nBODY PARSER STATUS (AFTER MULTER):");
-  console.log("   req.body exists?", !!req.body);
-  console.log("   Type of req.body:", typeof req.body);
+
 
   if (req.body) {
-    console.log("   req.body keys:", Object.keys(req.body));
+   
 
     // Log all body fields
     Object.keys(req.body).forEach((key) => {
       const value = req.body[key];
-      console.log(
-        `     - ${key}:`,
-        value,
-        `(type: ${typeof value}, length: ${value ? value.length : 0})`
-      );
+
     });
 
     // Search for document_type in any form
@@ -70,51 +51,37 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
         key.toLowerCase().includes("doc")
     );
 
-    console.log("   Possible document_type fields:", possibleDocTypeFields);
+  
 
     if (possibleDocTypeFields.length > 0) {
       possibleDocTypeFields.forEach((field) => {
-        console.log(`     Checking ${field}:`, req.body[field]);
+      
       });
     }
   } else {
-    console.log("   WARNING: req.body is undefined or null!");
+  
   }
 
   // Check files
-  console.log("\nFILES STATUS:");
-  console.log("   req.files exists?", !!req.files);
-  console.log("   req.file exists?", !!req.file);
+
 
   if (req.files && Array.isArray(req.files)) {
-    console.log("   Number of files:", req.files.length);
+  
     req.files.forEach((file, i) => {
-      console.log(`   File ${i + 1}:`);
-      console.log(`     - Fieldname: ${file.fieldname}`);
-      console.log(`     - Original: ${file.originalname}`);
-      console.log(`     - Size: ${file.size} bytes`);
-      console.log(`     - Mimetype: ${file.mimetype}`);
-      console.log(`     - Path: ${file.path}`);
-      console.log(`     - Filename: ${file.filename}`);
+
     });
   } else if (req.file) {
-    console.log("   Single file:");
-    console.log(`     - Fieldname: ${req.file.fieldname}`);
-    console.log(`     - Original: ${req.file.originalname}`);
-    console.log(`     - Path: ${req.file.path}`);
+
   } else {
-    console.log("   No files received");
+
   }
 
   // Check user authentication
-  console.log("\nUSER AUTH STATUS:");
-  console.log("   req.user exists?", !!req.user);
+
   if (req.user) {
-    console.log("   User ID:", req.user.id);
-    console.log("   User Type:", req.user["user-type"]);
-    console.log("   Full user object:", JSON.stringify(req.user, null, 2));
+
   } else {
-    console.log("   ERROR: No user in request!");
+
     return res.status(401).json({
       success: false,
       message: "Authentication required.",
@@ -123,17 +90,13 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
   }
 
   // ==================== PHASE 2: SAFE DATA EXTRACTION ====================
-  console.log("\nPHASE 2: SAFE DATA EXTRACTION");
+
 
   // Use req.body directly (multer will handle the data)
   const requestBody = req.body || {};
   const requestFiles = req.files || [];
 
-  console.log("   Using requestBody:", requestBody);
-  console.log(
-    "   Using requestFiles:",
-    requestFiles.length > 0 ? `${requestFiles.length} file(s)` : "none"
-  );
+
 
   // Search for document_type in all possible field names
   let document_type = null;
@@ -152,7 +115,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
     "request-type",
   ];
 
-  console.log("\nSEARCHING FOR DOCUMENT_TYPE:");
+
   for (const name of possibleNames) {
     if (
       requestBody[name] !== undefined &&
@@ -160,7 +123,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       requestBody[name] !== ""
     ) {
       document_type = requestBody[name];
-      console.log(`   Found as '${name}':`, document_type);
+   
       break;
     }
   }
@@ -177,7 +140,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
         const lowerKey = key.toLowerCase();
         if (lowerKey.includes("doc") || lowerKey.includes("type")) {
           document_type = requestBody[key];
-          console.log(`   Found in field '${key}':`, document_type);
+        
           break;
         }
       }
@@ -204,24 +167,21 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       : [requestBody.attachments];
   }
 
-  console.log("\nEXTRACTED DATA:");
-  console.log("   document_type:", document_type || "NOT FOUND!");
-  console.log("   language:", language);
-  console.log("   attachments count:", attachments.length);
+
 
   if (attachments.length > 0) {
-    console.log("   Attachments details:");
+  
     attachments.forEach((att, i) => {
       if (att.originalname) {
-        console.log(`     ${i + 1}. ${att.originalname} (${att.size} bytes)`);
+       
       } else {
-        console.log(`     ${i + 1}.`, att);
+      
       }
     });
   }
 
   // ==================== PHASE 3: VALIDATION ====================
-  console.log("\nPHASE 3: VALIDATION");
+
 
   // CRITICAL: Check if document_type exists
   if (!document_type) {
@@ -255,83 +215,69 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
   }
 
   const user = req.user;
-  console.log("User authenticated:", user.id, `(${user["user-type"]})`);
+ 
 
   // 1️⃣ Check if user is graduate
   if (user["user-type"] !== "graduate") {
-    console.log("User is not a graduate! User type:", user["user-type"]);
+  
     return res.status(403).json({
       success: false,
       message: "Only graduates can create document requests.",
     });
   }
-  console.log("User is a graduate");
+
 
   // ==================== PHASE 4: DATABASE OPERATIONS ====================
-  console.log("\nPHASE 4: DATABASE OPERATIONS");
+
 
   try {
-    console.log("Fetching user from database with ID:", user.id);
+ 
     const dbUser = await User.findByPk(user.id, {
       attributes: ["id", "national-id", "first-name", "last-name"],
     });
 
     if (!dbUser) {
-      console.log("User not found in database!");
+    
       return res.status(404).json({
         success: false,
         message: "User not found. Please login again.",
       });
     }
 
-    console.log("User found in database");
-    console.log("   First name:", dbUser["first-name"]);
-    console.log("   Last name:", dbUser["last-name"]);
-    console.log(
-      "   National ID length:",
-      dbUser["national-id"] ? dbUser["national-id"].length : 0
-    );
-    console.log(
-      "   National ID (first 20 chars):",
-      dbUser["national-id"]
-        ? dbUser["national-id"].substring(0, 20) + "..."
-        : "null"
-    );
+
 
     const national_id = dbUser["national-id"];
 
     // Check document type
-    console.log("\nDOCUMENT TYPE VALIDATION:");
-    console.log("   Requested type code:", document_type);
+
     const documentType = getDocumentByCode(document_type);
     if (!documentType) {
-      console.log("Invalid document type!");
+   
       return res.status(400).json({
         success: false,
         message: "Invalid document type. Please select a valid document type.",
         validTypes: ["GRAD_CERT", "STATUS_STMT", "OTHER"], // Add correct types here
       });
     }
-    console.log("Document type valid:", documentType.name_ar);
+    
 
     // Check if needs attachments
-    console.log("\nATTACHMENTS CHECK:");
+ 
     const needsAttachments = requiresAttachments(document_type);
-    console.log("   Document requires attachments?", needsAttachments);
-    console.log("   Attachments provided:", attachments.length);
+ 
 
     if (needsAttachments && attachments.length === 0) {
-      console.log("Missing required attachments");
+   
       return res.status(400).json({
         success: false,
         message:
           "This document requires attachments. Please upload required documents.",
       });
     }
-    console.log("Attachments check passed");
+   
 
     // ==================== PHASE 5: CREATE REQUEST ====================
-    console.log("\nPHASE 5: CREATING DOCUMENT REQUEST");
+  
 
     // Prepare attachments for storage
     let attachmentsForDB = null;
@@ -354,7 +300,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       status: document_type === "GRAD_CERT" ? "under_review" : "pending",
     };
 
-    console.log("Request data to save:");
+
     Object.keys(requestData).forEach((key) => {
       let value = requestData[key];
       let displayValue;
@@ -369,17 +315,12 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
         displayValue = value;
       }
 
-      console.log(`   ${key}:`, displayValue);
+     
     });
 
-    console.log("\nSaving to database...");
     const documentRequest = await DocumentRequest.create(requestData);
 
-    console.log("\nSUCCESS: Document request created!");
-    console.log("   Request ID:", documentRequest.document_request_id);
-    console.log("   Request Number:", documentRequest.request_number);
-    console.log("   Status:", documentRequest.status);
-    console.log("   Created at:", documentRequest["created-at"]);
+ 
 
     // Response
     const responseData = {
@@ -396,9 +337,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
       },
     };
 
-    console.log("\n" + "=".repeat(70));
-    console.log("CREATE DOCUMENT REQUEST - DEBUG END SUCCESS");
-    console.log("=".repeat(70) + "\n");
+
 
     res.status(201).json(responseData);
   } catch (error) {
@@ -444,7 +383,7 @@ const createDocumentRequest = asyncHandler(async (req, res) => {
 
     res.status(500).json(errorResponse);
 
-    console.log("=".repeat(70) + "\n");
+   
   }
 });
 
@@ -837,9 +776,7 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
   const user = req.user;
   const { status, graduate_id, page = 1, limit = 20 } = req.query;
 
-  console.log("\n================ GET ALL DOCUMENT REQUESTS DEBUG ================");
-  console.log("User ID:", user.id);
-  console.log("User Type:", user["user-type"]);
+
 
   //  Authorization
   if (!["staff", "admin"].includes(user["user-type"])) {
@@ -953,7 +890,7 @@ const getAllDocumentRequests = asyncHandler(async (req, res) => {
       data: enhancedRequests,
     });
   } catch (error) {
-    console.log("DB OR MAPPING ERROR:", error);
+  
 
     return res.status(500).json({
       success: false,

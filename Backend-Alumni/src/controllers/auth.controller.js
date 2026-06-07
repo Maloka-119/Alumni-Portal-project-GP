@@ -118,8 +118,7 @@ async function sendVerificationEmail(email, code) {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log(`✅ Verification code sent successfully to ${email}`);
-    console.log(`📧 Message ID: ${info.messageId}`);
+
     return info;
   } catch (error) {
     console.error("❌ Error sending verification email:", error);
@@ -194,7 +193,7 @@ const registerUser = asyncHandler(async (req, res) => {
       externalData = staffResp.data;
     }
   } catch (e) {
-    console.log("Staff API check failed:", e.message);
+   
   }
 
   // --- Graduate check  ---
@@ -216,7 +215,7 @@ const registerUser = asyncHandler(async (req, res) => {
         statusToLogin = "pending";
       }
     } catch (e) {
-      console.log("Graduate API check failed:", e.message);
+    
     
       statusToLogin = "pending";
     }
@@ -252,7 +251,7 @@ const registerUser = asyncHandler(async (req, res) => {
         try {
           await sendAutoGroupInvitation(user.id);
         } catch (e) {
-          console.log("Auto invite error:", e.message);
+         
         }
       }, 500);
     }
@@ -326,10 +325,6 @@ const loginUser = asyncHandler(async (req, res) => {
   }
 
 
-  console.log("\n🔄 CHECKING GRADUATE DATA ON LOGIN:");
-  console.log(`   - User ID: ${user.id}`);
-  console.log(`   - User Type: ${user["user-type"]}`);
-  console.log(`   - Email: ${user.email}`);
 
   let dataUpdated = false; 
   let graduate = null;
@@ -340,22 +335,12 @@ const loginUser = asyncHandler(async (req, res) => {
     });
 
     if (graduate) {
-      console.log("   - ✅ Graduate record found");
-      console.log(
-        `      - Current faculty_code: ${graduate.faculty_code || "missing"}`
-      );
-      console.log(
-        `      - Current graduation-year: ${
-          graduate["graduation-year"] || "missing"
-        }`
-      );
-      console.log(`      - Current skills: ${graduate.skills || "missing"}`);
+
+    
 
    
       if (!graduate.faculty_code || !graduate["graduation-year"]) {
-        console.log(
-          "   - ⚠️ Missing faculty or graduation year, fetching from external system..."
-        );
+
 
   
         let nationalId = null;
@@ -364,34 +349,26 @@ const loginUser = asyncHandler(async (req, res) => {
           const decrypted = aes.decryptNationalId(user["national-id"]);
           if (decrypted) {
             nationalId = decrypted;
-            console.log(
-              "   - ✅ Decrypted national ID:",
-              nationalId.substring(0, 6) + "****"
-            );
+   
           } else {
       
             const rawNid = String(user["national-id"]).trim();
             if (/^\d{14}$/.test(rawNid)) {
               nationalId = rawNid;
-              console.log(
-                "   - Using raw national ID (unencrypted):",
-                nationalId.substring(0, 6) + "****"
-              );
+  
             } else {
-              console.log(
-                "   - ❌ Could not decrypt national ID and raw value is not valid"
-              );
+
             }
           }
         } else {
-          console.log("   - ❌ No national ID found for user");
+       
         }
 
         if (nationalId) {
           try {
           
             const externalApiUrl = `http://localhost:5155/api/details/${nationalId}`;
-            console.log(`   - Calling external API: ${externalApiUrl}`);
+       
 
             const externalResponse = await axios.get(externalApiUrl, {
               timeout: 5000,
@@ -400,13 +377,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
             if (externalResponse.data) {
               const externalData = externalResponse.data;
-              console.log("   - ✅ External data received:");
-              console.log(`      - Full Name: ${externalData.fullName}`);
-              console.log(`      - Faculty: ${externalData.faculty}`);
-              console.log(`      - Department: ${externalData.department}`);
-              console.log(
-                `      - Graduation Year: ${externalData.graduationYear}`
-              );
+  
 
               let updated = false;
 
@@ -415,14 +386,10 @@ const loginUser = asyncHandler(async (req, res) => {
                 const facultyCode = normalizeCollegeName(externalData.faculty);
                 if (facultyCode) {
                   graduate.faculty_code = facultyCode;
-                  console.log(
-                    `      - ✅ Updated faculty_code to: ${facultyCode}`
-                  );
+         
                   updated = true;
                 } else {
-                  console.log(
-                    `      - ⚠️ Could not normalize faculty: ${externalData.faculty}`
-                  );
+          
                
                   graduate.faculty_code = externalData.faculty;
                   updated = true;
@@ -434,73 +401,52 @@ const loginUser = asyncHandler(async (req, res) => {
                 const year = parseInt(externalData.graduationYear);
                 if (!isNaN(year) && year > 1900 && year < 2100) {
                   graduate["graduation-year"] = year;
-                  console.log(`      - ✅ Updated graduation year to: ${year}`);
+                
                   updated = true;
                 } else {
-                  console.log(
-                    `      - ⚠️ Invalid graduation year: ${externalData.graduationYear}`
-                  );
+        
                 }
               }
 
             
               if (externalData.department && !graduate.skills) {
                 graduate.skills = externalData.department;
-                console.log(
-                  `      - ✅ Updated skills/department to: ${externalData.department}`
-                );
+         
                 updated = true;
               }
 
               if (updated) {
                 await graduate.save();
-                console.log(
-                  "   - ✅ Graduate data synced and saved successfully"
-                );
+      
                 dataUpdated = true;
               } else {
-                console.log("   - No updates needed");
+             
               }
             }
           } catch (error) {
-            console.log("   - ❌ Failed to fetch external data:");
-            console.log(`      - Error message: ${error.message}`);
-            console.log(`      - Error code: ${error.code || "N/A"}`);
+      
 
             if (error.response) {
-              console.log(`      - Response status: ${error.response.status}`);
-              console.log(`      - Response data:`, error.response.data);
+         
             } else if (error.code === "ECONNREFUSED") {
-              console.log(
-                "      - ⚠️ External system (port 5155) is not running or refused connection"
-              );
+     
             } else if (error.code === "ETIMEDOUT") {
-              console.log("      - ⚠️ External system request timed out");
+            
             }
 
-            console.log("⚠️ Failed to sync graduate data on login:", {
-              userId: user.id,
-              email: user.email,
-              error: error.message,
-              code: error.code,
-              ip: req.ip,
-            });
+
           }
         } else {
-          console.log(
-            "   - ⚠️ No valid national ID available for external sync"
-          );
+
         }
       } else {
-        console.log("   - ✅ Graduate data already complete");
+      
       }
     } else {
-      console.log("   - ❌ Graduate record not found for user ID:", user.id);
+   
     }
   } else {
-    console.log(
-      `   - User is not a graduate (type: ${user["user-type"]}), skipping sync`
-    );
+
   }
 
 
@@ -546,7 +492,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
   if (user["user-type"] === "graduate" && dataUpdated && graduate) {
-    console.log("\n📨 Sending auto invitation during login (data was updated)...");
+  
     
     try {
     
@@ -554,7 +500,7 @@ const loginUser = asyncHandler(async (req, res) => {
       const invitationSent = await sendAutoGroupInvitation(user.id);
       
       if (invitationSent) {
-        console.log("   - ✅ Auto invitation sent successfully during login");
+       
         
      
         const updatedGrad = await Graduate.findOne({ 
@@ -562,23 +508,21 @@ const loginUser = asyncHandler(async (req, res) => {
         });
         
      
-        console.log(`   - 📬 Notification should appear now for user ${user.id}`);
+       
       } else {
-        console.log("   - ⚠️ Auto invitation not sent (already exists or no group)");
+       
       }
     } catch (error) {
-      console.log("   - ❌ Auto invitation error during login:", error.message);
+    
       
     }
   }
 
   securityLogger.successfulLogin(req.ip, email, user["user-type"]);
 
-  console.log("✅ Login successful for user:", user.email);
-  console.log(`   - User Type: ${user["user-type"]}`);
-  console.log(`   - Status: ${status}`);
+
   if (user["user-type"] === "graduate" && dataUpdated) {
-    console.log(`   - 📬 Notification sent with login response`);
+  
   }
 
 

@@ -47,7 +47,7 @@ module.exports = {
       `);
     } catch (e) {
      
-      console.log('CHECK constraints skipped (probably using SQLite)');
+   
     }
   },
 

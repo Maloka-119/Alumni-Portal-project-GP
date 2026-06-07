@@ -65,7 +65,7 @@ class ChatSocketServer {
 
   setupEventHandlers() {
     this.io.on('connection', (socket) => {
-      console.log(`User ${socket.userId} connected with socket ${socket.id}`);
+     
       
       this.handleConnection(socket);
       this.handleDisconnection(socket);
@@ -95,13 +95,13 @@ class ChatSocketServer {
     // Send unread counts
     this.sendUnreadCounts(userId);
 
-    console.log(`User ${userId} connected with socket ${socket.id}`);
+   
   }
 
   handleDisconnection(socket) {
     socket.on('disconnect', async () => {
       const userId = socket.userId;
-      console.log(`User ${userId} disconnected`);
+   
 
       // Remove from connected users
       this.connectedUsers.delete(userId);
@@ -144,7 +144,7 @@ class ChatSocketServer {
 
         // Join the chat room
         socket.join(`chat_${chatId}`);
-        console.log(`User ${userId} joined chat ${chatId}`);
+      
 
         // Mark messages as read when joining
         await Message.update(
@@ -185,7 +185,6 @@ class ChatSocketServer {
     socket.on('leave_chat', (chatId) => {
       const userId = socket.userId;
       socket.leave(`chat_${chatId}`);
-      console.log(`User ${userId} left chat ${chatId}`);
     });
   }
 
@@ -799,7 +798,7 @@ class ChatSocketServer {
   sendNotification(receiverId, notification) {
     try {
       this.io.to(`user_${receiverId}`).emit('new_notification', notification);
-      console.log(`Notification sent to user_${receiverId} via socket`);
+     
     } catch (error) {
       console.error('Error sending notification via socket:', error);
     }
@@ -809,7 +808,7 @@ class ChatSocketServer {
   broadcastNewPost(post) {
     try {
       this.io.emit('new_post', post);
-      console.log('New post broadcasted to all users via socket');
+      
     } catch (error) {
       console.error('Error broadcasting post via socket:', error);
     }
@@ -819,7 +818,7 @@ class ChatSocketServer {
   broadcastPostUpdate(post) {
     try {
       this.io.emit('post_updated', post);
-      console.log(`Post ${post.post_id || post.id} update broadcasted via socket`);
+   
     } catch (error) {
       console.error('Error broadcasting post update via socket:', error);
     }
@@ -829,7 +828,7 @@ class ChatSocketServer {
   broadcastPostDelete(postId) {
     try {
       this.io.emit('post_deleted', postId);
-      console.log(`Post ${postId} deletion broadcasted via socket`);
+    
     } catch (error) {
       console.error('Error broadcasting post deletion via socket:', error);
     }
@@ -839,7 +838,7 @@ class ChatSocketServer {
   broadcastPostLike(data) {
     try {
       this.io.emit('post_liked', data);
-      console.log(`Post ${data.postId} like broadcasted via socket`);
+    
     } catch (error) {
       console.error('Error broadcasting post like via socket:', error);
     }
@@ -849,7 +848,7 @@ class ChatSocketServer {
   broadcastPostComment(data) {
     try {
       this.io.emit('post_commented', data);
-      console.log(`Post ${data.postId} comment broadcasted via socket`);
+    
     } catch (error) {
       console.error('Error broadcasting post comment via socket:', error);
     }
@@ -859,7 +858,7 @@ class ChatSocketServer {
   emitFriendRequest(receiverId, requestData) {
     try {
       this.io.to(`user_${receiverId}`).emit('friend_request_received', requestData);
-      console.log(`Friend request from ${requestData.senderId} sent to user ${receiverId} via socket`);
+     
     } catch (error) {
       console.error('Error emitting friend request via socket:', error);
     }
@@ -869,7 +868,7 @@ class ChatSocketServer {
   emitFriendRequestAccepted(senderId, friendData) {
     try {
       this.io.to(`user_${senderId}`).emit('friend_request_accepted', friendData);
-      console.log(`Friend request acceptance from ${friendData.id} sent to user ${senderId} via socket`);
+     
     } catch (error) {
       console.error('Error emitting friend request acceptance via socket:', error);
     }
@@ -879,7 +878,7 @@ class ChatSocketServer {
   emitFriendRequestCancelled(receiverId, senderId) {
     try {
       this.io.to(`user_${receiverId}`).emit('friend_request_cancelled', { senderId });
-      console.log(`Friend request cancellation from ${senderId} sent to user ${receiverId} via socket`);
+     
     } catch (error) {
       console.error('Error emitting friend request cancellation via socket:', error);
     }
@@ -889,7 +888,7 @@ class ChatSocketServer {
   emitUnfriend(friendId, userId) {
     try {
       this.io.to(`user_${friendId}`).emit('unfriended', { friendId: userId });
-      console.log(`Unfriend notification from ${userId} sent to user ${friendId} via socket`);
+  
     } catch (error) {
       console.error('Error emitting unfriend notification via socket:', error);
     }

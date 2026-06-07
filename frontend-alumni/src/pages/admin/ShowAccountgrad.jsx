@@ -26,7 +26,7 @@ const [chatId, setChatId] = useState(null);
    
       if (res.data.status === "success" && res.data.data) {
         const data = res.data.data;
-        console.log("Profile Data:", data);
+       
         const skills = Array.isArray(data.skills) ? data.skills : JSON.parse(data.skills || "[]");
 
         const formattedPosts = (data.posts || []).map((p) => ({

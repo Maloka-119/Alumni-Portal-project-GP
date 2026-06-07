@@ -10,7 +10,7 @@ const path = require("path");
 const uploadsDir = path.join(__dirname, "..", "uploads", "documents");
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log(`✅ Created uploads directory: ${uploadsDir}`);
+
 }
 
 // ==================== MULTER CONFIGURATION ====================
@@ -52,13 +52,7 @@ const upload = multer({
 
 // ==================== DEBUG MIDDLEWARE ====================
 const debugMulterMiddleware = (req, res, next) => {
-  console.log("\n" + "=".repeat(50));
-  console.log("🔍 DEBUG MULTER MIDDLEWARE");
-  console.log("Method:", req.method);
-  console.log("Path:", req.path);
-  console.log("Content-Type:", req.headers["content-type"]);
-  console.log("Content-Length:", req.headers["content-length"] || "0");
-  console.log("Has Authorization:", !!req.headers["authorization"]);
+
   next();
 };
 
@@ -103,15 +97,12 @@ router.post(
   multerErrorHandler,
   (req, res, next) => {
    
-    console.log("\n✅ MULTER PROCESSING COMPLETE");
-    console.log("req.body keys:", Object.keys(req.body));
-    console.log("req.files count:", req.files ? req.files.length : 0);
+
 
     if (req.body && req.body.document_type) {
-      console.log("📋 Document Type Found:", req.body.document_type);
+  
     } else {
-      console.log("⚠️ Document Type NOT found in req.body");
-      console.log("All fields in req.body:", req.body);
+
     }
 
     next();
@@ -147,18 +138,12 @@ router.post(
   protect,
   upload.array("attachments", 2),
   (req, res) => {
-    console.log("\n📁 TEST UPLOAD SUCCESS!");
-    console.log("📦 Body received:", req.body);
-    console.log("📁 Files received:", req.files ? req.files.length : 0);
+
 
     if (req.files) {
       req.files.forEach((file, i) => {
-        console.log(
-          `   File ${i + 1}: ${file.fieldname} - ${file.originalname} (${
-            file.size
-          } bytes)`
-        );
-        console.log(`   Saved as: ${file.path}`);
+
+     
       });
     }
 
@@ -182,9 +167,7 @@ router.post(
 
 
 router.post("/direct-test", upload.single("attachment"), (req, res) => {
-  console.log("\n🎯 DIRECT TEST ROUTE HIT!");
-  console.log("Body:", req.body);
-  console.log("File:", req.file);
+
 
   res.json({
     success: true,

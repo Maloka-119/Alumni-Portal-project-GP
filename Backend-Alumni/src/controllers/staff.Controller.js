@@ -432,7 +432,7 @@ const createStaff = async (req, res) => {
       : "undefined",
   });
 
-  console.log("📥 Request body from frontend:", req.body);
+
 
   
   const transaction = await sequelize.transaction();

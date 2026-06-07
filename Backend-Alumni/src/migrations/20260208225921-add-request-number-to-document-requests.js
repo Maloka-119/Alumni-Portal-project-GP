@@ -19,15 +19,15 @@ module.exports = {
         unique: true,
       });
 
-      console.log("✅ Added request_number column to DocumentRequest");
+    
     } else {
-      console.log("⚠️ request_number column already exists");
+    
     }
   },
 
   down: async (queryInterface, Sequelize) => {
    
     await queryInterface.removeColumn("DocumentRequest", "request_number");
-    console.log("✅ Removed request_number column from DocumentRequest");
+  
   },
 };
