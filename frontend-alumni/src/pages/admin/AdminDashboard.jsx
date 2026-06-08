@@ -32,7 +32,7 @@ function AdminDashboard({ currentUser }) {
   const [error, setError] = useState(null);
   const perm = currentUser?.userType === "admin"
   ? { canView: true, canAdd: true, canEdit: true, canDelete: true }
-  : getPermission("Graduates Feedback", currentUser) || { canView: false, canAdd: false, canEdit: false, canDelete: false };
+  : getPermission("Portal Reports", currentUser) || { canView: false, canAdd: false, canEdit: false, canDelete: false };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -40,6 +40,7 @@ function AdminDashboard({ currentUser }) {
         setLoading(true);
         const response = await API.get("/reports-stats");
         setData(response.data.data); 
+        console.log("Dashboard data fetched:", response.data.data);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
         setError(t("errorFetchingDashboard"));
