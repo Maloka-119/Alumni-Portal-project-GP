@@ -40,7 +40,6 @@ function AdminDashboard({ currentUser }) {
         setLoading(true);
         const response = await API.get("/reports-stats");
         setData(response.data.data); 
-        console.log("Dashboard data fetched:", response.data.data);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
         setError(t("errorFetchingDashboard"));
