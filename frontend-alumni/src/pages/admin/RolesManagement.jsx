@@ -169,7 +169,18 @@ const RolesManagement = ({ currentUser }) => {
     const roleObj = rolesData.find((r) => r.role_name === selectedRole);
     if (!roleObj) return;
 
-    if (!window.confirm("Are you sure you want to remove this staff from the role?")) return;
+    const confirmResult = await Swal.fire({
+  title: t("Are you sure?"),
+  text: t("Are you sure you want to remove this staff from the role?"),
+  icon: "warning",
+  showCancelButton: true,
+  confirmButtonColor: "#d33",
+  cancelButtonColor: "#3085d6",
+  confirmButtonText: t("Yes, remove it!"),
+  cancelButtonText: t("Cancel"),
+});
+
+if (!confirmResult.isConfirmed) return;
 
     try {
       const res = await API.delete(`/roles/remove/${staffId}/${roleObj.role_id}`);

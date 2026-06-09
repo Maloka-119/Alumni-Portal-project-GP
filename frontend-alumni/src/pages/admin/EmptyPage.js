@@ -1,12 +1,16 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next'; // 1. استيراد مكتبة الترجمة
 
 const EmptyPage = ({ title }) => {
+  const { t } = useTranslation(); // 2. تفعيل دالة الترجمة
+
   return (
     <div style={styles.wrapper}>
       <div style={styles.card}>
         <h2 style={styles.title}>{title}</h2>
         <p style={styles.text}>
-          “your centralized system for full control and management.”
+          {/* 3. استبدال النص الثابت بمفتاح الترجمة */}
+          {t('system_description')}
         </p>
       </div>
     </div>

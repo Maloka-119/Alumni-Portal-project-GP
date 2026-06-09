@@ -60,12 +60,14 @@ const general = {
        "alreadyHaveAccount": "Already have an account? Login",
        "Sign up with LinkedIn": "Sign up with LinkedIn",
   "Sign in with LinkedIn": "Sign in with LinkedIn",
-
-      
+  "system_description": "your centralized system for full control and management.",
+      "welcome_admin_dashboard": "Welcome to the Administrative Dashboard",
       }
     },
     ar: {
       translation: {
+        "system_description": "نظامك المركزي للتحكم والإدارة الكاملة.",
+        "welcome_admin_dashboard": "مرحباً بك في لوحة التحكم الإدارية",
         "Sign up with LinkedIn": "التسجيل عبر لينكدإن",
   "Sign in with LinkedIn": "تسجيل الدخول عبر لينكدإن",
         "alreadyHaveAccount_ar": "لديك حساب بالفعل؟ تسجيل الدخول",
