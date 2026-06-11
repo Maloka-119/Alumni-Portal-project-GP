@@ -263,7 +263,6 @@ const createGroup = async (req, res) => {
       }
     }
 
-   
     if (faculty_code && graduation_year) {
       const existingGroup = await Group.findOne({
         where: {
@@ -289,7 +288,6 @@ const createGroup = async (req, res) => {
       }
     }
 
- 
     let imageUrl = null;
     if (req.file) {
       imageUrl = req.file.path || req.file.url || req.file.location || null;
@@ -302,7 +300,6 @@ const createGroup = async (req, res) => {
       });
     }
 
-   
     const group = await Group.create({
       "group-name": groupName,
       description,
@@ -1204,8 +1201,6 @@ const joinGroup = async (req, res) => {
       "group-id": groupId,
       "user-id": userId,
     });
-
-  
 
     // Count members after addition
     const memberCount = await GroupMember.count({

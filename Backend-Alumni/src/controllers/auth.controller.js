@@ -324,8 +324,6 @@ const loginUser = asyncHandler(async (req, res) => {
     return res.status(401).json({ error: "Invalid email or password" });
   }
 
-
-
   let dataUpdated = false; 
   let graduate = null;
 
@@ -449,7 +447,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
   }
 
-
   let status = null;
 
   if (user["user-type"] === "graduate") {
@@ -489,8 +486,6 @@ const loginUser = asyncHandler(async (req, res) => {
     }
   }
 
-
-
   if (user["user-type"] === "graduate" && dataUpdated && graduate) {
   
     
@@ -524,7 +519,6 @@ const loginUser = asyncHandler(async (req, res) => {
   if (user["user-type"] === "graduate" && dataUpdated) {
   
   }
-
 
   res.json({
     id: user.id,

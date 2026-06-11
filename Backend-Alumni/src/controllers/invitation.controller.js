@@ -556,8 +556,6 @@ const sendAutoGroupInvitation = async (userId) => {
       timestamp: new Date().toISOString(),
     });
 
-   
-   
     const existingInvitations = await Invitation.findAll({
       where: {
         receiver_id: userId,
@@ -568,14 +566,10 @@ const sendAutoGroupInvitation = async (userId) => {
     if (existingInvitations.length > 0) {
     
       existingInvitations.forEach((inv, idx) => {
-     
       });
     
       return true; 
     }
-
- 
-
     // 1. Get graduate data
 
     const graduate = await Graduate.findOne({
@@ -593,7 +587,6 @@ const sendAutoGroupInvitation = async (userId) => {
       return false;
     }
 
- 
 
     if (!graduate.faculty_code) {
      
@@ -649,10 +642,7 @@ const sendAutoGroupInvitation = async (userId) => {
         return false;
       }
     }
-
     // 2. Find matching group
-
-
     const matchingGroup = await findMatchingGroup(
       graduate.faculty_code,
       graduate["graduation-year"]
@@ -669,17 +659,13 @@ const sendAutoGroupInvitation = async (userId) => {
       });
       return false;
     }
-
-
-    
-   
+  
     if (matchingGroup.faculty_code && matchingGroup.faculty_code !== graduate.faculty_code) {
  
       return false;
     }
 
-   
-   
+
     const finalCheck = await Invitation.findOne({
       where: {
         sender_id: 1,
